@@ -3,7 +3,9 @@ branch-defaults:
     environment: null
     group_suffix: null
   master:
-    environment: weco-dev
+    environment: api-dev
+  production:
+    environment: api-prod
 global:
   application_name: WECO
   default_platform: Node.js

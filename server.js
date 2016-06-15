@@ -28,8 +28,8 @@ var table = "Users";
 var params = {
   TableName: db.Table.Users,
   Item: {
-    "id": 0,
-    "username": "TestUser"
+    "id": 1,
+    "username": "TestUser1"
   }
 };
 docClient.put(params, function(err, data) {

@@ -1,0 +1,10 @@
+branch-defaults:
+  default:
+    environment: null
+    group_suffix: null
+global:
+  application_name: WECO
+  default_platform: Node.js
+  default_region: eu-west-1
+  profile: weco
+  sc: null

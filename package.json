@@ -17,5 +17,8 @@
     "aws-sdk": "^2.4.0",
     "body-parser": "^1.15.1",
     "express": "^4.13.4"
+  },
+  "devDependencies": {
+    "grunt": "^1.0.1"
   }
 }

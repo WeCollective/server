@@ -3,6 +3,7 @@
 // REQUIRE MODULES
 var express    = require("express");          // call express
 var app        = express();                   // define our app using express
+var helmet = require('helmet');               // protect against common web vulnerabilities
 var bodyParser = require("body-parser");      // reading request bodies
 var AWS = require("aws-sdk");                 // interfacing with AWS
 AWS.config.update({
@@ -20,6 +21,7 @@ var env = (process.env.NODE_ENV || "development");
 var port = process.env.PORT || 8081;
 
 // MIDDLEWARE
+app.use(helmet());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 

@@ -42,7 +42,11 @@ docClient.put(params, function(err, data) {
 
 // DUMMY API ROUTE
 app.get('/', function(req, res) {
-  res.send("Welcome to the WECO API! env: " + env);
+  res.statusCode = 200;
+  var success = {
+    message: "Welcome to the WECO API! env: " + env
+  }
+  res.send(success);
 });
 
 // START THE SERVER

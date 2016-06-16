@@ -5,6 +5,7 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-nodemon');
   grunt.loadNpmTasks('grunt-concurrent');
   grunt.loadNpmTasks('grunt-exec');
+  grunt.loadNpmTasks('grunt-mocha-test');
 
   // Configure tasks
   grunt.initConfig({
@@ -59,18 +60,25 @@ module.exports = function(grunt) {
           return 'echo Checking out ' + checkout + ' && git checkout ' + checkout + ' && echo Deploying... && eb deploy && git checkout master';
         }
       }
+    },
+    mochaTest: {
+      test: {
+        src: ['tests/test.js']
+      }
     }
   });
 
   /* Register main tasks.
+  **    grunt test            execute mocha tests for the API
   **    grunt serve           locally serve the web app and simultaneously watch for file changes for linting
   **    grunt jshint          lint all js files
-  **    grunt publish         merges development branch into production
-  **    grunt deploy:env      builds the current branch, and deploys to the specified environment
+  **    grunt publish         runs tests, then merges development branch into production
+  **    grunt deploy:env      builds the current branch, tests, and deploys to the specified environment
   **                          (either "development" or "production"), merging into production if needed.
   */
+  grunt.registerTask('test', 'mochaTest');
   grunt.registerTask('serve', 'concurrent:serve');
-  grunt.registerTask('publish', 'exec:publish');
-  grunt.registerTask('deploy:development', ['jshint', 'exec:deploy:development']);
+  grunt.registerTask('publish', ['test', 'exec:publish']);
+  grunt.registerTask('deploy:development', ['jshint', 'test', 'exec:deploy:development']);
   grunt.registerTask('deploy:production', ['jshint', 'publish', 'exec:deploy:production']);
 };

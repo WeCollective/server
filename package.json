@@ -4,7 +4,7 @@
   "description": "The RESTful API for WECO.",
   "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "mocha tests/test.js",
     "start": "node server.js"
   },
   "repository": {
@@ -24,6 +24,10 @@
     "grunt-contrib-jshint": "^1.0.0",
     "grunt-contrib-watch": "^1.0.0",
     "grunt-exec": "^1.0.0",
-    "grunt-nodemon": "^0.4.2"
+    "grunt-mocha-test": "^0.12.7",
+    "grunt-nodemon": "^0.4.2",
+    "mocha": "^2.5.3",
+    "should": "^9.0.2",
+    "supertest": "^1.2.0"
   }
 }

@@ -45,7 +45,7 @@ app.get('/', function(req, res) {
   res.statusCode = 200;
   var success = {
     message: "Welcome to the WECO API! env: " + env
-  }
+  };
   res.send(success);
 });
 

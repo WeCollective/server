@@ -70,13 +70,13 @@ module.exports = function(grunt) {
 
   /* Register main tasks.
   **    grunt test            lints the js and executes mocha tests for the API
-  **    grunt serve           locally serve the web app and simultaneously watch for file changes for linting
+  **    grunt serve           lints the js, then locally serves the web app and simultaneously watch for file changes for linting
   **    grunt publish         runs tests, then merges development branch into production
   **    grunt deploy:env      builds the current branch, tests, and deploys to the specified environment
   **                          (either "development" or "production"), merging into production if needed.
   */
   grunt.registerTask('test', ['jshint', 'mochaTest']);
-  grunt.registerTask('serve', 'concurrent:serve');
+  grunt.registerTask('serve', ['jshint', 'concurrent:serve']);
   grunt.registerTask('publish', ['test', 'exec:publish']);
   grunt.registerTask('deploy:development', ['test', 'exec:deploy:development']);
   grunt.registerTask('deploy:production', ['publish', 'exec:deploy:production']);

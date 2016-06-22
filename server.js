@@ -63,7 +63,7 @@ var options = {
 };
 app.use(session({
   store: new DynamoDBStore(options),
-  secret: 'secret',
+  secret: process.env.SESSION_SECRET,
   resave: true,
   saveUninitialized: true
 }));

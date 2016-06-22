@@ -13,10 +13,10 @@ function isLoggedIn(req, res, next) {
   return error.Forbidden(res);
 };
 
-module.exports = function(app, passport) {
+module.exports = function(app, passport, dbClient) {
 
   // USER ROUTES
-  var user = require('./routes/user.routes.js');
+  var user = require('./routes/user.routes.js')(dbClient);
   // sign up
   router.route('/user')
     .post(passport.authenticate('local-signup'), function(req, res, next) {
@@ -33,6 +33,9 @@ module.exports = function(app, passport) {
       req.logout();
       return success.OK(res);
     });
+  // get specified user
+  router.route('/user/:username')
+    .get(user.get);
 
   return router;
 };

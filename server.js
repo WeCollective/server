@@ -21,7 +21,8 @@ AWS.config.update({
   sslEnabled: true,
   logger: process.stdout
 });
-var db = require("./config/database.js")(AWS);
+var db = require("./config/database.js");
+var dbClient = new AWS.DynamoDB.DocumentClient();
 
 // SET ENVIRONMENT AND PORT
 var env = (process.env.NODE_ENV || "development");
@@ -60,11 +61,11 @@ app.use(session({
   resave: true,
   saveUninitialized: true
 }));
-passport = require('./config/passport')(passport, db);
+passport = require('./config/passport')(passport, dbClient);
 app.use(passport.initialize());
 app.use(passport.session());
 
-var apiRouter = require('./router.js')(app, passport);
+var apiRouter = require('./router.js')(app, passport, dbClient);
 app.use('/', apiRouter);
 
 // DUMMY API ROUTE

@@ -2,14 +2,12 @@ var LocalStrategy = require('passport-local').Strategy;
 var bcrypt = require('bcryptjs');
 var db = require('./database.js');
 
-// TODO: sanitize input!
-
-module.exports = function(passport, db) {
+module.exports = function(passport, dbClient) {
   passport.serializeUser(function(user, done) {
     done(null, user.username);
   });
   passport.deserializeUser(function(username, done) {
-    db.client.get({
+    dbClient.get({
       TableName: db.Table.Users,
       Key: {
         'username': username
@@ -25,7 +23,7 @@ module.exports = function(passport, db) {
   }, function(req, username, password, done) {
     process.nextTick(function() {
       // check whether a user with this username already exists in the database
-      db.client.get({
+      dbClient.get({
         TableName: db.Table.Users,
         Key: {
           'username': username
@@ -44,7 +42,7 @@ module.exports = function(passport, db) {
         }
 
         // TODO check valid password using regex
-        
+
         if(!req.body.email) {
           console.error('Missing email.');
           return done(null, false);
@@ -59,7 +57,7 @@ module.exports = function(passport, db) {
               'password': hash,
               'email': req.body.email
             };
-            db.client.put({
+            dbClient.put({
               TableName: db.Table.Users,
               Item: user
             }, function(err, data) {
@@ -84,7 +82,7 @@ module.exports = function(passport, db) {
   }, function(req, username, password, done) {
     process.nextTick(function() {
       // check whether a user with this username exists in the database
-      db.client.get({
+      dbClient.get({
         TableName: db.Table.Users,
         Key: {
           'username': username

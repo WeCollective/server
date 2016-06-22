@@ -19,7 +19,4 @@ if(process.env.NODE_ENV != 'production') {
   }
 }
 
-module.exports = function(AWS) {
-  config.client = new AWS.DynamoDB.DocumentClient();
-  return config;
-}
+module.exports = config;

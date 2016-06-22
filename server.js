@@ -36,7 +36,11 @@ app.use(bodyParser.json());
 
 // CROSS ORIGIN RESOURCE SHARING
 app.use(function(req, res, next) {
-  res.header("Access-Control-Allow-Origin", "*");
+  var allowedOrigins = ['http://localhost:8081', 'http://webapp-dev.eu9ntpt33z.eu-west-1.elasticbeanstalk.com', 'http://webapp-prod.eu-west-1.elasticbeanstalk.com', 'http://www.wecollective.co.uk'];
+  var origin = req.headers.origin;
+  if(allowedOrigins.indexOf(origin) > -1){
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  }
   res.header("Access-Control-Allow-Credentials", "true");
   res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,PATCH,OPTIONS');
   res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Authorization, Accept");

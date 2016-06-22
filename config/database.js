@@ -4,6 +4,7 @@
 // Table names should be accessed through this object.
 var config = {
   Table: {
+    Sessions: 'Sessions',
     Users: 'Users'
   }
 }

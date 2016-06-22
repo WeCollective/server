@@ -33,6 +33,9 @@ module.exports = function(app, passport, dbClient) {
       req.logout();
       return success.OK(res);
     });
+  // get authenticated user
+  router.route('/user/me')
+    .get(isLoggedIn, user.getSelf);
   // get specified user
   router.route('/user/:username')
     .get(user.get);

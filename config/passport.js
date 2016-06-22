@@ -44,6 +44,11 @@ module.exports = function(passport, db) {
         }
 
         // TODO check valid password using regex
+        
+        if(!req.body.email) {
+          console.error('Missing email.');
+          return done(null, false);
+        }
 
         // salt and hash the password, storing hash in the db
         bcrypt.genSalt(10, function(err, salt) {
@@ -51,7 +56,8 @@ module.exports = function(passport, db) {
             // save new user to database, using hashed password
             var user = {
               'username': username,
-              'password': hash
+              'password': hash,
+              'email': req.body.email
             };
             db.client.put({
               TableName: db.Table.Users,

@@ -19,13 +19,25 @@ module.exports = function(app, passport, dbClient) {
   var user = require('./routes/user.routes.js')(dbClient);
   // sign up
   router.route('/user')
-    .post(passport.authenticate('local-signup'), function(req, res, next) {
-      return success.OK(res);
+    .post(function(req, res, next) {
+      passport.authenticate('local-signup', function(err, user, info) {
+        if (err) { return next(err); }
+        if (!user) {
+          return res.status(info.status).json({ message: info.message });
+        }
+        return success.OK(res);
+      })(req, res, next);
     });
   // log in
   router.route('/user/login')
-    .post(passport.authenticate('local-login'), function(req, res, next) {
-      return success.OK(res);
+    .post(function(req, res, next) {
+      passport.authenticate('local-login', function(err, user, info) {
+        if (err) { return next(err); }
+        if (!user) {
+          return res.status(info.status).json({ message: info.message });
+        }
+        return success.OK(res);
+      })(req, res, next);
     });
   // log out
   router.route('/user/logout')

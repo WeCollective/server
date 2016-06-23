@@ -37,6 +37,8 @@
     "grunt-nodemon": "^0.4.2",
     "mocha": "^2.5.3",
     "should": "^9.0.2",
-    "supertest": "^1.2.0"
+    "superagent": "^2.0.0",
+    "supertest": "^1.2.0",
+    "supertest-session": "^2.0.1"
   }
 }

@@ -13,13 +13,18 @@ var DynamoDBStore = require('connect-dynamodb')({ // dynamodb session store
 });
 var AWS = require("aws-sdk");                     // interfacing with AWS
 
+// DISABLE LOGGING IF IN TEST MODE
+if (process.env.NODE_ENV == 'test') {
+  console.error = function () {};
+}
+
 // CONFIGURE AWS
 AWS.config.update({
   accessKeyId: process.env.AWS_ACCESS_KEY_ID_WECO_API,
   secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY_WECO_API,
   region: "eu-west-1",
   sslEnabled: true,
-  logger: process.stdout
+  logger: process.env.NODE_ENV == "test" ? undefined : process.stdout
 });
 var db = require("./config/database.js");
 var dbClient = new AWS.DynamoDB.DocumentClient();
@@ -49,23 +54,24 @@ app.use(function(req, res, next) {
 
 // AUTHENTICATION AND SESSION MANAGEMENT
 var options = {
-    table: db.Table.Sessions,
-    AWSConfigJSON: {
-      credentials: {
-        accessKeyId: process.env.AWS_ACCESS_KEY_ID_WECO_API,
-        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY_WECO_API
-      },
-      region: 'eu-west-1',
-      sslEnabled: true,
-      logger: process.stdout
+  table: db.Table.Sessions,
+  AWSConfigJSON: {
+    credentials: {
+      accessKeyId: process.env.AWS_ACCESS_KEY_ID_WECO_API,
+      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY_WECO_API
     },
-    reapInterval: 600000  // clean up expired sessions every 10 mins
+    region: 'eu-west-1',
+    sslEnabled: true,
+    logger: process.env.NODE_ENV == "test" ? undefined : process.stdout
+  },
+  reapInterval: 600000  // clean up expired sessions every 10 mins
 };
+
 app.use(session({
-  store: new DynamoDBStore(options),
+  //store: new DynamoDBStore(options),
   secret: process.env.SESSION_SECRET,
-  resave: true,
-  saveUninitialized: true
+  resave: false,
+  saveUninitialized: false
 }));
 passport = require('./config/passport')(passport, dbClient);
 app.use(passport.initialize());
@@ -78,7 +84,7 @@ app.use('/', apiRouter);
 app.get('/', function(req, res) {
   res.statusCode = 200;
   var success = {
-    message: "Welcome to the WECO API! env: " + env
+    message: "Welcome to the WECO API!"
   };
   res.send(success);
 });
@@ -86,3 +92,6 @@ app.get('/', function(req, res) {
 // START THE SERVER
 app.listen(port);
 console.log('Magic happens on port ' + port);
+
+// export app for testing
+module.exports = app;

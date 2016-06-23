@@ -9,7 +9,7 @@ module.exports = function(dbClient) {
     // TODO: access controls on what user info is sent back, inc. yourself vs other users
     getSelf: function(req, res) {
       if(!req.user.username) {
-        console.error("No username found in session.");
+        console.error('No username found in session.');
         return error.InternalServerError(res);
       }
 
@@ -20,6 +20,7 @@ module.exports = function(dbClient) {
         }
       }, function(err, data) {
         if(err) {
+          console.error('Error fetching user from database.');
           return error.InternalServerError(res);
         }
         var user = {
@@ -31,6 +32,7 @@ module.exports = function(dbClient) {
     get:  function(req, res) {
 
       if(!req.params.username) {
+        console.error('No username parameter specified.');
         return error.BadRequest(res);
       }
 
@@ -41,6 +43,7 @@ module.exports = function(dbClient) {
         }
       }, function(err, data) {
         if(err) {
+          console.error('Error fetching user from database.');
           return error.InternalServerError(res);
         }
 
@@ -49,6 +52,26 @@ module.exports = function(dbClient) {
         };
 
         return success.OK(res, user);
+      });
+    },
+    deleteSelf: function(req, res) {
+      if(!req.user.username) {
+        console.error("No username found in session.");
+        return error.InternalServerError(res);
+      }
+
+      dbClient.delete({
+        TableName: db.Table.Users,
+        Key: {
+          'username': req.user.username
+        }
+      }, function(err, data) {
+        if(err) {
+          console.error('Error deleting user from database.');
+          return error.InternalServerError(res);
+        }
+        req.logout();
+        return success.OK(res);
       });
     }
   };

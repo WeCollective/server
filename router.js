@@ -20,23 +20,35 @@ module.exports = function(app, passport, dbClient) {
   // sign up
   router.route('/user')
     .post(function(req, res, next) {
+      // local-signup with override of done() method to access info object from passport strategy
       passport.authenticate('local-signup', function(err, user, info) {
         if (err) { return next(err); }
+        // if no user object, send error response
         if (!user) {
           return res.status(info.status).json({ message: info.message });
         }
-        return success.OK(res);
+        // manually log in user to establish session
+        req.logIn(user, function(err) {
+          if (err) { return next(err); }
+          return success.OK(res);
+        });
       })(req, res, next);
     });
   // log in
   router.route('/user/login')
     .post(function(req, res, next) {
+      // local-login with override of done() method to access info object from passport strategy
       passport.authenticate('local-login', function(err, user, info) {
         if (err) { return next(err); }
+        // if no user object, send error response
         if (!user) {
           return res.status(info.status).json({ message: info.message });
         }
-        return success.OK(res);
+        // manually log in user to establish session
+        req.logIn(user, function(err) {
+          if (err) { return next(err); }
+          return success.OK(res);
+        });
       })(req, res, next);
     });
   // log out
@@ -45,10 +57,11 @@ module.exports = function(app, passport, dbClient) {
       req.logout();
       return success.OK(res);
     });
-  // get authenticated user
+  // operations on the authenticated user
   router.route('/user/me')
-    .get(isLoggedIn, user.getSelf);
-  // get specified user
+    .get(isLoggedIn, user.getSelf)
+    .delete(isLoggedIn, user.deleteSelf);
+  // operations on a specified user
   router.route('/user/:username')
     .get(user.get);
 

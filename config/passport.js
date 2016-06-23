@@ -22,6 +22,25 @@ module.exports = function(passport, dbClient) {
       passReqToCallback : true
   }, function(req, username, password, done) {
     process.nextTick(function() {
+      // ensure username length is over 1 char and less than 20
+      username = username.trim();
+      if(!username || username.length < 1 || username.length > 20) {
+        console.error('Invalid username.');
+        return done(null, false);
+      }
+
+      // ensure password contains no whitespace
+      if(/\s/g.test(password)) {
+        console.error('Password contains whitespace.');
+        return done(null, false);
+      }
+
+      // ensure password length is at least 6 characters and at most 30
+      if(!password || password.length < 6 || password.length > 30) {
+        console.error('Password must be at least 6 characters and at most 30 characters long.');
+        return done(null, false);
+      }
+
       // check whether a user with this username already exists in the database
       dbClient.get({
         TableName: db.Table.Users,

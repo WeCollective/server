@@ -16,7 +16,12 @@ module.exports = function(server) {
       .expect({
         message: 'Success',
         data: {
-          username: 'username'
+          username: 'username',
+          name: {
+            first: 'John',
+            last: 'Smith'
+          },
+          email: 'test@email.com'
         }
       }, done);
   });

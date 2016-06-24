@@ -24,7 +24,12 @@ module.exports = function(dbClient) {
           return error.InternalServerError(res);
         }
         var user = {
-          username: data.Item.username
+          username: data.Item.username,
+          name: {
+            first: data.Item.firstname,
+            last: data.Item.lastname
+          },
+          email: data.Item.email
         };
         return success.OK(res, user);
       });
@@ -48,7 +53,11 @@ module.exports = function(dbClient) {
         }
 
         var user = {
-          username: data.Item.username
+          username: data.Item.username,
+          name: {
+            first: data.Item.firstname,
+            last: data.Item.lastname
+          }
         };
 
         return success.OK(res, user);

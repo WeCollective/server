@@ -73,7 +73,7 @@ module.exports = function(server) {
     server.post('/user')
       .send('username=username')
       .send('password=password')
-      .send('email=email@test.com')
+      .send('email=test@email.com')
       .send('firstname=John')
       .send('lastname=Smith')
       .expect(200, done);
@@ -82,7 +82,7 @@ module.exports = function(server) {
     server.post('/user')
       .send('username=username')
       .send('password=password')
-      .send('email=email@test.com')
+      .send('email=test@email.com')
       .send('firstname=John')
       .send('lastname=Smith')
       .expect(400)

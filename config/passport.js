@@ -90,7 +90,9 @@ module.exports = function(passport, dbClient) {
             var user = {
               'username': username,
               'password': hash,
-              'email': req.body.email
+              'email': req.body.email,
+              'firstname': req.body.firstname,
+              'lastname': req.body.lastname
             };
             dbClient.put({
               TableName: db.Table.Users,

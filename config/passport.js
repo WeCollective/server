@@ -65,9 +65,22 @@ module.exports = function(passport, dbClient) {
           return done(null, false, { status: 400, message: 'Username already exists' });
         }
 
+        // check for a valid email address
         if(!req.body.email || !isEmail(req.body.email)) {
           console.error('Invalid email.');
           return done(null, false, { status: 400, message: 'Invalid email' });
+        }
+
+        // check for a valid first name
+        if(!req.body.firstname || req.body.firstname.length < 2 || req.body.firstname.length > 30) {
+          console.error('Invalid first name.');
+          return done(null, false, { status: 400, message: 'Invalid first name' });
+        }
+
+        // check for a valid last name
+        if(!req.body.lastname || req.body.lastname.length < 2 || req.body.lastname.length > 30) {
+          console.error('Invalid last name.');
+          return done(null, false, { status: 400, message: 'Invalid last name' });
         }
 
         // salt and hash the password, storing hash in the db

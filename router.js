@@ -63,7 +63,15 @@ module.exports = function(app, passport, dbClient) {
     .delete(isLoggedIn, user.deleteSelf);
   // operations on a specified user
   router.route('/user/:username')
-    .get(user.get);
+    .get(function(req, res) {
+      if(req.isAuthenticated() && req.user) {
+        if(req.user.username == req.params.username) {
+          user.getSelf(req, res);
+        } else {
+          user.get(req, res);
+        }
+      }
+    });
 
   return router;
 };

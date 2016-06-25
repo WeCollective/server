@@ -31,7 +31,7 @@ var dbClient = new AWS.DynamoDB.DocumentClient();
 
 // SET ENVIRONMENT AND PORT
 var env = (process.env.NODE_ENV || "development");
-var port = process.env.PORT || 8081;
+var port = process.env.PORT || 8080;
 
 // MIDDLEWARE
 app.use(helmet());

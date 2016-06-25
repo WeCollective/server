@@ -70,6 +70,8 @@ module.exports = function(app, passport, dbClient) {
         } else {
           user.get(req, res);
         }
+      } else {
+        user.get(req, res);
       }
     });
 

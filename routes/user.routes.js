@@ -23,6 +23,12 @@ module.exports = function(dbClient) {
           console.error('Error fetching user from database.');
           return error.InternalServerError(res);
         }
+
+        if(!data || !data.Item) {
+          console.error('No data received from database');
+          return error.NotFound(res);
+        }
+
         var user = {
           username: data.Item.username,
           name: {

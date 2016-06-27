@@ -6,8 +6,6 @@ var router = express.Router();
 var error = require('./routes/responses/errors.js');
 var success = require('./routes/responses/successes.js');
 
-var aws = require('./config/aws.js');
-
 // Middleware to ensure a user is logged in (used on protected routes)
 function isLoggedIn(req, res, next) {
   if (req.isAuthenticated())

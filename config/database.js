@@ -12,11 +12,9 @@ var Schema = {
 };
 
 // Database table keys
-var Key = {
-  User: {
-    primary: {
-      partition: 'username'
-    }
+var Keys = {
+  Users: {
+    primary: 'username'
   }
 };
 
@@ -30,7 +28,7 @@ var config = {
   // Model schemas
   Schema: Schema,
   // Database keys
-  Key: Key
+  Keys: Keys
 }
 
 // If in a development environment we should user the development tables.

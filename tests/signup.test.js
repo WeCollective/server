@@ -57,7 +57,7 @@ module.exports = function(server) {
       .send('firstname=a')
       .send('lastname=Smith')
       .expect(400)
-      .expect({ message: 'Invalid first name' }, done);
+      .expect({ message: 'Invalid firstname' }, done);
   });
   it('should return invalid last name (too short)', function(done) {
     server.post('/user')
@@ -67,7 +67,7 @@ module.exports = function(server) {
       .send('firstname=John')
       .send('lastname=a')
       .expect(400)
-      .expect({ message: 'Invalid last name' }, done);
+      .expect({ message: 'Invalid lastname' }, done);
   });
   it('should return successful sign up', function(done) {
     server.post('/user')

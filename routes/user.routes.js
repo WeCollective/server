@@ -94,7 +94,7 @@ module.exports = {
       }
     }
     if(invalids.length > 0) {
-      return error.BadRequest(res);
+      return error.BadRequest(res, 'Invalid ' + invalids[0]);
     }
     user.update().then(function() {
       return success.OK(res);

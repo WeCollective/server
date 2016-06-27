@@ -60,7 +60,8 @@ module.exports = function(app, passport) {
   // operations on the authenticated user
   router.route('/user/me')
     .get(isLoggedIn, user.getSelf)
-    .delete(isLoggedIn, user.deleteSelf);
+    .delete(isLoggedIn, user.deleteSelf)
+    .put(isLoggedIn, user.putSelf);
   // operations on a specified user
   router.route('/user/:username')
     .get(function(req, res) {

@@ -11,23 +11,12 @@ var session      = require('express-session');    // session middleware
 var DynamoDBStore = require('connect-dynamodb')({ // dynamodb session store
   session: session
 });
-var AWS = require("aws-sdk");                     // interfacing with AWS
+var db = require("./config/database.js");         // database config vars
 
 // DISABLE LOGGING IF IN TEST MODE
 if (process.env.NODE_ENV == 'test') {
   console.error = function () {};
 }
-
-// CONFIGURE AWS
-AWS.config.update({
-  accessKeyId: process.env.AWS_ACCESS_KEY_ID_WECO_API,
-  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY_WECO_API,
-  region: "eu-west-1",
-  sslEnabled: true,
-  logger: process.env.NODE_ENV == "test" ? undefined : process.stdout
-});
-var db = require("./config/database.js");
-var dbClient = new AWS.DynamoDB.DocumentClient();
 
 // SET ENVIRONMENT AND PORT
 var env = (process.env.NODE_ENV || "development");
@@ -73,11 +62,11 @@ app.use(session({
   resave: false,
   saveUninitialized: false
 }));
-passport = require('./config/passport')(passport, dbClient);
+passport = require('./config/passport')(passport);
 app.use(passport.initialize());
 app.use(passport.session());
 
-var apiRouter = require('./router.js')(app, passport, dbClient);
+var apiRouter = require('./router.js')(app, passport);
 app.use('/', apiRouter);
 
 // DUMMY API ROUTE

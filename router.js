@@ -6,6 +6,8 @@ var router = express.Router();
 var error = require('./routes/responses/errors.js');
 var success = require('./routes/responses/successes.js');
 
+var aws = require('./config/aws.js');
+
 // Middleware to ensure a user is logged in (used on protected routes)
 function isLoggedIn(req, res, next) {
   if (req.isAuthenticated())
@@ -13,10 +15,10 @@ function isLoggedIn(req, res, next) {
   return error.Forbidden(res);
 };
 
-module.exports = function(app, passport, dbClient) {
+module.exports = function(app, passport) {
 
   // USER ROUTES
-  var user = require('./routes/user.routes.js')(dbClient);
+  var user = require('./routes/user.routes.js');
   // sign up
   router.route('/user')
     .post(function(req, res, next) {

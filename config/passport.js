@@ -1,18 +1,19 @@
 var LocalStrategy = require('passport-local').Strategy;
 var bcrypt = require('bcryptjs');
 var db = require('./database.js');
+var aws = require('./aws.js');
 
 // Check whether a string is an email using regex and the RFC822 spec
 function isEmail(email) {
   return /^([^\x00-\x20\x22\x28\x29\x2c\x2e\x3a-\x3c\x3e\x40\x5b-\x5d\x7f-\xff]+|\x22([^\x0d\x22\x5c\x80-\xff]|\x5c[\x00-\x7f])*\x22)(\x2e([^\x00-\x20\x22\x28\x29\x2c\x2e\x3a-\x3c\x3e\x40\x5b-\x5d\x7f-\xff]+|\x22([^\x0d\x22\x5c\x80-\xff]|\x5c[\x00-\x7f])*\x22))*\x40([^\x00-\x20\x22\x28\x29\x2c\x2e\x3a-\x3c\x3e\x40\x5b-\x5d\x7f-\xff]+|\x5b([^\x0d\x5b-\x5d\x80-\xff]|\x5c[\x00-\x7f])*\x5d)(\x2e([^\x00-\x20\x22\x28\x29\x2c\x2e\x3a-\x3c\x3e\x40\x5b-\x5d\x7f-\xff]+|\x5b([^\x0d\x5b-\x5d\x80-\xff]|\x5c[\x00-\x7f])*\x5d))*$/.test( email );
 }
 
-module.exports = function(passport, dbClient) {
+module.exports = function(passport) {
   passport.serializeUser(function(user, done) {
     done(null, user.username);
   });
   passport.deserializeUser(function(username, done) {
-    dbClient.get({
+    aws.dbClient.get({
       TableName: db.Table.Users,
       Key: {
         'username': username
@@ -47,7 +48,7 @@ module.exports = function(passport, dbClient) {
       }
 
       // check whether a user with this username already exists in the database
-      dbClient.get({
+      aws.dbClient.get({
         TableName: db.Table.Users,
         Key: {
           'username': username
@@ -94,7 +95,7 @@ module.exports = function(passport, dbClient) {
               'firstname': req.body.firstname,
               'lastname': req.body.lastname
             };
-            dbClient.put({
+            aws.dbClient.put({
               TableName: db.Table.Users,
               Item: user
             }, function(err, data) {
@@ -118,7 +119,7 @@ module.exports = function(passport, dbClient) {
   }, function(req, username, password, done) {
     process.nextTick(function() {
       // check whether a user with this username exists in the database
-      dbClient.get({
+      aws.dbClient.get({
         TableName: db.Table.Users,
         Key: {
           'username': username

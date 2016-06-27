@@ -1,12 +1,36 @@
 'use strict';
 
+// Database model schemas
+var Schema = {
+  User: {
+    username: null,
+    password: null,
+    email: null,
+    firstname: null,
+    lastname: null
+  }
+};
+
+// Database table keys
+var Key = {
+  User: {
+    primary: {
+      partition: 'username'
+    }
+  }
+};
+
 // DynamoDB config info.
-// Table names should be accessed through this object.
 var config = {
+  // Table names
   Table: {
     Sessions: 'Sessions',
     Users: 'Users'
-  }
+  },
+  // Model schemas
+  Schema: Schema,
+  // Database keys
+  Key: Key
 }
 
 // If in a development environment we should user the development tables.

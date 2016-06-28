@@ -7,7 +7,9 @@ var Schema = {
     password: null,
     email: null,
     firstname: null,
-    lastname: null
+    lastname: null,
+    dob: null,
+    datejoined: null
   }
 };
 

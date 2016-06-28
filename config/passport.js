@@ -38,7 +38,8 @@ module.exports = function(passport) {
           'password': password,
           'email': req.body.email,
           'firstname': req.body.firstname,
-          'lastname': req.body.lastname
+          'lastname': req.body.lastname,
+          'datejoined': new Date().getTime()
         });
 
         // validate user properties

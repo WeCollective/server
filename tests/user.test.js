@@ -13,6 +13,16 @@ module.exports = function(server) {
   it('should return user object (me)', function(done) {
     server.get('/user/me')
       .expect(200)
+      .expect(function(res) {
+        // if valid datejoined, set to 0 for the next expect statement
+        if(Number(res.body.data.datejoined)) {
+          res.body.data.datejoined = 0;
+        }
+        // if valid dob, set to 0 for the next expect statement
+        if(Number(res.body.data.dob) || res.body.data.dob == null) {
+          res.body.data.dob = 0;
+        }
+      })
       .expect({
         message: 'Success',
         data: {
@@ -21,16 +31,19 @@ module.exports = function(server) {
             first: 'John',
             last: 'Smith'
           },
-          email: 'test@email.com'
+          email: 'test@email.com',
+          dob: 0,
+          datejoined: 0
         }
-      }, done);
+      })
+      .end(done);
   });
   it('should fail to update user (me) invalid firstname', function(done) {
     server.put('/user/me')
       .send('firstname=a')
       .expect(400)
       .expect({
-        message: 'The server could not process the request'
+        message: 'Invalid firstname'
       }, done);
   });
   it('should fail to update user (me) invalid lastname', function(done) {
@@ -38,7 +51,7 @@ module.exports = function(server) {
       .send('lastname=a')
       .expect(400)
       .expect({
-        message: 'The server could not process the request'
+        message: 'Invalid lastname'
       }, done);
   });
   it('should fail to update user (me) invalid email', function(done) {
@@ -46,7 +59,7 @@ module.exports = function(server) {
       .send('email=email')
       .expect(400)
       .expect({
-        message: 'The server could not process the request'
+        message: 'Invalid email'
       }, done);
   });
   it('should update user (me)', function(done) {

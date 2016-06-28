@@ -10,7 +10,7 @@ var User = function(data) {
     table: db.Table.Users,
     keys: db.Keys.Users
   };
-  this.restricted = ['username', 'password'];
+  this.restricted = ['username', 'password', 'datejoined'];
   this.data = this.sanitize(data);
 };
 
@@ -62,6 +62,18 @@ User.prototype.validate = function() {
   // check for a valid last name
   if(!this.data.lastname || this.data.lastname.length < 2 || this.data.lastname.length > 30) {
     invalids.push('lastname');
+  }
+
+  // check for valid date joined
+  if(!this.data.datejoined || !Number(this.data.datejoined) > 0) {
+    invalids.push('datejoined');
+  }
+
+  // check for valid date of birth
+  if(this.data.dob) {
+    if(!Number(this.data.dob) > 0) {
+      invalids.push('dob');
+    }
   }
 
   return invalids;

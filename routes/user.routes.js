@@ -21,7 +21,9 @@ module.exports = {
           first: user.data.firstname,
           last: user.data.lastname
         },
-        email: user.data.email
+        email: user.data.email,
+        dob: user.data.dob,
+        datejoined: user.data.datejoined
       };
       return success.OK(res, userResponse);
     }, function(err) {
@@ -44,7 +46,9 @@ module.exports = {
         name: {
           first: user.data.firstname,
           last: user.data.lastname
-        }
+        },
+        dob: user.data.dob,
+        datejoined: user.data.datejoined
       };
       return success.OK(res, userResponse);
     }, function(err) {
@@ -81,6 +85,12 @@ module.exports = {
     }
     if(req.body.email) {
       user.set('email', req.body.email);
+    }
+    if(req.body.dob) {
+      if(!Number(req.body.dob)) {
+        return error.BadRequest(res, 'Invalid dob');
+      }
+      user.set('dob', Number(req.body.dob));
     }
 
     // Check new parameters are valid, ignoring username and password validity

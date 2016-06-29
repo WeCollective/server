@@ -53,14 +53,24 @@ User.prototype.validate = function() {
     invalids.push('email');
   }
 
-  // check for a valid first name
+  // check for a valid first name length
   if(!this.data.firstname ||
       this.data.firstname.length < 2 || this.data.firstname.length > 30) {
     invalids.push('firstname');
   }
 
-  // check for a valid last name
+  // ensure first name contains no whitespace
+  if(/\s/g.test(this.data.firstname)) {
+    invalids.push('firstname');
+  }
+
+  // check for a valid last name length
   if(!this.data.lastname || this.data.lastname.length < 2 || this.data.lastname.length > 30) {
+    invalids.push('lastname');
+  }
+
+  // ensure last name contains no whitespace
+  if(/\s/g.test(this.data.lastname)) {
     invalids.push('lastname');
   }
 

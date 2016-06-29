@@ -59,6 +59,16 @@ module.exports = function(server) {
       .expect(400)
       .expect({ message: 'Invalid firstname' }, done);
   });
+  it('should return invalid first name (contains whitespace)', function(done) {
+    server.post('/user')
+      .send('username=username')
+      .send('password=password')
+      .send('email=test@email.com')
+      .send('firstname=white space')
+      .send('lastname=Smith')
+      .expect(400)
+      .expect({ message: 'Invalid firstname' }, done);
+  });
   it('should return invalid last name (too short)', function(done) {
     server.post('/user')
       .send('username=username')
@@ -66,6 +76,16 @@ module.exports = function(server) {
       .send('email=test@email.com')
       .send('firstname=John')
       .send('lastname=a')
+      .expect(400)
+      .expect({ message: 'Invalid lastname' }, done);
+  });
+  it('should return invalid last name (contains whitespace)', function(done) {
+    server.post('/user')
+      .send('username=username')
+      .send('password=password')
+      .send('email=test@email.com')
+      .send('firstname=John')
+      .send('lastname=white space')
       .expect(400)
       .expect({ message: 'Invalid lastname' }, done);
   });

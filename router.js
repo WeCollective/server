@@ -10,6 +10,7 @@ var success = require('./routes/responses/successes.js');
 function isLoggedIn(req, res, next) {
   if (req.isAuthenticated())
     return next();
+  console.log("Not allowed!");
   return error.Forbidden(res);
 };
 
@@ -75,6 +76,9 @@ module.exports = function(app, passport) {
         user.get(req, res);
       }
     });
+  // get presigned url for profile picture upload to S3
+  router.route('/user/me/picture-upload-url')
+    .get(isLoggedIn, user.getProfilePictureUploadUrl);
 
   return router;
 };

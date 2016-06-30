@@ -10,6 +10,11 @@ var Schema = {
     lastname: null,
     dob: null,
     datejoined: null
+  },
+  UserImages: {
+    id: null,
+    filename: null,
+    date: null
   }
 };
 
@@ -17,6 +22,9 @@ var Schema = {
 var Keys = {
   Users: {
     primary: 'username'
+  },
+  UserImages: {
+    primary: 'id'
   }
 };
 
@@ -25,7 +33,8 @@ var config = {
   // Table names
   Table: {
     Sessions: 'Sessions',
-    Users: 'Users'
+    Users: 'Users',
+    UserImages: 'UserImages'
   },
   // Model schemas
   Schema: Schema,

@@ -10,5 +10,6 @@ AWS.config.update({
 });
 
 module.exports = {
-  dbClient: new AWS.DynamoDB.DocumentClient()
+  dbClient: new AWS.DynamoDB.DocumentClient(),
+  s3Client: new AWS.S3()
 };

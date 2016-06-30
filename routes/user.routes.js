@@ -1,7 +1,10 @@
 'use strict';
 
-var db = require('../config/database.js');
+var aws = require('../config/aws.js');
+var fs = require('../config/filestorage.js');
+
 var User = require('../models/user.model.js');
+var UserImage = require('../models/user-image.model.js');
 var success = require('./responses/successes.js');
 var error = require('./responses/errors.js');
 
@@ -61,7 +64,7 @@ module.exports = {
   deleteSelf: function(req, res) {
     if(!req.user.username) {
       console.error("No username found in session.");
-      return error.InternalServerError(res);
+      return error.Forbidden(res);
     }
 
     var user = new User({
@@ -110,6 +113,22 @@ module.exports = {
       return success.OK(res);
     }, function() {
       return error.InternalServerError(res);
+    });
+  },
+  getProfilePictureUploadUrl: function(req, res) {
+    if(!req.user || !req.user.username) {
+      console.log("ERROR");
+      return error.Forbidden(res);
+    }
+
+    var filename = req.user.username + '-picture-orig-' + new Date().getTime() + '.jpg';
+    var params = {
+      Bucket: fs.Bucket.UserImages,
+      Key: filename,
+      ContentType: 'image/*'
+    }
+    var url = aws.s3Client.getSignedUrl('putObject', params, function(err, url) {
+      return success.OK(res, url);
     });
   }
 };

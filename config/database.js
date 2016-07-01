@@ -13,8 +13,8 @@ var Schema = {
   },
   UserImages: {
     id: null,
-    filename: null,
-    date: null
+    date: null,
+    extension: null
   }
 };
 

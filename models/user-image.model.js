@@ -24,4 +24,30 @@ UserImage.prototype.validate = function() {
   return invalids;
 };
 
+// Get a user image of given type ('picture', 'cover') by their username from the db, and
+// instantiate the object with this data.
+// Rejects promise with true if database error, with false if no image entry found.
+UserImage.prototype.findByUsername = function(username, type) {
+  if(type != 'picture' && type != 'cover') {
+    return reject();
+  }
+
+  var self = this;
+  return new Promise(function(resolve, reject) {
+    aws.dbClient.get({
+      TableName: self.config.table,
+      Key: {
+        'id': username + '-' + type
+      }
+    }, function(err, data) {
+      if(err) return reject(err);
+      if(!data || !data.Item) {
+        return reject();
+      }
+      self.data = data.Item;
+      return resolve();
+    });
+  });
+};
+
 module.exports = UserImage;

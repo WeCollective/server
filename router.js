@@ -79,6 +79,21 @@ module.exports = function(app, passport) {
   // get presigned url for profile picture upload to S3
   router.route('/user/me/picture-upload-url')
     .get(isLoggedIn, user.getProfilePictureUploadUrl);
+  // get user profile picture presigned url
+  router.route('/user/me/picture')
+    .get(isLoggedIn, user.getOwnProfilePicture);
+  router.route('/user/:username/picture')
+    .get(function(req, res) {
+      if(req.isAuthenticated() && req.user) {
+        if(req.user.username == req.params.username) {
+          user.getOwnProfilePicture(req, res);
+        } else {
+          user.getProfilePicture(req, res);
+        }
+      } else {
+        user.getProfilePicture(req, res);
+      }
+    });
 
   return router;
 };

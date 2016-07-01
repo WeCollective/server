@@ -37,7 +37,6 @@ module.exports = {
     });
   },
   get:  function(req, res) {
-    // no username parameter
     if(!req.params.username) {
       return error.BadRequest(res);
     }
@@ -117,11 +116,10 @@ module.exports = {
   },
   getProfilePictureUploadUrl: function(req, res) {
     if(!req.user || !req.user.username) {
-      console.log("ERROR");
       return error.Forbidden(res);
     }
 
-    var filename = req.user.username + '-picture-orig-' + new Date().getTime() + '.jpg';
+    var filename = req.user.username + '-picture-orig.jpg';
     var params = {
       Bucket: fs.Bucket.UserImages,
       Key: filename,
@@ -129,6 +127,52 @@ module.exports = {
     }
     var url = aws.s3Client.getSignedUrl('putObject', params, function(err, url) {
       return success.OK(res, url);
+    });
+  },
+  getOwnProfilePicture: function(req, res) {
+    if(!req.user || !req.user.username) {
+      return error.Forbidden(res);
+    }
+
+    var image = new UserImage();
+    image.findByUsername(req.user.username, 'picture').then(function() {
+      aws.s3Client.getSignedUrl('getObject', {
+        Bucket: fs.Bucket.UserImagesResized,
+        Key: image.data.id + '-500.' + image.data.extension
+      }, function(err, url) {
+        if(err) {
+          return error.InternalServerError(res);
+        }
+        return success.OK(res, url);
+      });
+    }, function(err) {
+      if(err) {
+        return error.InternalServerError(res);
+      }
+      return error.NotFound(res);
+    });
+  },
+  getProfilePicture: function(req, res) {
+    if(!req.params.username) {
+      return error.BadRequest(res);
+    }
+
+    var image = new UserImage();
+    image.findByUsername(req.params.username, 'picture').then(function() {
+      aws.s3Client.getSignedUrl('getObject', {
+        Bucket: fs.Bucket.UserImagesResized,
+        Key: image.data.id + '-500.' + image.data.extension
+      }, function(err, url) {
+        if(err) {
+          return error.InternalServerError(res);
+        }
+        return success.OK(res, url);
+      });
+    }, function(err) {
+      if(err) {
+        return error.InternalServerError(res);
+      }
+      return error.NotFound(res);
     });
   }
 };

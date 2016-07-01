@@ -114,12 +114,16 @@ module.exports = {
       return error.InternalServerError(res);
     });
   },
-  getProfilePictureUploadUrl: function(req, res) {
+  getPictureUploadUrl: function(req, res, type) {
     if(!req.user || !req.user.username) {
       return error.Forbidden(res);
     }
 
-    var filename = req.user.username + '-picture-orig.jpg';
+    if(type != 'picture' && type != 'cover') {
+      return error.InternalServerError(res);
+    }
+
+    var filename = req.user.username + '-' + type + '-orig.jpg';
     var params = {
       Bucket: fs.Bucket.UserImages,
       Key: filename,
@@ -129,16 +133,26 @@ module.exports = {
       return success.OK(res, url);
     });
   },
-  getOwnProfilePicture: function(req, res) {
+  getOwnPicture: function(req, res, type) {
     if(!req.user || !req.user.username) {
       return error.Forbidden(res);
     }
 
+    if(type != 'picture' && type != 'cover') {
+      return error.InternalServerError(res);
+    }
+    var size;
+    if(type == 'picture') {
+      size = 500;
+    } else {
+      size = 1280;
+    }
+
     var image = new UserImage();
-    image.findByUsername(req.user.username, 'picture').then(function() {
+    image.findByUsername(req.user.username, type).then(function() {
       aws.s3Client.getSignedUrl('getObject', {
         Bucket: fs.Bucket.UserImagesResized,
-        Key: image.data.id + '-500.' + image.data.extension
+        Key: image.data.id + '-' + size + '.' + image.data.extension
       }, function(err, url) {
         if(err) {
           return error.InternalServerError(res);
@@ -152,16 +166,26 @@ module.exports = {
       return error.NotFound(res);
     });
   },
-  getProfilePicture: function(req, res) {
+  getPicture: function(req, res, type) {
     if(!req.params.username) {
       return error.BadRequest(res);
     }
 
+    if(type != 'picture' && type != 'cover') {
+      return error.InternalServerError(res);
+    }
+    var size;
+    if(type == 'picture') {
+      size = 500;
+    } else {
+      size = 1280;
+    }
+
     var image = new UserImage();
-    image.findByUsername(req.params.username, 'picture').then(function() {
+    image.findByUsername(req.params.username, type).then(function() {
       aws.s3Client.getSignedUrl('getObject', {
         Bucket: fs.Bucket.UserImagesResized,
-        Key: image.data.id + '-500.' + image.data.extension
+        Key: image.data.id + '-' + size + '.' + image.data.extension
       }, function(err, url) {
         if(err) {
           return error.InternalServerError(res);

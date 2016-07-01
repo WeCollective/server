@@ -10,7 +10,6 @@ var success = require('./routes/responses/successes.js');
 function isLoggedIn(req, res, next) {
   if (req.isAuthenticated())
     return next();
-  console.log("Not allowed!");
   return error.Forbidden(res);
 };
 
@@ -78,20 +77,48 @@ module.exports = function(app, passport) {
     });
   // get presigned url for profile picture upload to S3
   router.route('/user/me/picture-upload-url')
-    .get(isLoggedIn, user.getProfilePictureUploadUrl);
-  // get user profile picture presigned url
+    .get(isLoggedIn, function(req, res) {
+      user.getPictureUploadUrl(req, res, 'picture');
+    });
+  // get presigned url for cover picture upload to S3
+  router.route('/user/me/cover-upload-url')
+    .get(isLoggedIn, function(req, res) {
+      user.getPictureUploadUrl(req, res, 'cover');
+    });
+  // get authd user profile picture presigned url
   router.route('/user/me/picture')
-    .get(isLoggedIn, user.getOwnProfilePicture);
+    .get(isLoggedIn, function(req, res) {
+      user.getOwnPicture(req, res, 'picture');
+    });
+  // get authd user cover picture presigned url
+  router.route('/user/me/cover')
+    .get(isLoggedIn, function(req, res) {
+      user.getOwnPicture(req, res, 'cover');
+    });
+  // get user profile picture presigned url
   router.route('/user/:username/picture')
     .get(function(req, res) {
       if(req.isAuthenticated() && req.user) {
         if(req.user.username == req.params.username) {
-          user.getOwnProfilePicture(req, res);
+          user.getOwnPicture(req, res, 'picture');
         } else {
-          user.getProfilePicture(req, res);
+          user.getPicture(req, res, 'picture');
         }
       } else {
-        user.getProfilePicture(req, res);
+        user.getPicture(req, res, 'picture');
+      }
+    });
+  // get user cover picture presigned url
+  router.route('/user/:username/cover')
+    .get(function(req, res) {
+      if(req.isAuthenticated() && req.user) {
+        if(req.user.username == req.params.username) {
+          user.getOwnPicture(req, res, 'cover');
+        } else {
+          user.getPicture(req, res, 'cover');
+        }
+      } else {
+        user.getPicture(req, res, 'cover');
       }
     });
 

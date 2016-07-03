@@ -21,6 +21,22 @@ UserImage.prototype.constructor = UserImage;
 UserImage.prototype.validate = function() {
   var invalids = [];
 
+  // check for valid id ending with -picture or -cover
+  if(!this.data.id || (!this.data.id.endsWith('-picture') && !this.data.id.endsWith('-cover'))) {
+    invalids.push('id');
+  }
+
+  // check for valid date
+  if(!this.data.date || !Number(this.data.date) > 0) {
+    invalids.push('date');
+  }
+
+  // check for valid extension
+  var extensions = ['jpg', 'JPG', 'jpe', 'JPE', 'jpeg', 'JPEG', 'png', 'PNG', 'bmp', 'BMP'];
+  if(extensions.indexOf(this.data.extension) == -1) {
+    invalids.push(this.data.extension);
+  }
+
   return invalids;
 };
 

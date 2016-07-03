@@ -72,6 +72,14 @@ module.exports = function(server) {
         message: 'Success'
       }, done);
   });
+  it('should get profile picture upload url', function(done) {
+    server.get('/user/me/picture-upload-url')
+      .expect(200, done);
+  });
+  it('should get cover picture upload url', function(done) {
+    server.get('/user/me/cover-upload-url')
+      .expect(200, done);
+  });
   it('should delete user (me)', function(done) {
     server.delete('/user/me')
       .expect(200)

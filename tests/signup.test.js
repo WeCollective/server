@@ -9,6 +9,56 @@ module.exports = function(server) {
       .expect(400)
       .expect({ message: 'Invalid username' }, done);
   });
+  it('should return invalid username (banned word: \'orig\')', function(done) {
+    server.post('/user')
+      .send('username=orig')
+      .send('password=password')
+      .send('email=test@email.com')
+      .send('firstname=John')
+      .send('lastname=Smith')
+      .expect(400)
+      .expect({ message: 'Invalid username' }, done);
+  });
+  it('should return invalid username (banned word: \'me\')', function(done) {
+    server.post('/user')
+      .send('username=me')
+      .send('password=password')
+      .send('email=test@email.com')
+      .send('firstname=John')
+      .send('lastname=Smith')
+      .expect(400)
+      .expect({ message: 'Invalid username' }, done);
+  });
+  it('should return invalid username (banned word: \'picture\')', function(done) {
+    server.post('/user')
+      .send('username=picture')
+      .send('password=password')
+      .send('email=test@email.com')
+      .send('firstname=John')
+      .send('lastname=Smith')
+      .expect(400)
+      .expect({ message: 'Invalid username' }, done);
+  });
+  it('should return invalid username (banned word: \'cover\')', function(done) {
+    server.post('/user')
+      .send('username=cover')
+      .send('password=password')
+      .send('email=test@email.com')
+      .send('firstname=John')
+      .send('lastname=Smith')
+      .expect(400)
+      .expect({ message: 'Invalid username' }, done);
+  });
+  it('should return invalid username (numeric)', function(done) {
+    server.post('/user')
+      .send('username=123')
+      .send('password=password')
+      .send('email=test@email.com')
+      .send('firstname=John')
+      .send('lastname=Smith')
+      .expect(400)
+      .expect({ message: 'Invalid username' }, done);
+  });
   it('should return invalid password (contains whitespace)', function(done) {
     server.post('/user')
       .send('username=username')

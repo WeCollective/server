@@ -37,6 +37,18 @@ User.prototype.validate = function() {
     invalids.push('username');
   }
 
+  // ensure username is not one of the banned words
+  // (these words are used in user image urls and routes)
+  var bannedUsernames = ['me', 'orig', 'picture', 'cover'];
+  if(bannedUsernames.indexOf(this.data.username) > -1) {
+    invalids.push('username');
+  }
+
+  // ensure username is not only numeric
+  if(Number(this.data.username)) {
+    invalids.push('username');
+  }
+
   // ensure password length is at least 6 characters and at most 30
   if(!this.data.password ||
       this.data.password.length < 6 || this.data.password.length > 30) {

@@ -126,6 +126,8 @@ module.exports = function(app, passport) {
   var branch = require('./routes/branch.routes.js');
   router.route('/branch')
     .post(isLoggedIn, branch.postBranch);
+  router.route('/branch/:branchid')
+    .get(branch.getBranch);
   router.route('/subbranches/:parentid')
     .get(branch.getSubbranches);
 

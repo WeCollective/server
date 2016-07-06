@@ -33,6 +33,21 @@ module.exports = {
       return error.InternalServerError(res);
     });
   },
+  getBranch: function(req, res) {
+    if(!req.params.branchid) {
+      return error.BadRequest(res, 'Missing branchid');
+    }
+
+    var branch = new Branch();
+    branch.findById(req.params.branchid).then(function() {
+      return success.OK(res, branch.data);
+    }, function(err) {
+      if(err) {
+        return error.InternalServerError(res);
+      }
+      return error.NotFound(res);
+    });
+  },
   getSubbranches: function(req, res) {
     if(!req.params.parentid) {
       return error.BadRequest(res, 'Missing parentid');

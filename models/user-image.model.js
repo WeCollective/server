@@ -10,6 +10,7 @@ var UserImage = function(data) {
     table: db.Table.UserImages,
     keys: db.Keys.UserImages
   };
+  this.restricted = ['id'];
   this.data = this.sanitize(data);
 };
 

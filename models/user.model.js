@@ -10,7 +10,6 @@ var User = function(data) {
     table: db.Table.Users,
     keys: db.Keys.Users
   };
-  this.restricted = ['username', 'password', 'datejoined'];
   this.data = this.sanitize(data);
 };
 

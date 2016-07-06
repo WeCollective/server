@@ -14,7 +14,6 @@ var Model = function() {
 Model.prototype.data = {};        // the actual model data
 Model.prototype.config = {};      // model config inc. table name, schema, db keys
 Model.prototype.dirtys = [];      // array of model data properties which have been changed
-Model.prototype.restricted = [];  // array of model data properties which must not be changed
 
 // Ensure data adheres to the schema
 Model.prototype.sanitize = function(data) {

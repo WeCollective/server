@@ -15,6 +15,14 @@ var Schema = {
     id: null,
     date: null,
     extension: null
+  },
+  Branch: {
+    id: null,
+    name: null,
+    mods: null,
+    creator: null,
+    date: null,
+    parentid: null
   }
 };
 
@@ -25,6 +33,12 @@ var Keys = {
   },
   UserImages: {
     primary: 'id'
+  },
+  Branches: {
+    primary: 'id',
+    secondary: {
+      global: 'parentid-index'
+    }
   }
 };
 
@@ -34,7 +48,8 @@ var config = {
   Table: {
     Sessions: 'Sessions',
     Users: 'Users',
-    UserImages: 'UserImages'
+    UserImages: 'UserImages',
+    Branches: 'Branches'
   },
   // Model schemas
   Schema: Schema,

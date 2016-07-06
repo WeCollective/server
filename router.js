@@ -122,5 +122,12 @@ module.exports = function(app, passport) {
       }
     });
 
+  // BRANCH ROUTES
+  var branch = require('./routes/branch.routes.js');
+  router.route('/branch')
+    .post(isLoggedIn, branch.postBranch);
+  router.route('/subbranches/:parentid')
+    .get(branch.getSubbranches);
+
   return router;
 };

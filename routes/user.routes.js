@@ -79,32 +79,29 @@ module.exports = {
   },
   putSelf: function(req, res) {
     var user = new User(req.user);
+    var propertiesToCheck = [];
     if(req.body.firstname) {
       user.set('firstname', req.body.firstname);
+      propertiesToCheck.push('firstname');
     }
     if(req.body.lastname) {
       user.set('lastname', req.body.lastname);
+      propertiesToCheck.push('lastname');
     }
     if(req.body.email) {
       user.set('email', req.body.email);
+      propertiesToCheck.push('email');
     }
     if(req.body.dob) {
       if(!Number(req.body.dob)) {
         return error.BadRequest(res, 'Invalid dob');
       }
       user.set('dob', Number(req.body.dob));
+      propertiesToCheck.push('dob');
     }
 
     // Check new parameters are valid, ignoring username and password validity
-    var invalids = user.validate();
-    for(var i = 0; i < invalids.length; i++) {
-      if(invalids[i].indexOf('username') > -1) {
-        invalids.splice(invalids[i].indexOf('username'), 1);
-      }
-      if(invalids[i].indexOf('password') > -1) {
-        invalids.splice(invalids[i].indexOf('password'), 1);
-      }
-    }
+    var invalids = user.validate(propertiesToCheck);
     if(invalids.length > 0) {
       return error.BadRequest(res, 'Invalid ' + invalids[0]);
     }

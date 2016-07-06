@@ -13,56 +13,68 @@ var Branch = function(data) {
   this.data = this.sanitize(data);
 };
 
-// User model inherits from Model
+// Branch model inherits from Model
 Branch.prototype = Object.create(Model.prototype);
 Branch.prototype.constructor = Branch;
 
-// Validate user object, returning an array of any invalid properties
-Branch.prototype.validate = function() {
+// Validate the properties specified in 'properties' on the branch object,
+// returning an array of any invalid ones
+Branch.prototype.validate = function(properties) {
   var invalids = [];
 
   // ensure id exists and is of correct length
-  if(!this.data.id || this.data.id.length < 1 || this.data.id.length > 20) {
-    invalids.push('id');
-  }
-
-  // ensure id contains no whitespace
-  if(/\s/g.test(this.data.id)) {
-    invalids.push('id');
+  if(properties.indexOf('id') > -1) {
+    if(!this.data.id || this.data.id.length < 1 || this.data.id.length > 20) {
+      invalids.push('id');
+    }
+    // ensure id contains no whitespace
+    if(/\s/g.test(this.data.id)) {
+      invalids.push('id');
+    }
   }
 
   // ensure name exists and is of correct length
-  if(!this.data.name || this.data.name.length < 1 || this.data.name.length > 20) {
-    invalids.push('name');
+  if(properties.indexOf('name') > -1) {
+    if(!this.data.name || this.data.name.length < 1 || this.data.name.length > 20) {
+      invalids.push('name');
+    }
   }
 
   // ensure mods is an array with at least one entry
-  if(!this.data.mods || this.data.mods.constructor !== Array || this.data.mods.length < 1) {
-    invalids.push('mods');
+  if(properties.indexOf('mods') > -1) {
+    if(!this.data.mods || this.data.mods.constructor !== Array || this.data.mods.length < 1) {
+      invalids.push('mods');
+    }
   }
 
   // TODO ensure each mod is a valid username
   // TODO ensure creator is valid username
-  if(!this.data.creator) {
-    invalids.push('creator');
+  if(properties.indexOf('creator') > -1) {
+    if(!this.data.creator) {
+      invalids.push('creator');
+    }
   }
 
   // ensure creation date is valid
-  if(!this.data.date || !Number(this.data.date) > 0) {
-    invalids.push('date');
+  if(properties.indexOf('date') > -1) {
+    if(!this.data.date || !Number(this.data.date) > 0) {
+      invalids.push('date');
+    }
   }
 
   // if parent id is not specified, make this a root branch
-  if(!this.data.parentid) {
-    this.data.parentid = 'root';
-  } else {
-    // ...ensure it is of the correct length
-    if(this.data.parentid.length < 1 || this.data.parentid.length > 20) {
-      invalids.push('parentid');
-    }
-    // ...and contains no whitespace
-    if(/\s/g.test(this.data.parentid)) {
-      invalids.push('parentid');
+  if(properties.indexOf('parentid') > -1) {
+    if(!this.data.parentid) {
+      this.data.parentid = 'root';
+    } else {
+      // ...ensure it is of the correct length
+      if(this.data.parentid.length < 1 || this.data.parentid.length > 20) {
+        invalids.push('parentid');
+      }
+      // ...and contains no whitespace
+      if(/\s/g.test(this.data.parentid)) {
+        invalids.push('parentid');
+      }
     }
   }
 

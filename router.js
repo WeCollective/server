@@ -25,7 +25,11 @@ module.exports = function(app, passport) {
         if (err) { return next(err); }
         // if no user object, send error response
         if (!user) {
-          return res.status(info.status).json({ message: info.message });
+          var status = 403;
+          if(info.status) {
+            status = info.status;
+          }
+          return res.status(status).json({ message: info.message });
         }
         // manually log in user to establish session
         req.logIn(user, function(err) {
@@ -127,7 +131,8 @@ module.exports = function(app, passport) {
   router.route('/branch')
     .post(isLoggedIn, branch.postBranch);
   router.route('/branch/:branchid')
-    .get(branch.getBranch);
+    .get(branch.getBranch)
+    .put(isLoggedIn, branch.putBranch);
   router.route('/subbranches/:parentid')
     .get(branch.getSubbranches);
 

@@ -22,7 +22,8 @@ module.exports = {
     });
 
     // validate branch properties
-    var invalids = branch.validate();
+    var propertiesToCheck = ['id', 'name', 'mods', 'creator', 'date', 'parentid'];
+    var invalids = branch.validate(propertiesToCheck);
     if(invalids.length > 0) {
       return error.BadRequest(res, 'Invalid ' + invalids[0]);
     }
@@ -46,6 +47,33 @@ module.exports = {
         return error.InternalServerError(res);
       }
       return error.NotFound(res);
+    });
+  },
+  putBranch: function(req, res) {
+    if(!req.params.branchid) {
+      return error.BadRequest(res, 'Missing branchid');
+    }
+
+    var branch = new Branch({
+      id: req.params.branchid
+    });
+
+    var propertiesToCheck = [];
+    if(req.body.name) {
+      branch.set('name', req.body.name);
+      propertiesToCheck.push('name');
+    }
+
+    // Check new parameters are valid, ignoring id validity
+    var invalids = branch.validate(propertiesToCheck);
+
+    if(invalids.length > 0) {
+      return error.BadRequest(res, 'Invalid ' + invalids[0]);
+    }
+    branch.update().then(function() {
+      return success.OK(res);
+    }, function() {
+      return error.InternalServerError(res);
     });
   },
   getSubbranches: function(req, res) {

@@ -43,7 +43,8 @@ module.exports = function(passport) {
         });
 
         // validate user properties
-        var invalids = newUser.validate();
+        var propertiesToCheck = ['username', 'password', 'email', 'firstname', 'lastname', 'datejoined'];
+        var invalids = newUser.validate(propertiesToCheck);
         if(invalids.length > 0) {
           return done(null, false, { status: 400, message: 'Invalid ' + invalids[0] });
         }

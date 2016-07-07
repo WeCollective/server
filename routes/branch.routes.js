@@ -1,7 +1,10 @@
 'use strict';
 
 var aws = require('../config/aws.js');
+var fs = require('../config/filestorage.js');
+
 var Branch = require('../models/branch.model.js');
+var BranchImage = require('../models/branch-image.model.js');
 var success = require('./responses/successes.js');
 var error = require('./responses/errors.js');
 
@@ -74,6 +77,62 @@ module.exports = {
       return success.OK(res);
     }, function() {
       return error.InternalServerError(res);
+    });
+  },
+  getPictureUploadUrl: function(req, res, type) {
+    if(!req.user || !req.user.username) {
+      return error.Forbidden(res);
+    }
+
+    if(!req.params.branchid) {
+      return error.BadRequest(res, 'Missing branchid');
+    }
+
+    if(type != 'picture' && type != 'cover') {
+      return error.InternalServerError(res);
+    }
+
+    var filename = req.params.branchid + '-' + type + '-orig.jpg';
+    var params = {
+      Bucket: fs.Bucket.BranchImages,
+      Key: filename,
+      ContentType: 'image/*'
+    }
+    var url = aws.s3Client.getSignedUrl('putObject', params, function(err, url) {
+      return success.OK(res, url);
+    });
+  },
+  getPicture: function(req, res, type) {
+    if(!req.params.branchid) {
+      return error.BadRequest(res, 'Missing branchid');
+    }
+
+    if(type != 'picture' && type != 'cover') {
+      return error.InternalServerError(res);
+    }
+    var size;
+    if(type == 'picture') {
+      size = 500;
+    } else {
+      size = 1280;
+    }
+
+    var image = new BranchImage();
+    image.findById(req.params.branchid, type).then(function() {
+      aws.s3Client.getSignedUrl('getObject', {
+        Bucket: fs.Bucket.BranchImagesResized,
+        Key: image.data.id + '-' + size + '.' + image.data.extension
+      }, function(err, url) {
+        if(err) {
+          return error.InternalServerError(res);
+        }
+        return success.OK(res, url);
+      });
+    }, function(err) {
+      if(err) {
+        return error.InternalServerError(res);
+      }
+      return error.NotFound(res);
     });
   },
   getSubbranches: function(req, res) {

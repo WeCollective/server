@@ -133,6 +133,16 @@ module.exports = function(app, passport) {
   router.route('/branch/:branchid')
     .get(branch.getBranch)
     .put(isLoggedIn, branch.putBranch);
+  // get presigned url for branch profile picture upload to S3
+  router.route('/branch/:branchid/picture-upload-url')
+    .get(isLoggedIn, function(req, res) {
+      branch.getPictureUploadUrl(req, res, 'picture');
+    });
+  // get branch profile picture presigned url
+  router.route('/branch/:branchid/picture')
+    .get(function(req, res) {
+      branch.getPicture(req, res, 'picture');
+    });
   router.route('/subbranches/:parentid')
     .get(branch.getSubbranches);
 

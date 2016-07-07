@@ -5,7 +5,9 @@ var config = {
   // Bucket names
   Bucket: {
     UserImages: 'weco-user-images',
-    UserImagesResized: 'weco-user-images-resized'
+    UserImagesResized: 'weco-user-images-resized',
+    BranchImages: 'weco-branch-images',
+    BranchImagesResized: 'weco-branch-images-resized'
   }
 }
 

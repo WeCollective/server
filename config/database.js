@@ -23,6 +23,11 @@ var Schema = {
     creator: null,
     date: null,
     parentid: null
+  },
+  BranchImages: {
+    id: null,
+    date: null,
+    extension: null
   }
 };
 
@@ -39,6 +44,9 @@ var Keys = {
     secondary: {
       global: 'parentid-index'
     }
+  },
+  BranchImages: {
+    primary: 'id'
   }
 };
 
@@ -49,7 +57,8 @@ var config = {
     Sessions: 'Sessions',
     Users: 'Users',
     UserImages: 'UserImages',
-    Branches: 'Branches'
+    Branches: 'Branches',
+    BranchImages: 'BranchImages'
   },
   // Model schemas
   Schema: Schema,

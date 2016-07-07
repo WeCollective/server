@@ -138,10 +138,20 @@ module.exports = function(app, passport) {
     .get(isLoggedIn, function(req, res) {
       branch.getPictureUploadUrl(req, res, 'picture');
     });
+  // get presigned url for branch cover picture upload to S3
+  router.route('/branch/:branchid/cover-upload-url')
+    .get(isLoggedIn, function(req, res) {
+      branch.getPictureUploadUrl(req, res, 'cover');
+    });
   // get branch profile picture presigned url
   router.route('/branch/:branchid/picture')
     .get(function(req, res) {
       branch.getPicture(req, res, 'picture');
+    });
+  // get branch cover picture presigned url
+  router.route('/branch/:branchid/cover')
+    .get(function(req, res) {
+      branch.getPicture(req, res, 'cover');
     });
   router.route('/subbranches/:parentid')
     .get(branch.getSubbranches);

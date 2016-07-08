@@ -16,9 +16,9 @@ Model.prototype.config = {};      // model config inc. table name, schema, db ke
 Model.prototype.dirtys = [];      // array of model data properties which have been changed
 
 // Ensure data adheres to the schema
-Model.prototype.sanitize = function(data) {
+Model.prototype.sanitize = function(data, schema) {
   data = data || {};
-  return _.pick(_.defaults(data, this.config.schema), _.keys(this.config.schema));
+  return _.pick(_.defaults(data, schema || this.config.schema), _.keys(schema || this.config.schema));
 };
 
 // Get/Set data on model

@@ -8,61 +8,40 @@ var UserImage = require('../models/user-image.model.js');
 var success = require('./responses/successes.js');
 var error = require('./responses/errors.js');
 
+var ACL = require('../config/acl.js');
+
 module.exports = {
-  // TODO: access controls on what user info is sent back, inc. yourself vs other users
-  getSelf: function(req, res) {
-    // no user object attached by passport
-    if(!req.user.username) {
-      return error.InternalServerError(res);
-    }
-
-    var user = new User();
-    user.findByUsername(req.user.username).then(function() {
-      var userResponse = {
-        username: user.data.username,
-        name: {
-          first: user.data.firstname,
-          last: user.data.lastname
-        },
-        email: user.data.email,
-        dob: user.data.dob,
-        datejoined: user.data.datejoined
-      };
-      return success.OK(res, userResponse);
-    }, function(err) {
-      if(err) {
-        return error.InternalServerError(res);
-      }
-      return error.NotFound(res);
-    });
-  },
   get:  function(req, res) {
-    if(!req.params.username) {
-      return error.BadRequest(res);
+    var username;
+    if(req.ACLRole == ACL.Roles.Self) {
+      // ensure user object has been attached by passport
+      if(!req.user.username) {
+        console.error("No username found in session.");
+        return error.InternalServerError(res);
+      }
+      username = req.user.username;
+    } else {
+      // ensure username is specified
+      if(!req.params.username) {
+        return error.BadRequest(res);
+      }
+      username = req.params.username;
     }
 
     var user = new User();
-    user.findByUsername(req.params.username).then(function() {
-      var userResponse = {
-        username: user.data.username,
-        name: {
-          first: user.data.firstname,
-          last: user.data.lastname
-        },
-        dob: user.data.dob,
-        datejoined: user.data.datejoined
-      };
-      return success.OK(res, userResponse);
+    user.findByUsername(username).then(function() {
+      var sanitized = user.sanitize(user.data, ACL.Schema(req.ACLRole, 'User'));
+      return success.OK(res, sanitized);
     }, function(err) {
       if(err) {
+        console.error("Error fetching user.");
         return error.InternalServerError(res);
       }
       return error.NotFound(res);
     });
   },
-  deleteSelf: function(req, res) {
-    if(!req.user.username) {
-      console.error("No username found in session.");
+  delete: function(req, res) {
+    if(req.ACLRole !== ACL.Roles.Self || !req.user || !req.user.username) {
       return error.Forbidden(res);
     }
 
@@ -77,7 +56,11 @@ module.exports = {
       return error.InternalServerError(res);
     });
   },
-  putSelf: function(req, res) {
+  put: function(req, res) {
+    if(req.ACLRole !== ACL.Roles.Self || !req.user || !req.user.username) {
+      return error.Forbidden(res);
+    }
+
     var user = new User(req.user);
     var propertiesToCheck = [];
     if(req.body.firstname) {
@@ -108,6 +91,7 @@ module.exports = {
     user.update().then(function() {
       return success.OK(res);
     }, function() {
+      console.error("Error updating user.");
       return error.InternalServerError(res);
     });
   },
@@ -117,6 +101,7 @@ module.exports = {
     }
 
     if(type != 'picture' && type != 'cover') {
+      console.error("Invalid picture type.");
       return error.InternalServerError(res);
     }
 
@@ -130,45 +115,24 @@ module.exports = {
       return success.OK(res, url);
     });
   },
-  getOwnPicture: function(req, res, type) {
-    if(!req.user || !req.user.username) {
-      return error.Forbidden(res);
-    }
-
-    if(type != 'picture' && type != 'cover') {
-      return error.InternalServerError(res);
-    }
-    var size;
-    if(type == 'picture') {
-      size = 500;
-    } else {
-      size = 1280;
-    }
-
-    var image = new UserImage();
-    image.findByUsername(req.user.username, type).then(function() {
-      aws.s3Client.getSignedUrl('getObject', {
-        Bucket: fs.Bucket.UserImagesResized,
-        Key: image.data.id + '-' + size + '.' + image.data.extension
-      }, function(err, url) {
-        if(err) {
-          return error.InternalServerError(res);
-        }
-        return success.OK(res, url);
-      });
-    }, function(err) {
-      if(err) {
+  getPicture: function(req, res, type) {
+    var username;
+    if(req.ACLRole == ACL.Roles.Self) {
+      // ensure user object has been attached by passport
+      if(!req.user.username) {
         return error.InternalServerError(res);
       }
-      return error.NotFound(res);
-    });
-  },
-  getPicture: function(req, res, type) {
-    if(!req.params.username) {
-      return error.BadRequest(res);
+      username = req.user.username;
+    } else {
+      // ensure username is specified
+      if(!req.params.username) {
+        return error.BadRequest(res);
+      }
+      username = req.params.username;
     }
 
     if(type != 'picture' && type != 'cover') {
+      console.error("Invalid picture type.");
       return error.InternalServerError(res);
     }
     var size;
@@ -179,18 +143,20 @@ module.exports = {
     }
 
     var image = new UserImage();
-    image.findByUsername(req.params.username, type).then(function() {
+    image.findByUsername(username, type).then(function() {
       aws.s3Client.getSignedUrl('getObject', {
         Bucket: fs.Bucket.UserImagesResized,
         Key: image.data.id + '-' + size + '.' + image.data.extension
       }, function(err, url) {
         if(err) {
+          console.error("Error getting signed url.");
           return error.InternalServerError(res);
         }
         return success.OK(res, url);
       });
     }, function(err) {
       if(err) {
+        console.error("Error fetching user.");
         return error.InternalServerError(res);
       }
       return error.NotFound(res);

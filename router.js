@@ -6,12 +6,7 @@ var router = express.Router();
 var error = require('./routes/responses/errors.js');
 var success = require('./routes/responses/successes.js');
 
-// Middleware to ensure a user is logged in (used on protected routes)
-function isLoggedIn(req, res, next) {
-  if (req.isAuthenticated())
-    return next();
-  return error.Forbidden(res);
-};
+var ACL = require('./config/acl.js');
 
 module.exports = function(app, passport) {
 
@@ -63,40 +58,42 @@ module.exports = function(app, passport) {
     });
   // operations on the authenticated user
   router.route('/user/me')
-    .get(isLoggedIn, user.getSelf)
-    .delete(isLoggedIn, user.deleteSelf)
-    .put(isLoggedIn, user.putSelf);
+    .get(ACL.validateRole(ACL.Roles.AuthenticatedUser), ACL.attachRole(ACL.Roles.Self), user.get)
+    .delete(ACL.validateRole(ACL.Roles.AuthenticatedUser), ACL.attachRole(ACL.Roles.Self), user.delete)
+    .put(ACL.validateRole(ACL.Roles.AuthenticatedUser), ACL.attachRole(ACL.Roles.Self), user.put);
   // operations on a specified user
   router.route('/user/:username')
     .get(function(req, res) {
       if(req.isAuthenticated() && req.user) {
         if(req.user.username == req.params.username) {
-          user.getSelf(req, res);
+          ACL.attachRole(ACL.Roles.Self)(req, res);
         } else {
-          user.get(req, res);
+          ACL.attachRole(ACL.Roles.AuthenticatedUser)(req, res);
         }
+        user.get(req, res);
       } else {
+        ACL.attachRole(ACL.Roles.Guest)(req, res);
         user.get(req, res);
       }
     });
   // get presigned url for profile picture upload to S3
   router.route('/user/me/picture-upload-url')
-    .get(isLoggedIn, function(req, res) {
+    .get(ACL.validateRole(ACL.Roles.AuthenticatedUser), function(req, res) {
       user.getPictureUploadUrl(req, res, 'picture');
     });
   // get presigned url for cover picture upload to S3
   router.route('/user/me/cover-upload-url')
-    .get(isLoggedIn, function(req, res) {
+    .get(ACL.validateRole(ACL.Roles.AuthenticatedUser), function(req, res) {
       user.getPictureUploadUrl(req, res, 'cover');
     });
   // get authd user profile picture presigned url
   router.route('/user/me/picture')
-    .get(isLoggedIn, function(req, res) {
+    .get(ACL.validateRole(ACL.Roles.AuthenticatedUser), function(req, res) {
       user.getOwnPicture(req, res, 'picture');
     });
   // get authd user cover picture presigned url
   router.route('/user/me/cover')
-    .get(isLoggedIn, function(req, res) {
+    .get(ACL.validateRole(ACL.Roles.AuthenticatedUser), function(req, res) {
       user.getOwnPicture(req, res, 'cover');
     });
   // get user profile picture presigned url
@@ -104,11 +101,13 @@ module.exports = function(app, passport) {
     .get(function(req, res) {
       if(req.isAuthenticated() && req.user) {
         if(req.user.username == req.params.username) {
-          user.getOwnPicture(req, res, 'picture');
+          ACL.attachRole(ACL.Roles.Self)(req, res);
         } else {
-          user.getPicture(req, res, 'picture');
+          ACL.attachRole(ACL.Roles.AuthenticatedUser)(req, res);
         }
+        user.getPicture(req, res, 'picture');
       } else {
+        ACL.attachRole(ACL.Roles.Guest)(req, res);
         user.getPicture(req, res, 'picture');
       }
     });
@@ -117,11 +116,13 @@ module.exports = function(app, passport) {
     .get(function(req, res) {
       if(req.isAuthenticated() && req.user) {
         if(req.user.username == req.params.username) {
-          user.getOwnPicture(req, res, 'cover');
+          ACL.attachRole(ACL.Roles.Self)(req, res);
         } else {
-          user.getPicture(req, res, 'cover');
+          ACL.attachRole(ACL.Roles.AuthenticatedUser)(req, res);
         }
+        user.getPicture(req, res, 'cover');
       } else {
+        ACL.attachRole(ACL.Roles.Guest)(req, res);
         user.getPicture(req, res, 'cover');
       }
     });
@@ -129,18 +130,24 @@ module.exports = function(app, passport) {
   // BRANCH ROUTES
   var branch = require('./routes/branch.routes.js');
   router.route('/branch')
-    .post(isLoggedIn, branch.postBranch);
+    .post(ACL.validateRole(ACL.Roles.AuthenticatedUser), branch.post);
   router.route('/branch/:branchid')
-    .get(branch.getBranch)
-    .put(isLoggedIn, branch.putBranch);
+    .get(branch.get)
+    .put(function(req, res, next) {
+      ACL.validateRole(ACL.Roles.Moderator, req.params.branchid)(req, res, next);
+    }, branch.put);
   // get presigned url for branch profile picture upload to S3
   router.route('/branch/:branchid/picture-upload-url')
-    .get(isLoggedIn, function(req, res) {
+    .get(function(req, res, next) {
+      ACL.validateRole(ACL.Roles.Moderator, req.params.branchid)(req, res, next);
+    }, function(req, res) {
       branch.getPictureUploadUrl(req, res, 'picture');
     });
   // get presigned url for branch cover picture upload to S3
   router.route('/branch/:branchid/cover-upload-url')
-    .get(isLoggedIn, function(req, res) {
+    .get(function(req, res, next) {
+      ACL.validateRole(ACL.Roles.Moderator, req.params.branchid)(req, res, next);
+    }, function(req, res) {
       branch.getPictureUploadUrl(req, res, 'cover');
     });
   // get branch profile picture presigned url
@@ -153,6 +160,8 @@ module.exports = function(app, passport) {
     .get(function(req, res) {
       branch.getPicture(req, res, 'cover');
     });
+
+  // TODO change to /branch/:branchid/subbranches
   router.route('/subbranches/:parentid')
     .get(branch.getSubbranches);
 

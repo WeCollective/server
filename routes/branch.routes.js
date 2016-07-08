@@ -9,10 +9,10 @@ var success = require('./responses/successes.js');
 var error = require('./responses/errors.js');
 
 module.exports = {
-  postBranch: function(req, res) {
+  post: function(req, res) {
     if(!req.user.username) {
       console.error("No username found in session.");
-      return error.Forbidden(res);
+      return error.InternalServerError(res);
     }
 
     // check whether the specified branch id is unique
@@ -44,11 +44,12 @@ module.exports = {
       branch.save().then(function() {
         return success.OK(res);
       }, function() {
+        console.error("Error saving branch.");
         return error.InternalServerError(res);
       });
     });
   },
-  getBranch: function(req, res) {
+  get: function(req, res) {
     if(!req.params.branchid) {
       return error.BadRequest(res, 'Missing branchid');
     }
@@ -63,7 +64,7 @@ module.exports = {
       return error.NotFound(res);
     });
   },
-  putBranch: function(req, res) {
+  put: function(req, res) {
     if(!req.params.branchid) {
       return error.BadRequest(res, 'Missing branchid');
     }

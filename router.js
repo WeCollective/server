@@ -78,23 +78,23 @@ module.exports = function(app, passport) {
     });
   // get presigned url for profile picture upload to S3
   router.route('/user/me/picture-upload-url')
-    .get(ACL.validateRole(ACL.Roles.AuthenticatedUser), function(req, res) {
+    .get(ACL.validateRole(ACL.Roles.AuthenticatedUser), ACL.attachRole(ACL.Roles.Self), function(req, res) {
       user.getPictureUploadUrl(req, res, 'picture');
     });
   // get presigned url for cover picture upload to S3
   router.route('/user/me/cover-upload-url')
-    .get(ACL.validateRole(ACL.Roles.AuthenticatedUser), function(req, res) {
+    .get(ACL.validateRole(ACL.Roles.AuthenticatedUser), ACL.attachRole(ACL.Roles.Self), function(req, res) {
       user.getPictureUploadUrl(req, res, 'cover');
     });
   // get authd user profile picture presigned url
   router.route('/user/me/picture')
-    .get(ACL.validateRole(ACL.Roles.AuthenticatedUser), function(req, res) {
-      user.getOwnPicture(req, res, 'picture');
+    .get(ACL.validateRole(ACL.Roles.AuthenticatedUser), ACL.attachRole(ACL.Roles.Self), function(req, res) {
+      user.getPicture(req, res, 'picture');
     });
   // get authd user cover picture presigned url
   router.route('/user/me/cover')
-    .get(ACL.validateRole(ACL.Roles.AuthenticatedUser), function(req, res) {
-      user.getOwnPicture(req, res, 'cover');
+    .get(ACL.validateRole(ACL.Roles.AuthenticatedUser), ACL.attachRole(ACL.Roles.Self), function(req, res) {
+      user.getPicture(req, res, 'cover');
     });
   // get user profile picture presigned url
   router.route('/user/:username/picture')

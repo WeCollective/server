@@ -15,26 +15,35 @@ module.exports = {
       return error.Forbidden(res);
     }
 
-    var branch = new Branch({
-      id: req.body.id,
-      name: req.body.name,
-      mods: [req.user.username],
-      creator: req.user.username,
-      date: new Date().getTime(),
-      parentid: req.body.parentid
-    });
+    // check whether the specified branch id is unique
+    new Branch().findById(req.body.id).then(function() {
+      return error.BadRequest(res, 'That Unique Name is already taken.');
+    }, function(err) {
+      if(err) {
+        return error.InternalServerError(res);
+      }
 
-    // validate branch properties
-    var propertiesToCheck = ['id', 'name', 'mods', 'creator', 'date', 'parentid'];
-    var invalids = branch.validate(propertiesToCheck);
-    if(invalids.length > 0) {
-      return error.BadRequest(res, 'Invalid ' + invalids[0]);
-    }
+      var branch = new Branch({
+        id: req.body.id,
+        name: req.body.name,
+        mods: [req.user.username],
+        creator: req.user.username,
+        date: new Date().getTime(),
+        parentid: req.body.parentid
+      });
 
-    branch.save().then(function() {
-      return success.OK(res);
-    }, function() {
-      return error.InternalServerError(res);
+      // validate branch properties
+      var propertiesToCheck = ['id', 'name', 'mods', 'creator', 'date', 'parentid'];
+      var invalids = branch.validate(propertiesToCheck);
+      if(invalids.length > 0) {
+        return error.BadRequest(res, 'Invalid ' + invalids[0]);
+      }
+
+      branch.save().then(function() {
+        return success.OK(res);
+      }, function() {
+        return error.InternalServerError(res);
+      });
     });
   },
   getBranch: function(req, res) {

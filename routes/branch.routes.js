@@ -67,6 +67,16 @@ module.exports = {
       propertiesToCheck.push('name');
     }
 
+    if(req.body.description) {
+      branch.set('description', req.body.description);
+      propertiesToCheck.push('description');
+    }
+
+    if(req.body.rules) {
+      branch.set('rules', req.body.rules);
+      propertiesToCheck.push('rules');
+    }
+
     // Check new parameters are valid, ignoring id validity
     var invalids = branch.validate(propertiesToCheck);
 

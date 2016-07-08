@@ -78,6 +78,20 @@ Branch.prototype.validate = function(properties) {
     }
   }
 
+  // ensure description is of valid length
+  if(properties.indexOf('description') > -1) {
+    if(!this.data.description || this.data.description.length > 250 || this.data.description.length < 1) {
+      invalids.push('description');
+    }
+  }
+
+  // ensure rules text is of valid length
+  if(properties.indexOf('rules') > -1) {
+    if(!this.data.rules || this.data.rules.length > 250 || this.data.rules.length < 1) {
+      invalids.push('rules');
+    }
+  }
+
   return invalids;
 };
 

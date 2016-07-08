@@ -60,7 +60,7 @@ Model.prototype.update = function() {
       AttributeUpdates: Updates
     }, function(err, data) {
       if(err) return reject(err);
-      self.dirtys = []; // all items are now clean
+      self.dirtys.splice(0, self.dirtys.length); // clear dirtys array
       return resolve();
     });
   });
@@ -75,7 +75,7 @@ Model.prototype.save = function() {
       Item: self.data
     }, function(err, data) {
       if(err) return reject(err);
-      self.dirtys = []; // all items are now clean
+      self.dirtys.splice(0, self.dirtys.length); // clear dirtys array
       return resolve();
     });
   });

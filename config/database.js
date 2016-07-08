@@ -22,7 +22,9 @@ var Schema = {
     mods: null,
     creator: null,
     date: null,
-    parentid: null
+    parentid: null,
+    description: null,
+    rules: null
   },
   BranchImages: {
     id: null,

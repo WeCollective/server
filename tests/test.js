@@ -22,4 +22,5 @@ describe('API test', function() {
   importTest('Sign up test', './signup.test.js');
   importTest('Login test', './login.test.js');
   importTest('User test', './user.test.js');
+  importTest('Branch test', './branch.test.js');
 });

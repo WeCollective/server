@@ -24,7 +24,7 @@ Branch.prototype.validate = function(properties) {
 
   // ensure id exists and is of correct length
   if(properties.indexOf('id') > -1) {
-    if(!this.data.id || this.data.id.length < 1 || this.data.id.length > 20) {
+    if(!this.data.id || this.data.id.length < 1 || this.data.id.length > 30) {
       invalids.push('id');
     }
     // ensure id contains no whitespace
@@ -35,7 +35,7 @@ Branch.prototype.validate = function(properties) {
 
   // ensure name exists and is of correct length
   if(properties.indexOf('name') > -1) {
-    if(!this.data.name || this.data.name.length < 1 || this.data.name.length > 20) {
+    if(!this.data.name || this.data.name.length < 1 || this.data.name.length > 30) {
       invalids.push('name');
     }
   }

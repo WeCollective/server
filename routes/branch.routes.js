@@ -17,11 +17,13 @@ module.exports = {
 
     // check whether the specified branch id is unique
     new Branch().findById(req.body.id).then(function() {
-      return error.BadRequest(res, 'That Unique Name is already taken.');
+      return error.BadRequest(res, 'That Unique Name is already taken');
     }, function(err) {
       if(err) {
         return error.InternalServerError(res);
       }
+
+      // TODO: check whether parentid exists
 
       var branch = new Branch({
         id: req.body.id,

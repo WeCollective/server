@@ -56,10 +56,10 @@ Mod.prototype.findByBranch = function(branchid) {
   var self = this;
   return new Promise(function(resolve, reject) {
     var params = {
-      TableName: "devMods",
+      TableName: self.config.table,
       KeyConditionExpression: "branchid = :id",
       ExpressionAttributeValues: {
-        ":id": "abc"
+        ":id": branchid
       }
     };
     aws.dbClient.query(params, function(err, data) {

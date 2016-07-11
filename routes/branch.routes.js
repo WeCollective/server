@@ -193,12 +193,12 @@ module.exports = {
     });
   },
   getSubbranches: function(req, res) {
-    if(!req.params.parentid) {
-      return error.BadRequest(res, 'Missing parentid');
+    if(!req.params.branchid) {
+      return error.BadRequest(res, 'Missing branchid');
     }
 
     var branch = new Branch();
-    branch.findSubbranches(req.params.parentid).then(function(data) {
+    branch.findSubbranches(req.params.branchid).then(function(data) {
       return success.OK(res, data);
     }, function() {
       return error.InternalServerError(res);

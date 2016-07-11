@@ -163,9 +163,8 @@ module.exports = function(app, passport) {
   // get branch mods
   router.route('/branch/:branchid/mods')
     .get(branch.getMods);
-
-  // TODO change to /branch/:branchid/subbranches
-  router.route('/subbranches/:parentid')
+  // get child branches
+  router.route('/branch/:branchid/subbranches')
     .get(branch.getSubbranches);
 
   return router;

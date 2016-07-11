@@ -82,13 +82,10 @@ Model.prototype.save = function() {
 };
 
 // Delete the database entry specified by the model data
-Model.prototype.delete = function() {
+// The key should be the Primary key values identifying the object to be deleted
+Model.prototype.delete = function(Key) {
   var self = this;
   return new Promise(function(resolve, reject) {
-    // Construct key to identify the entry to be updated
-    var Key = {};
-    Key[self.config.keys.primary] = self.data[self.config.keys.primary];
-
     aws.dbClient.delete({
       TableName: self.config.table,
       Key: Key

@@ -165,7 +165,10 @@ module.exports = function(app, passport) {
     .get(branch.getMods)
     .post(function(req, res, next) {
       ACL.validateRole(ACL.Roles.Moderator, req.params.branchid)(req, res, next);
-    }, branch.postMod);
+    }, branch.postMod)
+    .delete(function(req, res, next) {
+      ACL.validateRole(ACL.Roles.Moderator, req.params.branchid)(req, res, next);
+    }, branch.deleteMod);
   // get child branches
   router.route('/branch/:branchid/subbranches')
     .get(branch.getSubbranches);

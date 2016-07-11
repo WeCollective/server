@@ -235,7 +235,7 @@ module.exports = {
           console.error("Error saving new moderator.");
           return error.InternalServerError(res);
         });
-      }, function(err) {
+      }, function() {
         // either an error, or no mods found; should be at least one!
         console.error("Error fetching mods.");
         return error.InternalServerError(res);
@@ -247,6 +247,49 @@ module.exports = {
       }
       // user doesn't exist
       return error.NotFound(res);
+    });
+  },
+  deleteMod: function(req, res) {
+    if(!req.params.branchid) {
+      return error.BadRequest(res, 'Missing branchid');
+    }
+
+    if(!req.body.username) {
+      return error.BadRequest(res, 'Missing username');
+    }
+
+    // create new mod object
+    var mod = new Mod();
+    mod.findByBranch(req.params.branchid).then(function(mods) {
+      var deleter = {}; // user performing the delete
+      var deletee = {}; // mod to be deleted
+      for(var i = 0; i < mods.length; i++) {
+        if(mods[i].username == req.user.username) {
+          deleter = mods[i];
+        }
+        if(mods[i].username == req.body.username) {
+          deletee = mods[i];
+        }
+      }
+
+      // deletee must have become a mod after the deleter did
+      if(Number(deleter.date) > Number(deletee.date)) {
+        return error.Forbidden(res);
+      }
+
+      deletee = new Mod(deletee);
+      deletee.delete({
+        branchid: deletee.data.branchid,
+        date: Number(deletee.data.date)
+      }).then(function () {
+        return success.OK(res);
+      }, function() {
+        console.error("Error deleting mod.");
+        return error.InternalServerError(res);
+      });
+    }, function() {
+      console.error("Error fetching mods.");
+      return error.InternalServerError(res);
     });
   },
   getSubbranches: function(req, res) {

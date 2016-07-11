@@ -45,10 +45,10 @@ module.exports = {
       return error.Forbidden(res);
     }
 
-    var user = new User({
+    var user = new User();
+    user.delete({
       username: req.user.username
-    });
-    user.delete().then(function() {
+    }).then(function() {
       req.logout();
       return success.OK(res);
     }, function() {

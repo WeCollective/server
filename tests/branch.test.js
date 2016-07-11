@@ -196,6 +196,28 @@ module.exports = function(server) {
       .send('username=username2')
       .expect(200, done);
   });
+  it('should login successfully as new mod', function(done) {
+    server.post('/user/login')
+      .send('username=username2')
+      .send('password=password')
+      .expect(200, done);
+  });
+  it('should fail to delete mod added before self', function(done) {
+    server.delete('/branch/branch/mods')
+      .send('username=username')
+      .expect(403, done);
+  });
+  it('should login successfully original mod', function(done) {
+    server.post('/user/login')
+      .send('username=username')
+      .send('password=password')
+      .expect(200, done);
+  });
+  it('should successfully delete mod added after self', function(done) {
+    server.delete('/branch/branch/mods')
+      .send('username=username2')
+      .expect(200, done);
+  });
 
   it('should delete user (me)', function(done) {
     server.delete('/user/me')

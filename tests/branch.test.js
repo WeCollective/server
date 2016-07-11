@@ -112,25 +112,6 @@ module.exports = function(server) {
       })
       .end(done);
   });
-  it('should successfully fetch mods', function(done) {
-    server.get('/branch/branch/mods')
-      .expect(200)
-      .expect(function(res) {
-        // if valid date, set to 0 for the next expect statement
-        if(Number(res.body.data[0].date)) {
-          res.body.data[0].date = 0;
-        }
-      })
-      .expect({
-        message: 'Success',
-        data: [{
-          branchid: 'branch',
-          date: 0,
-          username: 'username'
-        }]
-      })
-      .end(done);
-  });
   it('should logout successfully', function(done) {
     server.get('/user/logout')
       .expect(200, done);
@@ -170,6 +151,52 @@ module.exports = function(server) {
     server.get('/branch/branch/cover-upload-url')
       .expect(403, done)
   });
+  it('should successfully fetch mods', function(done) {
+    server.get('/branch/branch/mods')
+      .expect(200)
+      .expect(function(res) {
+        // if valid date, set to 0 for the next expect statement
+        if(Number(res.body.data[0].date)) {
+          res.body.data[0].date = 0;
+        }
+      })
+      .expect({
+        message: 'Success',
+        data: [{
+          branchid: 'branch',
+          date: 0,
+          username: 'username'
+        }]
+      })
+      .end(done);
+  });
+  it('should fail add new mod (not mod)', function(done) {
+    server.post('/branch/branch/mods')
+      .send('username=username2')
+      .expect(403, done);
+  });
+  it('should login successfully as mod', function(done) {
+    server.post('/user/login')
+      .send('username=username')
+      .send('password=password')
+      .expect(200, done);
+  });
+  it('should fail to add non-existent user as mod', function(done) {
+    server.post('/branch/branch/mods')
+      .send('username=nobody')
+      .expect(404, done);
+  });
+  it('should fail to add existing mod to mod list', function(done) {
+    server.post('/branch/branch/mods')
+      .send('username=username')
+      .expect(400, done);
+  });
+  it('should successfully add new mod', function(done) {
+    server.post('/branch/branch/mods')
+      .send('username=username2')
+      .expect(200, done);
+  });
+
   it('should delete user (me)', function(done) {
     server.delete('/user/me')
       .expect(200)
@@ -177,7 +204,7 @@ module.exports = function(server) {
   });
   it('should login successfully', function(done) {
     server.post('/user/login')
-      .send('username=username')
+      .send('username=username2')
       .send('password=password')
       .expect(200, done);
   });

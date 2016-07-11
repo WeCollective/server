@@ -160,9 +160,12 @@ module.exports = function(app, passport) {
     .get(function(req, res) {
       branch.getPicture(req, res, 'cover');
     });
-  // get branch mods
+  // branch moderators
   router.route('/branch/:branchid/mods')
-    .get(branch.getMods);
+    .get(branch.getMods)
+    .post(function(req, res, next) {
+      ACL.validateRole(ACL.Roles.Moderator, req.params.branchid)(req, res, next);
+    }, branch.postMod);
   // get child branches
   router.route('/branch/:branchid/subbranches')
     .get(branch.getSubbranches);

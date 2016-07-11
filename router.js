@@ -160,6 +160,9 @@ module.exports = function(app, passport) {
     .get(function(req, res) {
       branch.getPicture(req, res, 'cover');
     });
+  // get branch mods
+  router.route('/branch/:branchid/mods')
+    .get(branch.getMods);
 
   // TODO change to /branch/:branchid/subbranches
   router.route('/subbranches/:parentid')

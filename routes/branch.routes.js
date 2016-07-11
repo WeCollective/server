@@ -5,6 +5,7 @@ var fs = require('../config/filestorage.js');
 
 var Branch = require('../models/branch.model.js');
 var BranchImage = require('../models/branch-image.model.js');
+var Mod = require('../models/mod.model.js');
 var success = require('./responses/successes.js');
 var error = require('./responses/errors.js');
 
@@ -25,26 +26,44 @@ module.exports = {
 
       // TODO: check whether parentid exists
 
+      // create branch object
+      var time = new Date().getTime();
       var branch = new Branch({
         id: req.body.id,
         name: req.body.name,
-        mods: [req.user.username],
         creator: req.user.username,
-        date: new Date().getTime(),
+        date: time,
         parentid: req.body.parentid
       });
 
       // validate branch properties
-      var propertiesToCheck = ['id', 'name', 'mods', 'creator', 'date', 'parentid'];
+      var propertiesToCheck = ['id', 'name', 'creator', 'date', 'parentid'];
       var invalids = branch.validate(propertiesToCheck);
       if(invalids.length > 0) {
         return error.BadRequest(res, 'Invalid ' + invalids[0]);
       }
 
+      // create mod object
+      var mod = new Mod({
+        branchid: req.body.id,
+        date: time,
+        username: req.user.username
+      });
+
+      // validate mod properties
+      propertiesToCheck = ['branchid', 'date', 'username'];
+      invalids = mod.validate(propertiesToCheck);
+      if(invalids.length > 0) {
+        return error.BadRequest(res, 'Invalid ' + invalids[0]);
+      }
+
       branch.save().then(function() {
-        return success.OK(res);
+        mod.save().then(function () {
+          return success.OK(res);
+        }, function() {
+          return error.InternalServerError(res);
+        });
       }, function() {
-        console.error("Error saving branch.");
         return error.InternalServerError(res);
       });
     });
@@ -152,6 +171,22 @@ module.exports = {
       });
     }, function(err) {
       if(err) {
+        return error.InternalServerError(res);
+      }
+      return error.NotFound(res);
+    });
+  },
+  getMods: function(req, res) {
+    if(!req.params.branchid) {
+      return error.BadRequest(res, 'Missing branchid');
+    }
+
+    var mods = new Mod();
+    mods.findByBranch(req.params.branchid).then(function(response) {
+      return success.OK(res, response);
+    }, function(err) {
+      if(err) {
+        console.error("Error fetching mods.");
         return error.InternalServerError(res);
       }
       return error.NotFound(res);

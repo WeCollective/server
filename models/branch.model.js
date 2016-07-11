@@ -40,14 +40,6 @@ Branch.prototype.validate = function(properties) {
     }
   }
 
-  // ensure mods is an array with at least one entry
-  if(properties.indexOf('mods') > -1) {
-    if(!this.data.mods || this.data.mods.constructor !== Array || this.data.mods.length < 1) {
-      invalids.push('mods');
-    }
-  }
-
-  // TODO ensure each mod is a valid username
   // TODO ensure creator is valid username
   if(properties.indexOf('creator') > -1) {
     if(!this.data.creator) {

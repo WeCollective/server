@@ -67,7 +67,6 @@ module.exports = function(server) {
         data: {
           id: 'branch',
           name: 'Branch Name',
-          mods: ['username'],
           creator: 'username',
           date: 0,
           parentid: 'root',
@@ -104,13 +103,31 @@ module.exports = function(server) {
         data: {
           id: 'branch',
           name: 'New Name',
-          mods: ['username'],
           creator: 'username',
           date: 0,
           parentid: 'root',
           rules: 'These are\nmultiline\n\nrules!',
           description: 'This is a\nmultiline\n\ndescription!'
         }
+      })
+      .end(done);
+  });
+  it('should successfully fetch mods', function(done) {
+    server.get('/branch/branch/mods')
+      .expect(200)
+      .expect(function(res) {
+        // if valid date, set to 0 for the next expect statement
+        if(Number(res.body.data[0].date)) {
+          res.body.data[0].date = 0;
+        }
+      })
+      .expect({
+        message: 'Success',
+        data: [{
+          branchid: 'branch',
+          date: 0,
+          username: 'username'
+        }]
       })
       .end(done);
   });

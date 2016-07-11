@@ -2,6 +2,7 @@
 
 var _ = require('lodash');
 var Branch = require('../models/branch.model.js');
+var Mod = require('../models/mod.model.js');
 var error = require('../routes/responses/errors.js');
 
 var ACL = {};
@@ -85,6 +86,27 @@ ACL.validateRole = function(role, resourceId) {
           return error.Forbidden(res);
         }
         // Moderator must be one of the mods of the specified branch
+        var mod = new Mod();
+        mod.findByBranch(resourceId).then(function(mods) {
+          if(!mods) {
+            console.error("No mods object received.");
+            return error.InternalServerError(res);
+          }
+          for(var i = 0; i < mods.length; i++) {
+            if(mods[i].username == req.user.username) {
+              req.ACLRole = ACL.Roles.Moderator;
+              return next();
+            }
+          }
+          return error.Forbidden(res);
+        }, function(err) {
+          if(err) {
+            console.error('Error fetching branch mods.');
+            return error.InternalServerError(res);
+          }
+          return error.NotFound(res);
+        });
+
         var branch = new Branch();
         branch.findById(resourceId).then(function() {
           if(branch.data.mods.indexOf(req.user.username) > -1) {

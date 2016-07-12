@@ -166,6 +166,7 @@ module.exports = function(app, passport) {
     .post(function(req, res, next) {
       ACL.validateRole(ACL.Roles.Moderator, req.params.branchid)(req, res, next);
     }, branch.postMod)
+  router.route('/branch/:branchid/mods/:username')
     .delete(function(req, res, next) {
       ACL.validateRole(ACL.Roles.Moderator, req.params.branchid)(req, res, next);
     }, branch.deleteMod);

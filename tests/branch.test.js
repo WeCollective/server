@@ -203,8 +203,7 @@ module.exports = function(server) {
       .expect(200, done);
   });
   it('should fail to delete mod added before self', function(done) {
-    server.delete('/branch/branch/mods')
-      .send('username=username')
+    server.delete('/branch/branch/mods/username')
       .expect(403, done);
   });
   it('should login successfully original mod', function(done) {
@@ -214,8 +213,7 @@ module.exports = function(server) {
       .expect(200, done);
   });
   it('should successfully delete mod added after self', function(done) {
-    server.delete('/branch/branch/mods')
-      .send('username=username2')
+    server.delete('/branch/branch/mods/username2')
       .expect(200, done);
   });
 

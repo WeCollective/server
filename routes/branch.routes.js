@@ -254,7 +254,7 @@ module.exports = {
       return error.BadRequest(res, 'Missing branchid');
     }
 
-    if(!req.body.username) {
+    if(!req.params.username) {
       return error.BadRequest(res, 'Missing username');
     }
 
@@ -267,7 +267,7 @@ module.exports = {
         if(mods[i].username == req.user.username) {
           deleter = mods[i];
         }
-        if(mods[i].username == req.body.username) {
+        if(mods[i].username == req.params.username) {
           deletee = mods[i];
         }
       }

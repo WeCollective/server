@@ -34,6 +34,13 @@ var Schema = {
     branchid: null,
     date: null,
     username: null
+  },
+  ModLogEntry: {
+    branchid: null,
+    username: null,
+    date: null,
+    action: null,
+    data: null
   }
 };
 
@@ -56,6 +63,9 @@ var Keys = {
   },
   Mods: {
     primary: 'branchid'
+  },
+  ModLog: {
+    primary: 'branchid'
   }
 };
 
@@ -68,7 +78,8 @@ var config = {
     UserImages: 'UserImages',
     Branches: 'Branches',
     BranchImages: 'BranchImages',
-    Mods: 'Mods'
+    Mods: 'Mods',
+    ModLog: 'ModLog'
   },
   // Model schemas
   Schema: Schema,

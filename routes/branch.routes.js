@@ -7,8 +7,28 @@ var Branch = require('../models/branch.model.js');
 var BranchImage = require('../models/branch-image.model.js');
 var Mod = require('../models/mod.model.js');
 var User = require('../models/user.model.js');
+var ModLogEntry = require('../models/mod-log-entry.model.js');
 var success = require('./responses/successes.js');
 var error = require('./responses/errors.js');
+
+function postModLogEntry(req, res, action, data) {
+  return new Promise(function(resolve, reject) {
+    var entry = new ModLogEntry({
+      branchid: req.params.branchid,
+      username: req.user.username,
+      date: new Date().getTime(),
+      action: action,
+      data: data
+    });
+
+    var propertiesToCheck = ['branchid', 'username', 'date', 'action', 'data'];
+    var invalids = entry.validate(propertiesToCheck);
+    if(invalids.length > 0) {
+      return reject();
+    }
+    entry.save().then(resolve, reject);
+  });
+}
 
 module.exports = {
   post: function(req, res) {
@@ -230,8 +250,10 @@ module.exports = {
         }
         // safe to add this user as a new mod
         mod.save().then(function() {
+          return postModLogEntry(req, res, 'addmod', mod.data.username);
+        }).then(function () {
           return success.OK(res);
-        }, function() {
+        }).catch(function () {
           console.error("Error saving new moderator.");
           return error.InternalServerError(res);
         });
@@ -282,8 +304,10 @@ module.exports = {
         branchid: deletee.data.branchid,
         date: Number(deletee.data.date)
       }).then(function () {
+        return postModLogEntry(req, res, 'removemod', req.params.username);
+      }).then(function () {
         return success.OK(res);
-      }, function() {
+      }).catch(function(err) {
         console.error("Error deleting mod.");
         return error.InternalServerError(res);
       });
@@ -302,6 +326,23 @@ module.exports = {
       return success.OK(res, data);
     }, function() {
       return error.InternalServerError(res);
+    });
+  },
+  getModLog: function(req, res) {
+    if(!req.params.branchid) {
+      return error.BadRequest(res, 'Missing branchid');
+    }
+
+    var log = new ModLogEntry();
+    log.findByBranch(req.params.branchid).then(function(data) {
+      return success.OK(res, data);
+    }, function(err) {
+      if(err) {
+        console.error("Error fetching mod log.");
+        console.log(err);
+        return error.InternalServerError(res);
+      }
+      return error.NotFound(res);
     });
   }
 };

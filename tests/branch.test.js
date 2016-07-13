@@ -206,7 +206,7 @@ module.exports = function(server) {
     server.delete('/branch/branch/mods/username')
       .expect(403, done);
   });
-  it('should login successfully original mod', function(done) {
+  it('should login successfully as original mod', function(done) {
     server.post('/user/login')
       .send('username=username')
       .send('password=password')
@@ -215,6 +215,36 @@ module.exports = function(server) {
   it('should successfully delete mod added after self', function(done) {
     server.delete('/branch/branch/mods/username2')
       .expect(200, done);
+  });
+  it('mod log should reflect these recent operations', function(done) {
+    server.get('/branch/branch/modlog')
+      .expect(200)
+      .expect(function(res) {
+        // if valid date, set to 0 for the next expect statement
+        if(Number(res.body.data[0].date)) {
+          res.body.data[0].date = 0;
+        }
+        if(Number(res.body.data[1].date)) {
+          res.body.data[1].date = 0;
+        }
+      })
+      .expect({
+        message: 'Success',
+        data: [{
+          branchid: 'branch',
+          date: 0,
+          action: 'addmod',
+          username: 'username',
+          data: 'username2'
+        }, {
+          branchid: 'branch',
+          date: 0,
+          action: 'removemod',
+          username: 'username',
+          data: 'username2'
+        }]
+      })
+      .end(done);
   });
 
   it('should delete user (me)', function(done) {

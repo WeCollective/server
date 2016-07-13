@@ -173,6 +173,11 @@ module.exports = function(app, passport) {
   // get child branches
   router.route('/branch/:branchid/subbranches')
     .get(branch.getSubbranches);
+  // get branch moderator log
+  router.route('/branch/:branchid/modlog')
+    .get(function(req, res, next) {
+      ACL.validateRole(ACL.Roles.Moderator, req.params.branchid)(req, res, next);
+    }, branch.getModLog);
 
   return router;
 };

@@ -83,7 +83,8 @@ ModLogEntry.prototype.findByBranch = function(branchid) {
       KeyConditionExpression: "branchid = :id",
       ExpressionAttributeValues: {
         ":id": branchid
-      }
+      },
+      ScanIndexForward: false   // return results newest first
     }, function(err, data) {
       if(err) return reject(err);
       if(!data || !data.Items) {

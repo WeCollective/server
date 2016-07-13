@@ -3,7 +3,7 @@
 var _ = require('lodash');
 var Branch = require('../models/branch.model.js');
 var Mod = require('../models/mod.model.js');
-var error = require('../routes/responses/errors.js');
+var error = require('../responses/errors.js');
 
 var ACL = {};
 

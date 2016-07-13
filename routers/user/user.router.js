@@ -2,18 +2,14 @@
 
 var express = require('express');
 var router = express.Router();
-
-var error = require('./routes/responses/errors.js');
-var success = require('./routes/responses/successes.js');
-
-var ACL = require('./config/acl.js');
+var success = require('../../responses/successes.js');
+var ACL = require('../../config/acl.js');
 
 module.exports = function(app, passport) {
+  var controller = require('./user.controller.js');
 
-  // USER ROUTES
-  var user = require('./routes/user.routes.js');
   // sign up
-  router.route('/user')
+  router.route('/')
     .post(function(req, res, next) {
       // local-signup with override of done() method to access info object from passport strategy
       passport.authenticate('local-signup', function(err, user, info) {
@@ -33,8 +29,9 @@ module.exports = function(app, passport) {
         });
       })(req, res, next);
     });
+
   // log in
-  router.route('/user/login')
+  router.route('/login')
     .post(function(req, res, next) {
       // local-login with override of done() method to access info object from passport strategy
       passport.authenticate('local-login', function(err, user, info) {
@@ -50,19 +47,22 @@ module.exports = function(app, passport) {
         });
       })(req, res, next);
     });
+
   // log out
-  router.route('/user/logout')
+  router.route('/logout')
     .get(function(req, res, next) {
       req.logout();
       return success.OK(res);
     });
+
   // operations on the authenticated user
-  router.route('/user/me')
-    .get(ACL.validateRole(ACL.Roles.AuthenticatedUser), ACL.attachRole(ACL.Roles.Self), user.get)
-    .delete(ACL.validateRole(ACL.Roles.AuthenticatedUser), ACL.attachRole(ACL.Roles.Self), user.delete)
-    .put(ACL.validateRole(ACL.Roles.AuthenticatedUser), ACL.attachRole(ACL.Roles.Self), user.put);
+  router.route('/me')
+    .get(ACL.validateRole(ACL.Roles.AuthenticatedUser), ACL.attachRole(ACL.Roles.Self), controller.get)
+    .delete(ACL.validateRole(ACL.Roles.AuthenticatedUser), ACL.attachRole(ACL.Roles.Self), controller.delete)
+    .put(ACL.validateRole(ACL.Roles.AuthenticatedUser), ACL.attachRole(ACL.Roles.Self), controller.put);
+
   // operations on a specified user
-  router.route('/user/:username')
+  router.route('/:username')
     .get(function(req, res) {
       if(req.isAuthenticated() && req.user) {
         if(req.user.username == req.params.username) {
@@ -70,114 +70,63 @@ module.exports = function(app, passport) {
         } else {
           ACL.attachRole(ACL.Roles.AuthenticatedUser)(req, res);
         }
-        user.get(req, res);
+        controller.get(req, res);
       } else {
         ACL.attachRole(ACL.Roles.Guest)(req, res);
-        user.get(req, res);
-      }
-    });
-  // get presigned url for profile picture upload to S3
-  router.route('/user/me/picture-upload-url')
-    .get(ACL.validateRole(ACL.Roles.AuthenticatedUser), ACL.attachRole(ACL.Roles.Self), function(req, res) {
-      user.getPictureUploadUrl(req, res, 'picture');
-    });
-  // get presigned url for cover picture upload to S3
-  router.route('/user/me/cover-upload-url')
-    .get(ACL.validateRole(ACL.Roles.AuthenticatedUser), ACL.attachRole(ACL.Roles.Self), function(req, res) {
-      user.getPictureUploadUrl(req, res, 'cover');
-    });
-  // get authd user profile picture presigned url
-  router.route('/user/me/picture')
-    .get(ACL.validateRole(ACL.Roles.AuthenticatedUser), ACL.attachRole(ACL.Roles.Self), function(req, res) {
-      user.getPicture(req, res, 'picture');
-    });
-  // get authd user cover picture presigned url
-  router.route('/user/me/cover')
-    .get(ACL.validateRole(ACL.Roles.AuthenticatedUser), ACL.attachRole(ACL.Roles.Self), function(req, res) {
-      user.getPicture(req, res, 'cover');
-    });
-  // get user profile picture presigned url
-  router.route('/user/:username/picture')
-    .get(function(req, res) {
-      if(req.isAuthenticated() && req.user) {
-        if(req.user.username == req.params.username) {
-          ACL.attachRole(ACL.Roles.Self)(req, res);
-        } else {
-          ACL.attachRole(ACL.Roles.AuthenticatedUser)(req, res);
-        }
-        user.getPicture(req, res, 'picture');
-      } else {
-        ACL.attachRole(ACL.Roles.Guest)(req, res);
-        user.getPicture(req, res, 'picture');
-      }
-    });
-  // get user cover picture presigned url
-  router.route('/user/:username/cover')
-    .get(function(req, res) {
-      if(req.isAuthenticated() && req.user) {
-        if(req.user.username == req.params.username) {
-          ACL.attachRole(ACL.Roles.Self)(req, res);
-        } else {
-          ACL.attachRole(ACL.Roles.AuthenticatedUser)(req, res);
-        }
-        user.getPicture(req, res, 'cover');
-      } else {
-        ACL.attachRole(ACL.Roles.Guest)(req, res);
-        user.getPicture(req, res, 'cover');
+        controller.get(req, res);
       }
     });
 
-  // BRANCH ROUTES
-  var branch = require('./routes/branch.routes.js');
-  router.route('/branch')
-    .post(ACL.validateRole(ACL.Roles.AuthenticatedUser), branch.post);
-  router.route('/branch/:branchid')
-    .get(branch.get)
-    .put(function(req, res, next) {
-      ACL.validateRole(ACL.Roles.Moderator, req.params.branchid)(req, res, next);
-    }, branch.put);
-  // get presigned url for branch profile picture upload to S3
-  router.route('/branch/:branchid/picture-upload-url')
-    .get(function(req, res, next) {
-      ACL.validateRole(ACL.Roles.Moderator, req.params.branchid)(req, res, next);
-    }, function(req, res) {
-      branch.getPictureUploadUrl(req, res, 'picture');
+  // get presigned url for profile picture upload to S3
+  router.route('/me/picture-upload-url')
+    .get(ACL.validateRole(ACL.Roles.AuthenticatedUser), ACL.attachRole(ACL.Roles.Self), function(req, res) {
+      controller.getPictureUploadUrl(req, res, 'picture');
     });
-  // get presigned url for branch cover picture upload to S3
-  router.route('/branch/:branchid/cover-upload-url')
-    .get(function(req, res, next) {
-      ACL.validateRole(ACL.Roles.Moderator, req.params.branchid)(req, res, next);
-    }, function(req, res) {
-      branch.getPictureUploadUrl(req, res, 'cover');
+  // get presigned url for cover picture upload to S3
+  router.route('/me/cover-upload-url')
+    .get(ACL.validateRole(ACL.Roles.AuthenticatedUser), ACL.attachRole(ACL.Roles.Self), function(req, res) {
+      controller.getPictureUploadUrl(req, res, 'cover');
     });
-  // get branch profile picture presigned url
-  router.route('/branch/:branchid/picture')
+  // get authd user profile picture presigned url
+  router.route('/me/picture')
+    .get(ACL.validateRole(ACL.Roles.AuthenticatedUser), ACL.attachRole(ACL.Roles.Self), function(req, res) {
+      controller.getPicture(req, res, 'picture');
+    });
+  // get authd user cover picture presigned url
+  router.route('/me/cover')
+    .get(ACL.validateRole(ACL.Roles.AuthenticatedUser), ACL.attachRole(ACL.Roles.Self), function(req, res) {
+      controller.getPicture(req, res, 'cover');
+    });
+  // get user profile picture presigned url
+  router.route('/:username/picture')
     .get(function(req, res) {
-      branch.getPicture(req, res, 'picture');
+      if(req.isAuthenticated() && req.user) {
+        if(req.user.username == req.params.username) {
+          ACL.attachRole(ACL.Roles.Self)(req, res);
+        } else {
+          ACL.attachRole(ACL.Roles.AuthenticatedUser)(req, res);
+        }
+        controller.getPicture(req, res, 'picture');
+      } else {
+        ACL.attachRole(ACL.Roles.Guest)(req, res);
+        controller.getPicture(req, res, 'picture');
+      }
     });
-  // get branch cover picture presigned url
-  router.route('/branch/:branchid/cover')
+  // get user cover picture presigned url
+  router.route('/:username/cover')
     .get(function(req, res) {
-      branch.getPicture(req, res, 'cover');
+      if(req.isAuthenticated() && req.user) {
+        if(req.user.username == req.params.username) {
+          ACL.attachRole(ACL.Roles.Self)(req, res);
+        } else {
+          ACL.attachRole(ACL.Roles.AuthenticatedUser)(req, res);
+        }
+        controller.getPicture(req, res, 'cover');
+      } else {
+        ACL.attachRole(ACL.Roles.Guest)(req, res);
+        controller.getPicture(req, res, 'cover');
+      }
     });
-  // branch moderators
-  router.route('/branch/:branchid/mods')
-    .get(branch.getMods)
-    .post(function(req, res, next) {
-      ACL.validateRole(ACL.Roles.Moderator, req.params.branchid)(req, res, next);
-    }, branch.postMod)
-  router.route('/branch/:branchid/mods/:username')
-    .delete(function(req, res, next) {
-      ACL.validateRole(ACL.Roles.Moderator, req.params.branchid)(req, res, next);
-    }, branch.deleteMod);
-  // get child branches
-  router.route('/branch/:branchid/subbranches')
-    .get(branch.getSubbranches);
-  // get branch moderator log
-  router.route('/branch/:branchid/modlog')
-    .get(function(req, res, next) {
-      ACL.validateRole(ACL.Roles.Moderator, req.params.branchid)(req, res, next);
-    }, branch.getModLog);
 
   return router;
 };

@@ -1,14 +1,16 @@
 'use strict';
 
-var aws = require('../config/aws.js');
-var fs = require('../config/filestorage.js');
+var aws = require('../../config/aws.js');
+var fs = require('../../config/filestorage.js');
+var ACL = require('../../config/acl.js');
 
-var User = require('../models/user.model.js');
-var UserImage = require('../models/user-image.model.js');
-var success = require('./responses/successes.js');
-var error = require('./responses/errors.js');
+// Models
+var User = require('../../models/user.model.js');
+var UserImage = require('../../models/user-image.model.js');
 
-var ACL = require('../config/acl.js');
+// Responses
+var success = require('../../responses/successes.js');
+var error = require('../../responses/errors.js');
 
 module.exports = {
   get:  function(req, res) {

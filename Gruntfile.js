@@ -6,6 +6,7 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-concurrent');
   grunt.loadNpmTasks('grunt-exec');
   grunt.loadNpmTasks('grunt-mocha-test');
+  grunt.loadNpmTasks('grunt-apidoc');
 
   // Configure tasks
   grunt.initConfig({
@@ -67,6 +68,15 @@ module.exports = function(grunt) {
           timeout: 5000
         },
         src: ['tests/test.js']
+      }
+    },
+    apidoc: {
+      app: {
+        src: "./",
+        dest: "docs/",
+        options: {
+          excludeFilters: [ "node_modules/" ]
+        }
       }
     }
   });

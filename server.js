@@ -66,7 +66,7 @@ passport = require('./config/passport')(passport);
 app.use(passport.initialize());
 app.use(passport.session());
 
-var apiRouter = require('./router.js')(app, passport);
+var apiRouter = require('./routers/router.js')(app, passport);
 app.use('/', apiRouter);
 
 // DUMMY API ROUTE

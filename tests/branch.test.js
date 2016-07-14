@@ -233,13 +233,13 @@ module.exports = function(server) {
         data: [{
           branchid: 'branch',
           date: 0,
-          action: 'addmod',
+          action: 'removemod',
           username: 'username',
           data: 'username2'
         }, {
           branchid: 'branch',
           date: 0,
-          action: 'removemod',
+          action: 'addmod',
           username: 'username',
           data: 'username2'
         }]

@@ -183,8 +183,12 @@ module.exports = {
       return error.BadRequest(res, 'Missing branchid');
     }
 
+    if(!req.query.timeafter) {
+      return error.BadRequest(res, 'Missing timeafter');
+    }
+
     var branch = new Branch();
-    branch.findSubbranches(req.params.branchid).then(function(data) {
+    branch.findSubbranches(req.params.branchid, req.query.timeafter).then(function(data) {
       return success.OK(res, data);
     }, function() {
       return error.InternalServerError(res);

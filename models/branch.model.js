@@ -113,18 +113,24 @@ Branch.prototype.findById = function(id) {
 // TODO: this has an upper limit on the number of results; if so, a LastEvaluatedKey
 // will be supplied to indicate where to continue the search from
 // (see: http://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/DynamoDB.html#query-property)
-Branch.prototype.findSubbranches = function(parentid) {
+Branch.prototype.findSubbranches = function(parentid, timeafter) {
   var self = this;
   return new Promise(function(resolve, reject) {
     aws.dbClient.query({
       TableName: self.config.table,
       IndexName: self.config.keys.secondary.global,
-      Select: 'ALL_ATTRIBUTES',
-      KeyConditionExpression: "parentid = :parentid",
+      Select: 'ALL_PROJECTED_ATTRIBUTES',
+      KeyConditionExpression: "parentid = :parentid AND #date >= :timeafter",
+      // date is a reserved dynamodb keyword so must use this alias:
+      ExpressionAttributeNames: {
+        "#date": "date"
+      },
       ExpressionAttributeValues: {
-          ":parentid": parentid
+        ":parentid": String(parentid),
+        ":timeafter": Number(timeafter)
       }
     }, function(err, data) {
+      console.log(err);
       if(err) return reject(err);
       if(!data || !data.Items) {
         return reject();

@@ -55,7 +55,7 @@ var Keys = {
   Branches: {
     primary: 'id',
     secondary: {
-      global: 'parentid-index'
+      global: 'parentid-date-index'
     }
   },
   BranchImages: {

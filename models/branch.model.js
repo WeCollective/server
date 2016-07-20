@@ -63,12 +63,16 @@ Branch.prototype.validate = function(properties) {
     if(!this.data.parentid) {
       this.data.parentid = 'root';
     } else {
-      // ...ensure it is of the correct length
+      // ensure it is of the correct length
       if(this.data.parentid.length < 1 || this.data.parentid.length > 20) {
         invalids.push('parentid');
       }
-      // ...and contains no whitespace
+      // ensure it contains no whitespace
       if(/\s/g.test(this.data.parentid)) {
+        invalids.push('parentid');
+      }
+      // ensure it is not a reserved word
+      if(this.data.parentid == 'none') {
         invalids.push('parentid');
       }
     }

@@ -31,6 +31,10 @@ Branch.prototype.validate = function(properties) {
     if(/\s/g.test(this.data.id)) {
       invalids.push('id');
     }
+    // ensure id is lowercase
+    if(this.data.id != this.data.id.toLowerCase()) {
+      invalids.push('id');
+    }
   }
 
   // ensure name exists and is of correct length

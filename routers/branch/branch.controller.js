@@ -18,7 +18,12 @@ module.exports = {
       return error.InternalServerError(res);
     }
 
+    if(!req.body.id) {
+      return error.BadRequest(res, 'Invalid id');
+    }
+
     // check whether the specified branch id is unique
+    req.body.id = req.body.id.toLowerCase();
     new Branch().findById(req.body.id).then(function() {
       return error.BadRequest(res, 'That Unique Name is already taken');
     }, function(err) {

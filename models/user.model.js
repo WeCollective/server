@@ -26,7 +26,7 @@ function isEmail(email) {
 // returning an array of any invalid ones
 User.prototype.validate = function(properties) {
   var invalids = [];
-  
+
   if(properties.indexOf('username') > -1) {
     // ensure username length is over 1 char and less than 20
     if(!this.data.username ||
@@ -35,6 +35,10 @@ User.prototype.validate = function(properties) {
     }
     // ensure username contains no whitespace
     if(/\s/g.test(this.data.username)) {
+      invalids.push('username');
+    }
+    // ensure username is lowercase
+    if(this.data.username != this.data.username.toLowerCase()) {
       invalids.push('username');
     }
     // ensure username is not one of the banned words

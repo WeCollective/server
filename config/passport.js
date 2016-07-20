@@ -25,6 +25,7 @@ module.exports = function(passport) {
     process.nextTick(function() {
       // check whether a user with this username already exists in the database
       var user = new User();
+      username = username.toLowerCase();
       user.findByUsername(username).then(function() {
         return done(null, false, { status: 400, message: 'Username already exists' });
       }, function(err) {

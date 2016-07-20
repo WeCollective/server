@@ -41,6 +41,12 @@ var Schema = {
     date: null,
     action: null,
     data: null
+  },
+  SubBranchRequest: {
+    parentid: null,
+    childid: null,
+    date: null,
+    creator: null
   }
 };
 
@@ -66,6 +72,12 @@ var Keys = {
   },
   ModLog: {
     primary: 'branchid'
+  },
+  SubBranchRequests: {
+    primary: 'parentid',
+    secondary: {
+      global: 'parentid-date-index'
+    }
   }
 };
 
@@ -79,7 +91,8 @@ var config = {
     Branches: 'Branches',
     BranchImages: 'BranchImages',
     Mods: 'Mods',
-    ModLog: 'ModLog'
+    ModLog: 'ModLog',
+    SubBranchRequests: 'SubBranchRequests'
   },
   // Model schemas
   Schema: Schema,

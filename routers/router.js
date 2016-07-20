@@ -21,5 +21,9 @@ module.exports = function(app, passport) {
   var modsRouter = require('./mods/mods.router.js')(app, passport);
   app.use('/branch/:branchid/mods', modsRouter);
 
+  // SUBBRANCH REQUESTS ROUTER
+  var requestsRouter = require('./requests/subbranches.router.js')(app, passport);
+  app.use('/branch/:branchid/requests/subbranches', requestsRouter);
+
   return router;
 };

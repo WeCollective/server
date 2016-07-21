@@ -8,6 +8,8 @@ var BranchImage = require('../../models/branch-image.model.js');
 var Mod = require('../../models/mod.model.js');
 var ModLogEntry = require('../../models/mod-log-entry.model.js');
 var User = require('../../models/user.model.js');
+var SubBranchRequest = require('../../models/subbranch-request.model.js');
+
 var success = require('../../responses/successes.js');
 var error = require('../../responses/errors.js');
 
@@ -40,7 +42,7 @@ module.exports = {
         name: req.body.name,
         creator: req.user.username,
         date: time,
-        parentid: req.body.parentid
+        parentid: 'root'
       });
 
       // validate branch properties
@@ -50,27 +52,49 @@ module.exports = {
         return error.BadRequest(res, 'Invalid ' + invalids[0]);
       }
 
-      // create mod object
-      var mod = new Mod({
-        branchid: req.body.id,
+      // for now, set parentid to 'root'
+      // and create new subbranch request for the given parentid
+      var subbranchRequest = new SubBranchRequest({
+        parentid: req.body.parentid,
+        childid: req.body.id,
         date: time,
-        username: req.user.username
+        creator: req.user.username
       });
-
-      // validate mod properties
-      propertiesToCheck = ['branchid', 'date', 'username'];
-      invalids = mod.validate(propertiesToCheck);
+      // validate request properties
+      var propertiesToCheck = ['parentid', 'childid', 'date', 'creator'];
+      invalids = subbranchRequest.validate(propertiesToCheck);
       if(invalids.length > 0) {
         return error.BadRequest(res, 'Invalid ' + invalids[0]);
       }
+      // save the request
+      subbranchRequest.save().then(function () {
+        // create mod object
+        var mod = new Mod({
+          branchid: req.body.id,
+          date: time,
+          username: req.user.username
+        });
 
-      branch.save().then(function() {
-        mod.save().then(function () {
-          return success.OK(res);
+        // validate mod properties
+        propertiesToCheck = ['branchid', 'date', 'username'];
+        invalids = mod.validate(propertiesToCheck);
+        if(invalids.length > 0) {
+          return error.BadRequest(res, 'Invalid ' + invalids[0]);
+        }
+
+        // save the new branch
+        branch.save().then(function() {
+          // save the mod of the branch
+          mod.save().then(function () {
+            return success.OK(res);
+          }, function() {
+            return error.InternalServerError(res);
+          });
         }, function() {
           return error.InternalServerError(res);
         });
-      }, function() {
+      }, function () {
+        console.error("Unable to save subbranch request.");
         return error.InternalServerError(res);
       });
     });

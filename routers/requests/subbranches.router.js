@@ -17,7 +17,10 @@ module.exports = function(app, passport) {
   router.route('/:childid')
     .post(function(req, res, next) {
       ACL.validateRole(ACL.Roles.Moderator, req.params.childid)(req, res, next);
-    }, controller.post);
+    }, controller.post)
+    .put(function(req, res, next) {
+      ACL.validateRole(ACL.Roles.Moderator, req.params.branchid)(req, res, next);
+    }, controller.put);
 
   return router;
 }

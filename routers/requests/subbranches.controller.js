@@ -5,12 +5,12 @@ var fs = require('../../config/filestorage.js');
 
 var SubBranchRequest = require('../../models/subbranch-request.model.js');
 var Branch = require('../../models/branch.model.js');
+var ModLogEntry = require('../../models/mod-log-entry.model.js');
 
 var success = require('../../responses/successes.js');
 var error = require('../../responses/errors.js');
 
 module.exports = {
-  // TODO: add an entry to the mod log
   post: function(req, res) {
     if(!req.user.username) {
       console.error("No username found in session.");
@@ -36,10 +36,28 @@ module.exports = {
     subbranchRequest.find(subbranchRequest.data.parentid,
                           subbranchRequest.data.childid).then(function(response) {
       if(!response || response.length == 0) {
+        // save the request to the database
         subbranchRequest.save().then(function () {
+          // save a mod log entry describing the filing of the request
+          var entry = new ModLogEntry({
+            branchid: req.params.childid,     // child branch
+            username: req.user.username,      // child mod
+            date: new Date().getTime(),
+            action: 'make-subbranch-request',
+            data: req.params.branchid         // parent branch
+          });
+
+          var propertiesToCheck = ['branchid', 'username', 'date', 'action', 'data'];
+          var invalids = entry.validate(propertiesToCheck);
+          if(invalids.length > 0) {
+            console.error('Error saving mod log entry.');
+            return error.InternalServerError(res);
+          }
+          return entry.save();
+        }).then(function () {
           return success.OK(res);
-        }, function () {
-          console.error("Unable to save subbranch request.");
+        }).catch(function(err) {
+          console.error("Error saving subbranch request and mod log entry.");
           return error.InternalServerError(res);
         });
       } else {

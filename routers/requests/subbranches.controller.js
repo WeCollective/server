@@ -86,7 +86,6 @@ module.exports = {
       return error.NotFound(res);
     });
   },
-  // TODO: add an entry to the mod log
   put: function(req, res) {
     if(!req.user.username) {
       console.error("No username found in session.");
@@ -104,11 +103,50 @@ module.exports = {
         return error.NotFound(res);
       }
 
+      // create promise to delete the subbranch request
       var deletePromise = subbranchRequest.delete({
         parentid: req.params.branchid,
         childid: req.params.childid
       });
 
+      // create an mod log entry for the parent branch describing the
+      // action taken on the subbranch request
+      var entryParent = new ModLogEntry({
+        branchid: req.params.branchid,     // parent branch
+        username: req.user.username,       // parent mod
+        date: new Date().getTime(),
+        action: 'answer-subbranch-request',
+        data: JSON.stringify({
+          response: req.body.action,       // 'accept' or 'reject'
+          childid: req.params.childid,     // child branch id
+          parentid: req.params.branchid,   // parent branch id
+          childmod: data[0].creator        // child mod username
+        })
+      });
+      // create an mod log entry for the child branch describing the
+      // action taken on the subbranch request
+      var entryChild = new ModLogEntry({
+        branchid: req.params.childid,      // parent branch
+        username: req.user.username,       // parent mod
+        date: new Date().getTime(),
+        action: 'answer-subbranch-request',
+        data: JSON.stringify({
+          response: req.body.action,       // 'accept' or 'reject'
+          childid: req.params.childid,     // child branch id
+          parentid: req.params.branchid,   // parent branch id
+          childmod: data[0].creator        // child mod username
+        })
+      });
+      var propertiesToCheck = ['branchid', 'username', 'date', 'action', 'data'];
+      var invalidsParent = entryParent.validate(propertiesToCheck);
+      var invalidsChild = entryChild.validate(propertiesToCheck);
+      if(invalidsParent.length > 0 || invalidsChild.length > 0) {
+        console.error('Error saving mod log entry.');
+        return error.InternalServerError(res);
+      }
+
+
+      // Accept the request:
       if(req.body.action == 'accept') {
         // update the child branch's parentid
         var updatedBranch = new Branch({
@@ -119,17 +157,29 @@ module.exports = {
           // delete the request from the table
           return deletePromise;
         }).then(function() {
+          // save the child mod log entry
+          return entryChild.save();
+        }).then(function() {
+          // save the parent mod log entry
+          return entryParent.save();
+        }).then(function() {
           return success.OK(res);
         }).catch(function() {
           console.error("Error accepting request.");
           return error.InternalServerError(res);
         });
+      // Reject the request:
       } else {
         // delete the request from the table
-        deletePromise.then(function () {
+        deletePromise.then(function() {
+          // save the child mod log entry
+          return entryChild.save();
+        }).then(function() {
+          // save the parent mod log entry
+          return entryParent.save();
+        }).then(function() {
           return success.OK(res);
-        }, function() {
-          console.error("Error rejecting request.");
+        }).catch(function() {
           return error.InternalServerError(res);
         });
       }

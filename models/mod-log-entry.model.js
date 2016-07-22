@@ -66,7 +66,8 @@ ModLogEntry.prototype.validate = function(properties) {
   if(!this.data.action || (
       this.data.action != 'addmod' &&
       this.data.action != 'removemod' &&
-      this.data.action != 'make-subbranch-request')) {
+      this.data.action != 'make-subbranch-request' &&
+      this.data.action != 'answer-subbranch-request')) {
     invalids.push('action');
   }
   if(!this.data.data) {

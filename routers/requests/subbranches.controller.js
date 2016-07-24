@@ -32,41 +32,49 @@ module.exports = {
       return error.BadRequest(res, 'Invalid ' + invalids[0]);
     }
 
-    // check this request does not already exist
-    subbranchRequest.find(subbranchRequest.data.parentid,
-                          subbranchRequest.data.childid).then(function(response) {
-      if(!response || response.length == 0) {
-        // save the request to the database
-        subbranchRequest.save().then(function () {
-          // save a mod log entry describing the filing of the request
-          var entry = new ModLogEntry({
-            branchid: req.params.childid,     // child branch
-            username: req.user.username,      // child mod
-            date: new Date().getTime(),
-            action: 'make-subbranch-request',
-            data: req.params.branchid         // parent branch
-          });
+    // ensure the specified branches exist
+    new Branch().findById(req.params.branchid).then(function() {
+      return new Branch().findById(req.params.childid);
+    }).then(function () {
+      // check this request does not already exist
+      subbranchRequest.find(subbranchRequest.data.parentid,
+                            subbranchRequest.data.childid).then(function(response) {
+        if(!response || response.length == 0) {
+          // save the request to the database
+          subbranchRequest.save().then(function () {
+            // save a mod log entry describing the filing of the request
+            var entry = new ModLogEntry({
+              branchid: req.params.childid,     // child branch
+              username: req.user.username,      // child mod
+              date: new Date().getTime(),
+              action: 'make-subbranch-request',
+              data: req.params.branchid         // parent branch
+            });
 
-          var propertiesToCheck = ['branchid', 'username', 'date', 'action', 'data'];
-          var invalids = entry.validate(propertiesToCheck);
-          if(invalids.length > 0) {
-            console.error('Error saving mod log entry.');
+            var propertiesToCheck = ['branchid', 'username', 'date', 'action', 'data'];
+            var invalids = entry.validate(propertiesToCheck);
+            if(invalids.length > 0) {
+              console.error('Error saving mod log entry.');
+              return error.InternalServerError(res);
+            }
+            return entry.save();
+          }).then(function () {
+            return success.OK(res);
+          }).catch(function(err) {
+            console.error("Error saving subbranch request and mod log entry.");
             return error.InternalServerError(res);
-          }
-          return entry.save();
-        }).then(function () {
-          return success.OK(res);
-        }).catch(function(err) {
-          console.error("Error saving subbranch request and mod log entry.");
+          });
+        } else {
+          return error.BadRequest(res, 'Request already exists');
+        }
+      }, function (err) {
+        if(err) {
           return error.InternalServerError(res);
-        });
-      } else {
-        return error.BadRequest(res, 'Request already exists');
-      }
-    }, function (err) {
-      if(err) {
-        return error.InternalServerError(res);
-      }
+        }
+        return error.NotFound(res);
+      });
+    }, function () {
+      // one of the specified branches doesnt exist
       return error.NotFound(res);
     });
   },

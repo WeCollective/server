@@ -58,23 +58,25 @@ Branch.prototype.validate = function(properties) {
     }
   }
 
-  // if parent id is not specified, make this a root branch
+  // ensure valid parentid
   if(properties.indexOf('parentid') > -1) {
-    if(!this.data.parentid) {
-      this.data.parentid = 'root';
-    } else {
-      // ensure it is of the correct length
-      if(this.data.parentid.length < 1 || this.data.parentid.length > 20) {
-        invalids.push('parentid');
-      }
-      // ensure it contains no whitespace
-      if(/\s/g.test(this.data.parentid)) {
-        invalids.push('parentid');
-      }
-      // ensure it is not a reserved word
-      if(this.data.parentid == 'none') {
-        invalids.push('parentid');
-      }
+    console.log("ID");
+    console.log(this.data.parentid);
+    // ensure it is of the correct length
+    if(!this.data.parentid || this.data.parentid.length < 1 || this.data.parentid.length > 20) {
+      invalids.push('parentid');
+    }
+    // ensure it contains no whitespace
+    if(/\s/g.test(this.data.parentid)) {
+      invalids.push('parentid');
+    }
+    // ensure it is not a reserved word
+    if(this.data.parentid == 'none') {
+      invalids.push('parentid');
+    }
+    // ensure it is lowercase
+    if(this.data.parentid && this.data.parentid != this.data.parentid.toLowerCase()) {
+      invalids.push('parentid');
     }
   }
 

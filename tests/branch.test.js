@@ -18,6 +18,7 @@ module.exports = function(server) {
   it('id should be invalid (too long)', function(done) {
     server.post('/branch')
       .send('id=thisbranchparamiswaytoolongforthis')
+      .send('parentid=root')
       .send('name=branch')
       .expect(400)
       .expect({ message: 'Invalid id' }, done);
@@ -25,6 +26,7 @@ module.exports = function(server) {
   it('id should be invalid (contains whitespace)', function(done) {
     server.post('/branch')
       .send('id=branch id')
+      .send('parentid=root')
       .send('name=branch')
       .expect(400)
       .expect({ message: 'Invalid id' }, done);
@@ -32,19 +34,37 @@ module.exports = function(server) {
   it('name should be invalid (too long)', function(done) {
     server.post('/branch')
       .send('id=branch')
+      .send('parentid=root')
       .send('name=thisbranchparamiswaytoolongforthis')
       .expect(400)
       .expect({ message: 'Invalid name' }, done);
   });
+  it('parentid should be reserved word', function(done) {
+    server.post('/branch')
+      .send('id=branch')
+      .send('parentid=none')
+      .send('name=branch')
+      .expect(400)
+      .expect({ message: 'Invalid parentid' }, done);
+  });
+  it('parentid should not be found', function(done) {
+    server.post('/branch')
+      .send('id=branch')
+      .send('parentid=unknown')
+      .send('name=branch')
+      .expect(404, done);
+  });
   it('branch should be succesfully created', function(done) {
     server.post('/branch')
       .send('id=branch')
+      .send('parentid=root')
       .send('name=Branch Name')
       .expect(200, done);
   });
   it('id should be invalid (already taken)', function(done) {
     server.post('/branch')
       .send('id=branch')
+      .send('parentid=root')
       .send('name=Branch Name')
       .expect(400)
       .expect({ message: 'That Unique Name is already taken' }, done);

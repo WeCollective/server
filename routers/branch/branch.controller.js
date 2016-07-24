@@ -20,15 +20,24 @@ module.exports = {
       return error.InternalServerError(res);
     }
 
-    if(!req.body.id) {
-      return error.BadRequest(res, 'Invalid id');
-    }
-    if(!req.body.parentid) {
-      return error.BadRequest(res, 'Invalid parentid');
+    // create branch object
+    var time = new Date().getTime();
+    var branch = new Branch({
+      id: req.body.id,
+      name: req.body.name,
+      creator: req.user.username,
+      date: time,
+      parentid: req.body.parentid
+    });
+
+    // validate branch properties
+    var propertiesToCheck = ['id', 'name', 'creator', 'date', 'parentid'];
+    var invalids = branch.validate(propertiesToCheck);
+    if(invalids.length > 0) {
+      return error.BadRequest(res, 'Invalid ' + invalids[0]);
     }
 
     // check whether the specified branch id is unique
-    req.body.id = req.body.id.toLowerCase();
     new Branch().findById(req.body.id).then(function() {
       return error.BadRequest(res, 'That Unique Name is already taken');
     }, function(err) {
@@ -38,26 +47,7 @@ module.exports = {
 
       // ensure the specified parent branch exists
       new Branch().findById(req.body.parentid).then(function() {
-
-        // create branch object
-        var time = new Date().getTime();
-        var branch = new Branch({
-          id: req.body.id,
-          name: req.body.name,
-          creator: req.user.username,
-          date: time,
-          parentid: 'root'
-        });
-
-        // validate branch properties
-        var propertiesToCheck = ['id', 'name', 'creator', 'date', 'parentid'];
-        var invalids = branch.validate(propertiesToCheck);
-        if(invalids.length > 0) {
-          return error.BadRequest(res, 'Invalid ' + invalids[0]);
-        }
-
-        // for now, set parentid to 'root'
-        // and create new subbranch request for the given parentid
+        // create new subbranch request for the given parentid
         var subbranchRequest = new SubBranchRequest({
           parentid: req.body.parentid,
           childid: req.body.id,
@@ -71,7 +61,7 @@ module.exports = {
           return error.BadRequest(res, 'Invalid ' + invalids[0]);
         }
         // save the request
-        subbranchRequest.save().then(function () {
+        subbranchRequest.save().then(function() {
           // create mod object
           var mod = new Mod({
             branchid: req.body.id,

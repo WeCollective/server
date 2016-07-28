@@ -60,8 +60,6 @@ Branch.prototype.validate = function(properties) {
 
   // ensure valid parentid
   if(properties.indexOf('parentid') > -1) {
-    console.log("ID");
-    console.log(this.data.parentid);
     // ensure it is of the correct length
     if(!this.data.parentid || this.data.parentid.length < 1 || this.data.parentid.length > 20) {
       invalids.push('parentid');

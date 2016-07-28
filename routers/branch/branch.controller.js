@@ -47,56 +47,64 @@ module.exports = {
 
       // ensure the specified parent branch exists
       new Branch().findById(req.body.parentid).then(function() {
-        // create new subbranch request for the given parentid
-        var subbranchRequest = new SubBranchRequest({
-          parentid: req.body.parentid,
-          childid: req.body.id,
-          date: time,
-          creator: req.user.username
-        });
-        // validate request properties
-        var propertiesToCheck = ['parentid', 'childid', 'date', 'creator'];
-        invalids = subbranchRequest.validate(propertiesToCheck);
-        if(invalids.length > 0) {
-          return error.BadRequest(res, 'Invalid ' + invalids[0]);
-        }
-        // save the request
-        subbranchRequest.save().then(function() {
-          // create mod object
-          var mod = new Mod({
-            branchid: req.body.id,
+        // save a subbranch request iff. the parentid is not the root branch
+        if(req.body.parentid != 'root') {
+          // create new subbranch request for the given parentid
+          var subbranchRequest = new SubBranchRequest({
+            parentid: req.body.parentid,
+            childid: req.body.id,
             date: time,
-            username: req.user.username
+            creator: req.user.username
           });
-
-          // validate mod properties
-          propertiesToCheck = ['branchid', 'date', 'username'];
-          invalids = mod.validate(propertiesToCheck);
+          // validate request properties
+          var propertiesToCheck = ['parentid', 'childid', 'date', 'creator'];
+          invalids = subbranchRequest.validate(propertiesToCheck);
           if(invalids.length > 0) {
             return error.BadRequest(res, 'Invalid ' + invalids[0]);
           }
+          // save the request
+          return subbranchRequest.save();
+        } else {
+          return new Promise(function(resolve, reject) {
+            resolve();
+          });
+        }
+      }, function () {
+        console.error("Unable to save subbranch request.");
+        return error.InternalServerError(res);
+      }).then(function() {
+        // create mod object
+        var mod = new Mod({
+          branchid: req.body.id,
+          date: time,
+          username: req.user.username
+        });
 
-          // save the new branch
-          branch.save().then(function() {
-            // save the mod of the branch
-            mod.save().then(function () {
-              return success.OK(res);
-            }, function() {
-              return error.InternalServerError(res);
-            });
+        // validate mod properties
+        propertiesToCheck = ['branchid', 'date', 'username'];
+        invalids = mod.validate(propertiesToCheck);
+        if(invalids.length > 0) {
+          return error.BadRequest(res, 'Invalid ' + invalids[0]);
+        }
+
+        // save the new branch
+        branch.set('parentid', 'root');
+        branch.save().then(function() {
+          // save the mod of the branch
+          mod.save().then(function () {
+            return success.OK(res);
           }, function() {
             return error.InternalServerError(res);
           });
-        }, function () {
-          console.error("Unable to save subbranch request.");
+        }, function() {
           return error.InternalServerError(res);
         });
-      }, function(err) {
-        if(err) {
-          return error.InternalServerError(res);
-        }
-        return error.NotFound(res);
       });
+    }, function(err) {
+      if(err) {
+        return error.InternalServerError(res);
+      }
+      return error.NotFound(res);
     });
   },
   get: function(req, res) {

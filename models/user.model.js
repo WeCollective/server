@@ -38,7 +38,8 @@ User.prototype.validate = function(properties) {
       invalids.push('username');
     }
     // ensure username is lowercase
-    if(this.data.username != this.data.username.toLowerCase()) {
+    if((typeof this.data.username === 'string' || this.data.username instanceof String) &&
+        this.data.username != this.data.username.toLowerCase()) {
       invalids.push('username');
     }
     // ensure username is not one of the banned words

@@ -47,6 +47,10 @@ var Schema = {
     childid: null,
     date: null,
     creator: null
+  },
+  Tag: {
+    branchid: null,
+    tag: null
   }
 };
 
@@ -78,6 +82,12 @@ var Keys = {
     secondary: {
       global: 'parentid-date-index'
     }
+  },
+  Tags: {
+    primary: 'branchid',
+    secondary: {
+      global: 'tag-branchid-index'
+    }
   }
 };
 
@@ -92,7 +102,8 @@ var config = {
     BranchImages: 'BranchImages',
     Mods: 'Mods',
     ModLog: 'ModLog',
-    SubBranchRequests: 'SubBranchRequests'
+    SubBranchRequests: 'SubBranchRequests',
+    Tags: 'Tags'
   },
   // Model schemas
   Schema: Schema,

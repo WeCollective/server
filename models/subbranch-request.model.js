@@ -22,6 +22,52 @@ SubBranchRequest.prototype.constructor = SubBranchRequest;
 SubBranchRequest.prototype.validate = function(properties) {
   var invalids = [];
 
+  // ensure parentid exists and is of correct length
+  if(properties.indexOf('parentid') > -1) {
+    if(!this.data.parentid || this.data.parentid.length < 1 || this.data.parentid.length > 30) {
+      invalids.push('parentid');
+    }
+    // ensure parentid contains no whitespace
+    if(/\s/g.test(this.data.parentid)) {
+      invalids.push('parentid');
+    }
+    // ensure id is lowercase
+    if((typeof this.data.parentid === 'string' || this.data.parentid instanceof String) &&
+        this.data.parentid != this.data.parentid.toLowerCase()) {
+      invalids.push('parentid');
+    }
+  }
+
+  // ensure childid exists and is of correct length
+  if(properties.indexOf('childid') > -1) {
+    if(!this.data.childid || this.data.childid.length < 1 || this.data.childid.length > 30) {
+      invalids.push('childid');
+    }
+    // ensure childid contains no whitespace
+    if(/\s/g.test(this.data.childid)) {
+      invalids.push('childid');
+    }
+    // ensure id is lowercase
+    if((typeof this.data.childid === 'string' || this.data.childid instanceof String) &&
+        this.data.childid != this.data.childid.toLowerCase()) {
+      invalids.push('childid');
+    }
+  }
+
+  // ensure creation date is valid
+  if(properties.indexOf('date') > -1) {
+    if(!this.data.date || !Number(this.data.date) > 0) {
+      invalids.push('date');
+    }
+  }
+
+  // TODO ensure creator is valid username
+  if(properties.indexOf('creator') > -1) {
+    if(!this.data.creator) {
+      invalids.push('creator');
+    }
+  }
+
   return invalids;
 };
 

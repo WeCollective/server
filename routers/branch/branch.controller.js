@@ -9,6 +9,7 @@ var Mod = require('../../models/mod.model.js');
 var ModLogEntry = require('../../models/mod-log-entry.model.js');
 var User = require('../../models/user.model.js');
 var SubBranchRequest = require('../../models/subbranch-request.model.js');
+var Tag = require('../../models/tag.model.js');
 
 var success = require('../../responses/successes.js');
 var error = require('../../responses/errors.js');
@@ -92,7 +93,37 @@ module.exports = {
         branch.save().then(function() {
           // save the mod of the branch
           mod.save().then(function () {
-            return success.OK(res);
+            // add the branchid to the tags table with the tags of itself and
+            // those of its parent (just 'root')
+            var branchTag = new Tag({
+              branchid: branch.data.id,
+              tag: branch.data.id
+            });
+            propertiesToCheck = ['branchid', 'tag'];
+            invalids = branchTag.validate(propertiesToCheck);
+            if(invalids.length > 0) {
+              return error.BadRequest(res, 'Invalid ' + invalids[0]);
+            }
+
+            var rootTag = new Tag({
+              branchid: branch.data.id,
+              tag: 'root'
+            });
+            propertiesToCheck = ['branchid', 'tag'];
+            invalids = rootTag.validate(propertiesToCheck);
+            if(invalids.length > 0) {
+              return error.BadRequest(res, 'Invalid ' + invalids[0]);
+            }
+
+            // save the tags
+            branchTag.save().then(function () {
+              return rootTag.save();
+            }).then(function() {
+              return success.OK(res);
+            }).catch(function () {
+              console.error("Error saving branch tags");
+              return error.InternalServerError(res);
+            });
           }, function() {
             return error.InternalServerError(res);
           });

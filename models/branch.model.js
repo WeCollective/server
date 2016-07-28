@@ -32,7 +32,8 @@ Branch.prototype.validate = function(properties) {
       invalids.push('id');
     }
     // ensure id is lowercase
-    if(this.data.id != this.data.id.toLowerCase()) {
+    if((typeof this.data.id === 'string' || this.data.id instanceof String) &&
+        this.data.id != this.data.id.toLowerCase()) {
       invalids.push('id');
     }
   }
@@ -73,7 +74,8 @@ Branch.prototype.validate = function(properties) {
       invalids.push('parentid');
     }
     // ensure it is lowercase
-    if(this.data.parentid && this.data.parentid != this.data.parentid.toLowerCase()) {
+    if((typeof this.data.parentid === 'string' || this.data.parentid instanceof String) &&
+        this.data.parentid != this.data.parentid.toLowerCase()) {
       invalids.push('parentid');
     }
   }

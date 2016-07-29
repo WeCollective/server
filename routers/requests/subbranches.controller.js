@@ -186,11 +186,14 @@ module.exports = {
               // update each child's tags (allChildren includes self)
               for(var i = 0; i < allChildren.length; i++) {
                 updateTagsPromises.push(new Promise(function(resolve, reject) {
+                  // perform tag update operations for this branch, resolving promise when complete
+
                   // get all the tags of this child
                   tag.findByBranch(allChildren[i].branchid).then(function(tags) {
                     var bid;
                     if(tags.length > 0) bid = tags[0].branchid;
-                    var promises = [];
+                    var promises = [];  // to hold all tag operation promises
+                    // make copies
                     var O = _O.slice(0);
                     var N = _N.slice(0);
 
@@ -230,6 +233,7 @@ module.exports = {
                       n++;
                     }
 
+                    // wait for all tag operations on this branch to complete
                     Promise.all(promises).then(function() {
                       // Success updating tags!
                       return resolve();
@@ -242,7 +246,7 @@ module.exports = {
                   });
                 }));
               }
-              
+
               // when all tags are updated, update the actual branch parent
               Promise.all(updateTagsPromises).then(function () {
                 // update the child branch's parentid

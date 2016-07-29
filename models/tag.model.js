@@ -64,10 +64,31 @@ Tag.prototype.findByBranch = function(branchid) {
   return new Promise(function(resolve, reject) {
     aws.dbClient.query({
       TableName: self.config.table,
-      IndexName: self.config.keys.secondary.global,
       KeyConditionExpression: "branchid = :id",
       ExpressionAttributeValues: {
         ":id": branchid
+      }
+    }, function(err, data) {
+      if(err) return reject(err);
+      if(!data || !data.Items) {
+        return reject();
+      }
+      return resolve(data.Items);
+    });
+  });
+};
+
+// Get the all the branches with a specific tag, passing in results to promise resolve.
+// Rejects promise with true if database error, with false if no data found.
+Tag.prototype.findByTag = function(tag) {
+  var self = this;
+  return new Promise(function(resolve, reject) {
+    aws.dbClient.query({
+      TableName: self.config.table,
+      IndexName: self.config.keys.secondary.global,
+      KeyConditionExpression: "tag = :tag",
+      ExpressionAttributeValues: {
+        ":tag": tag
       }
     }, function(err, data) {
       if(err) return reject(err);

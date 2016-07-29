@@ -6,9 +6,12 @@ var fs = require('../../config/filestorage.js');
 var SubBranchRequest = require('../../models/subbranch-request.model.js');
 var Branch = require('../../models/branch.model.js');
 var ModLogEntry = require('../../models/mod-log-entry.model.js');
+var Tag = require('../../models/tag.model.js');
 
 var success = require('../../responses/successes.js');
 var error = require('../../responses/errors.js');
+
+var _ = require('lodash');
 
 module.exports = {
   post: function(req, res) {
@@ -156,25 +159,122 @@ module.exports = {
 
       // Accept the request:
       if(req.body.action == 'accept') {
-        // update the child branch's parentid
-        var updatedBranch = new Branch({
-          id: req.params.childid
-        });
-        updatedBranch.set('parentid', req.params.branchid);
-        updatedBranch.update().then(function () {
-          // delete the request from the table
-          return deletePromise;
-        }).then(function() {
-          // save the child mod log entry
-          return entryChild.save();
-        }).then(function() {
-          // save the parent mod log entry
-          return entryParent.save();
-        }).then(function() {
-          return success.OK(res);
-        }).catch(function() {
-          console.error("Error accepting request.");
-          return error.InternalServerError(res);
+        // get the parent branch's tags
+        var tag = new Tag();
+        tag.findByBranch(req.params.branchid).then(function(parentTags) {
+          for(var i = 0; i < parentTags.length; i++) {
+            if(parentTags[i].branchid == req.params.childid) {
+              return error.BadRequest(res, 'The requested parent is a subbranch.');
+            }
+          }
+
+          // get the child branch's tags
+          tag.findByBranch(req.params.childid).then(function(childTags) {
+            var B = childTags.map(function(x) {
+              return x.tag;
+            });
+            var P = parentTags.map(function(x) {
+              return x.tag;
+            });
+            var _O = _.difference(B, _.intersection(B, P));
+            if(_O.indexOf(req.params.childid) > -1) _O.splice(_O.indexOf(req.params.childid), 1);  // remove self from O
+            var _N = _.difference(P, B);
+
+            // get the branch whose parent is changing AND all its children
+            tag.findByTag(req.params.childid).then(function(allChildren) {
+              var updateTagsPromises = [];
+              // update each child's tags (allChildren includes self)
+              for(var i = 0; i < allChildren.length; i++) {
+                updateTagsPromises.push(new Promise(function(resolve, reject) {
+                  // get all the tags of this child
+                  tag.findByBranch(allChildren[i].branchid).then(function(tags) {
+                    var bid;
+                    if(tags.length > 0) bid = tags[0].branchid;
+                    var promises = [];
+                    var O = _O.slice(0);
+                    var N = _N.slice(0);
+
+                    // for each tag in the child's tag set...
+                    var n = 0;
+                    for(var t = 0; t < tags.length; t++) {
+                      // if the tag set contains a tag from O
+                      if(O.indexOf(tags[t].tag) > -1) {
+                        // remove tag from list
+                        promises.push(tag.delete(tags[t]));
+                        tags.splice(t, 1);
+                        // replace it with one from N if possible
+                        if(n < N.length) {
+                          tags.push({
+                            branchid: bid,
+                            tag: N[n]
+                          });
+                          promises.push(new Tag({
+                            branchid: bid,
+                            tag: N[n]
+                          }).save());
+                          n++;
+                        }
+                      }
+                    }
+
+                    // add any remaining tags in N
+                    while(n < N.length) {
+                      tags.push({
+                        branchid: bid,
+                        tag: N[n]
+                      });
+                      promises.push(new Tag({
+                        branchid: bid,
+                        tag: N[n]
+                      }).save());
+                      n++;
+                    }
+
+                    Promise.all(promises).then(function() {
+                      // Success updating tags!
+                      return resolve();
+                    }, function(err) {
+                      return reject(err);
+                    });
+                  }, function(err) {
+                    console.error("Error fetching tags by branch.");
+                    return error.InternalServerError(res);
+                  });
+                }));
+              }
+              
+              // when all tags are updated, update the actual branch parent
+              Promise.all(updateTagsPromises).then(function () {
+                // update the child branch's parentid
+                var updatedBranch = new Branch({
+                  id: req.params.childid
+                });
+                updatedBranch.set('parentid', req.params.branchid);
+                updatedBranch.update().then(function () {
+                  // delete the request from the table
+                  return deletePromise;
+                }).then(function() {
+                  // save the child mod log entry
+                  return entryChild.save();
+                }).then(function() {
+                  // save the parent mod log entry
+                  return entryParent.save();
+                }).then(function() {
+                  return success.OK(res);
+                }).catch(function() {
+                  console.error("Error accepting request.");
+                  return error.InternalServerError(res);
+                });
+              }, function(err) {
+                console.error("Error updating tags!");
+                console.error(err);
+                return error.InternalServerError(res);
+              });
+            });
+          }, function() {
+            console.error("Error fetching branch tags");
+            return error.InternalServerError(res);
+          });
         });
       // Reject the request:
       } else {

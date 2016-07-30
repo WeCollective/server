@@ -195,12 +195,84 @@ module.exports = {
     }
 
     var branch = new Branch();
-    branch.delete({
-      id: req.params.branchid
+    branch.findById(req.params.branchid).then(function() {
+      // ensure the branch is a root branch
+      if(branch.data.parentid != 'root') {
+        return error.BadRequest(res, 'Branch must be a root branch');
+      }
+      // delete the branch
+      return branch.delete({
+        id: req.params.branchid
+      });
+    }).then(function() {
+      // delete branch profile image
+      var profile = new BranchImage();
+      return profile.delete({
+        id: req.params.branchid + '-picture'
+      });
+    }).then(function() {
+      // delete branch cover image
+      var cover = new BranchImage();
+      return cover.delete({
+        id: req.params.branchid + '-cover'
+      });
+    }).then(function() {
+      // get mod log entries for this branch
+      return new ModLogEntry().findByBranch(req.params.branchid);
+    }).then(function(entries) {
+      // delete all mod log entries
+      var promises = [];
+      for(var i = 0; i < entries.length; i++) {
+        promises.push(new ModLogEntry().delete({
+          branchid: entries[i].branchid,
+          date: entries[i].date
+        }));
+      }
+      return Promise.all(promises);
+    }).then(function () {
+      // fetch all mods for this branch
+      return new Mod().findByBranch(req.params.branchid);
+    }).then(function(mods) {
+      // delete all mods
+      var promises = [];
+      for(var i = 0; i < mods.length; i++) {
+        promises.push(new Mod().delete({
+          branchid: mods[i].branchid,
+          date: mods[i].date
+        }));
+      }
+      return Promise.all(promises);
+    }).then(function() {
+      // fetch all tags on this branch
+      return new Tag().findByBranch(req.params.branchid);
+    }).then(function(tags) {
+      // delete all tags
+      var promises = [];
+      for(var i = 0; i < tags.length; i++) {
+        promises.push(new Tag().delete({
+          branchid: tags[i].branchid,
+          tag: tags[i].tag
+        }));
+      }
+      return Promise.all(promises);
+    }).then(function() {
+      // fetch all tags of this branch on other branches
+      return new Tag().findByTag(req.params.branchid);
+    }).then(function(tags) {
+      // delete all tags
+      var promises = [];
+      for(var i = 0; i < tags.length; i++) {
+        promises.push(new Tag().delete({
+          branchid: tags[i].branchid,
+          tag: tags[i].tag
+        }));
+      }
+      return Promise.all(promises);
     }).then(function() {
       return success.OK(res);
-    }, function() {
-      console.error('Error deleting branch.');
+    }, function(err) {
+      console.error("Error deleting branch");
+      console.error(err);
       return error.InternalServerError(res);
     });
   },

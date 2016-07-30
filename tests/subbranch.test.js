@@ -181,4 +181,20 @@ module.exports = function(server) {
       })
       .end(done);
   });
+  it('should delete user (me)', function(done) {
+    server.delete('/user/me')
+      .expect(200)
+      .expect({ message: 'Success' }, done);
+  });
+  it('should login successfully as username1', function(done) {
+    server.post('/user/login')
+      .send('username=username1')
+      .send('password=password')
+      .expect(200, done);
+  });
+  it('should delete user (me)', function(done) {
+    server.delete('/user/me')
+      .expect(200)
+      .expect({ message: 'Success' }, done);
+  });
 };

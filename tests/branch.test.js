@@ -2,6 +2,7 @@ module.exports = function(server) {
   it('should not be authenticated', function(done) {
     server.post('/branch')
       .send('id=branch')
+      .send('parentid=root')
       .send('name=branch')
       .expect(403)
       .expect({ message: 'Access denied' }, done);
@@ -54,7 +55,13 @@ module.exports = function(server) {
       .send('name=branch')
       .expect(404, done);
   });
-  it('branch should be succesfully created', function(done) {
+  it('missing parentid', function(done) {
+    server.post('/branch')
+      .send('id=branch')
+      .send('name=branch')
+      .expect(400, done);
+  });
+  it('branch should be successfully created', function(done) {
     server.post('/branch')
       .send('id=branch')
       .send('parentid=root')

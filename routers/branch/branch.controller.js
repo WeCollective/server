@@ -45,7 +45,6 @@ module.exports = {
       if(err) {
         return error.InternalServerError(res);
       }
-
       // ensure the specified parent branch exists
       new Branch().findById(req.body.parentid).then(function() {
         // save a subbranch request iff. the parentid is not the root branch
@@ -70,9 +69,8 @@ module.exports = {
             resolve();
           });
         }
-      }, function () {
-        console.error("Unable to save subbranch request.");
-        return error.InternalServerError(res);
+      }, function() {
+        return error.NotFound(res);
       }).then(function() {
         // create mod object
         var mod = new Mod({
@@ -116,12 +114,11 @@ module.exports = {
             }
 
             // save the tags
-            branchTag.save().then(function () {
+            branchTag.save().then(function(err) {
               return rootTag.save();
-            }).then(function() {
+            }).then(function(err) {
               return success.OK(res);
-            }).catch(function () {
-              console.error("Error saving branch tags");
+            }).catch(function(err) {
               return error.InternalServerError(res);
             });
           }, function() {
@@ -130,6 +127,8 @@ module.exports = {
         }, function() {
           return error.InternalServerError(res);
         });
+      }).catch(function() {
+        return error.InternalServerError(res);
       });
     }, function(err) {
       if(err) {

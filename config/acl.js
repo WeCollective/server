@@ -106,18 +106,30 @@ ACL.validateRole = function(role, resourceId) {
           }
           return error.NotFound(res);
         });
+        break;
+      case ACL.Roles.Admin:
+        // Admin must be logged in
+        if (!req.isAuthenticated()) {
+          return error.Forbidden(res);
+        }
 
-        var branch = new Branch();
-        branch.findById(resourceId).then(function() {
-          if(branch.data.mods.indexOf(req.user.username) > -1) {
-            req.ACLRole = ACL.Roles.Moderator;
-            next();
-          } else {
-            return error.Forbidden(res);
+        // Admin is a moderator of the root branch
+        var mod = new Mod();
+        mod.findByBranch('root').then(function(mods) {
+          if(!mods) {
+            console.error("No mods object received.");
+            return error.InternalServerError(res);
           }
+          for(var i = 0; i < mods.length; i++) {
+            if(mods[i].username == req.user.username) {
+              req.ACLRole = ACL.Roles.Admin;
+              return next();
+            }
+          }
+          return error.Forbidden(res);
         }, function(err) {
           if(err) {
-            console.error('Error fetching branch.');
+            console.error('Error fetching branch mods.');
             return error.InternalServerError(res);
           }
           return error.NotFound(res);

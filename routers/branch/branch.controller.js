@@ -189,6 +189,21 @@ module.exports = {
       return error.InternalServerError(res);
     });
   },
+  delete: function(req, res) {
+    if(!req.params.branchid) {
+      return error.BadRequest(res, 'Missing branchid');
+    }
+
+    var branch = new Branch();
+    branch.delete({
+      id: req.params.branchid
+    }).then(function() {
+      return success.OK(res);
+    }, function() {
+      console.error('Error deleting branch.');
+      return error.InternalServerError(res);
+    });
+  },
   getPictureUploadUrl: function(req, res, type) {
     if(!req.user || !req.user.username) {
       return error.Forbidden(res);

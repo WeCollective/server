@@ -13,7 +13,10 @@ module.exports = function(app, passport) {
     .get(controller.get)
     .put(function(req, res, next) {
       ACL.validateRole(ACL.Roles.Moderator, req.params.branchid)(req, res, next);
-    }, controller.put);
+    }, controller.put)
+    .delete(function(req, res, next) {
+      ACL.validateRole(ACL.Roles.Admin)(req, res, next);
+    }, controller.delete);
   // get presigned url for branch profile picture upload to S3
   router.route('/:branchid/picture-upload-url')
     .get(function(req, res, next) {

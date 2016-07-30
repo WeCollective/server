@@ -195,6 +195,8 @@ module.exports = {
     }
 
     var branch = new Branch();
+    var profile = new BranchImage();
+    var cover = new BranchImage();
     branch.findById(req.params.branchid).then(function() {
       // ensure the branch is a root branch
       if(branch.data.parentid != 'root') {
@@ -205,13 +207,66 @@ module.exports = {
         id: req.params.branchid
       });
     }).then(function() {
-      // delete branch profile image
-      var profile = new BranchImage();
-      return profile.delete({
+      // get branch profile picture
+      return profile.findById(req.params.branchid, 'picture');
+    }).then(function () {
+      // get branch cover picture
+      return cover.findById(req.params.branchid, 'cover');
+    }).then(function() {
+      // delete orig branch profile and cover pictures from s3
+      return new Promise(function(resolve, reject) {
+        var objects = [];
+        if(profile.data.id) {
+          objects.push({
+            Key: profile.data.id + '-orig.' + profile.data.extension
+          });
+        }
+        if(cover.data.id) {
+          objects.push({
+            Key: cover.data.id + '-orig.' + cover.data.extension
+          });
+        }
+        aws.s3Client.deleteObjects({
+          Bucket: fs.Bucket.BranchImages,
+          Delete: {
+            Objects: objects
+          }
+        }, function(err) {
+          if(err) return reject(err);
+          resolve();
+        });
+      });
+    }).then(function() {
+      // delete resized branch profile and cover pictures from s3
+      return new Promise(function(resolve, reject) {
+        var objects = [];
+        if(profile.data.id) {
+          objects.push({
+            Key: profile.data.id + '-500.' + profile.data.extension
+          });
+        }
+        if(cover.data.id) {
+          objects.push({
+            Key: cover.data.id + '-1280.' + cover.data.extension
+          });
+        }
+        aws.s3Client.deleteObjects({
+          Bucket: fs.Bucket.BranchImagesResized,
+          Delete: {
+            Objects: objects
+          }
+        }, function(err) {
+          if(err) return reject(err);
+          resolve();
+        });
+      });
+    }).then(function () {
+      // delete branch profile image from db
+      return new BranchImage().delete({
         id: req.params.branchid + '-picture'
       });
     }).then(function() {
-      // delete branch cover image
+      // delete branch cover image from db
       var cover = new BranchImage();
       return cover.delete({
         id: req.params.branchid + '-cover'

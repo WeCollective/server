@@ -208,10 +208,20 @@ module.exports = {
       });
     }).then(function() {
       // get branch profile picture
-      return profile.findById(req.params.branchid, 'picture');
+      return new Promise(function(resolve, reject) {
+        profile.findById(req.params.branchid, 'picture').then(resolve, function(err) {
+          if(err) return reject();
+          resolve();
+        });
+      });
     }).then(function () {
       // get branch cover picture
-      return cover.findById(req.params.branchid, 'cover');
+      return new Promise(function(resolve, reject) {
+        profile.findById(req.params.branchid, 'cover').then(resolve, function(err) {
+          if(err) return reject();
+          resolve();
+        });
+      });
     }).then(function() {
       // delete orig branch profile and cover pictures from s3
       return new Promise(function(resolve, reject) {
@@ -225,6 +235,9 @@ module.exports = {
           objects.push({
             Key: cover.data.id + '-orig.' + cover.data.extension
           });
+        }
+        if(objects.length == 0) {
+          return resolve();
         }
         aws.s3Client.deleteObjects({
           Bucket: fs.Bucket.BranchImages,
@@ -249,6 +262,9 @@ module.exports = {
           objects.push({
             Key: cover.data.id + '-1280.' + cover.data.extension
           });
+        }
+        if(objects.length == 0) {
+          return resolve();
         }
         aws.s3Client.deleteObjects({
           Bucket: fs.Bucket.BranchImagesResized,
@@ -321,6 +337,18 @@ module.exports = {
           branchid: tags[i].branchid,
           tag: tags[i].tag
         }));
+      }
+      return Promise.all(promises);
+    }).then(function() {
+      // get the deleted branch's subbranches
+      return branch.findSubbranches(req.params.branchid, 0);
+    }).then(function(subbranches) {
+      // update all subbranches parents to 'root'
+      var promises = [];
+      for(var i = 0; i < subbranches.length; i++) {
+        var b = new Branch(subbranches[i]);
+        b.set('parentid', 'root');
+        promises.push(b.update());
       }
       return Promise.all(promises);
     }).then(function() {

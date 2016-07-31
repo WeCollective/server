@@ -140,7 +140,6 @@ Branch.prototype.findSubbranches = function(parentid, timeafter) {
         ":timeafter": Number(timeafter)
       }
     }, function(err, data) {
-      console.log(err);
       if(err) return reject(err);
       if(!data || !data.Items) {
         return reject();

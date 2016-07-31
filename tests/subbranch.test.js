@@ -197,4 +197,26 @@ module.exports = function(server) {
       .expect(200)
       .expect({ message: 'Success' }, done);
   });
+  it('should login successfully as admin', function(done) {
+    server.post('/user/login')
+      .send('username=mikechristensen')
+      .send('password=password')
+      .expect(200, done);
+  });
+  it('should successfully delete branch A', function(done) {
+    server.delete('/branch/a')
+      .expect(200, done);
+  });
+  it('should successfully delete branch D', function(done) {
+    server.delete('/branch/d')
+      .expect(200, done);
+  });
+  it('should successfully delete branch B', function(done) {
+    server.delete('/branch/b')
+      .expect(200, done);
+  });
+  it('should successfully delete branch C', function(done) {
+    server.delete('/branch/c')
+      .expect(200, done);
+  });
 };

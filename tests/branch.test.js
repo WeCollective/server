@@ -290,4 +290,18 @@ module.exports = function(server) {
       .expect(200)
       .expect({ message: 'Success' }, done);
   });
+  it('should login successfully as admin', function(done) {
+    server.post('/user/login')
+      .send('username=mikechristensen')
+      .send('password=password')
+      .expect(200, done);
+  });
+  it('should successfully delete branch', function(done) {
+    server.delete('/branch/branch')
+      .expect(200, done);
+  });
+  it('should successfully logout', function(done) {
+    server.get('/user/logout')
+      .expect(200, done);
+  });
 };

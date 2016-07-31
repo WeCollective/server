@@ -206,6 +206,10 @@ module.exports = {
       return branch.delete({
         id: req.params.branchid
       });
+    }, function(err) {
+      if(err) return error.InternalServerError(res);
+      // no err, branch was not found
+      return error.NotFound(res);
     }).then(function() {
       // get branch profile picture
       return new Promise(function(resolve, reject) {

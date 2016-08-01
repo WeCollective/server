@@ -31,9 +31,13 @@ SubBranchRequest.prototype.validate = function(properties) {
     if(/\s/g.test(this.data.parentid)) {
       invalids.push('parentid');
     }
-    // ensure id is lowercase
+    // ensure parentid is lowercase
     if((typeof this.data.parentid === 'string' || this.data.parentid instanceof String) &&
         this.data.parentid != this.data.parentid.toLowerCase()) {
+      invalids.push('parentid');
+    }
+    // ensure parentid is not root
+    if(this.data.parentid == 'root') {
       invalids.push('parentid');
     }
   }

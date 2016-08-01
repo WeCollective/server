@@ -36,9 +36,16 @@ module.exports = {
     }
 
     // ensure the specified branches exist
-    new Branch().findById(req.params.branchid).then(function() {
-      return new Branch().findById(req.params.childid);
+    var parent = new Branch();
+    var child = new Branch();
+    parent.findById(req.params.branchid).then(function() {
+      return child.findById(req.params.childid);
     }).then(function () {
+      // ensure the requested parent isn't already a parent
+      if(parent.data.id == child.data.parentid) {
+        return error.BadRequest(res, 'The requested branch is already a parent.');
+      }
+
       // ensure the requested parent is not a child branch
       var tag = new Tag();
       tag.findByBranch(req.params.branchid).then(function(parentTags) {

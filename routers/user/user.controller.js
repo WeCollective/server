@@ -139,9 +139,9 @@ module.exports = {
     }
     var size;
     if(type == 'picture') {
-      size = 500;
+      size = 640;
     } else {
-      size = 1280;
+      size = 1920;
     }
 
     var image = new UserImage();

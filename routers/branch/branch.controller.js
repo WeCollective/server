@@ -259,12 +259,12 @@ module.exports = {
         var objects = [];
         if(profile.data.id) {
           objects.push({
-            Key: profile.data.id + '-500.' + profile.data.extension
+            Key: profile.data.id + '-640.' + profile.data.extension
           });
         }
         if(cover.data.id) {
           objects.push({
-            Key: cover.data.id + '-1280.' + cover.data.extension
+            Key: cover.data.id + '-1920.' + cover.data.extension
           });
         }
         if(objects.length == 0) {
@@ -396,9 +396,9 @@ module.exports = {
     }
     var size;
     if(type == 'picture') {
-      size = 500;
+      size = 640;
     } else {
-      size = 1280;
+      size = 1920;
     }
 
     var image = new BranchImage();

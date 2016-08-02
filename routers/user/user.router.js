@@ -90,12 +90,20 @@ module.exports = function(app, passport) {
   // get authd user profile picture presigned url
   router.route('/me/picture')
     .get(ACL.validateRole(ACL.Roles.AuthenticatedUser), ACL.attachRole(ACL.Roles.Self), function(req, res) {
-      controller.getPicture(req, res, 'picture');
+      controller.getPicture(req, res, 'picture', false);
+    });
+  router.route('/me/picture-thumb')
+    .get(ACL.validateRole(ACL.Roles.AuthenticatedUser), ACL.attachRole(ACL.Roles.Self), function(req, res) {
+      controller.getPicture(req, res, 'picture', true);
     });
   // get authd user cover picture presigned url
   router.route('/me/cover')
     .get(ACL.validateRole(ACL.Roles.AuthenticatedUser), ACL.attachRole(ACL.Roles.Self), function(req, res) {
-      controller.getPicture(req, res, 'cover');
+      controller.getPicture(req, res, 'cover', false);
+    });
+  router.route('/me/cover-thumb')
+    .get(ACL.validateRole(ACL.Roles.AuthenticatedUser), ACL.attachRole(ACL.Roles.Self), function(req, res) {
+      controller.getPicture(req, res, 'cover', true);
     });
   // get user profile picture presigned url
   router.route('/:username/picture')
@@ -106,10 +114,24 @@ module.exports = function(app, passport) {
         } else {
           ACL.attachRole(ACL.Roles.AuthenticatedUser)(req, res);
         }
-        controller.getPicture(req, res, 'picture');
+        controller.getPicture(req, res, 'picture', false);
       } else {
         ACL.attachRole(ACL.Roles.Guest)(req, res);
-        controller.getPicture(req, res, 'picture');
+        controller.getPicture(req, res, 'picture', false);
+      }
+    });
+  router.route('/:username/picture-thumb')
+    .get(function(req, res) {
+      if(req.isAuthenticated() && req.user) {
+        if(req.user.username == req.params.username) {
+          ACL.attachRole(ACL.Roles.Self)(req, res);
+        } else {
+          ACL.attachRole(ACL.Roles.AuthenticatedUser)(req, res);
+        }
+        controller.getPicture(req, res, 'picture', true);
+      } else {
+        ACL.attachRole(ACL.Roles.Guest)(req, res);
+        controller.getPicture(req, res, 'picture', true);
       }
     });
   // get user cover picture presigned url
@@ -121,10 +143,24 @@ module.exports = function(app, passport) {
         } else {
           ACL.attachRole(ACL.Roles.AuthenticatedUser)(req, res);
         }
-        controller.getPicture(req, res, 'cover');
+        controller.getPicture(req, res, 'cover', false);
       } else {
         ACL.attachRole(ACL.Roles.Guest)(req, res);
-        controller.getPicture(req, res, 'cover');
+        controller.getPicture(req, res, 'cover', false);
+      }
+    });
+  router.route('/:username/cover-thumb')
+    .get(function(req, res) {
+      if(req.isAuthenticated() && req.user) {
+        if(req.user.username == req.params.username) {
+          ACL.attachRole(ACL.Roles.Self)(req, res);
+        } else {
+          ACL.attachRole(ACL.Roles.AuthenticatedUser)(req, res);
+        }
+        controller.getPicture(req, res, 'cover', true);
+      } else {
+        ACL.attachRole(ACL.Roles.Guest)(req, res);
+        controller.getPicture(req, res, 'cover', true);
       }
     });
 

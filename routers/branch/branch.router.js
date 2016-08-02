@@ -34,12 +34,22 @@ module.exports = function(app, passport) {
   // get branch profile picture presigned url
   router.route('/:branchid/picture')
     .get(function(req, res) {
-      controller.getPicture(req, res, 'picture');
+      controller.getPicture(req, res, 'picture', false);
+    });
+  // get branch profile picture presigned url
+  router.route('/:branchid/picture-thumb')
+    .get(function(req, res) {
+      controller.getPicture(req, res, 'picture', true);
     });
   // get branch cover picture presigned url
   router.route('/:branchid/cover')
     .get(function(req, res) {
-      controller.getPicture(req, res, 'cover');
+      controller.getPicture(req, res, 'cover', false);
+    });
+  // get branch cover picture presigned url
+  router.route('/:branchid/cover-thumb')
+    .get(function(req, res) {
+      controller.getPicture(req, res, 'cover', true);
     });
   // get child branches
   router.route('/:branchid/subbranches')

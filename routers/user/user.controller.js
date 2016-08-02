@@ -117,7 +117,7 @@ module.exports = {
       return success.OK(res, url);
     });
   },
-  getPicture: function(req, res, type) {
+  getPicture: function(req, res, type, thumbnail) {
     var username;
     if(req.ACLRole == ACL.Roles.Self) {
       // ensure user object has been attached by passport
@@ -139,9 +139,9 @@ module.exports = {
     }
     var size;
     if(type == 'picture') {
-      size = 640;
+      size = thumbnail ? 200 : 640;
     } else {
-      size = 1920;
+      size = thumbnail ? 800 : 1920;
     }
 
     var image = new UserImage();

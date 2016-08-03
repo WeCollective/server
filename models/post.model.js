@@ -86,4 +86,28 @@ Post.prototype.validate = function(properties) {
   return invalids;
 };
 
+// TODO: currently uses branchid-individual-index, make this versatile to
+// use a local stat index too. Should also filter by time!
+Post.prototype.findByBranch = function(branchid) {
+  var self = this;
+  return new Promise(function(resolve, reject) {
+    aws.dbClient.query({
+      TableName: self.config.table,
+      IndexName: self.config.keys.secondary.global,
+      Select: 'ALL_PROJECTED_ATTRIBUTES',
+      KeyConditionExpression: "branchid = :branchid",
+      ExpressionAttributeValues: {
+        ":branchid": String(branchid)
+      },
+      ScanIndexForward: false   // return results highest first
+    }, function(err, data) {
+      if(err) return reject(err);
+      if(!data || !data.Items) {
+        return reject();
+      }
+      return resolve(data.Items);
+    });
+  });
+};
+
 module.exports = Post;

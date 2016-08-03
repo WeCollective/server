@@ -3,6 +3,7 @@
 var aws = require('../../config/aws.js');
 var fs = require('../../config/filestorage.js');
 
+var Branch = require('../../models/branch.model.js');
 var Post = require('../../models/post.model.js');
 var PostData = require('../../models/post-data.model.js');
 
@@ -20,7 +21,11 @@ module.exports = {
       return error.BadRequest(res, 'Invalid title');
     }
 
-    req.body.branchids = JSON.parse(req.body.branchids);
+    try {
+      req.body.branchids = JSON.parse(req.body.branchids);
+    } catch(err) {
+      return error.BadRequest(res, 'Malformed branchids.');
+    }
     if(!req.body.branchids || req.body.branchids.length == 0 || req.body.branchids.length > 5) {
       return error.BadRequest(res, 'Invalid branchids');
     }
@@ -65,17 +70,31 @@ module.exports = {
       return error.BadRequest(res, 'Invalid ' + invalids[0]);
     }
 
+    // Check all the specified branches exist
     var promises = [];
     for(var i = 0; i < posts.length; i++) {
-      promises.push(posts[i].save());
+      promises.push(new Branch().findById(posts[i].data.branchid));
     }
 
-    Promise.all(promises).then(function() {
-      return postdata.save();
-    }).then(function() {
-      return success.OK(res);
-    }).catch(function() {
-      return error.InternalServerError(res);
+    Promise.all(promises).then(function () {
+      // save a post entry for each specified branch
+      promises = [];
+      for(var i = 0; i < posts.length; i++) {
+        promises.push(posts[i].save());
+      }
+
+      Promise.all(promises).then(function() {
+        return postdata.save();
+      }).then(function() {
+        return success.OK(res);
+      }).catch(function() {
+        return error.InternalServerError(res);
+      });
+    }, function(err) {
+      if(err) {
+        return error.InternalServerError(res);
+      }
+      return error.NotFound(res, 'One of the specified branches doesn\'t exist.');
     });
   }
 };

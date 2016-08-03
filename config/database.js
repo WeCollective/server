@@ -106,7 +106,10 @@ var Keys = {
     }
   },
   Posts: {
-    primary: 'id'
+    primary: 'id',
+    secondary: {
+      global: 'branchid-individual-index'
+    }
   },
   PostData: {
     primary: 'id'

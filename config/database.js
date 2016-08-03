@@ -51,6 +51,22 @@ var Schema = {
   Tag: {
     branchid: null,
     tag: null
+  },
+  Post: {
+    id: null,
+    branchid: null,
+    type: null,
+    local: null,
+    individual: null,
+    up: null,
+    down: null
+  },
+  PostData: {
+    id: null,
+    creator: null,
+    date: null,
+    title: null,
+    text: null
   }
 };
 
@@ -88,6 +104,12 @@ var Keys = {
     secondary: {
       global: 'tag-branchid-index'
     }
+  },
+  Posts: {
+    primary: 'id'
+  },
+  PostData: {
+    primary: 'id'
   }
 };
 
@@ -103,7 +125,9 @@ var config = {
     Mods: 'Mods',
     ModLog: 'ModLog',
     SubBranchRequests: 'SubBranchRequests',
-    Tags: 'Tags'
+    Tags: 'Tags',
+    Posts: 'Posts',
+    PostData: 'PostData'
   },
   // Model schemas
   Schema: Schema,

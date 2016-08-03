@@ -45,9 +45,30 @@ Branch.prototype.validate = function(properties) {
     }
   }
 
-  // TODO ensure creator is valid username
+  // ensure creator is valid username
   if(properties.indexOf('creator') > -1) {
-    if(!this.data.creator) {
+    // ensure creator length is over 1 char and less than 20
+    if(!this.data.creator ||
+        this.data.creator.length < 1 || this.data.creator.length > 20) {
+      invalids.push('creator');
+    }
+    // ensure creator contains no whitespace
+    if(/\s/g.test(this.data.creator)) {
+      invalids.push('creator');
+    }
+    // ensure username is lowercase
+    if((typeof this.data.creator === 'string' || this.data.creator instanceof String) &&
+        this.data.creator != this.data.creator.toLowerCase()) {
+      invalids.push('creator');
+    }
+    // ensure username is not one of the banned words
+    // (these words are used in user image urls and routes)
+    var bannedUsernames = ['me', 'orig', 'picture', 'cover'];
+    if(bannedUsernames.indexOf(this.data.creator) > -1) {
+      invalids.push('creator');
+    }
+    // ensure username is not only numeric
+    if(Number(this.data.creator)) {
       invalids.push('creator');
     }
   }

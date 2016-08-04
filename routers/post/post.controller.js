@@ -96,5 +96,18 @@ module.exports = {
       }
       return error.NotFound(res, 'One of the specified branches doesn\'t exist.');
     });
+  },
+  get: function(req, res) {
+    if(!req.params.postid) {
+      return error.BadRequest(res, 'Missing postid');
+    }
+
+    var post = new PostData();
+    post.findById(req.params.postid).then(function() {
+      return success.OK(res, post.data);
+    }, function () {
+      console.error("Error fetching post data");
+      return error.InternalServerError(res);
+    });
   }
 };

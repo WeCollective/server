@@ -90,4 +90,26 @@ PostData.prototype.validate = function(properties) {
   return invalids;
 };
 
+// Get a post' data by its id from the db, and
+// instantiate the object with this data.
+// Rejects promise with true if database error, with false if no post found.
+PostData.prototype.findById = function(id) {
+  var self = this;
+  return new Promise(function(resolve, reject) {
+    aws.dbClient.get({
+      TableName: self.config.table,
+      Key: {
+        'id': id
+      }
+    }, function(err, data) {
+      if(err) return reject(err);
+      if(!data || !data.Item) {
+        return reject();
+      }
+      self.data = data.Item;
+      return resolve();
+    });
+  });
+};
+
 module.exports = PostData;

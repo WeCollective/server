@@ -10,5 +10,8 @@ module.exports = function(app, passport) {
   router.route('/')
     .post(ACL.validateRole(ACL.Roles.AuthenticatedUser), controller.post);
 
+  router.route('/:postid')
+    .get(controller.get);
+
   return router;
 }

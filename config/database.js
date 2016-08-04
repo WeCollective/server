@@ -67,6 +67,11 @@ var Schema = {
     date: null,
     title: null,
     text: null
+  },
+  PostImages: {
+    id: null,
+    date: null,
+    extension: null
   }
 };
 
@@ -113,6 +118,9 @@ var Keys = {
   },
   PostData: {
     primary: 'id'
+  },
+  PostImages: {
+    primary: 'id'
   }
 };
 
@@ -130,7 +138,8 @@ var config = {
     SubBranchRequests: 'SubBranchRequests',
     Tags: 'Tags',
     Posts: 'Posts',
-    PostData: 'PostData'
+    PostData: 'PostData',
+    PostImages: 'PostImages'
   },
   // Model schemas
   Schema: Schema,

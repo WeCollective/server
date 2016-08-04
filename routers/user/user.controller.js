@@ -158,7 +158,7 @@ module.exports = {
       });
     }, function(err) {
       if(err) {
-        console.error("Error fetching user.");
+        console.error("Error fetching user image.");
         return error.InternalServerError(res);
       }
       return error.NotFound(res);

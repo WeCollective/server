@@ -6,6 +6,7 @@ var fs = require('../../config/filestorage.js');
 var Branch = require('../../models/branch.model.js');
 var Post = require('../../models/post.model.js');
 var PostData = require('../../models/post-data.model.js');
+var PostImage = require('../../models/post-image.model.js');
 
 var success = require('../../responses/successes.js');
 var error = require('../../responses/errors.js');
@@ -86,7 +87,8 @@ module.exports = {
       Promise.all(promises).then(function() {
         return postdata.save();
       }).then(function() {
-        return success.OK(res);
+        // successfully create post, send back its id
+        return success.OK(res, id);
       }).catch(function() {
         return error.InternalServerError(res);
       });
@@ -105,9 +107,73 @@ module.exports = {
     var post = new PostData();
     post.findById(req.params.postid).then(function() {
       return success.OK(res, post.data);
-    }, function () {
-      console.error("Error fetching post data");
-      return error.InternalServerError(res);
+    }, function(err) {
+      if(err) {
+        console.error("Error fetching post data");
+        return error.InternalServerError(res);
+      }
+      return error.NotFound(res);
+    });
+  },
+  getPictureUploadUrl: function(req, res) {
+    if(!req.user || !req.user.username) {
+      return error.Forbidden(res);
+    }
+
+    if(!req.params.postid) {
+      return error.BadRequest(res, 'Missing postid');
+    }
+
+    // ensure this user is the creator of the specified post
+    var post = new PostData();
+    post.findById(req.params.postid).then(function() {
+      if(post.data.creator != req.user.username) {
+        // user did not create this post
+        return error.Forbidden(res);
+      }
+
+      var filename = req.params.postid + '-picture-orig.jpg';
+      var params = {
+        Bucket: fs.Bucket.PostImages,
+        Key: filename,
+        ContentType: 'image/*'
+      }
+      var url = aws.s3Client.getSignedUrl('putObject', params, function(err, url) {
+        return success.OK(res, url);
+      });
+    }, function(err) {
+      if(err) {
+        console.error("Error fetching post data");
+        return error.InternalServerError(res);
+      }
+      return error.NotFound(res);
+    });
+  },
+  getPicture: function(req, res, thumbnail) {
+    if(!req.params.postid) {
+      return error.BadRequest(res, 'Missing postid');
+    }
+
+    var size = thumbnail ? 200 : 640;
+
+    var image = new PostImage();
+    image.findById(req.params.postid).then(function() {
+      aws.s3Client.getSignedUrl('getObject', {
+        Bucket: fs.Bucket.PostImagesResized,
+        Key: image.data.id + '-' + size + '.' + image.data.extension
+      }, function(err, url) {
+        if(err) {
+          console.error("Error getting signed url.");
+          return error.InternalServerError(res);
+        }
+        return success.OK(res, url);
+      });
+    }, function(err) {
+      if(err) {
+        console.error("Error fetching post image.");
+        return error.InternalServerError(res);
+      }
+      return error.NotFound(res);
     });
   }
 };

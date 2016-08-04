@@ -7,7 +7,9 @@ var config = {
     UserImages: 'weco-user-images',
     UserImagesResized: 'weco-user-images-resized',
     BranchImages: 'weco-branch-images',
-    BranchImagesResized: 'weco-branch-images-resized'
+    BranchImagesResized: 'weco-branch-images-resized',
+    PostImages: 'weco-post-images',
+    PostImagesResized: 'weco-post-images-resized'
   }
 }
 

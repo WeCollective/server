@@ -3,6 +3,7 @@
 var Model = require('./model.js');
 var db = require('../config/database.js');
 var aws = require('../config/aws.js');
+var validate = require('./validate.js');
 
 var ModLogEntry = function(data) {
   this.config = {
@@ -24,40 +25,19 @@ ModLogEntry.prototype.validate = function(properties) {
 
   // ensure branchid exists and is of correct length
   if(properties.indexOf('branchid') > -1) {
-    if(!this.data.branchid || this.data.branchid.length < 1 || this.data.branchid.length > 30) {
-      invalids.push('branchid');
-    }
-    // ensure branchid contains no whitespace
-    if(/\s/g.test(this.data.branchid)) {
+    if(!validate.branchid(this.data.branchid)) {
       invalids.push('branchid');
     }
   }
 
   if(properties.indexOf('username') > -1) {
-    // ensure username length is over 1 char and less than 20
-    if(!this.data.username ||
-        this.data.username.length < 1 || this.data.username.length > 20) {
-      invalids.push('username');
-    }
-    // ensure username contains no whitespace
-    if(/\s/g.test(this.data.username)) {
-      invalids.push('username');
-    }
-    // ensure username is not one of the banned words
-    // (these words are used in user image urls and routes)
-    var bannedUsernames = ['me', 'orig', 'picture', 'cover'];
-    if(bannedUsernames.indexOf(this.data.username) > -1) {
-      invalids.push('username');
-    }
-    // ensure username is not only numeric
-    if(Number(this.data.username)) {
+    if(!validate.username(this.data.username)) {
       invalids.push('username');
     }
   }
 
   if(properties.indexOf('date') > -1) {
-    // check for valid date joined
-    if(!this.data.date || !Number(this.data.date) > 0) {
+    if(!validate.date(this.data.date)) {
       invalids.push('date');
     }
   }

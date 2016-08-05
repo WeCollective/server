@@ -3,6 +3,7 @@
 var Model = require('./model.js');
 var db = require('../config/database.js');
 var aws = require('../config/aws.js');
+var validate = require('./validate.js');
 
 var Post = function(data) {
   this.config = {
@@ -24,38 +25,14 @@ Post.prototype.validate = function(properties) {
 
   // ensure id exists and is of correct length
   if(properties.indexOf('id') > -1) {
-    if(!this.data.id || this.data.id.length < 1 || this.data.id.length > 45) {
-      invalids.push('id');
-    }
-    // ensure id contains no whitespace
-    if(/\s/g.test(this.data.id)) {
-      invalids.push('id');
-    }
-    // ensure id is lowercase
-    if((typeof this.data.id === 'string' || this.data.id instanceof String) &&
-        this.data.id != this.data.id.toLowerCase()) {
+    if(!validate.postid(this.data.id)) {
       invalids.push('id');
     }
   }
 
   // ensure branchid exists and is of correct length
   if(properties.indexOf('branchid') > -1) {
-    if(!this.data.branchid || this.data.branchid.length < 1 || this.data.branchid.length > 30) {
-      invalids.push('branchid');
-    }
-    // ensure branchid contains no whitespace
-    if(/\s/g.test(this.data.branchid)) {
-      invalids.push('branchid');
-    }
-    // ensure branchid is lowercase
-    if((typeof this.data.branchid === 'string' || this.data.branchid instanceof String) &&
-        this.data.branchid != this.data.branchid.toLowerCase()) {
-      invalids.push('branchid');
-    }
-    // ensure branchid is not one of the banned words
-    // (these words are used in urls and routes)
-    var bannedIds = ['p'];
-    if(bannedIds.indexOf(this.data.branchid) > -1) {
+    if(!validate.branchid(this.data.branchid)) {
       invalids.push('branchid');
     }
     // ensure not posting to root wall
@@ -66,7 +43,7 @@ Post.prototype.validate = function(properties) {
 
   // ensure creation date is valid
   if(properties.indexOf('date') > -1) {
-    if(!this.data.date || !Number(this.data.date) > 0) {
+    if(!validate.date(this.data.date)) {
       invalids.push('date');
     }
   }

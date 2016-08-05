@@ -3,6 +3,7 @@
 var Model = require('./model.js');
 var db = require('../config/database.js');
 var aws = require('../config/aws.js');
+var validate = require('./validate.js');
 
 var Mod = function(data) {
   this.config = {
@@ -24,25 +25,20 @@ Mod.prototype.validate = function(properties) {
 
   // ensure id exists and is of correct length
   if(properties.indexOf('branchid') > -1) {
-    if(!this.data.branchid || this.data.branchid.length < 1 || this.data.branchid.length > 30) {
-      invalids.push('branchid');
-    }
-    // ensure id contains no whitespace
-    if(/\s/g.test(this.data.branchid)) {
+    if(!validate.branchid(this.data.branchid)) {
       invalids.push('branchid');
     }
   }
 
   // ensure creation date is valid
   if(properties.indexOf('date') > -1) {
-    if(!this.data.date || !Number(this.data.date) > 0) {
+    if(!validate.date(this.data.date)) {
       invalids.push('date');
     }
   }
 
-  // TODO ensure username is existing + valid username
   if(properties.indexOf('username') > -1) {
-    if(!this.data.username) {
+    if(!validate.username(this.data.username)) {
       invalids.push('username');
     }
   }

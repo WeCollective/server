@@ -3,6 +3,7 @@
 var Model = require('./model.js');
 var db = require('../config/database.js');
 var aws = require('../config/aws.js');
+var validate = require('./validate.js');
 
 var PostImage = function(data) {
   this.config = {
@@ -28,14 +29,13 @@ PostImage.prototype.validate = function() {
   }
 
   // check for valid date
-  if(!this.data.date || !Number(this.data.date) > 0) {
+  if(!validate.date(this.data.date)) {
     invalids.push('date');
   }
 
   // check for valid extension
-  var extensions = ['jpg', 'JPG', 'jpe', 'JPE', 'jpeg', 'JPEG', 'png', 'PNG', 'bmp', 'BMP'];
-  if(extensions.indexOf(this.data.extension) == -1) {
-    invalids.push(this.data.extension);
+  if(!validate.extension(this.data.extension)) {
+    invalids.push('extension');
   }
 
   return invalids;

@@ -3,6 +3,7 @@
 var Model = require('./model.js');
 var db = require('../config/database.js');
 var aws = require('../config/aws.js');
+var validate = require('./validate.js');
 
 var SubBranchRequest = function(data) {
   this.config = {
@@ -24,16 +25,7 @@ SubBranchRequest.prototype.validate = function(properties) {
 
   // ensure parentid exists and is of correct length
   if(properties.indexOf('parentid') > -1) {
-    if(!this.data.parentid || this.data.parentid.length < 1 || this.data.parentid.length > 30) {
-      invalids.push('parentid');
-    }
-    // ensure parentid contains no whitespace
-    if(/\s/g.test(this.data.parentid)) {
-      invalids.push('parentid');
-    }
-    // ensure parentid is lowercase
-    if((typeof this.data.parentid === 'string' || this.data.parentid instanceof String) &&
-        this.data.parentid != this.data.parentid.toLowerCase()) {
+    if(!validate.branchid(this.data.parentid)) {
       invalids.push('parentid');
     }
     // ensure parentid is not root
@@ -44,30 +36,20 @@ SubBranchRequest.prototype.validate = function(properties) {
 
   // ensure childid exists and is of correct length
   if(properties.indexOf('childid') > -1) {
-    if(!this.data.childid || this.data.childid.length < 1 || this.data.childid.length > 30) {
-      invalids.push('childid');
-    }
-    // ensure childid contains no whitespace
-    if(/\s/g.test(this.data.childid)) {
-      invalids.push('childid');
-    }
-    // ensure id is lowercase
-    if((typeof this.data.childid === 'string' || this.data.childid instanceof String) &&
-        this.data.childid != this.data.childid.toLowerCase()) {
+    if(!validate.branchid(this.data.childid)) {
       invalids.push('childid');
     }
   }
 
   // ensure creation date is valid
   if(properties.indexOf('date') > -1) {
-    if(!this.data.date || !Number(this.data.date) > 0) {
+    if(!validate.date(this.data.date)) {
       invalids.push('date');
     }
   }
 
-  // TODO ensure creator is valid username
   if(properties.indexOf('creator') > -1) {
-    if(!this.data.creator) {
+    if(!validate.username(this.data.creator)) {
       invalids.push('creator');
     }
   }

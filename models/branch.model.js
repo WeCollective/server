@@ -3,6 +3,7 @@
 var Model = require('./model.js');
 var db = require('../config/database.js');
 var aws = require('../config/aws.js');
+var validate = require('./validate.js');
 
 var Branch = function(data) {
   this.config = {
@@ -24,22 +25,7 @@ Branch.prototype.validate = function(properties) {
 
   // ensure id exists and is of correct length
   if(properties.indexOf('id') > -1) {
-    if(!this.data.id || this.data.id.length < 1 || this.data.id.length > 30) {
-      invalids.push('id');
-    }
-    // ensure id contains no whitespace
-    if(/\s/g.test(this.data.id)) {
-      invalids.push('id');
-    }
-    // ensure id is lowercase
-    if((typeof this.data.id === 'string' || this.data.id instanceof String) &&
-        this.data.id != this.data.id.toLowerCase()) {
-      invalids.push('id');
-    }
-    // ensure id is not one of the banned words
-    // (these words are used in urls and routes)
-    var bannedIds = ['p'];
-    if(bannedIds.indexOf(this.data.id) > -1) {
+    if(!validate.branchid(this.data.id)) {
       invalids.push('id');
     }
   }
@@ -53,56 +39,21 @@ Branch.prototype.validate = function(properties) {
 
   // ensure creator is valid username
   if(properties.indexOf('creator') > -1) {
-    // ensure creator length is over 1 char and less than 20
-    if(!this.data.creator ||
-        this.data.creator.length < 1 || this.data.creator.length > 20) {
-      invalids.push('creator');
-    }
-    // ensure creator contains no whitespace
-    if(/\s/g.test(this.data.creator)) {
-      invalids.push('creator');
-    }
-    // ensure username is lowercase
-    if((typeof this.data.creator === 'string' || this.data.creator instanceof String) &&
-        this.data.creator != this.data.creator.toLowerCase()) {
-      invalids.push('creator');
-    }
-    // ensure username is not one of the banned words
-    // (these words are used in user image urls and routes)
-    var bannedUsernames = ['me', 'orig', 'picture', 'cover'];
-    if(bannedUsernames.indexOf(this.data.creator) > -1) {
-      invalids.push('creator');
-    }
-    // ensure username is not only numeric
-    if(Number(this.data.creator)) {
+    if(!validate.username(this.data.creator)) {
       invalids.push('creator');
     }
   }
 
   // ensure creation date is valid
   if(properties.indexOf('date') > -1) {
-    if(!this.data.date || !Number(this.data.date) > 0) {
+    if(!validate.date(this.data.date)) {
       invalids.push('date');
     }
   }
 
   // ensure valid parentid
   if(properties.indexOf('parentid') > -1) {
-    // ensure it is of the correct length
-    if(!this.data.parentid || this.data.parentid.length < 1 || this.data.parentid.length > 20) {
-      invalids.push('parentid');
-    }
-    // ensure it contains no whitespace
-    if(/\s/g.test(this.data.parentid)) {
-      invalids.push('parentid');
-    }
-    // ensure it is not a reserved word
-    if(this.data.parentid == 'none') {
-      invalids.push('parentid');
-    }
-    // ensure it is lowercase
-    if((typeof this.data.parentid === 'string' || this.data.parentid instanceof String) &&
-        this.data.parentid != this.data.parentid.toLowerCase()) {
+    if(!validate.branchid(this.data.parentid)) {
       invalids.push('parentid');
     }
   }

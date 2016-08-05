@@ -3,6 +3,7 @@
 var Model = require('./model.js');
 var db = require('../config/database.js');
 var aws = require('../config/aws.js');
+var validate = require('./validate.js');
 
 var PostData = function(data) {
   this.config = {
@@ -24,44 +25,14 @@ PostData.prototype.validate = function(properties) {
 
   // ensure id exists and is of correct length
   if(properties.indexOf('id') > -1) {
-    if(!this.data.id || this.data.id.length < 1 || this.data.id.length > 45) {
-      invalids.push('id');
-    }
-    // ensure id contains no whitespace
-    if(/\s/g.test(this.data.id)) {
-      invalids.push('id');
-    }
-    // ensure id is lowercase
-    if((typeof this.data.id === 'string' || this.data.id instanceof String) &&
-        this.data.id != this.data.id.toLowerCase()) {
+    if(!validate.postid(this.data.id)) {
       invalids.push('id');
     }
   }
 
   // ensure creator is valid username
   if(properties.indexOf('creator') > -1) {
-    // ensure creator length is over 1 char and less than 20
-    if(!this.data.creator ||
-        this.data.creator.length < 1 || this.data.creator.length > 20) {
-      invalids.push('creator');
-    }
-    // ensure creator contains no whitespace
-    if(/\s/g.test(this.data.creator)) {
-      invalids.push('creator');
-    }
-    // ensure username is lowercase
-    if((typeof this.data.creator === 'string' || this.data.creator instanceof String) &&
-        this.data.creator != this.data.creator.toLowerCase()) {
-      invalids.push('creator');
-    }
-    // ensure username is not one of the banned words
-    // (these words are used in user image urls and routes)
-    var bannedUsernames = ['me', 'orig', 'picture', 'cover'];
-    if(bannedUsernames.indexOf(this.data.creator) > -1) {
-      invalids.push('creator');
-    }
-    // ensure username is not only numeric
-    if(Number(this.data.creator)) {
+    if(!validate.username(this.data.creator)) {
       invalids.push('creator');
     }
   }

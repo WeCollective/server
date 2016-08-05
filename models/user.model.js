@@ -3,6 +3,7 @@
 var Model = require('./model.js');
 var db = require('../config/database.js');
 var aws = require('../config/aws.js');
+var validate = require('./validate.js');
 
 var User = function(data) {
   this.config = {
@@ -28,28 +29,7 @@ User.prototype.validate = function(properties) {
   var invalids = [];
 
   if(properties.indexOf('username') > -1) {
-    // ensure username length is over 1 char and less than 20
-    if(!this.data.username ||
-        this.data.username.length < 1 || this.data.username.length > 20) {
-      invalids.push('username');
-    }
-    // ensure username contains no whitespace
-    if(/\s/g.test(this.data.username)) {
-      invalids.push('username');
-    }
-    // ensure username is lowercase
-    if((typeof this.data.username === 'string' || this.data.username instanceof String) &&
-        this.data.username != this.data.username.toLowerCase()) {
-      invalids.push('username');
-    }
-    // ensure username is not one of the banned words
-    // (these words are used in user image urls and routes)
-    var bannedUsernames = ['me', 'orig', 'picture', 'cover'];
-    if(bannedUsernames.indexOf(this.data.username) > -1) {
-      invalids.push('username');
-    }
-    // ensure username is not only numeric
-    if(Number(this.data.username)) {
+    if(!validate.username(this.data.username)) {
       invalids.push('username');
     }
   }
@@ -97,18 +77,14 @@ User.prototype.validate = function(properties) {
   }
 
   if(properties.indexOf('datejoined') > -1) {
-    // check for valid date joined
-    if(!this.data.datejoined || !Number(this.data.datejoined) > 0) {
+    if(!validate.date(this.data.datejoined)) {
       invalids.push('datejoined');
     }
   }
 
   if(properties.indexOf('dob') > -1) {
-    // check for valid date of birth
-    if(this.data.dob) {
-      if(!Number(this.data.dob) > 0) {
-        invalids.push('dob');
-      }
+    if(!validate.date(this.data.dob)) {
+      invalids.push('dob');
     }
   }
 

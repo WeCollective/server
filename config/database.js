@@ -55,16 +55,17 @@ var Schema = {
   Post: {
     id: null,
     branchid: null,
+    date: null,
     type: null,
     local: null,
     individual: null,
     up: null,
-    down: null
+    down: null,
+    rank: null
   },
   PostData: {
     id: null,
     creator: null,
-    date: null,
     title: null,
     text: null
   },

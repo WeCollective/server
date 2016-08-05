@@ -66,13 +66,6 @@ PostData.prototype.validate = function(properties) {
     }
   }
 
-  // ensure creation date is valid
-  if(properties.indexOf('date') > -1) {
-    if(!this.data.date || !Number(this.data.date) > 0) {
-      invalids.push('date');
-    }
-  }
-
   // ensure title is valid
   if(properties.indexOf('title') > -1) {
     if(!this.data.title || this.data.title.length < 1 || this.data.title.length > 300) {

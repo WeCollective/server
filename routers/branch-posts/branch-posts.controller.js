@@ -13,8 +13,14 @@ module.exports = {
     if(!req.params.branchid) {
       return error.BadRequest(res, 'Missing branchid');
     }
+
+    var timeafter = req.query.timeafter;
+    if(!req.query.timeafter) {
+      timeafter = 0;
+    }
+
     // TODO: add support for different stats and time filters
-    new Post().findByBranch(req.params.branchid).then(function(posts) {
+    new Post().findByBranch(req.params.branchid, timeafter).then(function(posts) {
       return success.OK(res, posts);
     }, function () {
       console.error('Error fetching posts on branch.');

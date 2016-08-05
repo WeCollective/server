@@ -40,15 +40,17 @@ module.exports = {
       var post = new Post({
         id: id,
         branchid: req.body.branchids[i],
+        date: date,
         type: req.body.type,
         local: 0,
         individual: 0,
         up: 0,
-        down: 0
+        down: 0,
+        rank: 0
       });
 
       // validate post properties
-      propertiesToCheck = ['id', 'branchid', 'type', 'local', 'individual', 'up', 'down'];
+      propertiesToCheck = ['id', 'branchid', 'date', 'type', 'local', 'individual', 'up', 'down', 'rank'];
       invalids = post.validate(propertiesToCheck);
       if(invalids.length > 0) {
         return error.BadRequest(res, 'Invalid ' + invalids[0]);
@@ -59,13 +61,12 @@ module.exports = {
     var postdata = new PostData({
       id: id,
       creator: req.user.username,
-      date: date,
       title: req.body.title,
       text: req.body.text
     });
 
     // validate postdata properties
-    propertiesToCheck = ['id', 'creator', 'date', 'title', 'text'];
+    propertiesToCheck = ['id', 'creator', 'title', 'text'];
     invalids = postdata.validate(propertiesToCheck);
     if(invalids.length > 0) {
       return error.BadRequest(res, 'Invalid ' + invalids[0]);
@@ -106,7 +107,7 @@ module.exports = {
 
     var post;
     var postdata = new PostData();
-    new Post().findById(req.params.postid).then(function(posts) {
+    new Post().findById(req.params.postid, 0).then(function(posts) {
       if(!posts || posts.length == 0) {
         return error.NotFound(res);
       }

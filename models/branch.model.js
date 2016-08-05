@@ -36,6 +36,12 @@ Branch.prototype.validate = function(properties) {
         this.data.id != this.data.id.toLowerCase()) {
       invalids.push('id');
     }
+    // ensure id is not one of the banned words
+    // (these words are used in urls and routes)
+    var bannedIds = ['p'];
+    if(bannedIds.indexOf(this.data.id) > -1) {
+      invalids.push('id');
+    }
   }
 
   // ensure name exists and is of correct length

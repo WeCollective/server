@@ -52,6 +52,23 @@ Post.prototype.validate = function(properties) {
         this.data.branchid != this.data.branchid.toLowerCase()) {
       invalids.push('branchid');
     }
+    // ensure branchid is not one of the banned words
+    // (these words are used in urls and routes)
+    var bannedIds = ['p'];
+    if(bannedIds.indexOf(this.data.branchid) > -1) {
+      invalids.push('branchid');
+    }
+    // ensure not posting to root wall
+    if(this.data.branchid == 'root') {
+      invalids.push('branchid');
+    }
+  }
+
+  // ensure creation date is valid
+  if(properties.indexOf('date') > -1) {
+    if(!this.data.date || !Number(this.data.date) > 0) {
+      invalids.push('date');
+    }
   }
 
   // ensure type is valid
@@ -82,6 +99,11 @@ Post.prototype.validate = function(properties) {
       invalids.push('down');
     }
   }
+  if(properties.indexOf('rank') > -1) {
+    if(isNaN(this.data.rank)) {
+      invalids.push('rank');
+    }
+  }
 
   return invalids;
 };
@@ -108,8 +130,9 @@ Post.prototype.findById = function(id) {
 };
 
 // TODO: currently uses branchid-individual-index, make this versatile to
-// use a local stat index too. Should also filter by time!
-Post.prototype.findByBranch = function(branchid) {
+// use a local stat index too.
+// Fetch the posts on a specific branch, using a specific stat, and filtered by time
+Post.prototype.findByBranch = function(branchid, timeafter) {
   var self = this;
   return new Promise(function(resolve, reject) {
     aws.dbClient.query({
@@ -117,8 +140,14 @@ Post.prototype.findByBranch = function(branchid) {
       IndexName: self.config.keys.secondary.global,
       Select: 'ALL_PROJECTED_ATTRIBUTES',
       KeyConditionExpression: "branchid = :branchid",
+      FilterExpression: "#date >= :timeafter",
+      // date is a reserved dynamodb keyword so must use this alias:
+      ExpressionAttributeNames: {
+        "#date": "date"
+      },
       ExpressionAttributeValues: {
-        ":branchid": String(branchid)
+        ":branchid": String(branchid),
+        ":timeafter": Number(timeafter)
       },
       ScanIndexForward: false   // return results highest first
     }, function(err, data) {

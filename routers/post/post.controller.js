@@ -104,10 +104,18 @@ module.exports = {
       return error.BadRequest(res, 'Missing postid');
     }
 
-    var post = new PostData();
-    post.findById(req.params.postid).then(function() {
-      return success.OK(res, post.data);
-    }, function(err) {
+    var post;
+    var postdata = new PostData();
+    new Post().findById(req.params.postid).then(function(posts) {
+      if(!posts || posts.length == 0) {
+        return error.NotFound(res);
+      }
+      post = posts[0];
+      return postdata.findById(req.params.postid);
+    }).then(function() {
+      post.data = postdata.data;
+      return success.OK(res, post);
+    }).catch(function(err) {
       if(err) {
         console.error("Error fetching post data");
         return error.InternalServerError(res);

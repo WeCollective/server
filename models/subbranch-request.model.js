@@ -87,7 +87,7 @@ SubBranchRequest.prototype.findByBranch = function(branchid) {
   return new Promise(function(resolve, reject) {
     aws.dbClient.query({
       TableName: self.config.table,
-      IndexName: self.config.keys.secondary.global,
+      IndexName: self.config.keys.globalIndexes[0],
       KeyConditionExpression: "parentid = :id",
       ExpressionAttributeValues: {
         ":id": branchid

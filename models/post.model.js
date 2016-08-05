@@ -114,7 +114,7 @@ Post.prototype.findByBranch = function(branchid, timeafter) {
   return new Promise(function(resolve, reject) {
     aws.dbClient.query({
       TableName: self.config.table,
-      IndexName: self.config.keys.secondary.global,
+      IndexName: self.config.keys.globalIndexes[0],
       Select: 'ALL_PROJECTED_ATTRIBUTES',
       KeyConditionExpression: "branchid = :branchid",
       FilterExpression: "#date >= :timeafter",

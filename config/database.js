@@ -86,9 +86,7 @@ var Keys = {
   },
   Branches: {
     primary: 'id',
-    secondary: {
-      global: 'parentid-date-index'
-    }
+    globalIndexes: ['parentid-date-index']
   },
   BranchImages: {
     primary: 'id'
@@ -101,21 +99,15 @@ var Keys = {
   },
   SubBranchRequests: {
     primary: 'parentid',
-    secondary: {
-      global: 'parentid-date-index'
-    }
+    globalIndexes: ['parentid-date-index']
   },
   Tags: {
     primary: 'branchid',
-    secondary: {
-      global: 'tag-branchid-index'
-    }
+    globalIndexes: ['tag-branchid-index']
   },
   Posts: {
     primary: 'id',
-    secondary: {
-      global: 'branchid-individual-index'
-    }
+    globalIndexes: ['branchid-individual-index']
   },
   PostData: {
     primary: 'id'

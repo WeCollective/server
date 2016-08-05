@@ -68,7 +68,7 @@ Tag.prototype.findByTag = function(tag) {
   return new Promise(function(resolve, reject) {
     aws.dbClient.query({
       TableName: self.config.table,
-      IndexName: self.config.keys.secondary.global,
+      IndexName: self.config.keys.globalIndexes[0],
       KeyConditionExpression: "tag = :tag",
       ExpressionAttributeValues: {
         ":tag": tag

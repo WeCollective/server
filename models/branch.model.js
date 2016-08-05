@@ -106,7 +106,7 @@ Branch.prototype.findSubbranches = function(parentid, timeafter) {
   return new Promise(function(resolve, reject) {
     aws.dbClient.query({
       TableName: self.config.table,
-      IndexName: self.config.keys.secondary.global,
+      IndexName: self.config.keys.globalIndexes[0],
       Select: 'ALL_PROJECTED_ATTRIBUTES',
       KeyConditionExpression: "parentid = :parentid AND #date >= :timeafter",
       // date is a reserved dynamodb keyword so must use this alias:

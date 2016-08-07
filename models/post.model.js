@@ -50,7 +50,9 @@ Post.prototype.validate = function(properties) {
 
   // ensure type is valid
   if(properties.indexOf('type') > -1) {
-    if(this.data.type != 'text') {
+    if(this.data.type != 'text' && this.data.type != 'page' &&
+       this.data.type != 'image' && this.data.type != 'audio' &&
+       this.data.type != 'video') {
       invalids.push('type');
     }
   }

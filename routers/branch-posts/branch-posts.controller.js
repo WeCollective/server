@@ -19,8 +19,12 @@ module.exports = {
       timeafter = 0;
     }
 
-    // TODO: add support for different stats and time filters
-    new Post().findByBranch(req.params.branchid, timeafter).then(function(posts) {
+    var stat = req.query.stat;
+    if(!req.query.stat) {
+      stat = 'individual';
+    }
+
+    new Post().findByBranch(req.params.branchid, timeafter, stat).then(function(posts) {
       return success.OK(res, posts);
     }, function () {
       console.error('Error fetching posts on branch.');

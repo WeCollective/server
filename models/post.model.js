@@ -104,15 +104,25 @@ Post.prototype.findById = function(id) {
   });
 };
 
-// TODO: currently uses branchid-individual-index, make this versatile to
-// use a local stat index too.
 // Fetch the posts on a specific branch, using a specific stat, and filtered by time
-Post.prototype.findByBranch = function(branchid, timeafter) {
+Post.prototype.findByBranch = function(branchid, timeafter, stat) {
   var self = this;
+  var index = self.config.keys.globalIndexes[0];
+  switch(stat) {
+    case 'individual':
+      index = self.config.keys.globalIndexes[0];
+      break;
+    case 'local':
+      index = self.config.keys.globalIndexes[1];
+      break;
+    case 'global':
+      index = self.config.keys.globalIndexes[2];
+      break;
+  }
   return new Promise(function(resolve, reject) {
     aws.dbClient.query({
       TableName: self.config.table,
-      IndexName: self.config.keys.globalIndexes[0],
+      IndexName: index,
       Select: 'ALL_PROJECTED_ATTRIBUTES',
       KeyConditionExpression: "branchid = :branchid",
       FilterExpression: "#date >= :timeafter",

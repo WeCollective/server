@@ -7,9 +7,12 @@ var Branch = require('../../models/branch.model.js');
 var Post = require('../../models/post.model.js');
 var PostData = require('../../models/post-data.model.js');
 var PostImage = require('../../models/post-image.model.js');
+var Tag = require('../../models/tag.model.js');
 
 var success = require('../../responses/successes.js');
 var error = require('../../responses/errors.js');
+
+var _ = require('lodash');
 
 module.exports = {
   post: function(req, res) {
@@ -30,74 +33,105 @@ module.exports = {
     if(!req.body.branchids || req.body.branchids.length == 0 || req.body.branchids.length > 5) {
       return error.BadRequest(res, 'Invalid branchids');
     }
+    if(req.body.branchids.indexOf('root') > -1) {
+      return error.BadRequest(res, 'Invalid branchid');
+    }
 
-    var date = new Date().getTime();
-    var id = req.user.username + '-' + date;
-
-    var propertiesToCheck, invalids;
-    var posts = [];
+    // fetch the tags of each specfied branch. The union of these is the list of
+    // the branches the post should be tagged to.
+    var allTags = [];
+    var tagCollectionPromises = [];
     for(var i = 0; i < req.body.branchids.length; i++) {
-      var post = new Post({
+      tagCollectionPromises.push(new Promise(function(resolve, reject) {
+        new Tag().findByBranch(req.body.branchids[i]).then(function(tags) {
+          for(var j = 0; j < tags.length; j++) {
+            allTags.push(tags[j].tag);
+          }
+          resolve();
+        }, function(err) {
+          if(err) {
+            reject();
+          }
+          resolve();
+        });
+      }));
+    }
+
+    Promise.all(tagCollectionPromises).then(function () {
+      // all tags are collected, these are the branchids to tag the post to
+      req.body.branchids = _.union(allTags);
+
+      var date = new Date().getTime();
+      var id = req.user.username + '-' + date;
+
+      var propertiesToCheck, invalids;
+      var posts = [];
+      for(var i = 0; i < req.body.branchids.length; i++) {
+        var post = new Post({
+          id: id,
+          branchid: req.body.branchids[i],
+          date: date,
+          type: req.body.type,
+          local: 0,
+          individual: 0,
+          up: 0,
+          down: 0,
+          rank: 0
+        });
+
+        // validate post properties
+        propertiesToCheck = ['id', 'branchid', 'date', 'type', 'local', 'individual', 'up', 'down', 'rank'];
+        invalids = post.validate(propertiesToCheck);
+        if(invalids.length > 0) {
+          return error.BadRequest(res, 'Invalid ' + invalids[0]);
+        }
+        posts.push(post);
+      }
+
+      var postdata = new PostData({
         id: id,
-        branchid: req.body.branchids[i],
-        date: date,
-        type: req.body.type,
-        local: 0,
-        individual: 0,
-        up: 0,
-        down: 0,
-        rank: 0
+        creator: req.user.username,
+        title: req.body.title,
+        text: req.body.text
       });
 
-      // validate post properties
-      propertiesToCheck = ['id', 'branchid', 'date', 'type', 'local', 'individual', 'up', 'down', 'rank'];
-      invalids = post.validate(propertiesToCheck);
+      // validate postdata properties
+      propertiesToCheck = ['id', 'creator', 'title', 'text'];
+      invalids = postdata.validate(propertiesToCheck);
       if(invalids.length > 0) {
         return error.BadRequest(res, 'Invalid ' + invalids[0]);
       }
-      posts.push(post);
-    }
 
-    var postdata = new PostData({
-      id: id,
-      creator: req.user.username,
-      title: req.body.title,
-      text: req.body.text
-    });
-
-    // validate postdata properties
-    propertiesToCheck = ['id', 'creator', 'title', 'text'];
-    invalids = postdata.validate(propertiesToCheck);
-    if(invalids.length > 0) {
-      return error.BadRequest(res, 'Invalid ' + invalids[0]);
-    }
-
-    // Check all the specified branches exist
-    var promises = [];
-    for(var i = 0; i < posts.length; i++) {
-      promises.push(new Branch().findById(posts[i].data.branchid));
-    }
-
-    Promise.all(promises).then(function () {
-      // save a post entry for each specified branch
-      promises = [];
+      // Check all the specified branches exist
+      var promises = [];
       for(var i = 0; i < posts.length; i++) {
-        promises.push(posts[i].save());
+        promises.push(new Branch().findById(posts[i].data.branchid));
       }
 
-      Promise.all(promises).then(function() {
-        return postdata.save();
-      }).then(function() {
-        // successfully create post, send back its id
-        return success.OK(res, id);
-      }).catch(function() {
-        return error.InternalServerError(res);
+      Promise.all(promises).then(function () {
+        // save a post entry for each specified branch
+        promises = [];
+        for(var i = 0; i < posts.length; i++) {
+          promises.push(posts[i].save());
+        }
+
+        Promise.all(promises).then(function() {
+          return postdata.save();
+        }).then(function() {
+          // successfully create post, send back its id
+          return success.OK(res, id);
+        }).catch(function() {
+          return error.InternalServerError(res);
+        });
+      }, function(err) {
+        if(err) {
+          return error.InternalServerError(res);
+        }
+        return error.NotFound(res, 'One of the specified branches doesn\'t exist.');
       });
-    }, function(err) {
-      if(err) {
-        return error.InternalServerError(res);
-      }
-      return error.NotFound(res, 'One of the specified branches doesn\'t exist.');
+    }, function() {
+      console.error("Error fetching branch tags.");
+      return error.InternalServerError(res);
     });
   },
   get: function(req, res) {

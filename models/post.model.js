@@ -35,10 +35,6 @@ Post.prototype.validate = function(properties) {
     if(!validate.branchid(this.data.branchid)) {
       invalids.push('branchid');
     }
-    // ensure not posting to root wall
-    if(this.data.branchid == 'root') {
-      invalids.push('branchid');
-    }
   }
 
   // ensure creation date is valid

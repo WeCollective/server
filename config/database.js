@@ -107,7 +107,7 @@ var Keys = {
   },
   Posts: {
     primary: 'id',
-    globalIndexes: ['branchid-individual-index', 'branchid-local-index', 'branchid-global-index']
+    globalIndexes: ['branchid-individual-index', 'branchid-local-index']
   },
   PostData: {
     primary: 'id'

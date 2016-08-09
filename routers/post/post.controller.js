@@ -139,16 +139,19 @@ module.exports = {
       return error.BadRequest(res, 'Missing postid');
     }
 
-    var post;
+    var post, date, type;
     var postdata = new PostData();
     new Post().findById(req.params.postid, 0).then(function(posts) {
       if(!posts || posts.length == 0) {
         return error.NotFound(res);
       }
-      post = posts[0];
+      date = posts[0].date;
+      type = posts[0].type;
       return postdata.findById(req.params.postid);
     }).then(function() {
-      post.data = postdata.data;
+      post = postdata.data;
+      post.type = type;
+      post.date = date;
       return success.OK(res, post);
     }).catch(function(err) {
       if(err) {

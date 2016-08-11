@@ -36,12 +36,18 @@ Model.prototype.set = function(name, value) {
 };
 
 // Update the existing database entry according to the model data
-Model.prototype.update = function() {
+// The key should be the Primary key values identifying the object to be updated
+Model.prototype.update = function(Key) {
   var self = this;
   return new Promise(function(resolve, reject) {
-    // Construct key to identify the entry to be updated
-    var Key = {};
-    Key[self.config.keys.primary] = self.data[self.config.keys.primary];
+    // Construct key to identify the entry to be updated if it isnt provided
+    if(!Key) {
+      Key = {};
+      Key[self.config.keys.primary] = self.data[self.config.keys.primary];
+      if(self.config.keys.sort) {
+        Key[self.config.keys.sort] = self.data[self.config.keys.sort];
+      }
+    }
 
     // Update the entry with values which have changed in the model
     var Updates = {};

@@ -79,41 +79,52 @@ var Schema = {
 // Database table keys
 var Keys = {
   Users: {
-    primary: 'username'
+    primary: 'username',
+    sort: null
   },
   UserImages: {
-    primary: 'id'
+    primary: 'id',
+    sort: null
   },
   Branches: {
     primary: 'id',
+    sort: null,
     globalIndexes: ['parentid-date-index']
   },
   BranchImages: {
-    primary: 'id'
+    primary: 'id',
+    sort: null
   },
   Mods: {
-    primary: 'branchid'
+    primary: 'branchid',
+    sort: 'date'
   },
   ModLog: {
-    primary: 'branchid'
+    primary: 'branchid',
+    sort: 'date'
   },
   SubBranchRequests: {
     primary: 'parentid',
+    sort: 'childid',
     globalIndexes: ['parentid-date-index']
   },
   Tags: {
     primary: 'branchid',
+    sort: 'tag',
     globalIndexes: ['tag-branchid-index']
   },
   Posts: {
     primary: 'id',
+    sort: 'branchid',
     globalIndexes: ['branchid-individual-index', 'branchid-local-index']
   },
   PostData: {
-    primary: 'id'
+    primary: 'id',
+    sort: null
   },
   PostImages: {
-    primary: 'id'
+    primary: 'id',
+    sort: null
   }
 };
 

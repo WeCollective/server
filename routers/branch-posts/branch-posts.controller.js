@@ -78,5 +78,26 @@ module.exports = {
       }
       return error.NotFound(res);
     });
+  },
+  getPost: function(req, res) {
+    if(!req.params.branchid) {
+      return error.BadRequest(res, 'Missing branchid');
+    }
+    if(!req.params.postid) {
+      return error.BadRequest(res, 'Missing postid');
+    }
+
+    new Post().findByPostAndBranchIds(req.params.postid, req.params.branchid).then(function(post) {
+      if(!post || post.length == 0) {
+        return error.NotFound(res);
+      }
+      return success.OK(res, post);
+    }, function(err) {
+      if(err) {
+        console.error('Error fetching post on branch.');
+        return error.InternalServerError(res);
+      }
+      return error.NotFound(res);
+    });
   }
 };

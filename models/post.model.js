@@ -206,4 +206,28 @@ Post.prototype.findByBranch = function(branchid, timeafter, stat) {
   }
 };
 
+// Get a post by both its post id and branch id, passing in results to promise resolve.
+// Rejects promise with true if database error, with false if no data found.
+// Used to ensure a post exists on a given branch.
+Post.prototype.findByPostAndBranchIds = function(postid, branchid) {
+  var self = this;
+  return new Promise(function(resolve, reject) {
+    aws.dbClient.query({
+      TableName: self.config.table,
+      KeyConditionExpression: "id = :postid AND branchid = :branchid",
+      ExpressionAttributeValues: {
+        ":postid": postid,
+        ":branchid": branchid
+      }
+    }, function(err, data) {
+      console.log("DATA: %j", data);
+      if(err) return reject(err);
+      if(!data || !data.Items) {
+        return reject();
+      }
+      return resolve(data.Items);
+    });
+  });
+};
+
 module.exports = Post;

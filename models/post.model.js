@@ -220,7 +220,6 @@ Post.prototype.findByPostAndBranchIds = function(postid, branchid) {
         ":branchid": branchid
       }
     }, function(err, data) {
-      console.log("DATA: %j", data);
       if(err) return reject(err);
       if(!data || !data.Items) {
         return reject();

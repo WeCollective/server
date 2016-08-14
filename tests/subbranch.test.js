@@ -219,4 +219,8 @@ module.exports = function(server) {
     server.delete('/branch/c')
       .expect(200, done);
   });
+  it('should logout user (me)', function(done) {
+    server.get('/user/logout')
+      .expect(200, done);
+  });
 };

@@ -31,7 +31,10 @@ module.exports = function(app, passport) {
 
   // comments
   router.route('/:postid/comments')
+    .get(controller.getComments)
     .post(ACL.validateRole(ACL.Roles.AuthenticatedUser), controller.postComment);
+  router.route('/:postid/comments/:commentid')
+    .get(controller.getComment);
 
   return router;
 }

@@ -295,10 +295,56 @@ module.exports = {
       // save the comment data
       return commentdata.save();
     }).then(function() {
-      return success.OK(res);
+      // return the comment id to the client
+      return success.OK(res, id);
     }).catch(function(err) {
       if(err) {
         console.error("Error posting comment");
+        return error.InternalServerError(res);
+      }
+      return error.NotFound(res);
+    });
+  },
+  getComments: function(req, res) {
+    if(!req.params.postid) {
+      return error.BadRequest(res, 'Missing postid');
+    }
+
+    // if parentid not specified, get root comments
+    if(!req.params.parentid) {
+      req.params.parentid = 'none';
+    }
+
+    new Comment().findByParent(req.params.postid, req.params.parentid).then(function(comments) {
+      if(!comments || comments.length == 0) {
+        return error.NotFound(res);
+      }
+      return success.OK(res, comments);
+    }, function(err) {
+      if(err) {
+        console.error("Error fetching comments");
+        console.log(err);
+        return error.InternalServerError(res);
+      }
+      return error.NotFound(res);
+    });
+  },
+  getComment: function(req, res) {
+    if(!req.params.postid) {
+      return error.BadRequest(res, 'Missing postid');
+    }
+    if(!req.params.commentid) {
+      return error.BadRequest(res, 'Missing commentid');
+    }
+
+    // TODO check the specfied comment actually belongs to this post
+
+    var commentdata = new CommentData();
+    commentdata.findById(req.params.commentid).then(function() {
+      return success.OK(res, commentdata.data);
+    }, function(err) {
+      if(err) {
+        console.error("Error fetching comment data");
         return error.InternalServerError(res);
       }
       return error.NotFound(res);

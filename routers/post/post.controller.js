@@ -9,6 +9,7 @@ var PostData = require('../../models/post-data.model.js');
 var PostImage = require('../../models/post-image.model.js');
 var Tag = require('../../models/tag.model.js');
 var Comment = require('../../models/comment.model.js');
+var CommentData = require('../../models/comment-data.model.js');
 
 var success = require('../../responses/successes.js');
 var error = require('../../responses/errors.js');
@@ -245,9 +246,23 @@ module.exports = {
       rank: 0
     });
 
-    // validate post properties
+    // validate comment properties
     var propertiesToCheck = ['id', 'postid', 'parentid', 'individual', 'up', 'down', 'date', 'rank'];
     var invalids = comment.validate(propertiesToCheck);
+    if(invalids.length > 0) {
+      return error.BadRequest(res, 'Invalid ' + invalids[0]);
+    }
+
+    var commentdata = new CommentData({
+      id: id,
+      creator: req.user.username,
+      date: date,
+      text: req.body.text
+    });
+
+    // validate comment data properties
+    propertiesToCheck = ['id', 'creator', 'date', 'text'];
+    invalids = commentdata.validate(propertiesToCheck);
     if(invalids.length > 0) {
       return error.BadRequest(res, 'Invalid ' + invalids[0]);
     }
@@ -276,6 +291,9 @@ module.exports = {
 
       // all is well - save the new comment
       return comment.save();
+    }).then(function() {
+      // save the comment data
+      return commentdata.save();
     }).then(function() {
       return success.OK(res);
     }).catch(function(err) {

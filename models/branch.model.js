@@ -75,7 +75,7 @@ Branch.prototype.validate = function(properties) {
   return invalids;
 };
 
-// Get a user by their username from the db, and
+// Get a branch by its id from the db, and
 // instantiate the object with this data.
 // Rejects promise with true if database error, with false if no user found.
 Branch.prototype.findById = function(id) {

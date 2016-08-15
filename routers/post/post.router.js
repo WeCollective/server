@@ -28,5 +28,10 @@ module.exports = function(app, passport) {
       controller.getPicture(req, res, true);
     });
 
+
+  // comments
+  router.route('/:postid/comments')
+    .post(ACL.validateRole(ACL.Roles.AuthenticatedUser), controller.postComment);
+
   return router;
 }

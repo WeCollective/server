@@ -73,6 +73,22 @@ var Schema = {
     id: null,
     date: null,
     extension: null
+  },
+  Comment: {
+    id: null,
+    postid: null,
+    parentid: null,
+    individual: null,
+    up: null,
+    down: null,
+    date: null,
+    rank: null
+  },
+  CommentData: {
+    id: null,
+    text: null,
+    creator: null,
+    date: null
   }
 };
 
@@ -125,6 +141,15 @@ var Keys = {
   PostImages: {
     primary: 'id',
     sort: null
+  },
+  Comments: {
+    primary: 'id',
+    sort: null,
+    globalIndexes: ['postid-parentid-index']
+  },
+  CommentData: {
+    primary: 'id',
+    sort: null
   }
 };
 
@@ -143,7 +168,9 @@ var config = {
     Tags: 'Tags',
     Posts: 'Posts',
     PostData: 'PostData',
-    PostImages: 'PostImages'
+    PostImages: 'PostImages',
+    Comments: 'Comments',
+    CommentData: 'CommentData'
   },
   // Model schemas
   Schema: Schema,

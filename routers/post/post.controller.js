@@ -8,6 +8,7 @@ var Post = require('../../models/post.model.js');
 var PostData = require('../../models/post-data.model.js');
 var PostImage = require('../../models/post-image.model.js');
 var Tag = require('../../models/tag.model.js');
+var Comment = require('../../models/comment.model.js');
 
 var success = require('../../responses/successes.js');
 var error = require('../../responses/errors.js');
@@ -217,6 +218,69 @@ module.exports = {
     }, function(err) {
       if(err) {
         console.error("Error fetching post image.");
+        return error.InternalServerError(res);
+      }
+      return error.NotFound(res);
+    });
+  },
+  postComment: function(req, res) {
+    if(!req.user || !req.user.username) {
+      return error.Forbidden(res);
+    }
+
+    if(!req.params.postid) {
+      return error.BadRequest(res, 'Missing postid');
+    }
+
+    var date = new Date().getTime();
+    var id = req.user.username + '-' + date;
+    var comment = new Comment({
+      id: id,
+      postid: req.params.postid,    // ensure exists
+      parentid: req.body.parentid,  // ensure exists and in this post
+      individual: 0,
+      up: 0,
+      down: 0,
+      date: date,
+      rank: 0
+    });
+
+    // validate post properties
+    var propertiesToCheck = ['id', 'postid', 'parentid', 'individual', 'up', 'down', 'date', 'rank'];
+    var invalids = comment.validate(propertiesToCheck);
+    if(invalids.length > 0) {
+      return error.BadRequest(res, 'Invalid ' + invalids[0]);
+    }
+
+    // ensure the specified post exists
+    var parent = new Comment();
+    new Post().findById(req.params.postid, 0).then(function(posts) {
+      if(!posts || posts.length == 0) {
+        return error.NotFound(res);
+      }
+
+      // if this is a root comment, continue
+      if(req.body.parentid == 'none') {
+        return new Promise(function(resolve, reject) {
+          resolve();
+        });
+      } else {
+        // otherwise, ensure the specified parent comment exists
+        return parent.findById(req.body.parentid);
+      }
+    }).then(function() {
+      // ensure the parent comment belongs to this post
+      if(req.body.parentid != 'none' && parent.data.postid != req.params.postid) {
+        return error.BadRequest(res, 'Parent comment does not belong to the same post');
+      }
+
+      // all is well - save the new comment
+      return comment.save();
+    }).then(function() {
+      return success.OK(res);
+    }).catch(function(err) {
+      if(err) {
+        console.error("Error posting comment");
         return error.InternalServerError(res);
       }
       return error.NotFound(res);

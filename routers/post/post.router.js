@@ -29,12 +29,15 @@ module.exports = function(app, passport) {
     });
 
 
-  // comments
+  // get root comments or create a new one
   router.route('/:postid/comments')
     .get(controller.getComments)
     .post(ACL.validateRole(ACL.Roles.AuthenticatedUser), controller.postComment);
+  // get a particular comment's data
   router.route('/:postid/comments/:commentid')
-    .get(controller.getComment);
+    .get(controller.getComment)
+    // update or vote on a comment
+    .put(ACL.validateRole(ACL.Roles.AuthenticatedUser), controller.putComment);
 
   return router;
 }

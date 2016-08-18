@@ -311,11 +311,11 @@ module.exports = {
     }
 
     // if parentid not specified, get root comments
-    if(!req.params.parentid) {
-      req.params.parentid = 'none';
+    if(!req.query.parentid) {
+      req.query.parentid = 'none';
     }
 
-    new Comment().findByParent(req.params.postid, req.params.parentid).then(function(comments) {
+    new Comment().findByParent(req.params.postid, req.query.parentid).then(function(comments) {
       if(!comments || comments.length == 0) {
         return error.NotFound(res);
       }
@@ -345,6 +345,55 @@ module.exports = {
     }, function(err) {
       if(err) {
         console.error("Error fetching comment data");
+        return error.InternalServerError(res);
+      }
+      return error.NotFound(res);
+    });
+  },
+  putComment: function(req, res) {
+    if(!req.params.postid) {
+      return error.BadRequest(res, 'Missing postid');
+    }
+    if(!req.params.commentid) {
+      return error.BadRequest(res, 'Missing commentid');
+    }
+    if(!req.user.username) {
+      console.error("No username found in session.");
+      return error.InternalServerError(res);
+    }
+
+    // if this action is voting on the comment, ensure its valid
+    if(req.body.vote && (req.body.vote != 'up' && req.body.vote != 'down')) {
+      return error.BadRequest(res, 'Missing or malformed vote parameter');
+    }
+
+    var updatedComment = new Comment({
+      id: req.params.commentid,
+      postid: req.params.postid
+    });
+
+    // validate comment properties
+    var propertiesToCheck = ['id', 'postid'];
+    var invalids = updatedComment.validate(propertiesToCheck);
+    if(invalids.length > 0) {
+      return error.BadRequest(res, 'Invalid ' + invalids[0]);
+    }
+
+    // TODO check the specfied comment actually belongs to this post
+
+    var comment = new Comment();
+    comment.findById(req.params.commentid).then(function() {
+      if(!comment.data || comment.data.length == 0) {
+        return error.NotFound(res);
+      }
+
+      updatedComment.set(req.body.vote, comment.data[req.body.vote] + 1);
+      return updatedComment.update();
+    }).then(function() {
+      return success.OK(res);
+    }).catch(function(err) {
+      if(err) {
+        console.error('Error updating comment.');
         return error.InternalServerError(res);
       }
       return error.NotFound(res);

@@ -52,7 +52,7 @@ module.exports = {
       branchid: req.params.branchid
     });
 
-    // validate branch properties
+    // validate post properties
     var propertiesToCheck = ['id', 'branchid'];
     var invalids = post.validate(propertiesToCheck);
     if(invalids.length > 0) {

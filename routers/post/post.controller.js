@@ -315,7 +315,12 @@ module.exports = {
       req.query.parentid = 'none';
     }
 
-    new Comment().findByParent(req.params.postid, req.query.parentid, req.query.count).then(function(comments) {
+    var count = false;
+    if(req.query.count == 'true') {
+      count = true;
+    }
+
+    new Comment().findByParent(req.params.postid, req.query.parentid, count).then(function(comments) {
       if(!comments || comments.length == 0) {
         return error.NotFound(res);
       }

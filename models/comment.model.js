@@ -100,13 +100,13 @@ Comment.prototype.findById = function(id) {
   });
 };
 
-Comment.prototype.findByParent = function(postid, parentid) {
+Comment.prototype.findByParent = function(postid, parentid, countOnly) {
   var self = this;
   return new Promise(function(resolve, reject) {
     aws.dbClient.query({
       TableName: self.config.table,
       IndexName: self.config.keys.globalIndexes[0],
-      Select: 'ALL_PROJECTED_ATTRIBUTES',
+      Select: countOnly ? 'COUNT' : 'ALL_PROJECTED_ATTRIBUTES',
       KeyConditionExpression: "postid = :postid",
       FilterExpression: "parentid = :parentid",
       ExpressionAttributeValues: {
@@ -116,10 +116,17 @@ Comment.prototype.findByParent = function(postid, parentid) {
       ScanIndexForward: false   // return results highest first
     }, function(err, data) {
       if(err) return reject(err);
-      if(!data || !data.Items) {
-        return reject();
+      if(countOnly) {
+        if(!data || !data.Count) {
+          return reject();
+        }
+        resolve(data.Count);
+      } else {
+        if(!data || !data.Items) {
+          return reject();
+        }
+        resolve(data.Items);
       }
-      resolve(data.Items);
     });
   });
 };

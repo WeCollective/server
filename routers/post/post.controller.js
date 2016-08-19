@@ -315,7 +315,7 @@ module.exports = {
       req.query.parentid = 'none';
     }
 
-    new Comment().findByParent(req.params.postid, req.query.parentid).then(function(comments) {
+    new Comment().findByParent(req.params.postid, req.query.parentid, req.query.count).then(function(comments) {
       if(!comments || comments.length == 0) {
         return error.NotFound(res);
       }

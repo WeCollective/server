@@ -88,7 +88,8 @@ var Schema = {
     id: null,
     text: null,
     creator: null,
-    date: null
+    date: null,
+    edited: null
   }
 };
 

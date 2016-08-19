@@ -355,7 +355,7 @@ module.exports = {
       return error.NotFound(res);
     });
   },
-  putComment: function(req, res) {
+  voteComment: function(req, res) {
     if(!req.params.postid) {
       return error.BadRequest(res, 'Missing postid');
     }
@@ -368,16 +368,13 @@ module.exports = {
     }
 
     // if this action is voting on the comment, ensure its valid
-    if(req.body.vote && (req.body.vote != 'up' && req.body.vote != 'down')) {
+    if(!req.body.vote || (req.body.vote != 'up' && req.body.vote != 'down')) {
       return error.BadRequest(res, 'Missing or malformed vote parameter');
     }
-
     var updatedComment = new Comment({
       id: req.params.commentid,
       postid: req.params.postid
     });
-
-    // validate comment properties
     var propertiesToCheck = ['id', 'postid'];
     var invalids = updatedComment.validate(propertiesToCheck);
     if(invalids.length > 0) {
@@ -392,6 +389,12 @@ module.exports = {
         return error.NotFound(res);
       }
 
+      // check the specfied comment actually belongs to this post
+      if(comment.data.postid != req.params.postid) {
+        return error.NotFound(res);
+      }
+
+      // increment either the up or down vote for the comment if specified
       updatedComment.set(req.body.vote, comment.data[req.body.vote] + 1);
       return updatedComment.update();
     }).then(function() {
@@ -402,6 +405,50 @@ module.exports = {
         return error.InternalServerError(res);
       }
       return error.NotFound(res);
+    });
+  },
+  putComment: function(req, res) {
+    if(!req.params.postid) {
+      return error.BadRequest(res, 'Missing postid');
+    }
+    if(!req.params.commentid) {
+      return error.BadRequest(res, 'Missing commentid');
+    }
+    if(!req.user.username) {
+      console.error("No username found in session.");
+      return error.InternalServerError(res);
+    }
+
+    // ensure new comment text is valid
+    if(!req.body.text) {
+      return error.BadRequest(res, 'Missing text');
+    }
+    var updatedCommentData = new CommentData({
+      id: req.params.commentid
+    });
+    updatedCommentData.set('text', req.body.text);
+    updatedCommentData.set('edited', true);
+    // validate comment properties
+    var propertiesToCheck = ['id', 'text'];
+    var invalids = updatedCommentData.validate(propertiesToCheck);
+    if(invalids.length > 0) {
+      return error.BadRequest(res, 'Invalid ' + invalids[0]);
+    }
+
+    var comment = new Comment();
+    // check the specfied comment actually belongs to this post
+    comment.findById(req.params.commentid).then(function() {
+      if(comment.data.postid != req.params.postid) {
+        return error.NotFound(res);
+      }
+
+      // update the comment
+      return updatedCommentData.update();
+    }).then(function() {
+      return success.OK(res);
+    }).catch(function() {
+      console.error('Error updating comment.');
+      return error.InternalServerError(res);
     });
   }
 };

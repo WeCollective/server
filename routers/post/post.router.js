@@ -4,6 +4,9 @@ var express = require('express');
 var router = express.Router();
 var ACL = require('../../config/acl.js');
 
+var success = require('../../responses/successes.js');
+var error = require('../../responses/errors.js');
+
 module.exports = function(app, passport) {
   var controller = require('./post.controller.js');
 
@@ -37,7 +40,15 @@ module.exports = function(app, passport) {
   router.route('/:postid/comments/:commentid')
     .get(controller.getComment)
     // update or vote on a comment
-    .put(ACL.validateRole(ACL.Roles.AuthenticatedUser), controller.putComment);
+    .put(ACL.validateRole(ACL.Roles.AuthenticatedUser), function(req, res) {
+      if(req.body.vote) {
+        controller.voteComment(req, res);
+      } else if(req.body.text) {
+        controller.putComment(req, res);
+      } else {
+        return error.BadRequest(res, 'Must specify either vote or text in body');
+      }
+    });
 
   return router;
 }

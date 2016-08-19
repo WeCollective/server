@@ -51,6 +51,13 @@ CommentData.prototype.validate = function(properties) {
     }
   }
 
+  // ensure edited flag is valid
+  if(properties.indexOf('edited') > -1) {
+    if(this.data.edited !== undefined && this.data.edited !== true && this.data.edited !== false) {
+      invalids.push('edited');
+    }
+  }
+
   return invalids;
 };
 

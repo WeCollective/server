@@ -143,17 +143,20 @@ module.exports = {
 
     var post, date, type;
     var postdata = new PostData();
-    new Post().findById(req.params.postid, 0).then(function(posts) {
+    new Post().findById(req.params.postid).then(function(posts) {
       if(!posts || posts.length == 0) {
         return error.NotFound(res);
       }
-      date = posts[0].date;
-      type = posts[0].type;
+      var idx = 0;
+      for(var i = 0; i < posts.length; i++) {
+        if(posts[i].branchid == 'root') {
+          idx = i;
+        }
+      }
+      post = posts[idx];
       return postdata.findById(req.params.postid);
     }).then(function() {
-      post = postdata.data;
-      post.type = type;
-      post.date = date;
+      post.data = postdata.data;
       return success.OK(res, post);
     }).catch(function(err) {
       if(err) {

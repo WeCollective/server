@@ -240,6 +240,7 @@ module.exports = {
       postid: req.params.postid,    // ensure exists
       parentid: req.body.parentid,  // ensure exists and in this post
       individual: 0,
+      replies: 0,
       up: 0,
       down: 0,
       date: date,
@@ -247,7 +248,7 @@ module.exports = {
     });
 
     // validate comment properties
-    var propertiesToCheck = ['id', 'postid', 'parentid', 'individual', 'up', 'down', 'date', 'rank'];
+    var propertiesToCheck = ['id', 'postid', 'parentid', 'individual', 'replies', 'up', 'down', 'date', 'rank'];
     var invalids = comment.validate(propertiesToCheck);
     if(invalids.length > 0) {
       return error.BadRequest(res, 'Invalid ' + invalids[0]);
@@ -295,6 +296,17 @@ module.exports = {
       // save the comment data
       return commentdata.save();
     }).then(function() {
+      // if this is a root comment, continue
+      if(req.body.parentid == 'none') {
+        return new Promise(function(resolve, reject) {
+          resolve();
+        });
+      } else {
+        // otherwise, increment the number of replies on the parent
+        parent.set('replies', parent.data.replies + 1);
+        return parent.update();
+      }
+    }).then(function() {
       // return the comment id to the client
       return success.OK(res, id);
     }).catch(function(err) {
@@ -315,19 +327,13 @@ module.exports = {
       req.query.parentid = 'none';
     }
 
-    // ascertain whether to just get the _number_ of replies (default no)
-    var count = false;
-    if(req.query.count == 'true') {
-      count = true;
-    }
-
     // ascertain how to sort the comments (points, replies, date). Default points
     var sort = req.query.sort;
     if(!req.query.sort) {
       sort = 'points';
     }
 
-    new Comment().findByParent(req.params.postid, req.query.parentid, count, sort).then(function(comments) {
+    new Comment().findByParent(req.params.postid, req.query.parentid, sort).then(function(comments) {
       if(!comments || comments.length == 0) {
         return error.NotFound(res);
       }

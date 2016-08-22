@@ -67,6 +67,11 @@ Comment.prototype.validate = function(properties) {
       invalids.push('rank');
     }
   }
+  if(properties.indexOf('replies') > -1) {
+    if(isNaN(this.data.replies)) {
+      invalids.push('replies');
+    }
+  }
 
   // ensure creation date is valid
   if(properties.indexOf('date') > -1) {
@@ -100,7 +105,7 @@ Comment.prototype.findById = function(id) {
   });
 };
 
-Comment.prototype.findByParent = function(postid, parentid, countOnly, sortBy) {
+Comment.prototype.findByParent = function(postid, parentid, sortBy) {
   var self = this;
   var index = self.config.keys.globalIndexes[0];
   switch(sortBy) {
@@ -119,7 +124,7 @@ Comment.prototype.findByParent = function(postid, parentid, countOnly, sortBy) {
     aws.dbClient.query({
       TableName: self.config.table,
       IndexName: index,
-      Select: countOnly ? 'COUNT' : 'ALL_PROJECTED_ATTRIBUTES',
+      Select: 'ALL_PROJECTED_ATTRIBUTES',
       KeyConditionExpression: "postid = :postid",
       FilterExpression: "parentid = :parentid",
       ExpressionAttributeValues: {
@@ -129,17 +134,10 @@ Comment.prototype.findByParent = function(postid, parentid, countOnly, sortBy) {
       ScanIndexForward: false   // return results highest first
     }, function(err, data) {
       if(err) return reject(err);
-      if(countOnly) {
-        if(!data || !data.Count) {
-          return reject();
-        }
-        resolve(data.Count);
-      } else {
-        if(!data || !data.Items) {
-          return reject();
-        }
-        resolve(data.Items);
+      if(!data || !data.Items) {
+        return reject();
       }
+      resolve(data.Items);
     });
   });
 };

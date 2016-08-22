@@ -79,6 +79,7 @@ var Schema = {
     postid: null,
     parentid: null,
     individual: null,
+    replies: null,
     up: null,
     down: null,
     date: null,

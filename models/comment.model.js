@@ -100,12 +100,25 @@ Comment.prototype.findById = function(id) {
   });
 };
 
-Comment.prototype.findByParent = function(postid, parentid, countOnly) {
+Comment.prototype.findByParent = function(postid, parentid, countOnly, sortBy) {
   var self = this;
+  var index = self.config.keys.globalIndexes[0];
+  switch(sortBy) {
+    case 'points':
+      index = self.config.keys.globalIndexes[0];
+      break;
+    case 'date':
+      index = self.config.keys.globalIndexes[1];
+      break;
+    case 'replies':
+      index = self.config.keys.globalIndexes[2];
+      break;
+  }
+
   return new Promise(function(resolve, reject) {
     aws.dbClient.query({
       TableName: self.config.table,
-      IndexName: self.config.keys.globalIndexes[0],
+      IndexName: index,
       Select: countOnly ? 'COUNT' : 'ALL_PROJECTED_ATTRIBUTES',
       KeyConditionExpression: "postid = :postid",
       FilterExpression: "parentid = :parentid",

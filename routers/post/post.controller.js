@@ -315,12 +315,19 @@ module.exports = {
       req.query.parentid = 'none';
     }
 
+    // ascertain whether to just get the _number_ of replies (default no)
     var count = false;
     if(req.query.count == 'true') {
       count = true;
     }
 
-    new Comment().findByParent(req.params.postid, req.query.parentid, count).then(function(comments) {
+    // ascertain how to sort the comments (points, replies, date). Default points
+    var sort = req.query.sort;
+    if(!req.query.sort) {
+      sort = 'points';
+    }
+
+    new Comment().findByParent(req.params.postid, req.query.parentid, count, sort).then(function(comments) {
       if(!comments || comments.length == 0) {
         return error.NotFound(res);
       }

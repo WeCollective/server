@@ -146,7 +146,7 @@ var Keys = {
   Comments: {
     primary: 'id',
     sort: null,
-    globalIndexes: ['postid-individual-index']
+    globalIndexes: ['postid-individual-index', 'postid-date-index', 'postid-replies-index']
   },
   CommentData: {
     primary: 'id',

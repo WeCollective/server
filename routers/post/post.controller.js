@@ -258,11 +258,12 @@ module.exports = {
       id: id,
       creator: req.user.username,
       date: date,
-      text: req.body.text
+      text: req.body.text,
+      edited: false
     });
 
     // validate comment data properties
-    propertiesToCheck = ['id', 'creator', 'date', 'text'];
+    propertiesToCheck = ['id', 'creator', 'date', 'text', 'edited'];
     invalids = commentdata.validate(propertiesToCheck);
     if(invalids.length > 0) {
       return error.BadRequest(res, 'Invalid ' + invalids[0]);

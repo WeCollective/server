@@ -357,9 +357,13 @@ module.exports = {
 
     // TODO check the specfied comment actually belongs to this post
 
+    var comment = new Comment();
     var commentdata = new CommentData();
-    commentdata.findById(req.params.commentid).then(function() {
-      return success.OK(res, commentdata.data);
+    comment.findById(req.params.commentid).then(function() {
+      return commentdata.findById(req.params.commentid);
+    }).then(function() {
+      comment.data.data = commentdata.data;
+      return success.OK(res, comment.data);
     }, function(err) {
       if(err) {
         console.error("Error fetching comment data");

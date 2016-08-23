@@ -14,11 +14,11 @@ module.exports = function(app, passport) {
    * @apiGroup User
    * @apiPermission guest
    *
-   * @apiParam (Parameters) {String} username User's unique username. (1-20 lowercase chars, no whitespace, not numeric, not one of 'me', 'orig', 'picture', 'cover')
-   * @apiParam (Parameters) {String} password User's password. (6-30 chars, no whitespace)
-   * @apiParam (Parameters) {String} firstname User's first name. (2-30 chars, no whitespace)
-   * @apiParam (Parameters) {String} lastname  User's last name. (2-30 chars, no whitespace)
-   * @apiParam (Parameters) {String} email User's email.
+   * @apiParam (Body Parameters) {String} username User's unique username. (1-20 lowercase chars, no whitespace, not numeric, not one of 'me', 'orig', 'picture', 'cover')
+   * @apiParam (Body Parameters) {String} password User's password. (6-30 chars, no whitespace)
+   * @apiParam (Body Parameters) {String} firstname User's first name. (2-30 chars, no whitespace)
+   * @apiParam (Body Parameters) {String} lastname  User's last name. (2-30 chars, no whitespace)
+   * @apiParam (Body Parameters) {String} email User's email.
    *
    * @apiUse OK
    * @apiUse BadRequest
@@ -51,8 +51,8 @@ module.exports = function(app, passport) {
    * @apiGroup User
    * @apiPermission guest
    *
-   * @apiParam (Parameters) {String} username User's unique username. (1-20 lowercase chars, no whitespace, not numeric, not one of 'me', 'orig', 'picture', 'cover')
-   * @apiParam (Parameters) {String} password User's password. (6-30 chars, no whitespace)
+   * @apiParam (Body Parameters) {String} username User's unique username. (1-20 lowercase chars, no whitespace, not numeric, not one of 'me', 'orig', 'picture', 'cover')
+   * @apiParam (Body Parameters) {String} password User's password. (6-30 chars, no whitespace)
    *
    * @apiUse OK
    * @apiUse BadRequest
@@ -141,10 +141,10 @@ module.exports = function(app, passport) {
      * @apiGroup User
      * @apiPermission self
      *
-     * @apiParam (Parameters) {String} firstname User's new first name. (2-30 chars, no whitespace) [optional]
-     * @apiParam (Parameters) {String} lastname  User's new last name. (2-30 chars, no whitespace) [optional]
-     * @apiParam (Parameters) {String} email User's new email. [optional]
-     * @apiParam (Parameters) {Number} dob User's new date of birth (UNIX timestamp). [optional]
+     * @apiParam (Body Parameters) {String} firstname User's new first name. (2-30 chars, no whitespace) [optional]
+     * @apiParam (Body Parameters) {String} lastname  User's new last name. (2-30 chars, no whitespace) [optional]
+     * @apiParam (Body Parameters) {String} email User's new email. [optional]
+     * @apiParam (Body Parameters) {Number} dob User's new date of birth (UNIX timestamp). [optional]
      *
      * @apiUse OK
      * @apiUse Forbidden
@@ -161,7 +161,7 @@ module.exports = function(app, passport) {
      * @apiPermission guest
      * @apiPermission auth
      *
-     * @apiParam (Parameters) {String} username User's unique username.
+     * @apiParam (URL Parameters) {String} username User's unique username.
      *
      * @apiSuccess (Successes) {String} username User's unique username.
      * @apiSuccess (Successes) {String} email User's email address. [iff. the specified user is the authenticated user]
@@ -348,7 +348,7 @@ module.exports = function(app, passport) {
      * @apiPermission guest
      * @apiPermission self
      *
-     * @apiParam (Parameters) {String} username User's unique username.
+     * @apiParam (URL Parameters) {String} username User's unique username.
      *
      * @apiSuccess (Successes) {String} data The presigned URL.
      * @apiSuccessExample {json} SuccessResponse:
@@ -384,7 +384,7 @@ module.exports = function(app, passport) {
      * @apiPermission guest
      * @apiPermission self
      *
-     * @apiParam (Parameters) {String} username User's unique username.
+     * @apiParam (URL Parameters) {String} username User's unique username.
      *
      * @apiSuccess (Successes) {String} data The presigned URL.
      * @apiSuccessExample {json} SuccessResponse:
@@ -420,7 +420,7 @@ module.exports = function(app, passport) {
      * @apiPermission guest
      * @apiPermission self
      *
-     * @apiParam (Parameters) {String} username User's unique username.
+     * @apiParam (URL Parameters) {String} username User's unique username.
      *
      * @apiSuccess (Successes) {String} data The presigned URL.
      * @apiSuccessExample {json} SuccessResponse:
@@ -446,7 +446,7 @@ module.exports = function(app, passport) {
         controller.getPicture(req, res, 'cover', false);
       }
     });
-    
+
   router.route('/:username/cover-thumb')
     /**
      * @api {get} /:username/cover-thumb Get User Cover Thumbnail
@@ -456,7 +456,7 @@ module.exports = function(app, passport) {
      * @apiPermission guest
      * @apiPermission self
      *
-     * @apiParam (Parameters) {String} username User's unique username.
+     * @apiParam (URL Parameters) {String} username User's unique username.
      *
      * @apiSuccess (Successes) {String} data The presigned URL.
      * @apiSuccessExample {json} SuccessResponse:

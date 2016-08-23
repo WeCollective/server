@@ -55,8 +55,8 @@ module.exports = function(app, passport) {
 
   router.route('/:postid')
     /**
-     * @api {get} /branch/:branchid/posts/:postid Get Branch Post
-     * @apiName Get Branch Post
+     * @api {get} /branch/:branchid/posts/:postid Get Post on Branch
+     * @apiName Get Post on Branch
      * @apiGroup Posts
      * @apiPermission guest
      *

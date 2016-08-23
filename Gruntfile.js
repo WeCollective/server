@@ -75,7 +75,9 @@ module.exports = function(grunt) {
         src: "./",
         dest: "docs/",
         options: {
-          excludeFilters: [ "node_modules/" ]
+          includeFilters: [ ".*\\.js$" ],
+          excludeFilters: [ "node_modules/" ],
+          debug: true
         }
       }
     }

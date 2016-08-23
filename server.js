@@ -66,17 +66,12 @@ passport = require('./config/passport')(passport);
 app.use(passport.initialize());
 app.use(passport.session());
 
+// THE API ROUTES
 var apiRouter = require('./routers/router.js')(app, passport);
 app.use('/', apiRouter);
 
-// DUMMY API ROUTE
-app.get('/', function(req, res) {
-  res.statusCode = 200;
-  var success = {
-    message: "Welcome to the WECO API!"
-  };
-  res.send(success);
-});
+// SERVE THE DOCS ON THE BASE ROUTE
+app.use('/', express.static(__dirname + '/docs'));
 
 // START THE SERVER
 app.listen(port);

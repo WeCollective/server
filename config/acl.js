@@ -7,6 +7,26 @@ var error = require('../responses/errors.js');
 
 var ACL = {};
 
+/**
+ * @apiDefine guest Guest access
+ * Anyone can access this route, without authentication.
+ */
+/**
+* @apiDefine auth User access
+* All authenticated users can access this route.
+*/
+/**
+ * @apiDefine self Self access
+ * Only authenticated users can access themselves on this route.
+ */
+/**
+* @apiDefine mod Mod access
+* Only authenticated moderators of the specified branch can access this route.
+*/
+/**
+* @apiDefine admin Admin access
+* Only authenticated site administrators can access this route (moderators of the root branch).
+*/
 ACL.Roles = {
   Guest: 0,
   AuthenticatedUser: 1,

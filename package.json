@@ -43,5 +43,8 @@
     "superagent": "^2.0.0",
     "supertest": "^1.2.0",
     "supertest-session": "^2.0.1"
+  },
+  "apidoc": {
+    "title": "WECO API Documentation"
   }
 }

@@ -76,8 +76,8 @@ module.exports = function(grunt) {
         dest: "docs/",
         options: {
           includeFilters: [ ".*\\.js$" ],
-          excludeFilters: [ "node_modules/" ],
-          debug: true
+          excludeFilters: [ "node_modules/" ]
+          //debug: true
         }
       }
     }
@@ -91,8 +91,8 @@ module.exports = function(grunt) {
   **                          (either "development" or "production"), merging into production if needed.
   */
   grunt.registerTask('test', ['jshint', 'mochaTest']);
-  grunt.registerTask('serve', ['jshint', 'concurrent:serve']);
-  grunt.registerTask('publish', ['test', 'exec:publish']);
-  grunt.registerTask('deploy:development', ['test', 'exec:deploy:development']);
+  grunt.registerTask('serve', ['apidoc', 'jshint', 'concurrent:serve']);
+  grunt.registerTask('publish', ['apidoc', 'test', 'exec:publish']);
+  grunt.registerTask('deploy:development', ['apidoc', 'test', 'exec:deploy:development']);
   grunt.registerTask('deploy:production', ['publish', 'exec:deploy:production']);
 };

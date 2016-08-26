@@ -93,6 +93,6 @@ module.exports = function(grunt) {
   grunt.registerTask('test', ['jshint', 'mochaTest']);
   grunt.registerTask('serve', ['apidoc', 'jshint', 'concurrent:serve']);
   grunt.registerTask('publish', ['apidoc', 'test', 'exec:publish']);
-  grunt.registerTask('deploy:development', ['apidoc', 'test', 'exec:deploy:development']);
+  grunt.registerTask('deploy:development', ['apidoc', 'exec:deploy:development']);
   grunt.registerTask('deploy:production', ['publish', 'exec:deploy:production']);
 };

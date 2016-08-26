@@ -32,7 +32,7 @@ app.use(bodyParser.json());
 app.use(function(req, res, next) {
   var allowedOrigins = ['http://localhost:8081', 'http://webapp-dev.eu9ntpt33z.eu-west-1.elasticbeanstalk.com', 'http://webapp-prod.eu-west-1.elasticbeanstalk.com', 'http://www.wecollective.co.uk'];
   var origin = req.headers.origin;
-  if(allowedOrigins.indexOf(origin) > -1){
+  if(allowedOrigins.indexOf(origin) > -1) {
     res.setHeader('Access-Control-Allow-Origin', origin);
   }
   res.header("Access-Control-Allow-Credentials", "true");
@@ -71,7 +71,7 @@ var apiRouter = require('./routers/router.js')(app, passport);
 app.use('/', apiRouter);
 
 // SERVE THE DOCS ON THE BASE ROUTE
-app.use('/', express.static(__dirname + '/docs'));
+//app.use('/', express.static(__dirname + '/docs'));
 
 // START THE SERVER
 app.listen(port);

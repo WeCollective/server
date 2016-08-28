@@ -71,7 +71,7 @@ var apiRouter = require('./routers/router.js')(app, passport);
 app.use('/', apiRouter);
 
 // SERVE THE DOCS ON THE BASE ROUTE
-app.use('/', express.static(__dirname + '/docs'));
+//app.use('/', express.static(__dirname + '/docs'));
 
 // START THE SERVER
 app.listen(port);

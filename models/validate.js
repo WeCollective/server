@@ -1,3 +1,5 @@
+var NotificationTypes = require('../config/notification-types.js');
+
 var validate = {};
 
 validate.date = function(date) {
@@ -82,7 +84,7 @@ validate.postid = function(id) {
   }
 
   return true;
-}
+};
 
 validate.commentid = function(id) {
   if(!id || id.length < 1 || id.length > 45) {
@@ -99,6 +101,36 @@ validate.commentid = function(id) {
   }
 
   return true;
-}
+};
+
+validate.notificationid = function(id) {
+  if(!id || id.length < 1 || id.length > 30) {
+    return false;
+  }
+  // ensure id contains no whitespace
+  if(/\s/g.test(id)) {
+    return false;
+  }
+  // ensure id is a lowercase string
+  if(!(typeof id === 'string' || id instanceof String) ||
+      id != id.toLowerCase()) {
+    return false;
+  }
+
+  return true;
+};
+
+validate.boolean = function(value) {
+  return typeof value === 'boolean';
+};
+
+validate.notificationType = function(value) {
+  for(var type in NotificationTypes) {
+    if(NotificationTypes[type] == value) {
+      return true;
+    }
+  }
+  return false;
+};
 
 module.exports = validate;

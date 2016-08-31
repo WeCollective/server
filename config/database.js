@@ -91,6 +91,14 @@ var Schema = {
     creator: null,
     date: null,
     edited: null
+  },
+  Notification: {
+    id: null,
+    user: null,
+    date: null,
+    unread: null,
+    type: null,
+    data: null
   }
 };
 
@@ -152,6 +160,11 @@ var Keys = {
   CommentData: {
     primary: 'id',
     sort: null
+  },
+  Notifications: {
+    primary: 'id',
+    sort: null,
+    globalIndexes: ['user-date-index']
   }
 };
 
@@ -172,7 +185,8 @@ var config = {
     PostData: 'PostData',
     PostImages: 'PostImages',
     Comments: 'Comments',
-    CommentData: 'CommentData'
+    CommentData: 'CommentData',
+    Notifications: 'Notifications'
   },
   // Model schemas
   Schema: Schema,

@@ -3,10 +3,13 @@
 var aws = require('../../config/aws.js');
 var fs = require('../../config/filestorage.js');
 
+var NotificationTypes = require('../../config/notification-types.js');
 var SubBranchRequest = require('../../models/subbranch-request.model.js');
 var Branch = require('../../models/branch.model.js');
 var ModLogEntry = require('../../models/mod-log-entry.model.js');
 var Tag = require('../../models/tag.model.js');
+var Notification = require('../../models/notification.model.js');
+var Mod = require('../../models/mod.model.js');
 
 var success = require('../../responses/successes.js');
 var error = require('../../responses/errors.js');
@@ -40,65 +43,89 @@ module.exports = {
     var child = new Branch();
     parent.findById(req.params.branchid).then(function() {
       return child.findById(req.params.childid);
-    }).then(function () {
+    }).catch(function() {
+      // one of the specified branches doesnt exist
+      return error.NotFound(res);
+    }).then(function() {
       // ensure the requested parent isn't already a parent
       if(parent.data.id == child.data.parentid) {
         return error.BadRequest(res, 'The requested branch is already a parent.');
       }
-
       // ensure the requested parent is not a child branch
       var tag = new Tag();
-      tag.findByBranch(req.params.branchid).then(function(parentTags) {
-        for(var i = 0; i < parentTags.length; i++) {
-          if(parentTags[i].tag == req.params.childid) {
-            return error.BadRequest(res, 'The requested parent is a subbranch.');
-          }
+      return tag.findByBranch(req.params.branchid);
+    }).then(function(parentTags) {
+      for(var i = 0; i < parentTags.length; i++) {
+        if(parentTags[i].tag == req.params.childid) {
+          return error.BadRequest(res, 'The requested parent is a subbranch.');
         }
-        // requested parent is not child; continue
+      }
+      // requested parent is not child; continue
 
-        // check this request does not already exist
-        subbranchRequest.find(subbranchRequest.data.parentid,
-                              subbranchRequest.data.childid).then(function(response) {
-          if(!response || response.length == 0) {
-            // save the request to the database
-            subbranchRequest.save().then(function () {
-              // save a mod log entry describing the filing of the request
-              var entry = new ModLogEntry({
-                branchid: req.params.childid,     // child branch
-                username: req.user.username,      // child mod
-                date: new Date().getTime(),
-                action: 'make-subbranch-request',
-                data: req.params.branchid         // parent branch
-              });
-
-              var propertiesToCheck = ['branchid', 'username', 'date', 'action', 'data'];
-              var invalids = entry.validate(propertiesToCheck);
-              if(invalids.length > 0) {
-                console.error('Error saving mod log entry.');
-                return error.InternalServerError(res);
-              }
-              return entry.save();
-            }).then(function () {
-              return success.OK(res);
-            }).catch(function(err) {
-              console.error("Error saving subbranch request and mod log entry.");
-              return error.InternalServerError(res);
-            });
-          } else {
-            return error.BadRequest(res, 'Request already exists');
-          }
-        }, function (err) {
-          if(err) {
-            return error.InternalServerError(res);
-          }
-          return error.NotFound(res);
-        });
-      }, function () {
-        console.error("Error fetching parent's tags.");
-        return error.InternalServerError(res);
+      // check this request does not already exist
+      return subbranchRequest.find(subbranchRequest.data.parentid, subbranchRequest.data.childid);
+    }).then(function(response) {
+      if(!response || response.length == 0) {
+        // save the request to the database
+        return subbranchRequest.save();
+      } else {
+        return error.BadRequest(res, 'R1equest already exists');
+      }
+    }).then(function () {
+      // save a mod log entry describing the filing of the request
+      var entry = new ModLogEntry({
+        branchid: req.params.childid,     // child branch
+        username: req.user.username,      // child mod
+        date: new Date().getTime(),
+        action: 'make-subbranch-request',
+        data: req.params.branchid         // parent branch
       });
-    }, function () {
-      // one of the specified branches doesnt exist
+
+      var propertiesToCheck = ['branchid', 'username', 'date', 'action', 'data'];
+      var invalids = entry.validate(propertiesToCheck);
+      if(invalids.length > 0) {
+        console.error('Error saving mod log entry.');
+        return error.InternalServerError(res);
+      }
+      return entry.save();
+    }).then(function () {
+      // send notification of the new child branch request to the recipient branch's mods
+      return new Mod().findByBranch(req.params.branchid);
+    }).then(function(mods) {
+      var promises = [];
+      var time = new Date().getTime();
+      for(var i = 0; i < mods.length; i++) {
+        var notification = new Notification({
+          id: mods[i].username + '-' + time,
+          user: mods[i].username,
+          date: time,
+          unread: true,
+          type: NotificationTypes.NEW_CHILD_BRANCH_REQUEST,
+          data: {
+            childid: req.params.childid,
+            parentid: req.params.branchid,
+            username: req.user.username
+          }
+        });
+
+        var propertiesToCheck = ['id', 'user', 'date', 'unread', 'type', 'data'];
+        var invalids = notification.validate(propertiesToCheck);
+        if(invalids.length > 0) {
+          console.error('Error creating notification.');
+          return error.InternalServerError(res);
+        }
+
+        promises.push(notification.save());
+      }
+
+      return Promise.all(promises);
+    }).then(function() {
+      return success.OK(res);
+    }).catch(function(err) {
+      if(err) {
+        console.error("Error creating subbranch request: ", err);
+        return error.InternalServerError(res);
+      }
       return error.NotFound(res);
     });
   },

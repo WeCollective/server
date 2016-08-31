@@ -69,7 +69,7 @@ module.exports = {
         // save the request to the database
         return subbranchRequest.save();
       } else {
-        return error.BadRequest(res, 'R1equest already exists');
+        return error.BadRequest(res, 'Request already exists');
       }
     }).then(function () {
       // save a mod log entry describing the filing of the request
@@ -88,37 +88,6 @@ module.exports = {
         return error.InternalServerError(res);
       }
       return entry.save();
-    }).then(function () {
-      // send notification of the new child branch request to the recipient branch's mods
-      return new Mod().findByBranch(req.params.branchid);
-    }).then(function(mods) {
-      var promises = [];
-      var time = new Date().getTime();
-      for(var i = 0; i < mods.length; i++) {
-        var notification = new Notification({
-          id: mods[i].username + '-' + time,
-          user: mods[i].username,
-          date: time,
-          unread: true,
-          type: NotificationTypes.NEW_CHILD_BRANCH_REQUEST,
-          data: {
-            childid: req.params.childid,
-            parentid: req.params.branchid,
-            username: req.user.username
-          }
-        });
-
-        var propertiesToCheck = ['id', 'user', 'date', 'unread', 'type', 'data'];
-        var invalids = notification.validate(propertiesToCheck);
-        if(invalids.length > 0) {
-          console.error('Error creating notification.');
-          return error.InternalServerError(res);
-        }
-
-        promises.push(notification.save());
-      }
-
-      return Promise.all(promises);
     }).then(function() {
       return success.OK(res);
     }).catch(function(err) {

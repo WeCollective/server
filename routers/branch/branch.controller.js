@@ -45,8 +45,9 @@ module.exports = {
       if(err) {
         return error.InternalServerError(res);
       }
+
       // ensure the specified parent branch exists
-      new Branch().findById(req.body.parentid).then(function() {
+      return new Branch().findById(req.body.parentid).then(function() {
         // save a subbranch request iff. the parentid is not the root branch
         if(req.body.parentid != 'root') {
           // create new subbranch request for the given parentid
@@ -69,8 +70,6 @@ module.exports = {
             resolve();
           });
         }
-      }, function() {
-        return error.NotFound(res);
       }).then(function() {
         // create mod object
         var mod = new Mod({
@@ -86,55 +85,41 @@ module.exports = {
           return error.BadRequest(res, 'Invalid ' + invalids[0]);
         }
 
+        // save the mod of new branch
+        return mod.save();
+      }).then(function() {
         // save the new branch
         branch.set('parentid', 'root');
-        branch.save().then(function() {
-          // save the mod of the branch
-          mod.save().then(function () {
-            // add the branchid to the tags table with the tags of itself and
-            // those of its parent (just 'root')
-            var branchTag = new Tag({
-              branchid: branch.data.id,
-              tag: branch.data.id
-            });
-            propertiesToCheck = ['branchid', 'tag'];
-            invalids = branchTag.validate(propertiesToCheck);
-            if(invalids.length > 0) {
-              return error.BadRequest(res, 'Invalid ' + invalids[0]);
-            }
-
-            var rootTag = new Tag({
-              branchid: branch.data.id,
-              tag: 'root'
-            });
-            propertiesToCheck = ['branchid', 'tag'];
-            invalids = rootTag.validate(propertiesToCheck);
-            if(invalids.length > 0) {
-              return error.BadRequest(res, 'Invalid ' + invalids[0]);
-            }
-
-            // save the tags
-            branchTag.save().then(function(err) {
-              return rootTag.save();
-            }).then(function(err) {
-              return success.OK(res);
-            }).catch(function(err) {
-              return error.InternalServerError(res);
-            });
-          }, function() {
-            return error.InternalServerError(res);
-          });
-        }, function() {
-          return error.InternalServerError(res);
+        return branch.save();
+      }).then(function () {
+        // add the branchid to the tags table with the tags of itself and
+        // those of its parent (just 'root')
+        var branchTag = new Tag({
+          branchid: branch.data.id,
+          tag: branch.data.id
         });
+        propertiesToCheck = ['branchid', 'tag'];
+        invalids = branchTag.validate(propertiesToCheck);
+        if(invalids.length > 0) {
+          return error.BadRequest(res, 'Invalid ' + invalids[0]);
+        }
+        return branchTag.save();
+      }).then(function () {
+        var rootTag = new Tag({
+          branchid: branch.data.id,
+          tag: 'root'
+        });
+        propertiesToCheck = ['branchid', 'tag'];
+        invalids = rootTag.validate(propertiesToCheck);
+        if(invalids.length > 0) {
+          return error.BadRequest(res, 'Invalid ' + invalids[0]);
+        }
+        return rootTag.save();
+      }).then(function() {
+        return success.OK(res);
       }).catch(function() {
         return error.InternalServerError(res);
       });
-    }, function(err) {
-      if(err) {
-        return error.InternalServerError(res);
-      }
-      return error.NotFound(res);
     });
   },
   get: function(req, res) {

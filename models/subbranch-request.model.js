@@ -1,6 +1,10 @@
 'use strict';
 
 var Model = require('./model.js');
+var Mod = require('./mod.model.js');
+var Notification = require('./notification.model.js');
+
+var NotificationTypes = require('../config/notification-types.js');
 var db = require('../config/database.js');
 var aws = require('../config/aws.js');
 var validate = require('./validate.js');
@@ -99,6 +103,55 @@ SubBranchRequest.prototype.findByBranch = function(branchid) {
         return reject();
       }
       return resolve(data.Items);
+    });
+  });
+};
+
+// Override Model.save() in order to create a notification for the branch
+// mods whenever a new SubBranchRequest is created
+SubBranchRequest.prototype.save = function() {
+  var self = this;
+  return new Promise(function(resolve, reject) {
+    // fetch the mods of the parent (recipient) branch
+    new Mod().findByBranch(self.data.parentid).then(function(mods) {
+      // send notification of the new child branch request to these mods
+      var promises = [];
+      var time = new Date().getTime();
+      for(var i = 0; i < mods.length; i++) {
+        var notification = new Notification({
+          id: mods[i].username + '-' + time,
+          user: mods[i].username,
+          date: time,
+          unread: true,
+          type: NotificationTypes.NEW_CHILD_BRANCH_REQUEST,
+          data: {
+            childid: self.data.childid,
+            parentid: self.data.parentid,
+            username: self.data.creator
+          }
+        });
+
+        var propertiesToCheck = ['id', 'user', 'date', 'unread', 'type', 'data'];
+        var invalids = notification.validate(propertiesToCheck);
+        if(invalids.length > 0) {
+          console.error('Error creating notification.');
+          return error.InternalServerError(res);
+        }
+
+        promises.push(notification.save());
+      }
+
+      return Promise.all(promises);
+    }).then(function () {
+      // save the subbranchRequest
+      aws.dbClient.put({
+        TableName: self.config.table,
+        Item: self.data
+      }, function(err, data) {
+        if(err) return reject(err);
+        self.dirtys.splice(0, self.dirtys.length); // clear dirtys array
+        return resolve();
+      });
     });
   });
 };

@@ -7,6 +7,7 @@ var ACL = require('../../config/acl.js');
 // Models
 var User = require('../../models/user.model.js');
 var UserImage = require('../../models/user-image.model.js');
+var Notification = require('../../models/notification.model.js');
 
 // Responses
 var success = require('../../responses/successes.js');
@@ -159,6 +160,21 @@ module.exports = {
     }, function(err) {
       if(err) {
         console.error("Error fetching user image.");
+        return error.InternalServerError(res);
+      }
+      return error.NotFound(res);
+    });
+  },
+  getNotifications: function(req, res) {
+    if(!req.user.username) {
+      return error.InternalServerError(res);
+    }
+
+    new Notification().findByUsername(req.user.username).then(function(notifications) {
+      return success.OK(res, notifications);
+    }, function(err) {
+      if(err) {
+        console.error("Error fetching user notifications: ", err);
         return error.InternalServerError(res);
       }
       return error.NotFound(res);

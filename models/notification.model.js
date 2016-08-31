@@ -85,27 +85,23 @@ Notification.prototype.findById = function(id) {
   });
 };
 
-/*
-// Get root branches using the GSI 'parentid', which will be set to 'root'.
-// TODO: this has an upper limit on the number of results; if so, a LastEvaluatedKey
-// will be supplied to indicate where to continue the search from
-// (see: http://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/DynamoDB.html#query-property)
-Branch.prototype.findSubbranches = function(parentid, timeafter) {
+
+Notification.prototype.findByUsername = function(username) {
   var self = this;
   return new Promise(function(resolve, reject) {
     aws.dbClient.query({
       TableName: self.config.table,
       IndexName: self.config.keys.globalIndexes[0],
       Select: 'ALL_PROJECTED_ATTRIBUTES',
-      KeyConditionExpression: "parentid = :parentid AND #date >= :timeafter",
+      KeyConditionExpression: "#user = :username",
       // date is a reserved dynamodb keyword so must use this alias:
       ExpressionAttributeNames: {
-        "#date": "date"
+        "#user": "user"
       },
       ExpressionAttributeValues: {
-        ":parentid": String(parentid),
-        ":timeafter": Number(timeafter)
-      }
+        ":username": String(username)
+      },
+      ScanIndexForward: false   // return results highest first
     }, function(err, data) {
       if(err) return reject(err);
       if(!data || !data.Items) {
@@ -114,6 +110,6 @@ Branch.prototype.findSubbranches = function(parentid, timeafter) {
       return resolve(data.Items);
     });
   });
-}*/
+}
 
 module.exports = Notification;

@@ -65,6 +65,7 @@ module.exports = function(app, passport) {
         if (err) { return next(err); }
         // if no user object, send error response
         if (!user) {
+          console.log(info);
           return res.status(info.status).json({ message: info.message });
         }
         // manually log in user to establish session
@@ -482,6 +483,9 @@ module.exports = function(app, passport) {
         controller.getPicture(req, res, 'cover', true);
       }
     });
+
+  router.route('/:username/notifications')
+    .get(ACL.validateRole(ACL.Roles.AuthenticatedUser), ACL.attachRole(ACL.Roles.Self), controller.getNotifications);
 
   return router;
 };

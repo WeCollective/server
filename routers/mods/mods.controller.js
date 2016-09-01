@@ -2,10 +2,13 @@
 
 var aws = require('../../config/aws.js');
 var fs = require('../../config/filestorage.js');
+var NotificationTypes = require('../../config/notification-types.js');
 
 var Mod = require('../../models/mod.model.js');
 var User = require('../../models/user.model.js');
 var ModLogEntry = require('../../models/mod-log-entry.model.js');
+var Notification = require('../../models/notification.model.js');
+
 var success = require('../../responses/successes.js');
 var error = require('../../responses/errors.js');
 
@@ -50,6 +53,7 @@ module.exports = {
 
     // check username is a real user
     var user = new User();
+    var branchMods;
     user.findByUsername(req.body.username).then(function() {
       // check user is not already a mod on this branch
       var checkMod = new Mod();
@@ -58,9 +62,10 @@ module.exports = {
           console.error("Error fetching mods.");
           return error.InternalServerError(res);
         }
+        branchMods = mods;
         // check if the specified user is in the branch's mod list
-        for(var i = 0; i < mods.length; i++) {
-          if(mods[i].username == req.body.username) {
+        for(var i = 0; i < branchMods.length; i++) {
+          if(branchMods[i].username == req.body.username) {
             return error.BadRequest(res, 'User is already a moderator');
           }
         }
@@ -68,9 +73,38 @@ module.exports = {
         mod.save().then(function() {
           return postModLogEntry(req, res, 'addmod', mod.data.username);
         }).then(function () {
+          // notify mods of the branch that a mod was added
+          var promises = [];
+          var time = new Date().getTime();
+          branchMods.push(mod.data);  // add the new mod to the notification recipient list
+          for(var i = 0; i < branchMods.length; i++) {
+            var notification = new Notification({
+              id: branchMods[i].username + '-' + time,
+              user: branchMods[i].username,
+              date: time,
+              unread: true,
+              type: NotificationTypes.MODERATOR,
+              data: {
+                action: 'add',
+                branchid: req.params.branchid,
+                username: req.user.username,
+                mod: req.body.username
+              }
+            });
+
+            var propertiesToCheck = ['id', 'user', 'date', 'unread', 'type', 'data'];
+            var invalids = notification.validate(propertiesToCheck);
+            if(invalids.length > 0) {
+              console.error('Error creating notification.');
+              return error.InternalServerError(res);
+            }
+            promises.push(notification.save());
+          }
+          return Promise.all(promises);
+        }).then(function() {
           return success.OK(res);
-        }).catch(function () {
-          console.error("Error saving new moderator.");
+        }).catch(function(err) {
+          console.error("Error saving new moderator: ", err);
           return error.InternalServerError(res);
         });
       }, function() {
@@ -114,15 +148,17 @@ module.exports = {
 
     // create new mod object
     var mod = new Mod();
+    var branchMods;
+    var deleter = {}; // user performing the delete
+    var deletee = {}; // mod to be deleted
     mod.findByBranch(req.params.branchid).then(function(mods) {
-      var deleter = {}; // user performing the delete
-      var deletee = {}; // mod to be deleted
-      for(var i = 0; i < mods.length; i++) {
-        if(mods[i].username == req.user.username) {
-          deleter = mods[i];
+      branchMods = mods;
+      for(var i = 0; i < branchMods.length; i++) {
+        if(branchMods[i].username == req.user.username) {
+          deleter = branchMods[i];
         }
-        if(mods[i].username == req.params.username) {
-          deletee = mods[i];
+        if(branchMods[i].username == req.params.username) {
+          deletee = branchMods[i];
         }
       }
 
@@ -138,13 +174,43 @@ module.exports = {
       }).then(function () {
         return postModLogEntry(req, res, 'removemod', req.params.username);
       }).then(function () {
+        // notify mods of the branch that a mod was added
+        var promises = [];
+        var time = new Date().getTime();
+        // add the deleted mod to the notification recipient list
+        branchMods.push({ username: req.params.username });
+        for(var i = 0; i < branchMods.length; i++) {
+          var notification = new Notification({
+            id: branchMods[i].username + '-' + time,
+            user: branchMods[i].username,
+            date: time,
+            unread: true,
+            type: NotificationTypes.MODERATOR,
+            data: {
+              action: 'remove',
+              branchid: req.params.branchid,
+              username: req.user.username,
+              mod: req.params.username
+            }
+          });
+
+          var propertiesToCheck = ['id', 'user', 'date', 'unread', 'type', 'data'];
+          var invalids = notification.validate(propertiesToCheck);
+          if(invalids.length > 0) {
+            console.error('Error creating notification: invalid ' + invalids[0]);
+            return error.InternalServerError(res);
+          }
+          promises.push(notification.save());
+        }
+        return Promise.all(promises);
+      }).then(function() {
         return success.OK(res);
       }).catch(function(err) {
-        console.error("Error deleting mod.");
+        console.error("Error deleting mod: ", err);
         return error.InternalServerError(res);
       });
     }, function() {
-      console.error("Error fetching mods.");
+      console.error("Error fetching mods: ", err);
       return error.InternalServerError(res);
     });
   }

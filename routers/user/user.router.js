@@ -487,5 +487,8 @@ module.exports = function(app, passport) {
   router.route('/:username/notifications')
     .get(ACL.validateRole(ACL.Roles.AuthenticatedUser), ACL.attachRole(ACL.Roles.Self), controller.getNotifications);
 
+  router.route('/:username/notifications/:notificationid')
+    .put(ACL.validateRole(ACL.Roles.AuthenticatedUser), ACL.attachRole(ACL.Roles.Self), controller.putNotification);
+
   return router;
 };

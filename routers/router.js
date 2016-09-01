@@ -8,7 +8,7 @@ var success = require('../responses/successes.js');
 
 var ACL = require('../config/acl.js');
 
-module.exports = function(app, passport) {  
+module.exports = function(app, passport) {
   // USER ROUTER
   var userRouter = require('./user/user.router.js')(app, passport);
   app.use('/user', userRouter);

@@ -179,5 +179,37 @@ module.exports = {
       }
       return error.NotFound(res);
     });
+  },
+  putNotification: function(req, res) {
+    if(!req.user.username) {
+      return error.InternalServerError(res);
+    }
+
+    if(!req.params.notificationid) {
+      return error.BadRequest(res, 'Missing notificationid parameter');
+    }
+
+    if(!req.body.unread) {
+      return error.BadRequest(res, 'Missing unread parameter');
+    }
+
+    // TODO check notification actually belongs to user
+    var notification = new Notification();
+    notification.findById(req.params.notificationid).then(function() {
+      if(notification.data.user != req.user.username) {
+        return error.Forbidden(res);
+      }
+
+      notification.set('unread', req.body.unread);
+      return notification.save();
+    }).then(function() {
+      return success.OK(res);
+    }).catch(function(err) {
+      if(err) {
+        console.error("Error updating notification unread: ", err);
+        return error.InternalServerError(res);
+      }
+      return error.NotFound(res);
+    });
   }
 };

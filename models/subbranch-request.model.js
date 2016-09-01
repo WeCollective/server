@@ -9,6 +9,8 @@ var db = require('../config/database.js');
 var aws = require('../config/aws.js');
 var validate = require('./validate.js');
 
+var _ = require('lodash');
+
 var SubBranchRequest = function(data) {
   this.config = {
     schema: db.Schema.SubBranchRequest,
@@ -113,14 +115,22 @@ SubBranchRequest.prototype.save = function() {
   var self = this;
   return new Promise(function(resolve, reject) {
     // fetch the mods of the parent (recipient) branch
+    var parentMods, childMods;
     new Mod().findByBranch(self.data.parentid).then(function(mods) {
+      parentMods = mods;
+      return new Mod().findByBranch(self.data.childid);
+    }).then(function(mods) {
+      childMods = mods;
+      // remove any duplicates e.g. for user who is a mod of both branches
+      var allMods = _.uniqBy(parentMods.concat(childMods), 'username');
+
       // send notification of the new child branch request to these mods
       var promises = [];
       var time = new Date().getTime();
-      for(var i = 0; i < mods.length; i++) {
+      for(var i = 0; i < allMods.length; i++) {
         var notification = new Notification({
-          id: mods[i].username + '-' + time,
-          user: mods[i].username,
+          id: allMods[i].username + '-' + time,
+          user: allMods[i].username,
           date: time,
           unread: true,
           type: NotificationTypes.NEW_CHILD_BRANCH_REQUEST,

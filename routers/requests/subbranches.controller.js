@@ -265,6 +265,7 @@ module.exports = {
                 }));
               }
 
+              var parentMods, childMods;
               // when all tags are updated, update the actual branch parent
               Promise.all(updateTagsPromises).then(function () {
                 // update the child branch's parentid
@@ -282,9 +283,78 @@ module.exports = {
                   // save the parent mod log entry
                   return entryParent.save();
                 }).then(function() {
+                  // create a notification for the creator of the subbranch request
+                  // indicating that it was accepted
+                  var time = new Date().getTime();
+                  var notification = new Notification({
+                    id: data[0].creator + '-' + time,
+                    user: data[0].creator,
+                    date: time,
+                    unread: true,
+                    type: NotificationTypes.CHILD_BRANCH_REQUEST_ANSWERED,
+                    data: {
+                      action: 'accept',
+                      username: req.user.username,
+                      parentid: req.params.branchid,
+                      childid: req.params.childid
+                    }
+                  });
+
+                  var propertiesToCheck = ['id', 'user', 'date', 'unread', 'type', 'data'];
+                  var invalids = notification.validate(propertiesToCheck);
+                  if(invalids.length > 0) {
+                    console.error('Error creating notification.');
+                    return error.InternalServerError(res);
+                  }
+
+                  return notification.save();
+                }).then(function() {
+                  // create notifications for all branch mods (child and parent)
+                  // that the branch has been moved
+
+                  // first fetch the parent branch mods
+                  return new Mod().findByBranch(req.params.branchid);
+                }).then(function(mods) {
+                  parentMods = mods;
+                  // fetch the child branch mods
+                  return new Mod().findByBranch(req.params.childid);
+                }).then(function(mods) {
+                  childMods = mods;
+                  // remove any duplicates e.g. for user who is a mod of both branches
+                  var allMods = _.uniqBy(parentMods.concat(childMods), 'username');
+                  var promises = [];
+                  for(var i = 0; i < allMods.length; i++) {
+                    // create a notification for mod that the branch was moved
+                    // to a new parent
+                    var time = new Date().getTime();
+                    var notification = new Notification({
+                      id: allMods[i].username + '-' + time,
+                      user: allMods[i].username,
+                      date: time,
+                      unread: true,
+                      type: NotificationTypes.BRANCH_MOVED,
+                      data: {
+                        childid: req.params.childid,
+                        parentid: req.params.branchid
+                      }
+                    });
+
+                    var propertiesToCheck = ['id', 'user', 'date', 'unread', 'type', 'data'];
+                    var invalids = notification.validate(propertiesToCheck);
+                    if(invalids.length > 0) {
+                      console.error('Error creating notification.');
+                      return error.InternalServerError(res);
+                    }
+
+                    promises.push(notification.save());
+                  }
+
+                  return Promise.all(promises);
+                }).then(function () {
+                  // All done!
                   return success.OK(res);
-                }).catch(function() {
-                  console.error("Error accepting request.");
+                }).catch(function(err) {
+                  console.error("Error accepting request: ", err);
                   return error.InternalServerError(res);
                 });
               }, function(err) {
@@ -307,6 +377,32 @@ module.exports = {
         }).then(function() {
           // save the parent mod log entry
           return entryParent.save();
+        }).then(function() {
+          // create a notification for the creator of the subbranch request
+          // indicating that it was rejected
+          var time = new Date().getTime();
+          var notification = new Notification({
+            id: data[0].creator + '-' + time,
+            user: data[0].creator,
+            date: time,
+            unread: true,
+            type: NotificationTypes.CHILD_BRANCH_REQUEST_ANSWERED,
+            data: {
+              action: 'reject',
+              username: req.user.username,
+              parentid: req.params.branchid,
+              childid: req.params.childid
+            }
+          });
+
+          var propertiesToCheck = ['id', 'user', 'date', 'unread', 'type', 'data'];
+          var invalids = notification.validate(propertiesToCheck);
+          if(invalids.length > 0) {
+            console.error('Error creating notification.');
+            return error.InternalServerError(res);
+          }
+
+          return notification.save();
         }).then(function() {
           return success.OK(res);
         }).catch(function() {

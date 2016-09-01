@@ -199,8 +199,8 @@ module.exports = {
       if(notification.data.user != req.user.username) {
         return error.Forbidden(res);
       }
-
-      notification.set('unread', req.body.unread);
+      req.body.unread = (req.body.unread === 'true');
+      notification.set('unread', Boolean(req.body.unread));
       return notification.save();
     }).then(function() {
       return success.OK(res);

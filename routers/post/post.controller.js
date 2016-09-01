@@ -2,6 +2,7 @@
 
 var aws = require('../../config/aws.js');
 var fs = require('../../config/filestorage.js');
+var NotificationTypes = require('../../config/notification-types.js');
 
 var Branch = require('../../models/branch.model.js');
 var Post = require('../../models/post.model.js');
@@ -10,6 +11,7 @@ var PostImage = require('../../models/post-image.model.js');
 var Tag = require('../../models/tag.model.js');
 var Comment = require('../../models/comment.model.js');
 var CommentData = require('../../models/comment-data.model.js');
+var Notification = require('../../models/notification.model.js');
 
 var success = require('../../responses/successes.js');
 var error = require('../../responses/errors.js');
@@ -311,11 +313,69 @@ module.exports = {
         return parent.update();
       }
     }).then(function() {
+      // notify the post or comment author that a comment has been
+      // posted on their content
+
+      // get the username of the post or comment author
+      return new Promise(function(resolve, reject) {
+        // fetch the id of a valid branch which the post appears in
+        new Post().findById(req.params.postid).then(function(posts) {
+          // take the first branch this post appears in (there are many)
+          // for the purposes of viewing the notification
+          var branchid = posts[0].branchid;
+          if(req.body.parentid == 'none') {
+            // root comment, get post author
+            var postdata = new PostData();
+            postdata.findById(req.params.postid).then(function() {
+              resolve({
+                author: postdata.data.creator,
+                branchid: branchid
+              });
+            }, reject);
+          } else {
+            // comment reply, get parent comment author
+            var commentdata = new CommentData();
+            commentdata.findById(req.body.parentid).then(function() {
+              resolve({
+                author: commentdata.data.creator,
+                branchid: branchid
+              });
+            }, reject);
+          }
+        }, reject);
+      });
+    }).then(function(data) {
+      // notify the author that their content has been commented on/replied to
+      var time = new Date().getTime();
+      var notification = new Notification({
+        id: data.author + '-' + time,
+        user: data.author,
+        date: time,
+        unread: true,
+        type: NotificationTypes.COMMENT,
+        data: {
+          postid: req.params.postid,
+          parentid: req.body.parentid,
+          commentid: id,
+          username: req.user.username,
+          branchid: data.branchid
+        }
+      });
+
+      var propertiesToCheck = ['id', 'user', 'date', 'unread', 'type', 'data'];
+      var invalids = notification.validate(propertiesToCheck);
+      if(invalids.length > 0) {
+        console.error('Error creating notification.');
+        return error.InternalServerError(res);
+      }
+
+      return notification.save();
+    }).then(function() {
       // return the comment id to the client
       return success.OK(res, id);
     }).catch(function(err) {
       if(err) {
-        console.error("Error posting comment");
+        console.error("Error posting comment: ", err);
         return error.InternalServerError(res);
       }
       return error.NotFound(res);

@@ -99,6 +99,13 @@ var Schema = {
     unread: null,
     type: null,
     data: null
+  },
+  Session: {
+    id: null,
+    expires: null,
+    sess: null,
+    type: null,
+    socketID: null
   }
 };
 
@@ -165,6 +172,10 @@ var Keys = {
     primary: 'id',
     sort: null,
     globalIndexes: ['user-date-index']
+  },
+  Sessions: {
+    primary: 'id',
+    sort: null
   }
 };
 

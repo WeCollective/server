@@ -8,6 +8,7 @@ var ACL = require('../../config/acl.js');
 var User = require('../../models/user.model.js');
 var UserImage = require('../../models/user-image.model.js');
 var Notification = require('../../models/notification.model.js');
+var Session = require('../../models/session.model.js');
 
 // Responses
 var success = require('../../responses/successes.js');
@@ -193,9 +194,9 @@ module.exports = {
       return error.BadRequest(res, 'Missing unread parameter');
     }
 
-    // TODO check notification actually belongs to user
     var notification = new Notification();
     notification.findById(req.params.notificationid).then(function() {
+      // check notification actually belongs to user
       if(notification.data.user != req.user.username) {
         return error.Forbidden(res);
       }
@@ -207,6 +208,52 @@ module.exports = {
     }).catch(function(err) {
       if(err) {
         console.error("Error updating notification unread: ", err);
+        return error.InternalServerError(res);
+      }
+      return error.NotFound(res);
+    });
+  },
+  subscribeToNotifications: function(req, res) {
+    if(!req.user.username || !req.sessionID) {
+      return error.InternalServerError(res);
+    }
+
+    if(!req.body.socketID) {
+      return error.BadRequest(res, 'Missing socketID');
+    }
+
+    // fetch user's session
+    var session = new Session();
+    session.findById('sess:' + req.sessionID).then(function() {
+      // add the socketID and save
+      session.set('socketID', req.body.socketID);
+      return session.save();
+    }).then(function() {
+      return success.OK(res);
+    }).catch(function(err) {
+      if(err) {
+        console.error("Error subscribing to notifications: ", err);
+        return error.InternalServerError(res);
+      }
+      return error.NotFound(res);
+    });
+  },
+  unsubscribeFromNotifications: function(req, res) {
+    if(!req.user.username || !req.sessionID) {
+      return error.InternalServerError(res);
+    }
+
+    // fetch user's session
+    var session = new Session();
+    session.findById('sess:' + req.sessionID).then(function() {
+      // add the socketID and save
+      session.set('socketID', null);
+      return session.save();
+    }).then(function() {
+      return success.OK(res);
+    }).catch(function(err) {
+      if(err) {
+        console.error("Error unsubscribing from notifications: ", err);
         return error.InternalServerError(res);
       }
       return error.NotFound(res);

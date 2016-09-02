@@ -57,7 +57,7 @@ var options = {
 };
 
 app.use(session({
-  //store: new DynamoDBStore(options),
+  store: new DynamoDBStore(options),
   secret: process.env.SESSION_SECRET,
   resave: false,
   saveUninitialized: false
@@ -68,15 +68,22 @@ app.use(passport.session());
 
 // INITIALISE SOCKET.IO FOR EACH NAMESPACE
 var server = require('http').Server(app);
-var socketio = require('socket.io')(server);
-var io = {
-  notifications: socketio.of('/notifications'),
-  messages: socketio.of('/messages')
-};
+var io = require('./config/io.js')(server);
 
+io.notifications.on('connection', function(socket) {
+  // Give the client their socket id so they can subscribe to real time notifications
+  console.log("NEW CONNECTION!");
+  socket.emit('on_connect', { id: socket.id });
+
+  socket.on('disconnect', function() {
+    // Give the client their socket id so they can unsubscribe from real time notifications
+    console.log("DISCONNECTION!");
+    socket.emit('on_disconnect', { id: socket.id });
+  });
+});
 
 // THE API ROUTES
-var apiRouter = require('./routers/router.js')(app, passport, io);
+var apiRouter = require('./routers/router.js')(app, passport);
 app.use('/', apiRouter);
 
 // SERVE THE DOCS ON THE BASE ROUTE

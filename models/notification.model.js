@@ -4,6 +4,7 @@ var Model = require('./model.js');
 var db = require('../config/database.js');
 var aws = require('../config/aws.js');
 var validate = require('./validate.js');
+var io = require('../config/io.js')();
 
 var Notification = function(data) {
   this.config = {
@@ -111,5 +112,38 @@ Notification.prototype.findByUsername = function(username) {
     });
   });
 }
+
+// Override Model.save() in order to emit notification event to client
+// Save a new database entry according to the model data
+Notification.prototype.save = function(sessionID) {
+  var self = this;
+  return new Promise(function(resolve, reject) {
+    // fetch the session for the user given by the sessionID
+    if(sessionID) {
+      aws.dbClient.get({
+        TableName: db.Table.Sessions,
+        Key: {
+          'id': 'sess:' + sessionID
+        }
+      }, function(err, data) {
+        if(err) return reject(err);
+        if(!data || !data.Item) {
+          return reject();
+        }
+        // TODO return # of notifications
+        io.notifications.to(data.Item.socketID).emit('notification', 'new notification!');
+      });
+    }
+
+    aws.dbClient.put({
+      TableName: self.config.table,
+      Item: self.data
+    }, function(err, data) {
+      if(err) return reject(err);
+      self.dirtys.splice(0, self.dirtys.length); // clear dirtys array
+      return resolve();
+    });
+  });
+};
 
 module.exports = Notification;

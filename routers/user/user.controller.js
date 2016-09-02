@@ -202,7 +202,7 @@ module.exports = {
       }
       req.body.unread = (req.body.unread === 'true');
       notification.set('unread', Boolean(req.body.unread));
-      return notification.save();
+      return notification.save(req.sessionID);
     }).then(function() {
       return success.OK(res);
     }).catch(function(err) {

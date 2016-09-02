@@ -369,7 +369,7 @@ module.exports = {
         return error.InternalServerError(res);
       }
 
-      return notification.save();
+      return notification.save(req.sessionID);
     }).then(function() {
       // return the comment id to the client
       return success.OK(res, id);

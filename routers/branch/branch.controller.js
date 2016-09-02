@@ -64,7 +64,7 @@ module.exports = {
             return error.BadRequest(res, 'Invalid ' + invalids[0]);
           }
           // save the request
-          return subbranchRequest.save();
+          return subbranchRequest.save(req.sessionID);
         } else {
           return new Promise(function(resolve, reject) {
             resolve();

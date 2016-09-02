@@ -67,7 +67,7 @@ module.exports = {
     }).then(function(response) {
       if(!response || response.length == 0) {
         // save the request to the database
-        return subbranchRequest.save();
+        return subbranchRequest.save(req.sessionID);
       } else {
         return error.BadRequest(res, 'Request already exists');
       }
@@ -307,7 +307,7 @@ module.exports = {
                     return error.InternalServerError(res);
                   }
 
-                  return notification.save();
+                  return notification.save(req.sessionID);
                 }).then(function() {
                   // create notifications for all branch mods (child and parent)
                   // that the branch has been moved
@@ -346,7 +346,7 @@ module.exports = {
                       return error.InternalServerError(res);
                     }
 
-                    promises.push(notification.save());
+                    promises.push(notification.save(req.sessionID));
                   }
 
                   return Promise.all(promises);
@@ -402,7 +402,7 @@ module.exports = {
             return error.InternalServerError(res);
           }
 
-          return notification.save();
+          return notification.save(req.sessionID);
         }).then(function() {
           return success.OK(res);
         }).catch(function() {

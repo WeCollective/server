@@ -66,16 +66,25 @@ passport = require('./config/passport')(passport);
 app.use(passport.initialize());
 app.use(passport.session());
 
+// INITIALISE SOCKET.IO FOR EACH NAMESPACE
+var server = require('http').Server(app);
+var socketio = require('socket.io')(server);
+var io = {
+  notifications: socketio.of('/notifications'),
+  messages: socketio.of('/messages')
+};
+
+
 // THE API ROUTES
-var apiRouter = require('./routers/router.js')(app, passport);
+var apiRouter = require('./routers/router.js')(app, passport, io);
 app.use('/', apiRouter);
 
 // SERVE THE DOCS ON THE BASE ROUTE
 app.use('/docs', express.static(__dirname + '/docs'));
 
 // START THE SERVER
-app.listen(port);
+server.listen(port);
 console.log('Magic happens on port ' + port);
 
 // export app for testing
-module.exports = app;
+module.exports = server;

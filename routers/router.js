@@ -8,7 +8,7 @@ var success = require('../responses/successes.js');
 
 var ACL = require('../config/acl.js');
 
-module.exports = function(app, passport) {
+module.exports = function(app, passport, io) {
   // USER ROUTER
   var userRouter = require('./user/user.router.js')(app, passport);
   app.use('/user', userRouter);
@@ -32,6 +32,13 @@ module.exports = function(app, passport) {
   // POST ROUTER
   var postRouter = require('./post/post.router.js')(app, passport);
   app.use('/post', postRouter);
+
+  io.notifications.on('connection', function(socket) {
+    socket.emit('news', { hello: 'world' });
+    socket.on('my other event', function (data) {
+      console.log(data);
+    });
+  });
 
   return router;
 };

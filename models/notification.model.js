@@ -87,14 +87,14 @@ Notification.prototype.findById = function(id) {
 };
 
 
-Notification.prototype.findByUsername = function(username) {
+Notification.prototype.findByUsername = function(username, unreadCount) {
   var self = this;
   return new Promise(function(resolve, reject) {
-    aws.dbClient.query({
+    var options = {
       TableName: self.config.table,
       IndexName: self.config.keys.globalIndexes[0],
-      Select: 'ALL_PROJECTED_ATTRIBUTES',
-      KeyConditionExpression: "#user = :username",
+      Select: unreadCount ? 'COUNT' : 'ALL_PROJECTED_ATTRIBUTES',
+      KeyConditionExpression: '#user = :username',
       // date is a reserved dynamodb keyword so must use this alias:
       ExpressionAttributeNames: {
         "#user": "user"
@@ -103,12 +103,24 @@ Notification.prototype.findByUsername = function(username) {
         ":username": String(username)
       },
       ScanIndexForward: false   // return results highest first
-    }, function(err, data) {
+    };
+    if(unreadCount) {
+      options.FilterExpression = 'unread = :unread';
+      options.ExpressionAttributeValues[':unread'] = true;
+    }
+    aws.dbClient.query(options, function(err, data) {
+      console.log("DATA ", data);
       if(err) return reject(err);
-      if(!data || !data.Items) {
-        return reject();
+      if(unreadCount) {
+        if(!data || !data.Count) {
+          return resolve(0);
+        }
+      } else {
+        if(!data || !data.Items) {
+          return reject();
+        }
       }
-      return resolve(data.Items);
+      return resolve(data.Items || data.Count);
     });
   });
 }
@@ -131,7 +143,7 @@ Notification.prototype.save = function(sessionID) {
           return reject();
         }
         // TODO return # of notifications
-        io.notifications.to(data.Item.socketID).emit('notification', 'new notification!');
+        io.notifications.to(data.Item.socketID).emit('notification', null);
       });
     }
 

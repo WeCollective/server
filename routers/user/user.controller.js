@@ -171,7 +171,12 @@ module.exports = {
       return error.InternalServerError(res);
     }
 
-    new Notification().findByUsername(req.user.username).then(function(notifications) {
+    var unreadCount = false;
+    if(req.query.unreadCount == 'true') {
+      unreadCount = true;
+    }
+
+    new Notification().findByUsername(req.user.username, unreadCount).then(function(notifications) {
       return success.OK(res, notifications);
     }, function(err) {
       if(err) {

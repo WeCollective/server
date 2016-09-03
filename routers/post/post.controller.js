@@ -346,6 +346,14 @@ module.exports = {
       });
     }).then(function(data) {
       // notify the author that their content has been commented on/replied to
+
+      // don't notify the author if they are commenting/posting on their own content
+      if(req.user.username == data.author) {
+        return new Promise(function(resolve, reject) {
+          resolve();
+        });
+      }
+
       var time = new Date().getTime();
       var notification = new Notification({
         id: data.author + '-' + time,

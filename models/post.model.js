@@ -107,53 +107,40 @@ Post.prototype.findById = function(id) {
 };
 
 // Fetch the posts on a specific branch, using a specific stat, and filtered by time
-Post.prototype.findByBranch = function(branchid, timeafter, stat) {
+Post.prototype.findByBranch = function(branchid, timeafter, sortBy, stat) {
   var self = this;
   var index = self.config.keys.globalIndexes[0];
-  switch(stat) {
-    case 'individual':
-      index = self.config.keys.globalIndexes[0];
-      break;
-    case 'local':
-    case 'global':  // global stat requires ranking by local stat (but on root branch)
-      index = self.config.keys.globalIndexes[1];
-      break;
+  if(sortBy == 'points') {
+    switch(stat) {
+      case 'individual':
+        index = self.config.keys.globalIndexes[0];
+        break;
+      case 'local':
+      case 'global':  // global stat requires ranking by local stat (but on root branch)
+        index = self.config.keys.globalIndexes[1];
+        break;
+    }
+  } else if(sortBy == 'date') {
+    index = self.config.keys.globalIndexes[2];
   }
 
-  if(stat == 'global') {
-    return new Promise(function(resolve, reject) {
-      // fetch posts on the root branch sorted by local stat
-      aws.dbClient.query({
-        TableName: self.config.table,
-        IndexName: index,
-        Select: 'ALL_PROJECTED_ATTRIBUTES',
-        KeyConditionExpression: "branchid = :branchid",
-        FilterExpression: "#date >= :timeafter",
-        // date is a reserved dynamodb keyword so must use this alias:
-        ExpressionAttributeNames: {
-          "#date": "date"
-        },
-        ExpressionAttributeValues: {
-          ":branchid": 'root',
-          ":timeafter": Number(timeafter)
-        },
-        ScanIndexForward: false   // return results highest first
-      }, function(err, data) {
-        if(err) return reject(err);
-        if(!data || !data.Items) {
-          return reject();
-        }
-
-        var rootItems = data.Items;
-
-        // get the posts on the specified branch which appear in the ids list
+  if(sortBy == 'points') {
+    if(stat == 'global') {
+      return new Promise(function(resolve, reject) {
+        // fetch posts on the root branch sorted by local stat
         aws.dbClient.query({
           TableName: self.config.table,
           IndexName: index,
           Select: 'ALL_PROJECTED_ATTRIBUTES',
           KeyConditionExpression: "branchid = :branchid",
+          FilterExpression: "#date >= :timeafter",
+          // date is a reserved dynamodb keyword so must use this alias:
+          ExpressionAttributeNames: {
+            "#date": "date"
+          },
           ExpressionAttributeValues: {
-            ":branchid": String(branchid)
+            ":branchid": 'root',
+            ":timeafter": Number(timeafter)
           },
           ScanIndexForward: false   // return results highest first
         }, function(err, data) {
@@ -162,30 +149,73 @@ Post.prototype.findByBranch = function(branchid, timeafter, stat) {
             return reject();
           }
 
-          // get array of just the ids of the posts appearing on the specified branch
-          var ids = _.map(data.Items, 'id');
+          var rootItems = data.Items;
 
-          // return only the posts from root branch which appear in the specified branch,
-          // and at the same time transform the object st. the branchid is the specified
-          // branch (not 'root') and the stat is renamed 'global'
-          var items = rootItems.filter(function(item) {
-            item.branchid = branchid;
-            item.global = item.local;
-            delete item.local;
-            return ids.indexOf(item.id) > -1;
+          // get the posts on the specified branch which appear in the ids list
+          aws.dbClient.query({
+            TableName: self.config.table,
+            IndexName: index,
+            Select: 'ALL_PROJECTED_ATTRIBUTES',
+            KeyConditionExpression: "branchid = :branchid",
+            ExpressionAttributeValues: {
+              ":branchid": String(branchid)
+            },
+            ScanIndexForward: false   // return results highest first
+          }, function(err, data) {
+            if(err) return reject(err);
+            if(!data || !data.Items) {
+              return reject();
+            }
+
+            // get array of just the ids of the posts appearing on the specified branch
+            var ids = _.map(data.Items, 'id');
+
+            // return only the posts from root branch which appear in the specified branch,
+            // and at the same time transform the object st. the branchid is the specified
+            // branch (not 'root') and the stat is renamed 'global'
+            var items = rootItems.filter(function(item) {
+              item.branchid = branchid;
+              item.global = item.local;
+              delete item.local;
+              return ids.indexOf(item.id) > -1;
+            });
+            return resolve(items);
           });
-          return resolve(items);
         });
       });
-    });
-  } else {
+    } else {
+      return new Promise(function(resolve, reject) {
+        aws.dbClient.query({
+          TableName: self.config.table,
+          IndexName: index,
+          Select: 'ALL_PROJECTED_ATTRIBUTES',
+          KeyConditionExpression: "branchid = :branchid",
+          FilterExpression: "#date >= :timeafter",
+          // date is a reserved dynamodb keyword so must use this alias:
+          ExpressionAttributeNames: {
+            "#date": "date"
+          },
+          ExpressionAttributeValues: {
+            ":branchid": String(branchid),
+            ":timeafter": Number(timeafter)
+          },
+          ScanIndexForward: false   // return results highest first
+        }, function(err, data) {
+          if(err) return reject(err);
+          if(!data || !data.Items) {
+            return reject();
+          }
+          return resolve(data.Items);
+        });
+      });
+    }
+  } else if(sortBy == 'date') {
     return new Promise(function(resolve, reject) {
       aws.dbClient.query({
         TableName: self.config.table,
         IndexName: index,
         Select: 'ALL_PROJECTED_ATTRIBUTES',
-        KeyConditionExpression: "branchid = :branchid",
-        FilterExpression: "#date >= :timeafter",
+        KeyConditionExpression: "branchid = :branchid AND #date >= :timeafter",
         // date is a reserved dynamodb keyword so must use this alias:
         ExpressionAttributeNames: {
           "#date": "date"

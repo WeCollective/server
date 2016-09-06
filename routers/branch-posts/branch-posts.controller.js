@@ -19,15 +19,20 @@ module.exports = {
       timeafter = 0;
     }
 
+    var sortBy = req.query.sortBy;
+    if(!req.query.sortBy) {
+      sortBy = 'points';
+    }
+
     var stat = req.query.stat;
     if(!req.query.stat) {
       stat = 'individual';
     }
 
-    new Post().findByBranch(req.params.branchid, timeafter, stat).then(function(posts) {
+    new Post().findByBranch(req.params.branchid, timeafter, sortBy, stat).then(function(posts) {
       return success.OK(res, posts);
-    }, function () {
-      console.error('Error fetching posts on branch.');
+    }, function(err) {
+      console.error('Error fetching posts on branch: ', err);
       return error.InternalServerError(res);
     });
   },

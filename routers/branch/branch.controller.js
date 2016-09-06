@@ -413,8 +413,13 @@ module.exports = {
       return error.BadRequest(res, 'Missing timeafter');
     }
 
+    var sortBy = req.query.sortBy;
+    if(!req.query.sortBy) {
+      sortBy = 'date';
+    }
+
     var branch = new Branch();
-    branch.findSubbranches(req.params.branchid, req.query.timeafter).then(function(data) {
+    branch.findSubbranches(req.params.branchid, req.query.timeafter, sortBy).then(function(data) {
       return success.OK(res, data);
     }, function() {
       return error.InternalServerError(res);

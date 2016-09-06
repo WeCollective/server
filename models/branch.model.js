@@ -101,12 +101,22 @@ Branch.prototype.findById = function(id) {
 // TODO: this has an upper limit on the number of results; if so, a LastEvaluatedKey
 // will be supplied to indicate where to continue the search from
 // (see: http://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/DynamoDB.html#query-property)
-Branch.prototype.findSubbranches = function(parentid, timeafter) {
+Branch.prototype.findSubbranches = function(parentid, timeafter, sortBy) {
   var self = this;
+  var index;
+  switch(sortBy) {
+    case 'date':
+      index = self.config.keys.globalIndexes[0];
+      break;
+    default:
+      index = self.config.keys.globalIndexes[0];  // date index is default
+      break;
+  }
+
   return new Promise(function(resolve, reject) {
     aws.dbClient.query({
       TableName: self.config.table,
-      IndexName: self.config.keys.globalIndexes[0],
+      IndexName: index,
       Select: 'ALL_PROJECTED_ATTRIBUTES',
       KeyConditionExpression: "parentid = :parentid AND #date >= :timeafter",
       // date is a reserved dynamodb keyword so must use this alias:

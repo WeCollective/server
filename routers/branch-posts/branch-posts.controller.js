@@ -67,10 +67,11 @@ module.exports = {
 
     var branchIds = [];
     new Post().findById(req.params.postid).then(function(posts) {
-      // find the post on the specified branchid
+      // find all post entries to get the list of branches it is tagged to
       var promise;
       for(var i = 0; i < posts.length; i++) {
         branchIds.push(posts[i].branchid);
+        // find the post on the specified branchid
         if(posts[i].branchid == req.params.branchid) {
           // update the post vote up/down parameter
           // (vote stats will be auto-updated by a lambda function)

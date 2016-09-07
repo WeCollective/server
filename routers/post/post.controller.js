@@ -336,6 +336,23 @@ module.exports = {
         promises.push(post.update());
       }
       return Promise.all(promises);
+    }).then(function () {
+      // find all post entries to get the list of branches it is tagged to
+      return new Post().findById(req.params.postid);
+    }).then(function(posts) {
+      // increment the post comments count on each branch object
+      // the post appears in
+      var promises = [];
+      for(var i = 0; i < posts.length; i++) {
+        promises.push(new Promise(function(resolve, reject) {
+          var branch = new Branch();
+          branch.findById(posts[i].branchid).then(function() {
+            branch.set('post_comments', branch.data.post_comments + 1);
+            branch.update().then(resolve, reject);
+          }, reject);
+        }));
+      }
+      return Promise.all(promises);
     }).then(function() {
       // notify the post or comment author that a comment has been
       // posted on their content

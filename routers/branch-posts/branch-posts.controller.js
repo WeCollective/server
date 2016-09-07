@@ -4,6 +4,7 @@ var aws = require('../../config/aws.js');
 var fs = require('../../config/filestorage.js');
 
 var Post = require('../../models/post.model.js');
+var Branch = require('../../models/branch.model.js');
 
 var success = require('../../responses/successes.js');
 var error = require('../../responses/errors.js');
@@ -64,21 +65,40 @@ module.exports = {
       return error.BadRequest(res, 'Invalid ' + invalids[0]);
     }
 
+    var branchIds = [];
     new Post().findById(req.params.postid).then(function(posts) {
       // find the post on the specified branchid
+      var promise;
       for(var i = 0; i < posts.length; i++) {
+        branchIds.push(posts[i].branchid);
         if(posts[i].branchid == req.params.branchid) {
           // update the post vote up/down parameter
           // (vote stats will be auto-updated by a lambda function)
           post.set(req.body.vote, posts[i][req.body.vote] + 1);
-          return post.update();
+          promise = post.update();
         }
       }
+      return promise;
+    }).then(function() {
+      // increment/decrement the post points count on each branch object
+      // the post appears in
+      var promises = [];
+      var inc = (req.body.vote == 'up') ? 1 : -1;
+      for(var i = 0; i < branchIds.length; i++) {
+        promises.push(new Promise(function(resolve, reject) {
+          var branch = new Branch();
+          branch.findById(branchIds[i]).then(function() {
+            branch.set('post_points', branch.data.post_points + inc);
+            branch.update().then(resolve, reject);
+          }, reject);
+        }));
+      }
+      return Promise.all(promises);
     }).then(function() {
       return success.OK(res);
     }).catch(function(err) {
       if(err) {
-        console.error('Error voting on a post.');
+        console.error('Error voting on a post: ', err);
         return error.InternalServerError(res);
       }
       return error.NotFound(res);

@@ -28,7 +28,10 @@ module.exports = {
       name: req.body.name,
       creator: req.user.username,
       date: time,
-      parentid: req.body.parentid
+      parentid: req.body.parentid,
+      post_count: 0,
+      post_points: 0,
+      post_comments: 0
     });
 
     // validate branch properties

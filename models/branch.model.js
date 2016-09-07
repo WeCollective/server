@@ -72,6 +72,22 @@ Branch.prototype.validate = function(properties) {
     }
   }
 
+  if(properties.indexOf('post_count') > -1) {
+    if(isNaN(this.data.post_count)) {
+      invalids.push('post_count');
+    }
+  }
+  if(properties.indexOf('post_points') > -1) {
+    if(isNaN(this.data.post_points)) {
+      invalids.push('post_points');
+    }
+  }
+  if(properties.indexOf('post_comments') > -1) {
+    if(isNaN(this.data.post_comments)) {
+      invalids.push('post_comments');
+    }
+  }
+
   return invalids;
 };
 
@@ -108,33 +124,70 @@ Branch.prototype.findSubbranches = function(parentid, timeafter, sortBy) {
     case 'date':
       index = self.config.keys.globalIndexes[0];
       break;
+    case 'post_count':
+      index = self.config.keys.globalIndexes[1];
+      break;
+    case 'post_points':
+      index = self.config.keys.globalIndexes[2];
+      break;
+    case 'post_comments':
+      index = self.config.keys.globalIndexes[3];
+      break;
     default:
       index = self.config.keys.globalIndexes[0];  // date index is default
       break;
   }
 
-  return new Promise(function(resolve, reject) {
-    aws.dbClient.query({
-      TableName: self.config.table,
-      IndexName: index,
-      Select: 'ALL_PROJECTED_ATTRIBUTES',
-      KeyConditionExpression: "parentid = :parentid AND #date >= :timeafter",
-      // date is a reserved dynamodb keyword so must use this alias:
-      ExpressionAttributeNames: {
-        "#date": "date"
-      },
-      ExpressionAttributeValues: {
-        ":parentid": String(parentid),
-        ":timeafter": Number(timeafter)
-      }
-    }, function(err, data) {
-      if(err) return reject(err);
-      if(!data || !data.Items) {
-        return reject();
-      }
-      return resolve(data.Items);
+  if(sortBy == 'date') {
+    return new Promise(function(resolve, reject) {
+      aws.dbClient.query({
+        TableName: self.config.table,
+        IndexName: index,
+        Select: 'ALL_PROJECTED_ATTRIBUTES',
+        KeyConditionExpression: "parentid = :parentid AND #date >= :timeafter",
+        // date is a reserved dynamodb keyword so must use this alias:
+        ExpressionAttributeNames: {
+          "#date": "date"
+        },
+        ExpressionAttributeValues: {
+          ":parentid": String(parentid),
+          ":timeafter": Number(timeafter)
+        },
+        ScanIndexForward: false   // return results highest first
+      }, function(err, data) {
+        if(err) return reject(err);
+        if(!data || !data.Items) {
+          return reject();
+        }
+        return resolve(data.Items);
+      });
     });
-  });
+  } else {
+    return new Promise(function(resolve, reject) {
+      aws.dbClient.query({
+        TableName: self.config.table,
+        IndexName: index,
+        Select: 'ALL_PROJECTED_ATTRIBUTES',
+        KeyConditionExpression: "parentid = :parentid",
+        FilterExpression: "#date >= :timeafter",
+        // date is a reserved dynamodb keyword so must use this alias:
+        ExpressionAttributeNames: {
+          "#date": "date"
+        },
+        ExpressionAttributeValues: {
+          ":parentid": String(parentid),
+          ":timeafter": Number(timeafter)
+        },
+        ScanIndexForward: false   // return results highest first
+      }, function(err, data) {
+        if(err) return reject(err);
+        if(!data || !data.Items) {
+          return reject();
+        }
+        return resolve(data.Items);
+      });
+    });
+  }
 }
 
 module.exports = Branch;

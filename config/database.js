@@ -23,7 +23,10 @@ var Schema = {
     date: null,
     parentid: null,
     description: null,
-    rules: null
+    rules: null,
+    post_count: null,
+    post_points: null,
+    post_comments: null
   },
   BranchImages: {
     id: null,
@@ -122,7 +125,7 @@ var Keys = {
   Branches: {
     primary: 'id',
     sort: null,
-    globalIndexes: ['parentid-date-index']
+    globalIndexes: ['parentid-date-index', 'parentid-post_count-index', 'parentid-post_points-index', 'parentid-post_comments-index']
   },
   BranchImages: {
     primary: 'id',

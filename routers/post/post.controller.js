@@ -122,6 +122,20 @@ module.exports = {
         Promise.all(promises).then(function() {
           return postdata.save();
         }).then(function() {
+          // increment the post counters on the branch objects
+          var promises = [];
+          for(var i = 0; i < req.body.branchids.length; i++) {
+            var promise = new Promise(function(resolve, reject) {
+              var branch = new Branch();
+              branch.findById(req.body.branchids[i]).then(function() {
+                branch.set('post_count', branch.data.post_count + 1);
+                branch.update().then(resolve, reject);
+              }, reject);
+            });
+            promises.push(promise);
+          }
+          return Promise.all(promises);
+        }).then(function() {
           // successfully create post, send back its id
           return success.OK(res, id);
         }).catch(function() {

@@ -76,9 +76,9 @@ Post.prototype.validate = function(properties) {
       invalids.push('down');
     }
   }
-  if(properties.indexOf('rank') > -1) {
-    if(isNaN(this.data.rank)) {
-      invalids.push('rank');
+  if(properties.indexOf('comment_count') > -1) {
+    if(isNaN(this.data.comment_count)) {
+      invalids.push('comment_count');
     }
   }
 
@@ -122,6 +122,8 @@ Post.prototype.findByBranch = function(branchid, timeafter, sortBy, stat) {
     }
   } else if(sortBy == 'date') {
     index = self.config.keys.globalIndexes[2];
+  } else if(sortBy == 'comment_count') {
+    index = self.config.keys.globalIndexes[3];
   }
 
   if(sortBy == 'points') {
@@ -216,6 +218,31 @@ Post.prototype.findByBranch = function(branchid, timeafter, sortBy, stat) {
         IndexName: index,
         Select: 'ALL_PROJECTED_ATTRIBUTES',
         KeyConditionExpression: "branchid = :branchid AND #date >= :timeafter",
+        // date is a reserved dynamodb keyword so must use this alias:
+        ExpressionAttributeNames: {
+          "#date": "date"
+        },
+        ExpressionAttributeValues: {
+          ":branchid": String(branchid),
+          ":timeafter": Number(timeafter)
+        },
+        ScanIndexForward: false   // return results highest first
+      }, function(err, data) {
+        if(err) return reject(err);
+        if(!data || !data.Items) {
+          return reject();
+        }
+        return resolve(data.Items);
+      });
+    });
+  } else if(sortBy == 'comment_count') {
+    return new Promise(function(resolve, reject) {
+      aws.dbClient.query({
+        TableName: self.config.table,
+        IndexName: index,
+        Select: 'ALL_PROJECTED_ATTRIBUTES',
+        KeyConditionExpression: "branchid = :branchid",
+        FilterExpression: "#date >= :timeafter",
         // date is a reserved dynamodb keyword so must use this alias:
         ExpressionAttributeNames: {
           "#date": "date"

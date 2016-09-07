@@ -118,7 +118,7 @@ module.exports = function(server) {
           up: 0,
           individual: 0,
           local: 0,
-          rank: 0,
+          comment_count: 0,
           date: 0,
           branchid: 'branch1',
           type: 'text'
@@ -194,7 +194,7 @@ module.exports = function(server) {
           up: 1,
           individual: 0,
           local: 0,
-          rank: 0,
+          comment_count: 0,
           date: 0,
           branchid: 'branch1',
           type: 'text'
@@ -225,7 +225,7 @@ module.exports = function(server) {
           up: 2,
           individual: 0,
           local: 0,
-          rank: 0,
+          comment_count: 0,
           date: 0,
           branchid: 'branch2',
           type: 'text'

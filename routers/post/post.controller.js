@@ -80,11 +80,11 @@ module.exports = {
           individual: 0,
           up: 0,
           down: 0,
-          rank: 0
+          comment_count: 0
         });
 
         // validate post properties
-        propertiesToCheck = ['id', 'branchid', 'date', 'type', 'local', 'individual', 'up', 'down', 'rank'];
+        propertiesToCheck = ['id', 'branchid', 'date', 'type', 'local', 'individual', 'up', 'down', 'comment_count'];
         invalids = post.validate(propertiesToCheck);
         if(invalids.length > 0) {
           return error.BadRequest(res, 'Invalid ' + invalids[0]);
@@ -276,11 +276,12 @@ module.exports = {
 
     // ensure the specified post exists
     var parent = new Comment();
+    var commentPosts; // the post entries (one for each branch) this comment belongs to
     new Post().findById(req.params.postid, 0).then(function(posts) {
       if(!posts || posts.length == 0) {
         return error.NotFound(res);
       }
-
+      commentPosts = posts;
       // if this is a root comment, continue
       if(req.body.parentid == 'none') {
         return new Promise(function(resolve, reject) {
@@ -312,6 +313,15 @@ module.exports = {
         parent.set('replies', parent.data.replies + 1);
         return parent.update();
       }
+    }).then(function() {
+      // increment the number of comments on the post
+      var promises = [];
+      for(var i = 0; i < commentPosts.length; i++) {
+        var post = new Post(commentPosts[i]);
+        post.set('comment_count', commentPosts[i].comment_count + 1);
+        promises.push(post.update());
+      }
+      return Promise.all(promises);
     }).then(function() {
       // notify the post or comment author that a comment has been
       // posted on their content

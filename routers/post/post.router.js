@@ -55,7 +55,7 @@ module.exports = function(app, passport) {
      *         "down": 1,
      *         "individual": 1,
      *         "branchid": "science",
-     *         "rank": 0,
+     *         "comment_count": 0,
      *         "local": 1,
      *         "date": 1471642545455,
      *         "up": 2,

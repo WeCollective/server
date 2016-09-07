@@ -61,7 +61,7 @@ var Schema = {
     individual: null,
     up: null,
     down: null,
-    rank: null
+    comment_count: null
   },
   PostData: {
     id: null,
@@ -149,7 +149,7 @@ var Keys = {
   Posts: {
     primary: 'id',
     sort: 'branchid',
-    globalIndexes: ['branchid-individual-index', 'branchid-local-index', 'branchid-date-index']
+    globalIndexes: ['branchid-individual-index', 'branchid-local-index', 'branchid-date-index', 'branchid-comment_count-index']
   },
   PostData: {
     primary: 'id',

@@ -37,9 +37,6 @@ module.exports = {
     if(!req.body.branchids || req.body.branchids.length == 0 || req.body.branchids.length > 5) {
       return error.BadRequest(res, 'Invalid branchids');
     }
-    if(req.body.branchids.indexOf('root') > -1) {
-      return error.BadRequest(res, 'Invalid branchid');
-    }
 
     // fetch the tags of each specfied branch. The union of these is the list of
     // the branches the post should be tagged to.

@@ -485,11 +485,81 @@ module.exports = function(app, passport) {
     });
 
   router.route('/:username/notifications')
+    /**
+     * @api {get} /:username/notifications Get User Notifications
+     * @apiName Get User Notifications
+     * @apiDescription Get a list of notifications for the specified user, or a count of the number of unread ones.
+     * @apiGroup User
+     * @apiPermission self
+     *
+     * @apiParam (URL Parameters) {String} username User's unique username.
+     * @apiParam (Query Parameters) {String} unreadCount Boolean indicating whether to fetch the number of unread notifications rather than notifications themselves.
+     *
+     * @apiSuccess (Successes) {String} data The notifications array, or a count
+     * @apiSuccessExample {json} SuccessResponse:
+     *  HTTP/1.1 200
+     *  {
+     *    "message": "Success",
+     *    "data": "<notifications>"
+     *  }
+     *
+     * @apiUse Forbidden
+     * @apiUse InternalServerError
+     * @apiUse NotFound
+     */
     .get(ACL.validateRole(ACL.Roles.AuthenticatedUser), ACL.attachRole(ACL.Roles.Self), controller.getNotifications)
+
+    /**
+     * @api {put} /:username/notifications Subscribe to Notifications
+     * @apiName Subscribe to Notifications
+     * @apiDescription Subscribe the user to receive real-time notifications using Web Sockets.
+     * @apiGroup User
+     * @apiPermission self
+     *
+     * @apiParam (URL Parameters) {String} username User's unique username.
+     * @apiParam (URL Parameters) {String} socketID User's unique web socket ID (provided by Socket.io)
+     *
+     * @apiUse OK
+     * @apiUse Forbidden
+     * @apiUse InternalServerError
+     * @apiUse NotFound
+     */
     .put(ACL.validateRole(ACL.Roles.AuthenticatedUser), ACL.attachRole(ACL.Roles.Self), controller.subscribeToNotifications)
+
+    /**
+     * @api {delete} /:username/notifications Unsubscribe from Notifications
+     * @apiName Unsubscribe from Notifications
+     * @apiDescription Unsubscribe the user from receiving real-time notifications using Web Sockets.
+     * @apiGroup User
+     * @apiPermission self
+     *
+     * @apiParam (URL Parameters) {String} username User's unique username.
+     *
+     * @apiUse OK
+     * @apiUse Forbidden
+     * @apiUse InternalServerError
+     * @apiUse NotFound
+     */
     .delete(ACL.validateRole(ACL.Roles.AuthenticatedUser), ACL.attachRole(ACL.Roles.Self), controller.unsubscribeFromNotifications);
 
   router.route('/:username/notifications/:notificationid')
+    /**
+     * @api {put} /:username/notifications/:notificationid Mark notification
+     * @apiName Mark notification
+     * @apiDescription Mark notification as read/unread
+     * @apiGroup User
+     * @apiPermission self
+     *
+     * @apiParam (URL Parameters) {String} username User's unique username.
+     * @apiParam (URL Parameters) {String} notificationid Notification's unique ID.
+     *
+     * @apiParam (Body Parameters) {String} unread Boolean indicating whether the notification should be marked as unread/read.
+     *
+     * @apiUse OK
+     * @apiUse Forbidden
+     * @apiUse InternalServerError
+     * @apiUse NotFound
+     */
     .put(ACL.validateRole(ACL.Roles.AuthenticatedUser), ACL.attachRole(ACL.Roles.Self), controller.putNotification);
 
   return router;

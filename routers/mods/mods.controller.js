@@ -180,11 +180,17 @@ module.exports = {
       }).then(function () {
         return postModLogEntry(req, res, 'removemod', req.params.username);
       }).then(function () {
-        // notify mods of the branch that a mod was added
+        // notify mods of the branch that a mod was removed
         var promises = [];
         var time = new Date().getTime();
         // add the deleted mod to the notification recipient list
         branchMods.push({ username: req.params.username });
+        // do not notify self that you added a moderator
+        for(var i = 0; i < branchMods.length; i++) {
+          if(branchMods[i].username == req.user.username) {
+            branchMods.splice(i, 1);
+          }
+        }
         for(var i = 0; i < branchMods.length; i++) {
           var notification = new Notification({
             id: branchMods[i].username + '-' + time,

@@ -88,6 +88,12 @@ User.prototype.validate = function(properties) {
     }
   }
 
+  if(properties.indexOf('verified') > -1) {
+    if(!validate.boolean(this.data.verified)) {
+      invalids.push('verified');
+    }
+  }
+
   return invalids;
 };
 

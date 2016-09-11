@@ -37,11 +37,8 @@ module.exports = function(app, passport) {
           }
           return res.status(status).json({ message: info.message });
         }
-        // manually log in user to establish session
-        req.logIn(user, function(err) {
-          if (err) { return next(err); }
-          return success.OK(res);
-        });
+        req.logout();
+        return success.OK(res);
       })(req, res, next);
     });
 

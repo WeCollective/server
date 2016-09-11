@@ -9,7 +9,9 @@ var Schema = {
     firstname: null,
     lastname: null,
     dob: null,
-    datejoined: null
+    datejoined: null,
+    verified: null,
+    token: null
   },
   UserImages: {
     id: null,

@@ -33,6 +33,16 @@ module.exports = function(passport) {
           return done(err, false, { status: 500, message: 'Something went wrong' });
         }
 
+        // create a random 16 character verification token for the new user
+        var chars = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        var token = '';
+        for(var i = 0; i < 16; i++) {
+          token += chars[Math.round(Math.random() * (chars.length - 1))];
+        }
+        // create expiration date for token in 24 hours time
+        var expires = new Date();
+        expires.setHours(expires.getHours() + 24);
+
         // create a new user object
         var newUser = new User({
           'username': username,
@@ -40,11 +50,16 @@ module.exports = function(passport) {
           'email': req.body.email,
           'firstname': req.body.firstname,
           'lastname': req.body.lastname,
-          'datejoined': new Date().getTime()
+          'datejoined': new Date().getTime(),
+          'verified': false,
+          'token': JSON.stringify({
+            token: token,
+            expires: expires.getTime()
+          })
         });
 
         // validate user properties
-        var propertiesToCheck = ['username', 'password', 'email', 'firstname', 'lastname', 'datejoined'];
+        var propertiesToCheck = ['username', 'password', 'email', 'firstname', 'lastname', 'datejoined', 'verified'];
         var invalids = newUser.validate(propertiesToCheck);
         if(invalids.length > 0) {
           return done(null, false, { status: 400, message: 'Invalid ' + invalids[0] });

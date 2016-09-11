@@ -77,6 +77,12 @@ module.exports = {
           var promises = [];
           var time = new Date().getTime();
           branchMods.push(mod.data);  // add the new mod to the notification recipient list
+          // do not notify self that you added a moderator
+          for(var i = 0; i < branchMods.length; i++) {
+            if(branchMods[i].username == req.user.username) {
+              branchMods.splice(i, 1);
+            }
+          }
           for(var i = 0; i < branchMods.length; i++) {
             var notification = new Notification({
               id: branchMods[i].username + '-' + time,

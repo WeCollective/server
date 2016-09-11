@@ -4,6 +4,7 @@ var LocalStrategy = require('passport-local').Strategy;
 var bcrypt = require('bcryptjs');
 var db = require('./database.js');
 var User = require('../models/user.model.js');
+var mailer = require('./mailer.js');
 
 module.exports = function(passport) {
   passport.serializeUser(function(user, done) {
@@ -19,6 +20,7 @@ module.exports = function(passport) {
   });
 
   // SIGN UP STRATEGY
+  var newUser;
   passport.use('local-signup', new LocalStrategy({
       passReqToCallback : true
   }, function(req, username, password, done) {
@@ -44,7 +46,7 @@ module.exports = function(passport) {
         expires.setHours(expires.getHours() + 24);
 
         // create a new user object
-        var newUser = new User({
+        newUser = new User({
           'username': username,
           'password': password,
           'email': req.body.email,
@@ -65,6 +67,8 @@ module.exports = function(passport) {
           return done(null, false, { status: 400, message: 'Invalid ' + invalids[0] });
         }
 
+        return mailer.sendVerification(newUser.data, token);
+      }).then(function() {
         // salt and hash the password, storing hash in the db
         bcrypt.genSalt(10, function(err, salt) {
           bcrypt.hash(password, salt, function(err, hash) {
@@ -77,6 +81,8 @@ module.exports = function(passport) {
             });
           });
         });
+      }).catch(function() {
+        return done(err, false, { status: 500, message: 'Something went wrong' });
       });
     });
   }));

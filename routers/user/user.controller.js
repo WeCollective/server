@@ -3,6 +3,7 @@
 var aws = require('../../config/aws.js');
 var fs = require('../../config/filestorage.js');
 var ACL = require('../../config/acl.js');
+var mailer = require('../../config/mailer.js');
 
 // Models
 var User = require('../../models/user.model.js');
@@ -264,6 +265,29 @@ module.exports = {
       return error.NotFound(res);
     });
   },
+  resendVerification: function(req, res) {
+    if(!req.params.username) {
+      return error.BadRequest(res, 'Missing username parameter');
+    }
+
+    var user = new User();
+    user.findByUsername(req.params.username).then(function() {
+      // return error if already verified
+      if(user.data.verified) {
+        return error.BadRequest(res, 'Account is already verified');
+      }
+
+      return mailer.sendVerification(user.data, user.data.token);
+    }).then(function() {
+      return success.OK(res);
+    }).catch(function(err) {
+      if(err) {
+        console.error("Error resending verification email: ", err);
+        return error.InternalServerError(res);
+      }
+      return error.NotFound(res);
+    });
+  },
   verify: function(req, res) {
     if(!req.params.username || !req.params.token) {
       return error.BadRequest(res, 'Missing username or token parameter');
@@ -283,6 +307,13 @@ module.exports = {
 
       user.set('verified', true);
       return user.update();
+    }).then(function() {
+      // save the user's contact info in SendGrid contact list for email marketing
+      var sanitized = user.sanitize(user.data, ACL.Schema(ACL.Roles.Self, 'User'));
+      return mailer.addContact(sanitized);
+    }).then(function () {
+      // send the user a welcome email
+      return mailer.sendWelcome(user.data);
     }).then(function() {
       return success.OK(res);
     }).catch(function(err) {

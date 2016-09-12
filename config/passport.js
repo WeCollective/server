@@ -92,7 +92,7 @@ module.exports = function(passport) {
       user.findByUsername(username).then(function() {
         // check user has verified their account
         if(!user.data.verified) {
-          return done(null, false, { status: 400, message: 'Your account has not been verified' });
+          return done(null, false, { status: 403, message: 'Your account has not been verified' });
         }
 
         // compare password with stored hash from database using bcrypt

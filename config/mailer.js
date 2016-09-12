@@ -4,10 +4,16 @@ var mailHelper = require('sendgrid').mail;
 module.exports = {
   sendVerification: function(user, token) {
     return new Promise(function(resolve, reject) {
-      var from_email = new mailHelper.Email(process.env.WECO_EMAIL);
-      var to_email = new mailHelper.Email(user.email);
-      var content = new mailHelper.Content("text/plain", "Token: " + token + "\nUser: " + JSON.stringify(user));
-      var mail = new mailHelper.Mail(from_email, "WE Collective | Verify your email", to_email, content);
+      var mail = new mailHelper.Mail();
+      mail.setFrom(new mailHelper.Email(process.env.WECO_EMAIL));
+      mail.setSubject('WE Collective | Verify your account');
+      var personalization = new mailHelper.Personalization();
+      personalization.addTo(new mailHelper.Email(user.email));
+      personalization.addSubstitution(new mailHelper.Substitution('%firstname%', user.firstname));
+      personalization.addSubstitution(new mailHelper.Substitution('%username%', user.username));
+      personalization.addSubstitution(new mailHelper.Substitution('%verify_url%', process.env.WEBAPP_URL + user.username + '/verify/' + token));
+      mail.addPersonalization(personalization);
+      mail.setTemplateId("76ae83b3-3bac-4f9b-afe6-08b220916a32");
 
       var request = sendgrid.emptyRequest({
         method: 'POST',

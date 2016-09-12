@@ -271,21 +271,13 @@ module.exports = {
 
     var user = new User();
     user.findByUsername(req.params.username).then(function() {
-      var token = JSON.parse(user.data.token);
-
       // return success if already verified
       if(user.data.verified) {
         return success.OK(res);
       }
 
-      // check token hasn't expired
-      // (expired tokens eventually get cleaned up and deleted, so treat as a 404)
-      if(token.expires < new Date().getTime()) {
-        return error.NotFound(res);
-      }
-
       // check token matches
-      if(token.token !== req.params.token) {
+      if(user.data.token !== req.params.token) {
         return error.BadRequest(res, 'Invalid token');
       }
 

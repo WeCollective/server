@@ -20,6 +20,15 @@ module.exports = function(passport) {
   });
 
   // SIGN UP STRATEGY
+  function generateToken() {
+    // create a random 16 character verification token for the new user
+    var chars = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    var token = '';
+    for(var i = 0; i < 16; i++) {
+      token += chars[Math.round(Math.random() * (chars.length - 1))];
+    }
+    return token;
+  }
   var newUser;
   passport.use('local-signup', new LocalStrategy({
       passReqToCallback : true
@@ -35,16 +44,7 @@ module.exports = function(passport) {
           return done(err, false, { status: 500, message: 'Something went wrong' });
         }
 
-        // create a random 16 character verification token for the new user
-        var chars = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
-        var token = '';
-        for(var i = 0; i < 16; i++) {
-          token += chars[Math.round(Math.random() * (chars.length - 1))];
-        }
-        // create expiration date for token in 24 hours time
-        var expires = new Date();
-        expires.setHours(expires.getHours() + 24);
-
+        var token = generateToken();
         // create a new user object
         newUser = new User({
           'username': username,
@@ -54,10 +54,7 @@ module.exports = function(passport) {
           'lastname': req.body.lastname,
           'datejoined': new Date().getTime(),
           'verified': false,
-          'token': JSON.stringify({
-            token: token,
-            expires: expires.getTime()
-          })
+          'token': token
         });
 
         // validate user properties
@@ -67,22 +64,20 @@ module.exports = function(passport) {
           return done(null, false, { status: 400, message: 'Invalid ' + invalids[0] });
         }
 
-        return mailer.sendVerification(newUser.data, token);
-      }).then(function() {
-        // salt and hash the password, storing hash in the db
-        bcrypt.genSalt(10, function(err, salt) {
-          bcrypt.hash(password, salt, function(err, hash) {
-            // save new user to database, using hashed password
-            newUser.set('password', hash);
-            newUser.save().then(function() {
-              return done(null, { username: username });
-            }, function() {
-              return done(err, false, { status: 500, message: 'Something went wrong' });
+        mailer.sendVerification(newUser.data, token).then(function() {
+          // salt and hash the password, storing hash in the db
+          bcrypt.genSalt(10, function(err, salt) {
+            bcrypt.hash(password, salt, function(err, hash) {
+              // save new user to database, using hashed password
+              newUser.set('password', hash);
+              newUser.save().then(function() {
+                return done(null, { username: username });
+              }, function() {
+                return done(err, false, { status: 500, message: 'Something went wrong' });
+              });
             });
           });
         });
-      }).catch(function() {
-        return done(err, false, { status: 500, message: 'Something went wrong' });
       });
     });
   }));

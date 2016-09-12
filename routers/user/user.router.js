@@ -559,5 +559,8 @@ module.exports = function(app, passport) {
      */
     .put(ACL.validateRole(ACL.Roles.AuthenticatedUser), ACL.attachRole(ACL.Roles.Self), controller.putNotification);
 
+  router.route('/:username/verify/:token')
+    .get(ACL.attachRole(ACL.Roles.Guest), controller.verify);
+
   return router;
 };

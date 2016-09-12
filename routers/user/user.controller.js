@@ -263,5 +263,42 @@ module.exports = {
       }
       return error.NotFound(res);
     });
+  },
+  verify: function(req, res) {
+    if(!req.params.username || !req.params.token) {
+      return error.BadRequest(res, 'Missing username or token parameter');
+    }
+
+    var user = new User();
+    user.findByUsername(req.params.username).then(function() {
+      var token = JSON.parse(user.data.token);
+
+      // return success if already verified
+      if(user.data.verified) {
+        return success.OK(res);
+      }
+
+      // check token hasn't expired
+      // (expired tokens eventually get cleaned up and deleted, so treat as a 404)
+      if(token.expires < new Date().getTime()) {
+        return error.NotFound(res);
+      }
+
+      // check token matches
+      if(token.token !== req.params.token) {
+        return error.BadRequest(res, 'Invalid token');
+      }
+
+      user.set('verified', true);
+      return user.update();
+    }).then(function() {
+      return success.OK(res);
+    }).catch(function(err) {
+      if(err) {
+        console.error("Error verifying user: ", err);
+        return error.InternalServerError(res);
+      }
+      return error.NotFound(res);
+    });
   }
 };

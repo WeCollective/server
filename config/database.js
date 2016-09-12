@@ -11,7 +11,8 @@ var Schema = {
     dob: null,
     datejoined: null,
     verified: null,
-    token: null
+    token: null,
+    resetPasswordToken: null
   },
   UserImages: {
     id: null,

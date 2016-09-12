@@ -559,6 +559,12 @@ module.exports = function(app, passport) {
      */
     .put(ACL.validateRole(ACL.Roles.AuthenticatedUser), ACL.attachRole(ACL.Roles.Self), controller.putNotification);
 
+  router.route('/:username/reset-password')
+    .get(ACL.attachRole(ACL.Roles.Guest), controller.sendResetPasswordLink);
+
+  router.route('/:username/reset-password/:token')
+    .post(ACL.attachRole(ACL.Roles.Guest), controller.resetPassword);
+
   router.route('/:username/reverify')
     .get(ACL.attachRole(ACL.Roles.Guest), controller.resendVerification);
   router.route('/:username/verify/:token')

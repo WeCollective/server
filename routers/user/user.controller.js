@@ -4,6 +4,7 @@ var aws = require('../../config/aws.js');
 var fs = require('../../config/filestorage.js');
 var ACL = require('../../config/acl.js');
 var mailer = require('../../config/mailer.js');
+var auth = require('../../config/auth.js');
 
 // Models
 var User = require('../../models/user.model.js');
@@ -260,6 +261,74 @@ module.exports = {
     }).catch(function(err) {
       if(err) {
         console.error("Error unsubscribing from notifications: ", err);
+        return error.InternalServerError(res);
+      }
+      return error.NotFound(res);
+    });
+  },
+  sendResetPasswordLink: function(req, res) {
+    if(!req.params.username) {
+      return error.BadRequest(res, 'Missing username parameter');
+    }
+
+    var user = new User();
+    var token;
+    user.findByUsername(req.params.username).then(function() {
+      token = auth.generateToken();
+      user.set('resetPasswordToken', token);
+      return user.update();
+    }, function(err) {
+      if(err) {
+        console.error("Error sending password reset: ", err);
+        return error.InternalServerError(res);
+      }
+      return error.NotFound(res);
+    }).then(function() {
+      return mailer.sendResetPasswordLink(user.data, token);
+    }).then(function() {
+      return success.OK(res);
+    }).catch(function(err) {
+      return error.InternalServerError(res);
+    });
+  },
+  resetPassword: function(req, res) {
+    if(!req.params.username || !req.params.token) {
+      return error.BadRequest(res, 'Missing username or token parameter');
+    }
+
+    if(!req.body.password) {
+      return error.BadRequest(res, 'Missing password parameter');
+    }
+
+    var user = new User();
+    user.findByUsername(req.params.username).then(function() {
+      // check token matches
+      if(user.data.resetPasswordToken !== req.params.token) {
+        return error.BadRequest(res, 'Invalid token');
+      }
+
+      // validate new password
+      user.set('password', req.body.password);
+      var propertiesToCheck = ['password'];
+      var invalids = user.validate(propertiesToCheck);
+      if(invalids.length > 0) {
+        return done(null, false, { status: 400, message: 'Invalid ' + invalids[0] });
+      }
+
+      auth.generateSalt(10).then(function(salt) {
+        return auth.hash(req.body.password, salt);
+      }).then(function(hash) {
+        user.set('password', hash);
+        user.set('resetPasswordToken', null);
+        return user.update();
+      }).then(function() {
+        return success.OK(res);
+      }).catch(function() {
+        return error.InternalServerError(res);
+      });
+    }).catch(function() {
+      if(err) {
+        console.error("Error changing password: ", err);
         return error.InternalServerError(res);
       }
       return error.NotFound(res);

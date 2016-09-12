@@ -77,5 +77,30 @@ module.exports = {
         resolve();
       });
     });
+  },
+  sendResetPasswordLink: function(user, token) {
+    return new Promise(function(resolve, reject) {
+      var mail = new mailHelper.Mail();
+      mail.setFrom(new mailHelper.Email(process.env.WECO_EMAIL));
+      mail.setSubject('WE Collective | Reset password');
+      var personalization = new mailHelper.Personalization();
+      personalization.addTo(new mailHelper.Email(user.email));
+      personalization.addSubstitution(new mailHelper.Substitution('%firstname%', user.firstname));
+      personalization.addSubstitution(new mailHelper.Substitution('%username%', user.username));
+      personalization.addSubstitution(new mailHelper.Substitution('%reset_url%', process.env.WEBAPP_URL + 'reset-password/' + user.username + '/' + token));
+      mail.addPersonalization(personalization);
+      mail.setTemplateId("a9c63f7e-a7f6-4d16-b788-2241c2fd1d0a");
+
+      var request = sendgrid.emptyRequest({
+        method: 'POST',
+        path: '/v3/mail/send',
+        body: mail.toJSON()
+      });
+
+      sendgrid.API(request, function(error, response) {
+        if(error) reject();
+        resolve();
+      });
+    });
   }
 };

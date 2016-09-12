@@ -95,6 +95,11 @@ module.exports = function(passport) {
       // check whether a user with this username exists in the database
       var user = new User();
       user.findByUsername(username).then(function() {
+        // check user has verified their account
+        if(!user.data.verified) {
+          return done(null, false, { status: 400, message: 'Your account has not been verified' });
+        }
+
         // compare password with stored hash from database using bcrypt
         bcrypt.compare(password, user.data.password, function(err, res) {
           // bcrypt error

@@ -73,6 +73,8 @@ module.exports = {
           "num_mod_positions": user.num_mod_positions
         }
       ];
+      if(user.dob) request.body[0]["dob"] = mmddyyyy(new Date(user.dob));
+      
       request.method = update ? 'PATCH' : 'POST';
       request.path = '/v3/contactdb/recipients';
 

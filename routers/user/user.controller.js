@@ -95,8 +95,11 @@ module.exports = {
       return error.BadRequest(res, 'Invalid ' + invalids[0]);
     }
     user.update().then(function() {
+      // update the SendGrid contact list with the new user data
+      return mailer.addContact(user.data, true);
+    }).then(function() {
       return success.OK(res);
-    }, function() {
+    }).catch(function() {
       console.error("Error updating user.");
       return error.InternalServerError(res);
     });

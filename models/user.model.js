@@ -119,4 +119,27 @@ User.prototype.findByUsername = function(username) {
   });
 };
 
+User.prototype.findByEmail = function(email) {
+  var self = this;
+  return new Promise(function(resolve, reject) {
+    aws.dbClient.query({
+      TableName: self.config.table,
+      IndexName: self.config.keys.globalIndexes[0],
+      Select: 'ALL_PROJECTED_ATTRIBUTES',
+      KeyConditionExpression: "email = :email",
+      ExpressionAttributeValues: {
+        ":email": email
+      },
+      ScanIndexForward: false   // return results highest first
+    }, function(err, data) {
+      if(err) return reject(err);
+      if(!data || !data.Items || data.Items.length == 0) {
+        return reject();
+      }
+      self.data = data.Items[0];
+      resolve();
+    });
+  });
+};
+
 module.exports = User;

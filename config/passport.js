@@ -35,40 +35,48 @@ module.exports = function(passport) {
           return done(err, false, { status: 500, message: 'Something went wrong' });
         }
 
-        var token = auth.generateToken();
-        // create a new user object
-        newUser = new User({
-          'username': username,
-          'password': password,
-          'email': req.body.email,
-          'firstname': req.body.firstname,
-          'lastname': req.body.lastname,
-          'datejoined': new Date().getTime(),
-          'verified': false,
-          'token': token
-        });
-
-        // validate user properties
-        var propertiesToCheck = ['username', 'password', 'email', 'firstname', 'lastname', 'datejoined', 'verified'];
-        var invalids = newUser.validate(propertiesToCheck);
-        if(invalids.length > 0) {
-          return done(null, false, { status: 400, message: 'Invalid ' + invalids[0] });
-        }
-
-        mailer.sendVerification(newUser.data, token).then(function() {
-          return auth.generateSalt(10);
-        }).then(function(salt) {
-          return auth.hash(password, salt);
-        }).then(function(hash) {
-          // save new user to database, using hashed password
-          newUser.set('password', hash);
-          newUser.save().then(function() {
-            return done(null, { username: username });
-          }, function() {
+        new User().findByEmail(req.body.email).then(function() {
+          return done(null, false, { status: 400, message: 'Email already exists' });
+        }, function(err) {
+          if(err) {
             return done(err, false, { status: 500, message: 'Something went wrong' });
+          }
+
+          var token = auth.generateToken();
+          // create a new user object
+          newUser = new User({
+            'username': username,
+            'password': password,
+            'email': req.body.email,
+            'firstname': req.body.firstname,
+            'lastname': req.body.lastname,
+            'datejoined': new Date().getTime(),
+            'verified': false,
+            'token': token
           });
-        }).catch(function() {
-          return done(err, false, { status: 500, message: 'Something went wrong' });
+
+          // validate user properties
+          var propertiesToCheck = ['username', 'password', 'email', 'firstname', 'lastname', 'datejoined', 'verified'];
+          var invalids = newUser.validate(propertiesToCheck);
+          if(invalids.length > 0) {
+            return done(null, false, { status: 400, message: 'Invalid ' + invalids[0] });
+          }
+
+          mailer.sendVerification(newUser.data, token).then(function() {
+            return auth.generateSalt(10);
+          }).then(function(salt) {
+            return auth.hash(password, salt);
+          }).then(function(hash) {
+            // save new user to database, using hashed password
+            newUser.set('password', hash);
+            newUser.save().then(function() {
+              return done(null, { username: username });
+            }, function() {
+              return done(err, false, { status: 500, message: 'Something went wrong' });
+            });
+          }).catch(function() {
+            return done(err, false, { status: 500, message: 'Something went wrong' });
+          });  
         });
       });
     });

@@ -119,7 +119,8 @@ var Schema = {
 var Keys = {
   Users: {
     primary: 'username',
-    sort: null
+    sort: null,
+    globalIndexes: ['email-index']
   },
   UserImages: {
     primary: 'id',

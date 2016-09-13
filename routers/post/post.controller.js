@@ -2,6 +2,7 @@
 
 var aws = require('../../config/aws.js');
 var fs = require('../../config/filestorage.js');
+var mailer = require('../../config/mailer.js');
 var NotificationTypes = require('../../config/notification-types.js');
 
 var Branch = require('../../models/branch.model.js');
@@ -141,6 +142,9 @@ module.exports = {
           // increment user's post count
           user.set('num_posts', user.data.num_posts + 1);
           return user.update();
+        }).then(function () {
+          // update the SendGrid contact list with the new user data
+          return mailer.addContact(user.data, true);
         }).then(function() {
           // successfully create post, send back its id
           return success.OK(res, id);
@@ -433,6 +437,9 @@ module.exports = {
       // increment the user comment count
       user.set('num_comments', user.data.num_comments + 1);
       return user.update();
+    }).then(function () {
+      // update the SendGrid contact list with the new user data
+      return mailer.addContact(user.data, true);
     }).then(function() {
       // return the comment id to the client
       return success.OK(res, id);

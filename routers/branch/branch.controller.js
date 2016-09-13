@@ -2,6 +2,7 @@
 
 var aws = require('../../config/aws.js');
 var fs = require('../../config/filestorage.js');
+var mailer = require('../../config/mailer.js');
 
 var Branch = require('../../models/branch.model.js');
 var BranchImage = require('../../models/branch-image.model.js');
@@ -127,6 +128,9 @@ module.exports = {
         user.set('num_branches', user.data.num_branches + 1);
         user.set('num_mod_positions', user.data.num_mod_positions + 1);
         return user.update();
+      }).then(function () {
+        // update the SendGrid contact list with the new user data
+        return mailer.addContact(user.data, true);
       }).then(function() {
         return success.OK(res);
       }).catch(function() {

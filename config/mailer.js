@@ -57,7 +57,7 @@ module.exports = {
       });
     });
   },
-  addContact: function(user) {
+  addContact: function(user, update) {
     return new Promise(function(resolve, reject) {
       var request = sendgrid.emptyRequest();
       request.body = [
@@ -66,12 +66,16 @@ module.exports = {
           "first_name": user.firstname,
           "last_name": user.lastname,
           "username": user.username,
-          "datejoined": mmddyyyy(new Date(user.datejoined))
+          "datejoined": mmddyyyy(new Date(user.datejoined)),
+          "num_branches": user.num_branches,
+          "num_comments": user.num_comments,
+          "num_posts": user.num_posts,
+          "num_mod_positions": user.num_mod_positions
         }
       ];
-      request.method = 'POST';
+      request.method = update ? 'PATCH' : 'POST';
       request.path = '/v3/contactdb/recipients';
-      
+
       sendgrid.API(request, function (error, response) {
         if(error) reject();
         if(JSON.parse(response.body).error_count > 0) reject();

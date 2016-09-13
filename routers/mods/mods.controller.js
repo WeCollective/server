@@ -3,6 +3,7 @@
 var aws = require('../../config/aws.js');
 var fs = require('../../config/filestorage.js');
 var NotificationTypes = require('../../config/notification-types.js');
+var mailer = require('../../config/mailer.js');
 
 var Mod = require('../../models/mod.model.js');
 var User = require('../../models/user.model.js');
@@ -111,6 +112,9 @@ module.exports = {
           // increment the user's mod count
           user.set('num_mod_positions', user.data.num_mod_positions + 1);
           return user.update();
+        }).then(function () {
+          // update the SendGrid contact list with the new user data
+          return mailer.addContact(user.data, true);
         }).then(function() {
           return success.OK(res);
         }).catch(function(err) {
@@ -227,6 +231,9 @@ module.exports = {
         // decrement the deleted mod's mod count
         deleteeUser.set('num_mod_positions', deleteeUser.data.num_mod_positions - 1);
         return deleteeUser.update();
+      }).then(function () {
+        // update the SendGrid contact list with the new user data
+        return mailer.addContact(deleteeUser.data, true);
       }).then(function() {
         return success.OK(res);
       }).catch(function(err) {

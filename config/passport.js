@@ -52,11 +52,15 @@ module.exports = function(passport) {
             'lastname': req.body.lastname,
             'datejoined': new Date().getTime(),
             'verified': false,
-            'token': token
+            'token': token,
+            'num_posts': 0,
+            'num_comments': 0,
+            'num_branches': 0,
+            'num_mod_positions': 0
           });
 
           // validate user properties
-          var propertiesToCheck = ['username', 'password', 'email', 'firstname', 'lastname', 'datejoined', 'verified'];
+          var propertiesToCheck = ['username', 'password', 'email', 'firstname', 'lastname', 'datejoined', 'verified', 'num_posts', 'num_comments', 'num_branches', 'num_mod_positions'];
           var invalids = newUser.validate(propertiesToCheck);
           if(invalids.length > 0) {
             return done(null, false, { status: 400, message: 'Invalid ' + invalids[0] });
@@ -76,7 +80,7 @@ module.exports = function(passport) {
             });
           }).catch(function() {
             return done(err, false, { status: 500, message: 'Something went wrong' });
-          });  
+          });
         });
       });
     });

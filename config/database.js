@@ -12,7 +12,11 @@ var Schema = {
     datejoined: null,
     verified: null,
     token: null,
-    resetPasswordToken: null
+    resetPasswordToken: null,
+    num_posts: null,
+    num_comments: null,
+    num_branches: null,
+    num_mod_positions: null
   },
   UserImages: {
     id: null,

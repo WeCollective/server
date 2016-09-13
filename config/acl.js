@@ -45,7 +45,11 @@ ACL.Schema = function(role, model) {
           firstname: null,
           lastname: null,
           dob: null,
-          datejoined: null
+          datejoined: null,
+          num_posts: null,
+          num_comments: null,
+          num_branches: null,
+          num_mod_positions: null
         };
         break;
       case ACL.Roles.Self:
@@ -55,7 +59,11 @@ ACL.Schema = function(role, model) {
           firstname: null,
           lastname: null,
           dob: null,
-          datejoined: null
+          datejoined: null,
+          num_posts: null,
+          num_comments: null,
+          num_branches: null,
+          num_mod_positions: null
         };
         break;
       default:

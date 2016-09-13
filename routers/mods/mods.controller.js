@@ -107,6 +107,10 @@ module.exports = {
             promises.push(notification.save(req.sessionID));
           }
           return Promise.all(promises);
+        }).then(function () {
+          // increment the user's mod count
+          user.set('num_mod_positions', user.data.num_mod_positions + 1);
+          return user.update();
         }).then(function() {
           return success.OK(res);
         }).catch(function(err) {
@@ -157,6 +161,7 @@ module.exports = {
     var branchMods;
     var deleter = {}; // user performing the delete
     var deletee = {}; // mod to be deleted
+    var deleteeUser = new User();
     mod.findByBranch(req.params.branchid).then(function(mods) {
       branchMods = mods;
       for(var i = 0; i < branchMods.length; i++) {
@@ -215,6 +220,13 @@ module.exports = {
           promises.push(notification.save(req.sessionID));
         }
         return Promise.all(promises);
+      }).then(function () {
+        // get the deleted mod user
+        return deleteeUser.findByUsername(req.params.username);
+      }).then(function () {
+        // decrement the deleted mod's mod count
+        deleteeUser.set('num_mod_positions', deleteeUser.data.num_mod_positions - 1);
+        return deleteeUser.update();
       }).then(function() {
         return success.OK(res);
       }).catch(function(err) {

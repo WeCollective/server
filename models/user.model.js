@@ -94,6 +94,30 @@ User.prototype.validate = function(properties) {
     }
   }
 
+  if(properties.indexOf('num_posts') > -1) {
+    if(isNaN(this.data.num_posts)) {
+      invalids.push('num_posts');
+    }
+  }
+
+  if(properties.indexOf('num_comments') > -1) {
+    if(isNaN(this.data.num_comments)) {
+      invalids.push('num_comments');
+    }
+  }
+
+  if(properties.indexOf('num_branches') > -1) {
+    if(isNaN(this.data.num_branches)) {
+      invalids.push('num_branches');
+    }
+  }
+
+  if(properties.indexOf('num_mod_positions') > -1) {
+    if(isNaN(this.data.num_mod_positions)) {
+      invalids.push('num_mod_positions');
+    }
+  }
+
   return invalids;
 };
 

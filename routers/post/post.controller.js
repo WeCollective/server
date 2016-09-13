@@ -12,6 +12,7 @@ var Tag = require('../../models/tag.model.js');
 var Comment = require('../../models/comment.model.js');
 var CommentData = require('../../models/comment-data.model.js');
 var Notification = require('../../models/notification.model.js');
+var User = require('../../models/user.model.js');
 
 var success = require('../../responses/successes.js');
 var error = require('../../responses/errors.js');
@@ -116,6 +117,7 @@ module.exports = {
           promises.push(posts[i].save());
         }
 
+        var user = new User();
         Promise.all(promises).then(function() {
           return postdata.save();
         }).then(function() {
@@ -132,6 +134,13 @@ module.exports = {
             promises.push(promise);
           }
           return Promise.all(promises);
+        }).then(function() {
+          // get user
+          return user.findByUsername(req.user.username);
+        }).then(function() {
+          // increment user's post count
+          user.set('num_posts', user.data.num_posts + 1);
+          return user.update();
         }).then(function() {
           // successfully create post, send back its id
           return success.OK(res, id);
@@ -287,6 +296,7 @@ module.exports = {
 
     // ensure the specified post exists
     var parent = new Comment();
+    var user = new User();
     var commentPosts; // the post entries (one for each branch) this comment belongs to
     new Post().findById(req.params.postid, 0).then(function(posts) {
       if(!posts || posts.length == 0) {
@@ -416,6 +426,13 @@ module.exports = {
       }
 
       return notification.save(req.sessionID);
+    }).then(function () {
+      // get the user
+      return user.findByUsername(req.user.username);
+    }).then(function () {
+      // increment the user comment count
+      user.set('num_comments', user.data.num_comments + 1);
+      return user.update();
     }).then(function() {
       // return the comment id to the client
       return success.OK(res, id);

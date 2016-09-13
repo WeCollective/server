@@ -49,6 +49,7 @@ module.exports = {
         return error.InternalServerError(res);
       }
 
+      var user = new User();
       // ensure the specified parent branch exists
       return new Branch().findById(req.body.parentid).then(function() {
         // save a subbranch request iff. the parentid is not the root branch
@@ -118,6 +119,14 @@ module.exports = {
           return error.BadRequest(res, 'Invalid ' + invalids[0]);
         }
         return rootTag.save();
+      }).then(function () {
+        // get the user
+        return user.findByUsername(req.user.username);
+      }).then(function () {
+        // increment the user's branch and mod count
+        user.set('num_branches', user.data.num_branches + 1);
+        user.set('num_mod_positions', user.data.num_mod_positions + 1);
+        return user.update();
       }).then(function() {
         return success.OK(res);
       }).catch(function() {

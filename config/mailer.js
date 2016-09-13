@@ -1,11 +1,17 @@
 var sendgrid = require('sendgrid')(process.env.SENDGRID_MAIL_API_KEY);
 var mailHelper = require('sendgrid').mail;
 
+function mmddyyyy(date) {
+  var mm = (date.getMonth() + 1).toString();
+  var dd = (date.getDate()).toString();
+  return [mm.length == 1 ? '0' + mm : mm, '/', dd.length == 1 ? '0' + dd : dd, '/', date.getFullYear()].join('');
+}
+
 module.exports = {
   sendVerification: function(user, token) {
     return new Promise(function(resolve, reject) {
       var mail = new mailHelper.Mail();
-      mail.setFrom(new mailHelper.Email(process.env.WECO_EMAIL));
+      mail.setFrom(new mailHelper.Email(process.env.WECO_EMAIL, 'James from WECO'));
       mail.setSubject('WE Collective | Verify your account');
       var personalization = new mailHelper.Personalization();
       personalization.addTo(new mailHelper.Email(user.email));
@@ -30,7 +36,7 @@ module.exports = {
   sendWelcome: function(user) {
     return new Promise(function(resolve, reject) {
       var mail = new mailHelper.Mail();
-      mail.setFrom(new mailHelper.Email(process.env.WECO_EMAIL));
+      mail.setFrom(new mailHelper.Email(process.env.WECO_EMAIL, 'James from WECO'));
       mail.setSubject('Welcome to the WE Collective!');
       var personalization = new mailHelper.Personalization();
       personalization.addTo(new mailHelper.Email(user.email));
@@ -53,25 +59,20 @@ module.exports = {
   },
   addContact: function(user) {
     return new Promise(function(resolve, reject) {
-      // "firstname" property should be renamed "first_name"
-      if(user.firstname) {
-        user.first_name = user.firstname;
-        delete user.firstname;
-      }
-
-      // "lastname" property should be renamed "last_name"
-      if(user.lastname) {
-        user.last_name = user.lastname;
-        delete user.lastname;
-      }
-
-      var request = sendgrid.emptyRequest({
-        method: 'POST',
-        path: '/v3/contactdb/recipients',
-        body: [user]
-      });
-
-      sendgrid.API(request, function(error, response) {
+      var request = sendgrid.emptyRequest();
+      request.body = [
+        {
+          "email": user.email,
+          "first_name": user.firstname,
+          "last_name": user.lastname,
+          "username": user.username,
+          "datejoined": mmddyyyy(new Date(user.datejoined))
+        }
+      ];
+      request.method = 'POST';
+      request.path = '/v3/contactdb/recipients';
+      
+      sendgrid.API(request, function (error, response) {
         if(error) reject();
         if(JSON.parse(response.body).error_count > 0) reject();
         resolve();
@@ -81,7 +82,7 @@ module.exports = {
   sendResetPasswordLink: function(user, token) {
     return new Promise(function(resolve, reject) {
       var mail = new mailHelper.Mail();
-      mail.setFrom(new mailHelper.Email(process.env.WECO_EMAIL));
+      mail.setFrom(new mailHelper.Email(process.env.WECO_EMAIL, 'James from WECO'));
       mail.setSubject('WE Collective | Reset password');
       var personalization = new mailHelper.Personalization();
       personalization.addTo(new mailHelper.Email(user.email));

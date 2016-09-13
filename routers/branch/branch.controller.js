@@ -359,8 +359,7 @@ module.exports = {
     }).then(function() {
       return success.OK(res);
     }, function(err) {
-      console.error("Error deleting branch");
-      console.error(err);
+      console.error("Error deleting branch:", err);
       return error.InternalServerError(res);
     });
   },
@@ -451,7 +450,7 @@ module.exports = {
       return success.OK(res, data);
     }, function(err) {
       if(err) {
-        console.error("Error fetching mod log.");
+        console.error("Error fetching mod log:", err);
         return error.InternalServerError(res);
       }
       return error.NotFound(res);

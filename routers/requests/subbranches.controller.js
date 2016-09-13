@@ -259,7 +259,7 @@ module.exports = {
                       return reject(err);
                     });
                   }, function(err) {
-                    console.error("Error fetching tags by branch.");
+                    console.error("Error fetching tags by branch:", err);
                     return error.InternalServerError(res);
                   });
                 }));
@@ -358,8 +358,7 @@ module.exports = {
                   return error.InternalServerError(res);
                 });
               }, function(err) {
-                console.error("Error updating tags!");
-                console.error(err);
+                console.error("Error updating tags: ", err);
                 return error.InternalServerError(res);
               });
             });
@@ -411,7 +410,7 @@ module.exports = {
       }
     }, function(err) {
       if(err) {
-        console.error("Error fetching subbranch request.");
+        console.error("Error fetching subbranch request:", err);
         return error.InternalServerError(res);
       }
       return error.NotFound(res);

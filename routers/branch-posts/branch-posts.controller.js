@@ -120,7 +120,7 @@ module.exports = {
       return success.OK(res, post);
     }, function(err) {
       if(err) {
-        console.error('Error fetching post on branch.');
+        console.error('Error fetching post on branch:', err);
         return error.InternalServerError(res);
       }
       return error.NotFound(res);

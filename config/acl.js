@@ -129,7 +129,7 @@ ACL.validateRole = function(role, resourceId) {
           return error.Forbidden(res);
         }, function(err) {
           if(err) {
-            console.error('Error fetching branch mods.');
+            console.error('Error fetching branch mods: ', err);
             return error.InternalServerError(res);
           }
           return error.NotFound(res);
@@ -157,7 +157,7 @@ ACL.validateRole = function(role, resourceId) {
           return error.Forbidden(res);
         }, function(err) {
           if(err) {
-            console.error('Error fetching branch mods.');
+            console.error('Error fetching branch mods:', err);
             return error.InternalServerError(res);
           }
           return error.NotFound(res);

@@ -186,7 +186,7 @@ module.exports = {
       return success.OK(res, post);
     }).catch(function(err) {
       if(err) {
-        console.error("Error fetching post data");
+        console.error("Error fetching post data: ", err);
         return error.InternalServerError(res);
       }
       return error.NotFound(res);
@@ -220,7 +220,7 @@ module.exports = {
       });
     }, function(err) {
       if(err) {
-        console.error("Error fetching post data");
+        console.error("Error fetching post data:", err);
         return error.InternalServerError(res);
       }
       return error.NotFound(res);
@@ -240,14 +240,14 @@ module.exports = {
         Key: image.data.id + '-' + size + '.' + image.data.extension
       }, function(err, url) {
         if(err) {
-          console.error("Error getting signed url.");
+          console.error("Error getting signed url:", err);
           return error.InternalServerError(res);
         }
         return success.OK(res, url);
       });
     }, function(err) {
       if(err) {
-        console.error("Error fetching post image.");
+        console.error("Error fetching post image:", err);
         return error.InternalServerError(res);
       }
       return error.NotFound(res);
@@ -499,7 +499,7 @@ module.exports = {
       return success.OK(res, comment.data);
     }, function(err) {
       if(err) {
-        console.error("Error fetching comment data");
+        console.error("Error fetching comment data:", err);
         return error.InternalServerError(res);
       }
       return error.NotFound(res);
@@ -551,7 +551,7 @@ module.exports = {
       return success.OK(res);
     }).catch(function(err) {
       if(err) {
-        console.error('Error updating comment.');
+        console.error('Error updating comment:', err);
         return error.InternalServerError(res);
       }
       return error.NotFound(res);

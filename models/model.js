@@ -92,6 +92,15 @@ Model.prototype.save = function() {
 Model.prototype.delete = function(Key) {
   var self = this;
   return new Promise(function(resolve, reject) {
+    // Construct key to identify the entry to be deleted if it isnt provided
+    if(!Key) {
+      Key = {};
+      Key[self.config.keys.primary] = self.data[self.config.keys.primary];
+      if(self.config.keys.sort) {
+        Key[self.config.keys.sort] = self.data[self.config.keys.sort];
+      }
+    }
+
     aws.dbClient.delete({
       TableName: self.config.table,
       Key: Key

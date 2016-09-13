@@ -40,7 +40,7 @@ module.exports = {
       return success.OK(res, sanitized);
     }, function(err) {
       if(err) {
-        console.error("Error fetching user.");
+        console.error("Error fetching user:", err);
         return error.InternalServerError(res);
       }
       return error.NotFound(res);
@@ -158,14 +158,14 @@ module.exports = {
         Key: image.data.id + '-' + size + '.' + image.data.extension
       }, function(err, url) {
         if(err) {
-          console.error("Error getting signed url.");
+          console.error("Error getting signed url:", err);
           return error.InternalServerError(res);
         }
         return success.OK(res, url);
       });
     }, function(err) {
       if(err) {
-        console.error("Error fetching user image.");
+        console.error("Error fetching user image:", err);
         return error.InternalServerError(res);
       }
       return error.NotFound(res);

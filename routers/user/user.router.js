@@ -62,7 +62,6 @@ module.exports = function(app, passport) {
         if (err) { return next(err); }
         // if no user object, send error response
         if (!user) {
-          console.log(info);
           return res.status(info.status).json({ message: info.message });
         }
         // manually log in user to establish session

@@ -274,8 +274,13 @@ module.exports = {
     var user = new User();
     var token;
     user.findByUsername(req.params.username).then(function() {
-      token = auth.generateToken();
-      user.set('resetPasswordToken', token);
+      var expires = new Date();
+      expires.setHours(expires.getHours() + 1);
+      token = {
+        token: auth.generateToken(),
+        expires: expires.getTime()
+      };
+      user.set('resetPasswordToken', JSON.stringify(token));
       return user.update();
     }, function(err) {
       if(err) {
@@ -284,7 +289,7 @@ module.exports = {
       }
       return error.NotFound(res);
     }).then(function() {
-      return mailer.sendResetPasswordLink(user.data, token);
+      return mailer.sendResetPasswordLink(user.data, token.token);
     }).then(function() {
       return success.OK(res);
     }).catch(function(err) {
@@ -302,9 +307,14 @@ module.exports = {
 
     var user = new User();
     user.findByUsername(req.params.username).then(function() {
+      var token = JSON.parse(user.data.resetPasswordToken);
       // check token matches
-      if(user.data.resetPasswordToken !== req.params.token) {
+      if(token.token !== req.params.token) {
         return error.BadRequest(res, 'Invalid token');
+      }
+      // check token hasnt expired
+      if(token.expires < new Date().getTime()) {
+        return error.BadRequest(res, 'Token expired');
       }
 
       // validate new password

@@ -450,8 +450,7 @@ module.exports = {
       return success.OK(res, comments);
     }, function(err) {
       if(err) {
-        console.error("Error fetching comments");
-        console.log(err);
+        console.error("Error fetching comments", err);
         return error.InternalServerError(res);
       }
       return error.NotFound(res);

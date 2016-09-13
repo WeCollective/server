@@ -13,16 +13,10 @@ function importTest(name, path) {
 }
 
 describe('API test', function() {
-  it('should return welcome message', function(done) {
-    server.get('/')
-      .expect(200)
-      .expect({ message: 'Welcome to the WECO API!' }, done);
-  });
-
-  importTest('Sign up test', './signup.test.js');
-  importTest('Login test', './login.test.js');
-  importTest('User test', './user.test.js');
-  importTest('Branch test', './branch.test.js');
-  importTest('SubBranch test', './subbranch.test.js');
-  importTest('Post test', './post.test.js');
+  //importTest('Sign up test', './signup.test.js');
+  //importTest('Login test', './login.test.js');
+  //importTest('User test', './user.test.js');
+  //importTest('Branch test', './branch.test.js');
+  //importTest('SubBranch test', './subbranch.test.js');
+  //importTest('Post test', './post.test.js');
 });

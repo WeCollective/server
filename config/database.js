@@ -84,6 +84,15 @@ var Schema = {
     date: null,
     extension: null
   },
+  FlaggedPost: {
+    id: null,
+    branchid: null,
+    type: null,
+    date: null,
+    branch_rules_count: null,
+    site_rules_count: null,
+    wrong_type_count: null
+  },
   Comment: {
     id: null,
     postid: null,
@@ -170,6 +179,11 @@ var Keys = {
     primary: 'id',
     sort: null
   },
+  FlaggedPosts: {
+    primary: 'id',
+    sort: 'branchid',
+    globalIndexes: ['branchid-date-index', 'branchid-branch_rules_count-index', 'branchid-site_rules_count-index', 'branchid-wrong_type_count-index']
+  },
   Comments: {
     primary: 'id',
     sort: null,
@@ -206,6 +220,7 @@ var config = {
     Posts: 'Posts',
     PostData: 'PostData',
     PostImages: 'PostImages',
+    FlaggedPosts: 'FlaggedPosts',
     Comments: 'Comments',
     CommentData: 'CommentData',
     Notifications: 'Notifications'

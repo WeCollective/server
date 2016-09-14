@@ -113,10 +113,8 @@ module.exports = {
       return error.BadRequest(res, 'Missing postid');
     }
 
-    new Post().findByPostAndBranchIds(req.params.postid, req.params.branchid).then(function(post) {
-      if(!post || post.length == 0) {
-        return error.NotFound(res);
-      }
+    var post = new Post();
+    post.findByPostAndBranchIds(req.params.postid, req.params.branchid).then(function() {
       return success.OK(res, post);
     }, function(err) {
       if(err) {

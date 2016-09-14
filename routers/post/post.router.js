@@ -151,6 +151,10 @@ module.exports = function(app, passport) {
       controller.getPicture(req, res, true);
     });
 
+  router.route('/:postid/flag')
+    .post(ACL.validateRole(ACL.Roles.AuthenticatedUser), controller.flagPost);
+
+
   router.route('/:postid/comments')
     /**
      * @api {get} /post/:postid/comments?parentid=<parentid>&sort=<sort> Get Comments

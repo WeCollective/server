@@ -9,6 +9,7 @@ var Branch = require('../../models/branch.model.js');
 var Post = require('../../models/post.model.js');
 var PostData = require('../../models/post-data.model.js');
 var PostImage = require('../../models/post-image.model.js');
+var FlaggedPost = require('../../models/flagged-post.model.js');
 var Tag = require('../../models/tag.model.js');
 var Comment = require('../../models/comment.model.js');
 var CommentData = require('../../models/comment-data.model.js');
@@ -248,6 +249,64 @@ module.exports = {
     }, function(err) {
       if(err) {
         console.error("Error fetching post image:", err);
+        return error.InternalServerError(res);
+      }
+      return error.NotFound(res);
+    });
+  },
+  flagPost: function(req, res) {
+    if(!req.user || !req.user.username) {
+      return error.Forbidden(res);
+    }
+
+    if(!req.params.postid) {
+      return error.BadRequest(res, 'Missing postid');
+    }
+
+    if(!req.body.flag_type || (req.body.flag_type !== 'branch_rules' && req.body.flag_type !== 'site_rules' && req.body.flag_type !== 'wrong_type')) {
+      return error.BadRequest(res, 'Missing/invalid flag_type');
+    }
+
+    if(!req.body.branchid) {
+      return error.BadRequest(res, 'Missing branchid');
+    }
+
+    var flaggedpost = new FlaggedPost();
+    var origpost = new Post();
+    new Promise(function(resolve, reject) {
+      // check if post has already been flagged
+      flaggedpost.findByPostAndBranchIds(req.params.postid, req.body.branchid).then(function() {
+        resolve();
+      }, function(err) {
+        if(err) {
+          console.error("Error fetching flagged post:", err);
+          return error.InternalServerError(res);
+        }
+        // no flagged post exists: create one.
+        // first fetch the original post object
+        return origpost.findByPostAndBranchIds(req.params.postid, req.body.branchid);
+      }).then(function() {
+        // now create a flagged post
+        flaggedpost = new FlaggedPost({
+          id: origpost.data.id,
+          branchid: origpost.data.branchid,
+          type: origpost.data.type,
+          date: new Date().getTime(),
+          branch_rules_count: 0,
+          site_rules_count: 0,
+          wrong_type_count: 0
+        });
+        return flaggedpost.save();
+      }).then(resolve, reject);
+    }).then(function () {
+      // flagged post instatiated - now update counts
+      flaggedpost.set(req.body.flag_type + '_count', flaggedpost.data[req.body.flag_type + '_count'] + 1);
+      return flaggedpost.update();
+    }).then(function() {
+      return success.OK(res);
+    }).catch(function(err) {
+      if(err) {
+        console.error("Error flagging post: ", err);
         return error.InternalServerError(res);
       }
       return error.NotFound(res);

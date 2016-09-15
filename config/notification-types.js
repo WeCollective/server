@@ -4,5 +4,6 @@ module.exports = {
   'BRANCH_MOVED': 2,
   'MODERATOR': 3,
   'COMMENT': 4,
-  'POST_FLAGGED': 5
+  'POST_FLAGGED': 5,
+  'POST_REMOVED': 6
 };

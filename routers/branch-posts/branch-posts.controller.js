@@ -2,9 +2,12 @@
 
 var aws = require('../../config/aws.js');
 var fs = require('../../config/filestorage.js');
+var NotificationTypes = require('../../config/notification-types.js');
 
 var Post = require('../../models/post.model.js');
+var PostData = require('../../models/post-data.model.js');
 var FlaggedPost = require('../../models/flagged-post.model.js');
+var Notification = require('../../models/notification.model.js');
 var Branch = require('../../models/branch.model.js');
 
 var success = require('../../responses/successes.js');
@@ -195,16 +198,44 @@ module.exports = {
         return error.NotFound(res);
       });
     } else if(req.body.action === 'remove') {
-      // delete flag for this post on this branch
-      new FlaggedPost().delete({
-        id: req.params.postid,
-        branchid: req.params.branchid
+      var postdata = new PostData();
+      // get the original post
+      postdata.findById(req.params.postid).then(function() {
+        // delete flag for this post on this branch
+        return new FlaggedPost().delete({
+          id: req.params.postid,
+          branchid: req.params.branchid
+        })
       }).then(function() {
         // delete actual post from this branch
         return new Post().delete({
           id: req.params.postid,
           branchid: req.params.branchid
         });
+      }).then(function() {
+        // notify the OP that their post was removed
+        var time = new Date().getTime();
+        var notification = new Notification({
+          id: postdata.data.creator + '-' + time,
+          user: postdata.data.creator,
+          date: time,
+          unread: true,
+          type: NotificationTypes.POST_REMOVED,
+          data: {
+            branchid: req.params.branchid,
+            username: req.user.username,
+            postid: req.params.postid,
+            reason: req.body.reason,
+            message: req.body.message
+          }
+        });
+        var propertiesToCheck = ['id', 'user', 'date', 'unread', 'type', 'data'];
+        var invalids = notification.validate(propertiesToCheck);
+        if(invalids.length > 0) {
+          console.error('Error creating notification.');
+          return error.InternalServerError(res);
+        }
+        return notification.save(req.sessionID);
       }).then(function() {
         if(req.body.reason === 'site_rules') {
           // TODO notify global mods of violating post

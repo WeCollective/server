@@ -5,5 +5,6 @@ module.exports = {
   'MODERATOR': 3,
   'COMMENT': 4,
   'POST_FLAGGED': 5,
-  'POST_REMOVED': 6
+  'POST_REMOVED': 6,
+  'POST_TYPE_CHANGED': 7
 };

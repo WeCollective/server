@@ -170,10 +170,14 @@ module.exports = {
     }
 
     if(req.body.action === 'change_type') {
-      var post = new Post();
       // TODO: change post type everywhere or just in this branch?
-      // change post type for this branch only
-      post.findByPostAndBranchIds(req.params.postid, req.params.branchid).then(function() {
+      var post = new Post();
+      var postdata = new PostData();
+      // get the original post
+      postdata.findById(req.params.postid).then(function() {
+        // change post type for this branch only
+        return post.findByPostAndBranchIds(req.params.postid, req.params.branchid);
+      }).then(function() {
         post.set('type', req.body.type);
         // validate post properties
         var propertiesToCheck = ['type'];
@@ -188,6 +192,29 @@ module.exports = {
           id: req.params.postid,
           branchid: req.params.branchid
         });
+      }).then(function() {
+        // notify the OP that their post type was changed
+        var time = new Date().getTime();
+        var notification = new Notification({
+          id: postdata.data.creator + '-' + time,
+          user: postdata.data.creator,
+          date: time,
+          unread: true,
+          type: NotificationTypes.POST_TYPE_CHANGED,
+          data: {
+            branchid: req.params.branchid,
+            username: req.user.username,
+            postid: req.params.postid,
+            type: req.body.type
+          }
+        });
+        var propertiesToCheck = ['id', 'user', 'date', 'unread', 'type', 'data'];
+        var invalids = notification.validate(propertiesToCheck);
+        if(invalids.length > 0) {
+          console.error('Error creating notification.');
+          return error.InternalServerError(res);
+        }
+        return notification.save(req.sessionID);
       }).then(function() {
         return success.OK(res);
       }).catch(function(err) {
@@ -237,9 +264,6 @@ module.exports = {
         }
         return notification.save(req.sessionID);
       }).then(function() {
-        if(req.body.reason === 'site_rules') {
-          // TODO notify global mods of violating post
-        }
         return success.OK(res);
       }).catch(function(err) {
         if(err) {

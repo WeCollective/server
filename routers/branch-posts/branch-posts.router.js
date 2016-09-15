@@ -107,5 +107,10 @@ module.exports = function(app, passport) {
      */
     .put(ACL.validateRole(ACL.Roles.AuthenticatedUser), controller.put);
 
+  router.route('/:postid/resolve')
+    .post(function(req, res, next) {
+      ACL.validateRole(ACL.Roles.Moderator, req.params.branchid)(req, res, next);
+    }, controller.resolveFlag);
+
   return router;
 }

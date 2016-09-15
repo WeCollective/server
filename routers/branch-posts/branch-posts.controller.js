@@ -134,7 +134,7 @@ module.exports = {
 
     var post = new Post();
     post.findByPostAndBranchIds(req.params.postid, req.params.branchid).then(function() {
-      return success.OK(res, post);
+      return success.OK(res, post.data);
     }, function(err) {
       if(err) {
         console.error('Error fetching post on branch:', err);
@@ -142,5 +142,97 @@ module.exports = {
       }
       return error.NotFound(res);
     });
+  },
+  resolveFlag: function(req, res) {
+    if(!req.params.branchid) {
+      return error.BadRequest(res, 'Missing branchid');
+    }
+    if(!req.params.postid) {
+      return error.BadRequest(res, 'Missing postid');
+    }
+    if(!req.user.username) {
+      console.error("No username found in session.");
+      return error.InternalServerError(res);
+    }
+
+    if(!req.body.action || (req.body.action !== 'change_type' && req.body.action !== 'remove' && req.body.action !== 'approve')) {
+      return error.BadRequest(res, 'Missing/invalid action parameter');
+    }
+
+    if(req.body.action === 'change_type' && !req.body.type) {
+      return error.BadRequest(res, 'Missing type parameter');
+    }
+    if(req.body.action === 'remove' && !req.body.reason) {
+      return error.BadRequest(res, 'Missing reason parameter');
+    }
+
+    if(req.body.action === 'change_type') {
+      var post = new Post();
+      // TODO: change post type everywhere or just in this branch?
+      // change post type for this branch only
+      post.findByPostAndBranchIds(req.params.postid, req.params.branchid).then(function() {
+        post.set('type', req.body.type);
+        // validate post properties
+        var propertiesToCheck = ['type'];
+        var invalids = post.validate(propertiesToCheck);
+        if(invalids.length > 0) {
+          return error.BadRequest(res, 'Invalid type parameter');
+        }
+        return post.update();
+      }).then(function () {
+        // now delete post flags
+        return new FlaggedPost().delete({
+          id: req.params.postid,
+          branchid: req.params.branchid
+        });
+      }).then(function() {
+        return success.OK(res);
+      }).catch(function(err) {
+        if(err) {
+          console.error('Error fetching post on branch:', err);
+          return error.InternalServerError(res);
+        }
+        return error.NotFound(res);
+      });
+    } else if(req.body.action === 'remove') {
+      // delete flag for this post on this branch
+      new FlaggedPost().delete({
+        id: req.params.postid,
+        branchid: req.params.branchid
+      }).then(function() {
+        // delete actual post from this branch
+        return new Post().delete({
+          id: req.params.postid,
+          branchid: req.params.branchid
+        });
+      }).then(function() {
+        if(req.body.reason === 'site_rules') {
+          // TODO notify global mods of violating post
+        }
+        return success.OK(res);
+      }).catch(function(err) {
+        if(err) {
+          console.error('Error fetching post on branch:', err);
+          return error.InternalServerError(res);
+        }
+        return error.NotFound(res);
+      });
+    } else if(req.body.action === 'approve') {
+      // delete flag for this post on this branch
+      new FlaggedPost().delete({
+        id: req.params.postid,
+        branchid: req.params.branchid
+      }).then(function() {
+        return success.OK(res);
+      }).catch(function(err) {
+        if(err) {
+          console.error('Error fetching post on branch:', err);
+          return error.InternalServerError(res);
+        }
+        return error.NotFound(res);
+      });
+    } else {
+      return error.BadRequest(res, 'Invalid action parameter');
+    }
   }
 };

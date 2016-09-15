@@ -109,7 +109,6 @@ Notification.prototype.findByUsername = function(username, unreadCount) {
       options.ExpressionAttributeValues[':unread'] = true;
     }
     aws.dbClient.query(options, function(err, data) {
-      console.log("DATA ", data);
       if(err) return reject(err);
       if(unreadCount) {
         if(!data || !data.Count) {

@@ -15,6 +15,7 @@ var Comment = require('../../models/comment.model.js');
 var CommentData = require('../../models/comment-data.model.js');
 var Notification = require('../../models/notification.model.js');
 var User = require('../../models/user.model.js');
+var Mod = require('../../models/mod.model.js');
 
 var success = require('../../responses/successes.js');
 var error = require('../../responses/errors.js');
@@ -302,6 +303,36 @@ module.exports = {
       // flagged post instatiated - now update counts
       flaggedpost.set(req.body.flag_type + '_count', flaggedpost.data[req.body.flag_type + '_count'] + 1);
       return flaggedpost.update();
+    }).then(function() {
+      // get branch mods
+      return new Mod().findByBranch(req.body.branchid);
+    }).then(function(mods) {
+      // notify branch mods that post was flagged
+      var promises = [];
+      var time = new Date().getTime();
+      for(var i = 0; i < mods.length; i++) {
+        var notification = new Notification({
+          id: mods[i].username + '-' + time,
+          user: mods[i].username,
+          date: time,
+          unread: true,
+          type: NotificationTypes.POST_FLAGGED,
+          data: {
+            branchid: req.body.branchid,
+            username: req.user.username,
+            postid: req.params.postid,
+            reason: req.body.flag_type
+          }
+        });
+        var propertiesToCheck = ['id', 'user', 'date', 'unread', 'type', 'data'];
+        var invalids = notification.validate(propertiesToCheck);
+        if(invalids.length > 0) {
+          console.error('Error creating notification.');
+          return error.InternalServerError(res);
+        }
+        promises.push(notification.save(req.sessionID));
+      }
+      return Promise.all(promises);
     }).then(function() {
       return success.OK(res);
     }).catch(function(err) {

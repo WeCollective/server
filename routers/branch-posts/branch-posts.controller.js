@@ -170,22 +170,31 @@ module.exports = {
     }
 
     if(req.body.action === 'change_type') {
-      // TODO: change post type everywhere or just in this branch?
-      var post = new Post();
       var postdata = new PostData();
       // get the original post
       postdata.findById(req.params.postid).then(function() {
-        // change post type for this branch only
-        return post.findByPostAndBranchIds(req.params.postid, req.params.branchid);
-      }).then(function() {
-        post.set('type', req.body.type);
-        // validate post properties
-        var propertiesToCheck = ['type'];
-        var invalids = post.validate(propertiesToCheck);
-        if(invalids.length > 0) {
-          return error.BadRequest(res, 'Invalid type parameter');
+        // change post type for all branches it appears in
+        return new Post().findById(req.params.postid);
+      }).then(function(posts) {
+        if(!posts || posts.length === 0) {
+          return error.NotFound(res);
         }
-        return post.update();
+        var promises = [];
+        for(var i = 0; i < posts.length; i++) {
+          var post = new Post();
+          post.set('type', req.body.type);
+          // validate post properties
+          var propertiesToCheck = ['type'];
+          var invalids = post.validate(propertiesToCheck);
+          if(invalids.length > 0) {
+            return error.BadRequest(res, 'Invalid type parameter');
+          }
+          promises.push(post.update({
+            id: posts[i].id,
+            branchid: posts[i].branchid
+          }));
+        }
+        return Promise.all(promises);
       }).then(function () {
         // now delete post flags
         return new FlaggedPost().delete({

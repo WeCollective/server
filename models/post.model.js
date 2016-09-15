@@ -277,7 +277,6 @@ Post.prototype.findByPostAndBranchIds = function(postid, branchid) {
         ":branchid": branchid
       }
     }, function(err, data) {
-      console.log("ERRDATA", err, data);
       if(err) return reject(err);
       if(!data || !data.Items || data.Items.length == 0) {
         return reject();

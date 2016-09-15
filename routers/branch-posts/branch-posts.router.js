@@ -9,7 +9,7 @@ module.exports = function(app, passport) {
 
   router.route('/')
     /**
-     * @api {get} /branch/:branchid/posts>timeafter=<timeafter>&stat=<stat> Get Branch Posts
+     * @api {get} /branch/:branchid/posts?timeafter=<timeafter>&stat=<stat> Get Branch Posts
      * @apiName Get Branch Posts
      * @apiGroup Posts
      * @apiPermission guest

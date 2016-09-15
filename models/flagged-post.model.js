@@ -117,4 +117,69 @@ FlaggedPost.prototype.findByPostAndBranchIds = function(postid, branchid) {
   });
 };
 
+// Fetch the flagged posts on a specific branch
+FlaggedPost.prototype.findByBranch = function(branchid, timeafter, sortBy) {
+  var self = this;
+  if(sortBy == 'date') {
+    var index = self.config.keys.globalIndexes[0];
+  } else if(sortBy == 'branch_rules') {
+    index = self.config.keys.globalIndexes[1];
+  } else if(sortBy == 'site_rules') {
+    index = self.config.keys.globalIndexes[2];
+  } else if(sortBy == 'wrong_type') {
+    index = self.config.keys.globalIndexes[3];
+  }
+
+  if(sortBy == 'date') {
+    return new Promise(function(resolve, reject) {
+      aws.dbClient.query({
+        TableName: self.config.table,
+        IndexName: index,
+        Select: 'ALL_PROJECTED_ATTRIBUTES',
+        KeyConditionExpression: "branchid = :branchid AND #date >= :timeafter",
+        // date is a reserved dynamodb keyword so must use this alias:
+        ExpressionAttributeNames: {
+          "#date": "date"
+        },
+        ExpressionAttributeValues: {
+          ":branchid": String(branchid),
+          ":timeafter": Number(timeafter)
+        },
+        ScanIndexForward: false   // return results highest first
+      }, function(err, data) {
+        if(err) return reject(err);
+        if(!data || !data.Items) {
+          return reject();
+        }
+        return resolve(data.Items);
+      });
+    });
+  } else {
+    return new Promise(function(resolve, reject) {
+      aws.dbClient.query({
+        TableName: self.config.table,
+        IndexName: index,
+        Select: 'ALL_PROJECTED_ATTRIBUTES',
+        KeyConditionExpression: "branchid = :branchid",
+        FilterExpression: "#date >= :timeafter",
+        // date is a reserved dynamodb keyword so must use this alias:
+        ExpressionAttributeNames: {
+          "#date": "date"
+        },
+        ExpressionAttributeValues: {
+          ":branchid": String(branchid),
+          ":timeafter": Number(timeafter)
+        },
+        ScanIndexForward: false   // return results highest first
+      }, function(err, data) {
+        if(err) return reject(err);
+        if(!data || !data.Items) {
+          return reject();
+        }
+        return resolve(data.Items);
+      });
+    });
+  }
+};
+
 module.exports = FlaggedPost;

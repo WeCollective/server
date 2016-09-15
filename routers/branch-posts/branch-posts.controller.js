@@ -4,6 +4,7 @@ var aws = require('../../config/aws.js');
 var fs = require('../../config/filestorage.js');
 
 var Post = require('../../models/post.model.js');
+var FlaggedPost = require('../../models/flagged-post.model.js');
 var Branch = require('../../models/branch.model.js');
 
 var success = require('../../responses/successes.js');
@@ -20,17 +21,35 @@ module.exports = {
       timeafter = 0;
     }
 
+    var flag = req.query.flag === 'true';
+
+    // points, date, comment_count [if normal posts]
+    // date, branch_rules, site_rules, wrong_type [if flagged posts i.e. flag = true]
     var sortBy = req.query.sortBy;
     if(!req.query.sortBy) {
-      sortBy = 'points';
+      sortBy = flag ? 'date' : 'points';
     }
 
+    if(flag) {
+      // ensure valid sortBy param supplied for fetching flagged posts
+      if(['date', 'branch_rules', 'site_rules', 'wrong_type'].indexOf(sortBy) == -1) {
+        return error.BadRequest(res, 'Invalid sortBy parameter');
+      }
+    } else {
+      // ensure valid sortBy param supplied for fetching normal posts
+      if(['date', 'points', 'comment_count'].indexOf(sortBy) == -1) {
+        return error.BadRequest(res, 'Invalid sortBy parameter');
+      }
+    }
+
+    // ind/local/global stats [if normal posts]
     var stat = req.query.stat;
     if(!req.query.stat) {
       stat = 'individual';
     }
 
-    new Post().findByBranch(req.params.branchid, timeafter, sortBy, stat).then(function(posts) {
+
+    (flag ? new FlaggedPost() : new Post()).findByBranch(req.params.branchid, timeafter, sortBy, stat).then(function(posts) {
       return success.OK(res, posts);
     }, function(err) {
       console.error('Error fetching posts on branch: ', err);

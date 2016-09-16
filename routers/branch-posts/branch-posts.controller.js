@@ -10,6 +10,7 @@ var PostData = require('../../models/post-data.model.js');
 var FlaggedPost = require('../../models/flagged-post.model.js');
 var Notification = require('../../models/notification.model.js');
 var Branch = require('../../models/branch.model.js');
+var Mod = require('../../models/mod.model.js');
 
 var success = require('../../responses/successes.js');
 var error = require('../../responses/errors.js');
@@ -287,7 +288,45 @@ module.exports = {
         }
         return notification.save(req.sessionID);
       }).then(function() {
-        return success.OK(res);
+        // notify global mods of posts removed for breaching site rules
+        if(req.body.reason === 'site_rules') {
+          // get global mods
+          var promises = [];
+          var time = new Date().getTime();
+          new Mod().findByBranch('root').then(function(mods) {
+            for(var i = 0; i < mods.length; i++) {
+              var notification = new Notification({
+                id: mods[i].username + '-' + time,
+                user: mods[i].username,
+                date: time,
+                unread: true,
+                type: NotificationTypes.POST_REMOVED,
+                data: {
+                  branchid: req.params.branchid,
+                  username: req.user.username,
+                  postid: req.params.postid,
+                  reason: req.body.reason,
+                  message: req.body.message
+                }
+              });
+              var propertiesToCheck = ['id', 'user', 'date', 'unread', 'type', 'data'];
+              var invalids = notification.validate(propertiesToCheck);
+              if(invalids.length > 0) {
+                console.error('Error creating notification.');
+                return error.InternalServerError(res);
+              }
+              promises.push(notification.save(req.sessionID));
+            }
+            return Promise.all(promises);
+          }).then(function() {
+            return success.OK(res);
+          }).catch(function(err) {
+            console.error("Error sending notification to root mods: ", err);
+            return error.InternalServerError(res);
+          });
+        } else {
+          return success.OK(res);
+        }
       }).catch(function(err) {
         if(err) {
           console.error('Error fetching post on branch:', err);

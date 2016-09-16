@@ -2,6 +2,7 @@
 
 var aws = require('../../config/aws.js');
 var fs = require('../../config/filestorage.js');
+var ACL = require('../../config/acl.js');
 var NotificationTypes = require('../../config/notification-types.js');
 
 var Post = require('../../models/post.model.js');
@@ -33,29 +34,42 @@ module.exports = {
       sortBy = flag ? 'date' : 'points';
     }
 
-    if(flag) {
-      // ensure valid sortBy param supplied for fetching flagged posts
-      if(['date', 'branch_rules', 'site_rules', 'wrong_type'].indexOf(sortBy) == -1) {
-        return error.BadRequest(res, 'Invalid sortBy parameter');
+    new Promise(function(resolve, reject) {
+      if(flag) {
+        // ensure valid sortBy param supplied for fetching flagged posts
+        if(['date', 'branch_rules', 'site_rules', 'wrong_type'].indexOf(sortBy) == -1) {
+          return error.BadRequest(res, 'Invalid sortBy parameter');
+        }
+        // if requesting flagged posts ensure user is authenticated and is a mod
+        if(!req.user.username) {
+          return error.Forbidden(res);
+        } else {
+          ACL.validateRole(ACL.Roles.Moderator, req.params.branchid)(req, res, resolve);
+        }
+      } else {
+        // ensure valid sortBy param supplied for fetching normal posts
+        if(['date', 'points', 'comment_count'].indexOf(sortBy) == -1) {
+          return error.BadRequest(res, 'Invalid sortBy parameter');
+        } else {
+          resolve();
+        }
       }
-    } else {
-      // ensure valid sortBy param supplied for fetching normal posts
-      if(['date', 'points', 'comment_count'].indexOf(sortBy) == -1) {
-        return error.BadRequest(res, 'Invalid sortBy parameter');
+    }).then(function() {
+      // ind/local/global stats [if normal posts]
+      var stat = req.query.stat;
+      if(!req.query.stat) {
+        stat = 'individual';
       }
-    }
-
-    // ind/local/global stats [if normal posts]
-    var stat = req.query.stat;
-    if(!req.query.stat) {
-      stat = 'individual';
-    }
 
 
-    (flag ? new FlaggedPost() : new Post()).findByBranch(req.params.branchid, timeafter, sortBy, stat).then(function(posts) {
-      return success.OK(res, posts);
-    }, function(err) {
-      console.error('Error fetching posts on branch: ', err);
+      (flag ? new FlaggedPost() : new Post()).findByBranch(req.params.branchid, timeafter, sortBy, stat).then(function(posts) {
+        return success.OK(res, posts);
+      }, function(err) {
+        console.error('Error fetching posts on branch: ', err);
+        return error.InternalServerError(res);
+      });
+    }).catch(function(err) {
+      console.error("Error fetching posts:", err);
       return error.InternalServerError(res);
     });
   },

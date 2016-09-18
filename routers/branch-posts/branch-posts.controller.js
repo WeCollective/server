@@ -290,9 +290,9 @@ module.exports = {
       }).then(function() {
         // notify global mods of posts removed for breaching site rules
         if(req.body.reason === 'site_rules') {
-          // get global mods
           var promises = [];
           var time = new Date().getTime();
+          // get global mods
           new Mod().findByBranch('root').then(function(mods) {
             for(var i = 0; i < mods.length; i++) {
               var notification = new Notification({

@@ -30,7 +30,7 @@ app.use(bodyParser.json());
 
 // CROSS ORIGIN RESOURCE SHARING
 app.use(function(req, res, next) {
-  var allowedOrigins = ['http://localhost:8081', 'http://webapp-dev.eu9ntpt33z.eu-west-1.elasticbeanstalk.com', 'http://webapp-prod.eu-west-1.elasticbeanstalk.com', 'http://www.wecollective.co.uk'];
+  var allowedOrigins = ['http://localhost:8081', 'http://webapp-dev.eu9ntpt33z.eu-west-1.elasticbeanstalk.com', 'http://webapp-prod.eu-west-1.elasticbeanstalk.com', 'http://www.weco.io'];
   var origin = req.headers.origin;
   if(allowedOrigins.indexOf(origin) > -1) {
     res.setHeader('Access-Control-Allow-Origin', origin);

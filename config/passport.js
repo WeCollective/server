@@ -32,6 +32,7 @@ module.exports = function(passport) {
         return done(null, false, { status: 400, message: 'Username already exists' });
       }, function(err) {
         if(err) {
+          console.error("Error signing up:", err);
           return done(err, false, { status: 500, message: 'Something went wrong' });
         }
 
@@ -39,6 +40,7 @@ module.exports = function(passport) {
           return done(null, false, { status: 400, message: 'Email already exists' });
         }, function(err) {
           if(err) {
+            console.error("Error signing up:", err);
             return done(err, false, { status: 500, message: 'Something went wrong' });
           }
 
@@ -75,10 +77,12 @@ module.exports = function(passport) {
             newUser.set('password', hash);
             newUser.save().then(function() {
               return done(null, { username: username });
-            }, function() {
+            }, function(err) {
+              console.error("Error signing up:", err);
               return done(err, false, { status: 500, message: 'Something went wrong' });
             });
-          }).catch(function() {
+          }).catch(function(err) {
+            console.error("Error signing up:", err);
             return done(err, false, { status: 500, message: 'Something went wrong' });
           });
         });

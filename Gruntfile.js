@@ -128,7 +128,7 @@ module.exports = function(grunt) {
   **                          (either "development" or "production"), merging into production if needed.
   */
   grunt.registerTask('test', ['jshint', 'mochaTest']);
-  grunt.registerTask('serve', ['apidoc', 'jshint', 'preprocess:local', 'exec:commit', 'concurrent:serve']);
+  grunt.registerTask('serve', ['apidoc', 'jshint', 'preprocess:local', 'concurrent:serve']);
   grunt.registerTask('publish', ['apidoc', 'test', 'preprocess:production', 'exec:commit', 'exec:publish']);
   grunt.registerTask('deploy:development', ['apidoc', 'test', 'preprocess:development', 'exec:commit', 'exec:deploy:development']);
   grunt.registerTask('deploy:production', ['publish', 'exec:deploy:production']);

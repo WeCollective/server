@@ -107,10 +107,12 @@ module.exports = function(passport) {
         auth.compare(password, user.data.password).then(function() {
           return done(null, user.data);
         }).catch(function(err) {
+          console.error("Error logging in:", err);
           return done(null, false, err);
         });
       }, function(err) {
         if(err) {
+          console.error("Error logging in:", err);
           return done(err, false, { status: 500, message: 'Something went wrong' });
         }
         return done(null, false, { status: 400, message: 'User doesn\'t exist' });

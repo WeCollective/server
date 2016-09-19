@@ -29,13 +29,15 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
 // REDIRECT TRAFFIC ON HTTP TO HTTPS
-app.use(function(req, res, next) {
-  if((!req.secure) && (req.get('X-Forwarded-Proto') !== 'https')) {
-    res.redirect('https://' + req.get('Host') + req.url);
-  } else {
-    next();
-  }
-});
+if(process.env.NODE_ENV === 'production') {
+  app.use(function(req, res, next) {
+    if((!req.secure) && (req.get('X-Forwarded-Proto') !== 'https')) {
+      res.redirect('https://' + req.get('Host') + req.url);
+    } else {
+      next();
+    }
+  });
+}
 
 // CROSS ORIGIN RESOURCE SHARING
 app.use(function(req, res, next) {

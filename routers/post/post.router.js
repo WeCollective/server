@@ -73,7 +73,8 @@ module.exports = function(app, passport) {
      * @apiUse BadRequest
      * @apiUse InternalServerError
      */
-    .get(controller.get);
+    .get(controller.get)
+    .delete(controller.delete);
 
   router.route('/:postid/picture-upload-url')
     /**

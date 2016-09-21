@@ -194,6 +194,36 @@ module.exports = {
       return error.NotFound(res);
     });
   },
+  delete: function(req, res) {
+    if(!req.user || !req.user.username) {
+      return error.Forbidden(res);
+    }
+    if(!req.params.postid) {
+      return error.BadRequest(res, 'Missing postid');
+    }
+
+    // delete all post entries on branches
+    // NB: do not remove post data and post images for now - may want to
+    // reinstate posts
+    new Post().findById(req.params.postid).then(function(posts) {
+      var promises = [];
+      for(var i = 0; i < posts.length; i++) {
+        promises.push(new Post().delete({
+          id: posts[i].id,
+          id: posts[i].branchid
+        }));
+      }
+      return Promise.all(promises);
+    }).then(function() {
+      return success.OK(res);
+    }).catch(function(err) {
+      if(err) {
+        console.error("Error deleting posts: ", err);
+        return error.InternalServerError(res);
+      }
+      return error.NotFound(res);
+    });
+  },
   getPictureUploadUrl: function(req, res) {
     if(!req.user || !req.user.username) {
       return error.Forbidden(res);

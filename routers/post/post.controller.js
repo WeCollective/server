@@ -210,7 +210,7 @@ module.exports = {
       for(var i = 0; i < posts.length; i++) {
         promises.push(new Post().delete({
           id: posts[i].id,
-          id: posts[i].branchid
+          branchid: posts[i].branchid
         }));
       }
       return Promise.all(promises);

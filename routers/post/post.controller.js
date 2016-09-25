@@ -46,7 +46,9 @@ module.exports = {
     // the branches the post should be tagged to.
     var allTags = [];
     var tagCollectionPromises = [];
+    var branchCollectionPromises = [];
     for(var i = 0; i < req.body.branchids.length; i++) {
+      branchCollectionPromises.push(new Branch().findById(req.body.branchids[i]));
       tagCollectionPromises.push(new Promise(function(resolve, reject) {
         new Tag().findByBranch(req.body.branchids[i]).then(function(tags) {
           for(var j = 0; j < tags.length; j++) {
@@ -61,8 +63,15 @@ module.exports = {
         });
       }));
     }
-
-    Promise.all(tagCollectionPromises).then(function () {
+    Promise.all(branchCollectionPromises).then(function() {
+      return Promise.all(tagCollectionPromises);
+    }, function(err) {
+      if(err) {
+        return error.InternalServerError(res);
+      }
+      // one of the specified branches doesnt exist
+      return error.BadRequest(res, 'Invalid branchid');
+    }).then(function() {
       // all tags are collected, these are the branchids to tag the post to
       var original_branches = req.body.branchids;
       req.body.branchids = _.union(allTags);

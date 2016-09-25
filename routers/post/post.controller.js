@@ -64,6 +64,7 @@ module.exports = {
 
     Promise.all(tagCollectionPromises).then(function () {
       // all tags are collected, these are the branchids to tag the post to
+      var original_branches = req.body.branchids;
       req.body.branchids = _.union(allTags);
 
       var date = new Date().getTime();
@@ -97,11 +98,12 @@ module.exports = {
         id: id,
         creator: req.user.username,
         title: req.body.title,
-        text: req.body.text
+        text: req.body.text,
+        original_branches: JSON.stringify(original_branches)
       });
 
       // validate postdata properties
-      propertiesToCheck = ['id', 'creator', 'title', 'text'];
+      propertiesToCheck = ['id', 'creator', 'title', 'text', 'original_branches'];
       invalids = postdata.validate(propertiesToCheck);
       if(invalids.length > 0) {
         return error.BadRequest(res, 'Invalid ' + invalids[0]);

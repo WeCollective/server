@@ -51,6 +51,19 @@ PostData.prototype.validate = function(properties) {
     }
   }
 
+  // ensure original_branches is a valid JSON array
+  if(properties.indexOf('original_branches') > -1) {
+    if(!this.data.original_branches || this.data.original_branches.length === 0) {
+      invalids.push('original_branches');
+    } else {
+      try {
+        JSON.parse(this.data.original_branches);
+      } catch(err) {
+        invalids.push('original_branches');
+      }
+    }
+  }
+
   return invalids;
 };
 

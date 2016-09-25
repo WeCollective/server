@@ -77,7 +77,8 @@ var Schema = {
     id: null,
     creator: null,
     title: null,
-    text: null
+    text: null,
+    original_branches: null
   },
   PostImages: {
     id: null,

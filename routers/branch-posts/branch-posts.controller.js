@@ -11,6 +11,7 @@ var FlaggedPost = require('../../models/flagged-post.model.js');
 var Notification = require('../../models/notification.model.js');
 var Branch = require('../../models/branch.model.js');
 var Mod = require('../../models/mod.model.js');
+var UserVote = require('../../models/user-vote.model.js');
 
 var success = require('../../responses/successes.js');
 var error = require('../../responses/errors.js');
@@ -95,15 +96,18 @@ module.exports = {
       branchid: req.params.branchid
     });
 
-    // validate post properties
-    var propertiesToCheck = ['id', 'branchid'];
-    var invalids = post.validate(propertiesToCheck);
-    if(invalids.length > 0) {
-      return error.BadRequest(res, 'Invalid ' + invalids[0]);
-    }
-
     var branchIds = [];
-    new Post().findById(req.params.postid).then(function(posts) {
+    // check user hasn't already voted on this post
+    new UserVote().findByUsernameAndItemId(req.user.username, 'post-' + req.params.postid).then(function () {
+      return error.BadRequest(res, 'User has already voted on this post');
+    }, function(err) {
+      if(err) {
+        console.error("Error fetching user vote:", err);
+        return error.InternalServerError(res);
+      }
+      // get post on all branches
+      return new Post().findById(req.params.postid);
+    }).then(function(posts) {
       // find all post entries to get the list of branches it is tagged to
       var promise;
       for(var i = 0; i < posts.length; i++) {
@@ -116,6 +120,7 @@ module.exports = {
           promise = post.update();
         }
       }
+      if(!promise) return error.BadRequest(res, 'Invalid branchid');
       return promise;
     }).then(function() {
       // increment/decrement the post points count on each branch object
@@ -132,6 +137,22 @@ module.exports = {
         }));
       }
       return Promise.all(promises);
+    }).then(function() {
+      // store this vote in the table
+      var vote = new UserVote({
+        username: req.user.username,
+        itemid: 'post-' + req.params.postid,
+        direction: req.body.vote
+      });
+
+      // validate branch properties
+      var propertiesToCheck = ['username', 'itemid'];
+      var invalids = vote.validate(propertiesToCheck);
+      if(invalids.length > 0) {
+        console.error("Error creating UserVote: invalid ", invalids[0]);
+        return error.InternalServerError(res);
+      }
+      return vote.save();
     }).then(function() {
       return success.OK(res);
     }).catch(function(err) {

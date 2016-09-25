@@ -23,6 +23,11 @@ var Schema = {
     date: null,
     extension: null
   },
+  UserVote: {
+    username: null,
+    itemid: null,
+    direction: null
+  },
   Branch: {
     id: null,
     name: null,
@@ -140,6 +145,10 @@ var Keys = {
     primary: 'id',
     sort: null
   },
+  UserVotes: {
+    primary: 'username',
+    sort: 'itemid'
+  },
   Branches: {
     primary: 'id',
     sort: null,
@@ -212,6 +221,7 @@ var config = {
     Sessions: 'Sessions',
     Users: 'Users',
     UserImages: 'UserImages',
+    UserVotes: 'UserVotes',
     Branches: 'Branches',
     BranchImages: 'BranchImages',
     Mods: 'Mods',

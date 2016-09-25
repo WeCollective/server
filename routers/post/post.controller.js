@@ -16,6 +16,7 @@ var CommentData = require('../../models/comment-data.model.js');
 var Notification = require('../../models/notification.model.js');
 var User = require('../../models/user.model.js');
 var Mod = require('../../models/mod.model.js');
+var UserVote = require('../../models/user-vote.model.js');
 
 var success = require('../../responses/successes.js');
 var error = require('../../responses/errors.js');
@@ -662,10 +663,18 @@ module.exports = {
       return error.BadRequest(res, 'Invalid ' + invalids[0]);
     }
 
-    // TODO check the specfied comment actually belongs to this post
-
     var comment = new Comment();
-    comment.findById(req.params.commentid).then(function() {
+    // check user hasn't already voted on this comment
+    new UserVote().findByUsernameAndItemId(req.user.username, 'comment-' + req.params.commentid).then(function () {
+      return error.BadRequest(res, 'User has already voted on this comment');
+    }, function(err) {
+      if(err) {
+        console.error("Error fetching user vote:", err);
+        return error.InternalServerError(res);
+      }
+      // get comment
+      return comment.findById(req.params.commentid);
+    }).then(function() {
       if(!comment.data || comment.data.length == 0) {
         return error.NotFound(res);
       }
@@ -678,6 +687,22 @@ module.exports = {
       // increment either the up or down vote for the comment if specified
       updatedComment.set(req.body.vote, comment.data[req.body.vote] + 1);
       return updatedComment.update();
+    }).then(function() {
+      // store this vote in the table
+      var vote = new UserVote({
+        username: req.user.username,
+        itemid: 'comment-' + req.params.commentid,
+        direction: req.body.vote
+      });
+
+      // validate branch properties
+      var propertiesToCheck = ['username', 'itemid'];
+      var invalids = vote.validate(propertiesToCheck);
+      if(invalids.length > 0) {
+        console.error("Error creating UserVote: invalid ", invalids[0]);
+        return error.InternalServerError(res);
+      }
+      return vote.save();
     }).then(function() {
       return success.OK(res);
     }).catch(function(err) {

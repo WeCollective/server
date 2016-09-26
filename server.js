@@ -83,19 +83,17 @@ var io = require('./config/io.js')(server);
 
 io.notifications.on('connection', function(socket) {
   // Give the client their socket id so they can subscribe to real time notifications
-  console.log("NEW CONNECTION!");
   socket.emit('on_connect', { id: socket.id });
 
   socket.on('disconnect', function() {
     // Give the client their socket id so they can unsubscribe from real time notifications
-    console.log("DISCONNECTION!");
     socket.emit('on_disconnect', { id: socket.id });
   });
 });
 
 // THE API ROUTES
 var apiRouter = require('./routers/router.js')(app, passport);
-app.use('/', apiRouter);
+app.use('/v1', apiRouter);
 
 // SERVE THE DOCS ON THE BASE ROUTE
 app.use('/docs', express.static(__dirname + '/docs'));

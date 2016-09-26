@@ -48,7 +48,6 @@ Model.prototype.update = function(Key) {
         Key[self.config.keys.sort] = self.data[self.config.keys.sort];
       }
     }
-    console.log("KEY", Key);
 
     // Update the entry with values which have changed in the model
     var Updates = {};

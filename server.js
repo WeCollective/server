@@ -93,7 +93,7 @@ io.notifications.on('connection', function(socket) {
 
 // THE API ROUTES
 var apiRouter = require('./routers/router.js')(app, passport);
-app.use('/v1', apiRouter);
+app.use('/', apiRouter);
 
 // SERVE THE DOCS ON THE BASE ROUTE
 app.use('/docs', express.static(__dirname + '/docs'));

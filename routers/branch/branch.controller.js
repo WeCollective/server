@@ -346,7 +346,7 @@ module.exports = {
       return Promise.all(promises);
     }).then(function() {
       // get the deleted branch's subbranches
-      return branch.findSubbranches(req.params.branchid, 0);
+      return branch.findSubbranches(req.params.branchid, 0, 'date');
     }).then(function(subbranches) {
       // update all subbranches parents to 'root'
       var promises = [];

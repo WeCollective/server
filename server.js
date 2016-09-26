@@ -82,11 +82,7 @@ app.use(session({
   store: new DynamoDBStore(options),
   secret: process.env.SESSION_SECRET,
   resave: true,
-  saveUninitialized: false,
-  cookie: {
-    secure: true,
-    httpOnly: true
-  }
+  saveUninitialized: false
 }));
 passport = require('./config/passport')(passport);
 app.use(passport.initialize());

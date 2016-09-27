@@ -98,8 +98,19 @@ module.exports = {
 
     var branchIds = [];
     // check user hasn't already voted on this post
-    new UserVote().findByUsernameAndItemId(req.user.username, 'post-' + req.params.postid).then(function () {
-      return error.BadRequest(res, 'User has already voted on this post');
+    var uservote = new UserVote();
+    var voteChanged = false;
+    uservote.findByUsernameAndItemId(req.user.username, 'post-' + req.params.postid).then(function () {
+      // user has voted on this post before
+
+      // see if vote is the other direction, in which can change their vote
+      if(uservote.data.direction !== req.body.vote) {
+        // get post on all branches
+        voteChanged = true;
+        return new Post().findById(req.params.postid);
+      } else {
+        return error.BadRequest(res, 'User has already voted on this post');
+      }
     }, function(err) {
       if(err) {
         console.error("Error fetching user vote:", err);
@@ -117,6 +128,12 @@ module.exports = {
           // update the post vote up/down parameter
           // (vote stats will be auto-updated by a lambda function)
           post.set(req.body.vote, posts[i][req.body.vote] + 1);
+
+          // if user is changing their vote, undo the previous vote by decreasing it
+          if(voteChanged) {
+            var opposite = req.body.vote == 'up' ? 'down' : 'up';
+            post.set(opposite, posts[i][opposite] - 1);
+          }
           promise = post.update();
         }
       }
@@ -127,6 +144,11 @@ module.exports = {
       // the post appears in
       var promises = [];
       var inc = (req.body.vote == 'up') ? 1 : -1;
+      // if the user is changing their vote, need to also undo effect of their
+      // previous vote, so the vote counts as two
+      if(voteChanged) {
+        inc = inc == 1 ? inc + 1 : inc - 1;
+      }
       for(var i = 0; i < branchIds.length; i++) {
         promises.push(new Promise(function(resolve, reject) {
           var branch = new Branch();
@@ -138,21 +160,27 @@ module.exports = {
       }
       return Promise.all(promises);
     }).then(function() {
-      // store this vote in the table
-      var vote = new UserVote({
-        username: req.user.username,
-        itemid: 'post-' + req.params.postid,
-        direction: req.body.vote
-      });
+      if(voteChanged) {
+        // update the vote direction
+        uservote.set('direction', req.body.vote);
+        return uservote.update();
+      } else {
+        // new vote: store this vote in the table
+        var vote = new UserVote({
+          username: req.user.username,
+          itemid: 'post-' + req.params.postid,
+          direction: req.body.vote
+        });
 
-      // validate branch properties
-      var propertiesToCheck = ['username', 'itemid'];
-      var invalids = vote.validate(propertiesToCheck);
-      if(invalids.length > 0) {
-        console.error("Error creating UserVote: invalid ", invalids[0]);
-        return error.InternalServerError(res);
+        // validate vote properties
+        var propertiesToCheck = ['username', 'itemid'];
+        var invalids = vote.validate(propertiesToCheck);
+        if(invalids.length > 0) {
+          console.error("Error creating UserVote: invalid ", invalids[0]);
+          return error.InternalServerError(res);
+        }
+        return vote.save();
       }
-      return vote.save();
     }).then(function() {
       return success.OK(res);
     }).catch(function(err) {

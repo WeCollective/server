@@ -73,7 +73,7 @@ var options = {
     },
     region: 'eu-west-1',
     sslEnabled: true,
-    logger: process.env.NODE_ENV == "test" ? undefined : process.stdout
+    logger: process.env.NODE_ENV == "development" ? process.stdout : undefined
   },
   reapInterval: 600000  // clean up expired sessions every 10 mins
 };

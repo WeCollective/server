@@ -10,6 +10,7 @@ var ACL = require('../config/acl.js');
 
 var url = require('url');
 var http = require('http');
+var https = require('https');
 
 module.exports = function(app, passport) {
   var version = '/v1';
@@ -21,6 +22,7 @@ module.exports = function(app, passport) {
     if(!req.query.url) return error.NotFound(res);
 
     var url_parts = url.parse(req.query.url, true);
+    if(url_parts.protocol !== 'http:') return error.BadRequest(res, 'Only http resources can be proxied');
     http.get(req.query.url, function(response) {
       if (response.statusCode === 200) {
         res.writeHead(200, {

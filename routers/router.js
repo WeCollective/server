@@ -8,8 +8,32 @@ var success = require('../responses/successes.js');
 
 var ACL = require('../config/acl.js');
 
+var url = require('url');
+var http = require('http');
+
 module.exports = function(app, passport) {
   var version = '/v1';
+
+  // Route used to proxy resources on secure endpoints through
+  // this secure server to ensure all content is served over https.
+  // URL of resource should be supplied as a query argument.
+  app.get(version + '/proxy', function(req, res) {
+    if(!req.query.url) return error.NotFound(res);
+
+    var url_parts = url.parse(req.query.url, true);
+    http.get(req.query.url, function(response) {
+      if (response.statusCode === 200) {
+        res.writeHead(200, {
+          'Content-Type': response.headers['content-type']
+        });
+        response.pipe(res);
+      } else {
+        return error.NotFound(res);
+      }
+    }).on('error', function() {
+      return error.BadRequest(res, 'Invalid URL parameter');
+    });
+  });
 
   // USER ROUTER
   var userRouter = require('./user/user.router.js')(app, passport);

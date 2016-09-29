@@ -27,6 +27,7 @@ module.exports = {
       timeafter = 0;
     }
 
+    // indicates whether to fetch flagged posts only
     var flag = req.query.flag === 'true';
 
     // points, date, comment_count [if normal posts]
@@ -36,6 +37,8 @@ module.exports = {
       sortBy = flag ? 'date' : 'points';
     }
 
+    var posts = [];
+    var postDatas = [];
     new Promise(function(resolve, reject) {
       if(flag) {
         // ensure valid sortBy param supplied for fetching flagged posts
@@ -62,14 +65,23 @@ module.exports = {
       if(!req.query.stat) {
         stat = 'individual';
       }
-
-
-      (flag ? new FlaggedPost() : new Post()).findByBranch(req.params.branchid, timeafter, sortBy, stat).then(function(posts) {
-        return success.OK(res, posts);
-      }, function(err) {
-        console.error('Error fetching posts on branch: ', err);
-        return error.InternalServerError(res);
-      });
+      return (flag ? new FlaggedPost() : new Post()).findByBranch(req.params.branchid, timeafter, sortBy, stat);
+    }).then(function(results) {
+      posts = results;
+      var promises = [];
+      // fetch post data for each post
+      for(var i = 0; i < posts.length; i++) {
+        var postdata = new PostData();
+        promises.push(postdata.findById(posts[i].id));
+        postDatas.push(postdata);
+      }
+      return Promise.all(promises);
+    }).then(function() {
+      // attach post data to each post
+      for(var i = 0; i < posts.length; i++) {
+        posts[i].data = postDatas[i].data;
+      }
+      return success.OK(res, posts);
     }).catch(function(err) {
       console.error("Error fetching posts:", err);
       return error.InternalServerError(res);

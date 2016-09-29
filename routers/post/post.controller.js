@@ -90,13 +90,14 @@ module.exports = {
           type: req.body.type,
           local: 0,
           individual: 0,
+          global: 0,
           up: 0,
           down: 0,
           comment_count: 0
         });
 
         // validate post properties
-        propertiesToCheck = ['id', 'branchid', 'date', 'type', 'local', 'individual', 'up', 'down', 'comment_count'];
+        propertiesToCheck = ['id', 'branchid', 'date', 'type', 'local', 'individual', 'global', 'up', 'down', 'comment_count'];
         invalids = post.validate(propertiesToCheck);
         if(invalids.length > 0) {
           return error.BadRequest(res, 'Invalid ' + invalids[0]);

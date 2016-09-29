@@ -74,6 +74,7 @@ var Schema = {
     type: null,
     local: null,
     individual: null,
+    global: null,
     up: null,
     down: null,
     comment_count: null
@@ -179,7 +180,7 @@ var Keys = {
   Posts: {
     primary: 'id',
     sort: 'branchid',
-    globalIndexes: ['branchid-individual-index', 'branchid-local-index', 'branchid-date-index', 'branchid-comment_count-index']
+    globalIndexes: ['branchid-individual-index', 'branchid-local-index', 'branchid-date-index', 'branchid-comment_count-index', 'branchid-global-index']
   },
   PostData: {
     primary: 'id',

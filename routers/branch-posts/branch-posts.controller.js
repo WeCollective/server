@@ -39,33 +39,58 @@ module.exports = {
 
     var posts = [];
     var postDatas = [];
+    var lastPost = null;
+    // if lastPostId is specified, client wants results which appear _after_ this post (pagination)
     new Promise(function(resolve, reject) {
-      if(flag) {
-        // ensure valid sortBy param supplied for fetching flagged posts
-        if(['date', 'branch_rules', 'site_rules', 'wrong_type'].indexOf(sortBy) == -1) {
-          return error.BadRequest(res, 'Invalid sortBy parameter');
-        }
-        // if requesting flagged posts ensure user is authenticated and is a mod
-        if(!req.user.username) {
-          return error.Forbidden(res);
-        } else {
-          ACL.validateRole(ACL.Roles.Moderator, req.params.branchid)(req, res, resolve);
-        }
-      } else {
-        // ensure valid sortBy param supplied for fetching normal posts
-        if(['date', 'points', 'comment_count'].indexOf(sortBy) == -1) {
-          return error.BadRequest(res, 'Invalid sortBy parameter');
-        } else {
+      if(req.query.lastPostId) {
+        var post = new Post();
+        var postdata = new PostData();
+        // get the post
+        post.findByPostAndBranchIds(req.query.lastPostId, req.params.branchid).then(function() {
+          // fetch post data
+          return postdata.findById(req.query.lastPostId);
+        }).then(function () {
+          // create lastPost object
+          lastPost = post.data;
+          lastPost.data = postdata.data;
           resolve();
-        }
+        }).catch(function(err) {
+          if(err) reject();
+          return error.NotFound(res); // lastPostId is invalid
+        });
+      } else {
+        // no last post specified, continue
+        resolve();
       }
+    }).then(function () {
+      return new Promise(function(resolve, reject) {
+        if(flag) {
+          // ensure valid sortBy param supplied for fetching flagged posts
+          if(['date', 'branch_rules', 'site_rules', 'wrong_type'].indexOf(sortBy) == -1) {
+            return error.BadRequest(res, 'Invalid sortBy parameter');
+          }
+          // if requesting flagged posts ensure user is authenticated and is a mod
+          if(!req.user) {
+            return error.Forbidden(res);
+          } else {
+            ACL.validateRole(ACL.Roles.Moderator, req.params.branchid)(req, res, resolve);
+          }
+        } else {
+          // ensure valid sortBy param supplied for fetching normal posts
+          if(['date', 'points', 'comment_count'].indexOf(sortBy) == -1) {
+            return error.BadRequest(res, 'Invalid sortBy parameter');
+          } else {
+            resolve();
+          }
+        }
+      });
     }).then(function() {
       // ind/local/global stats [if normal posts]
       var stat = req.query.stat;
       if(!req.query.stat) {
         stat = 'individual';
       }
-      return (flag ? new FlaggedPost() : new Post()).findByBranch(req.params.branchid, timeafter, sortBy, stat);
+      return (flag ? new FlaggedPost() : new Post()).findByBranch(req.params.branchid, timeafter, sortBy, stat, lastPost);
     }).then(function(results) {
       posts = results;
       var promises = [];

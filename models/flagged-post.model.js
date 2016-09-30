@@ -140,7 +140,7 @@ FlaggedPost.prototype.findByBranch = function(branchid, timeafter, sortBy, stat,
       };
     }
     return new Promise(function(resolve, reject) {
-      aws.dbClient.query({
+      var params = {
         TableName: self.config.table,
         IndexName: index,
         Select: 'ALL_PROJECTED_ATTRIBUTES',
@@ -155,7 +155,13 @@ FlaggedPost.prototype.findByBranch = function(branchid, timeafter, sortBy, stat,
         },
         ExclusiveStartKey: last || null,  // fetch results which come _after_ this
         ScanIndexForward: false   // return results highest first
-      }, function(err, data) {
+      };
+      if(postType !== 'all') {
+        params.FilterExpression = "#type = :postType";
+        params.ExpressionAttributeNames["#type"] = "type";
+        params.ExpressionAttributeValues[":postType"] = String(postType);
+      }
+      aws.dbClient.query(params, function(err, data) {
         if(err) {
           return reject(err);
         }
@@ -175,7 +181,7 @@ FlaggedPost.prototype.findByBranch = function(branchid, timeafter, sortBy, stat,
       last = tmp;
     }
     return new Promise(function(resolve, reject) {
-      aws.dbClient.query({
+      var params = {
         TableName: self.config.table,
         IndexName: index,
         Select: 'ALL_PROJECTED_ATTRIBUTES',
@@ -191,8 +197,13 @@ FlaggedPost.prototype.findByBranch = function(branchid, timeafter, sortBy, stat,
         },
         ExclusiveStartKey: last || null,  // fetch results which come _after_ this
         ScanIndexForward: false   // return results highest first
-      }, function(err, data) {
-        console.log("DATA", data);
+      };
+      if(postType !== 'all') {
+        params.FilterExpression += " AND #type = :postType";
+        params.ExpressionAttributeNames["#type"] = "type";
+        params.ExpressionAttributeValues[":postType"] = String(postType);
+      }
+      aws.dbClient.query(params, function(err, data) {
         if(err) {
           return reject(err);
         }

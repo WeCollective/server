@@ -228,6 +228,18 @@ module.exports = {
       }
       return Promise.all(promises);
     }).then(function() {
+      // delete any instances of the post when flagged
+      return new FlaggedPost().findById(req.params.postid);
+    }).then(function(posts) {
+      var promises = [];
+      for(var i = 0; i < posts.length; i++) {
+        promises.push(new FlaggedPost().delete({
+          id: posts[i].id,
+          branchid: posts[i].branchid
+        }));
+      }
+      return Promise.all(promises);
+    }).then(function() {
       return success.OK(res);
     }).catch(function(err) {
       if(err) {

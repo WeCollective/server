@@ -118,7 +118,8 @@ FlaggedPost.prototype.findByPostAndBranchIds = function(postid, branchid) {
 };
 
 // Fetch the flagged posts on a specific branch
-FlaggedPost.prototype.findByBranch = function(branchid, timeafter, sortBy) {
+FlaggedPost.prototype.findByBranch = function(branchid, timeafter, sortBy, stat, postType, last) {
+  var limit = 30;
   var self = this;
   if(sortBy == 'date') {
     var index = self.config.keys.globalIndexes[0];
@@ -131,6 +132,13 @@ FlaggedPost.prototype.findByBranch = function(branchid, timeafter, sortBy) {
   }
 
   if(sortBy == 'date') {
+    if(last) {
+      last = {
+        id: last.id,
+        branchid: last.branchid,
+        date: last.date
+      };
+    }
     return new Promise(function(resolve, reject) {
       aws.dbClient.query({
         TableName: self.config.table,
@@ -145,16 +153,27 @@ FlaggedPost.prototype.findByBranch = function(branchid, timeafter, sortBy) {
           ":branchid": String(branchid),
           ":timeafter": Number(timeafter)
         },
+        ExclusiveStartKey: last || null,  // fetch results which come _after_ this
         ScanIndexForward: false   // return results highest first
       }, function(err, data) {
-        if(err) return reject(err);
+        if(err) {
+          return reject(err);
+        }
         if(!data || !data.Items) {
           return reject();
         }
-        return resolve(data.Items);
+        return resolve(data.Items.slice(0, limit));
       });
     });
   } else {
+    if(last) {
+      var tmp = {
+        id: last.id,
+        branchid: last.branchid
+      };
+      tmp[sortBy + '_count'] = last[sortBy + '_count'];
+      last = tmp;
+    }
     return new Promise(function(resolve, reject) {
       aws.dbClient.query({
         TableName: self.config.table,
@@ -170,13 +189,17 @@ FlaggedPost.prototype.findByBranch = function(branchid, timeafter, sortBy) {
           ":branchid": String(branchid),
           ":timeafter": Number(timeafter)
         },
+        ExclusiveStartKey: last || null,  // fetch results which come _after_ this
         ScanIndexForward: false   // return results highest first
       }, function(err, data) {
-        if(err) return reject(err);
+        console.log("DATA", data);
+        if(err) {
+          return reject(err);
+        }
         if(!data || !data.Items) {
           return reject();
         }
-        return resolve(data.Items);
+        return resolve(data.Items.slice(0, limit));
       });
     });
   }

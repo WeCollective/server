@@ -7,6 +7,7 @@ var NotificationTypes = require('../../config/notification-types.js');
 
 var Post = require('../../models/post.model.js');
 var PostData = require('../../models/post-data.model.js');
+var PostImage = require('../../models/post-image.model.js');
 var FlaggedPost = require('../../models/flagged-post.model.js');
 var Notification = require('../../models/notification.model.js');
 var Branch = require('../../models/branch.model.js');
@@ -47,6 +48,7 @@ module.exports = {
 
     var posts = [];
     var postDatas = [];
+    var postImages = [];
     var lastPost = null;
     // if lastPostId is specified, client wants results which appear _after_ this post (pagination)
     new Promise(function(resolve, reject) {
@@ -110,9 +112,53 @@ module.exports = {
       }
       return Promise.all(promises);
     }).then(function() {
-      // attach post data to each post
+      var promises = [];
       for(var i = 0; i < posts.length; i++) {
+        // attach post data to each post
         posts[i].data = postDatas[i].data;
+        // fetch each post's signed image url and attach it to the postimage object
+        promises.push(new Promise(function(resolve, reject) {
+          new PostImage().findById(posts[i].id).then(function(postimage) {
+            aws.s3Client.getSignedUrl('getObject', {
+              Bucket: fs.Bucket.PostImagesResized,
+              Key: postimage.id + '-640.' + postimage.extension
+            }, function(err, url) {
+              if(err) reject(err);
+              resolve(url);
+            });
+          }, function(err) {
+            if(err) reject();
+            resolve('');
+          });
+        }));
+      }
+      return Promise.all(promises);
+    }).then(function(urls) {
+      var promises = [];
+      for(var i = 0; i < posts.length; i++) {
+        // attach post image url to each post
+        posts[i].profileUrl = urls[i];
+        // fetch each post's signed image url and attach it to the postimage object
+        promises.push(new Promise(function(resolve, reject) {
+          new PostImage().findById(posts[i].id).then(function(postimage) {
+            aws.s3Client.getSignedUrl('getObject', {
+              Bucket: fs.Bucket.PostImagesResized,
+              Key: postimage.id + '-200.' + postimage.extension
+            }, function(err, url) {
+              if(err) reject(err);
+              resolve(url);
+            });
+          }, function(err) {
+            if(err) reject();
+            resolve('');
+          });
+        }));
+      }
+      return Promise.all(promises);
+    }).then(function(urls) {
+      // attach post image thumbnail url to each post
+      for(var i = 0; i < posts.length; i++) {
+        posts[i].profileUrlThumb = urls[i];
       }
       return success.OK(res, posts);
     }).catch(function(err) {

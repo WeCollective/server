@@ -58,7 +58,7 @@ PostImage.prototype.findById = function(id) {
         return reject();
       }
       self.data = data.Item;
-      return resolve();
+      return resolve(data.Item);
     });
   });
 };

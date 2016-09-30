@@ -112,8 +112,8 @@ Post.prototype.findById = function(id) {
 };
 
 // Fetch the posts on a specific branch, using a specific stat, and filtered by time
-Post.prototype.findByBranch = function(branchid, timeafter, sortBy, stat, last) {
-  var limit = 20; // fetch at most 20 posts at once
+Post.prototype.findByBranch = function(branchid, timeafter, sortBy, stat, postType, last) {
+  var limit = 30;
   var self = this;
   var index = self.config.keys.globalIndexes[0];
   if(sortBy == 'points') {
@@ -144,7 +144,7 @@ Post.prototype.findByBranch = function(branchid, timeafter, sortBy, stat, last) 
       last = tmp;
     }
     return new Promise(function(resolve, reject) {
-      aws.dbClient.query({
+      var params = {
         TableName: self.config.table,
         IndexName: index,
         Select: 'ALL_PROJECTED_ATTRIBUTES',
@@ -159,14 +159,19 @@ Post.prototype.findByBranch = function(branchid, timeafter, sortBy, stat, last) 
           ":timeafter": Number(timeafter)
         },
         ExclusiveStartKey: last || null,  // fetch results which come _after_ this
-        Limit: limit,
         ScanIndexForward: false   // return results highest first
-      }, function(err, data) {
+      };
+      if(postType !== 'all') {
+        params.FilterExpression += " AND #type = :postType";
+        params.ExpressionAttributeNames["#type"] = "type";
+        params.ExpressionAttributeValues[":postType"] = String(postType);
+      }
+      aws.dbClient.query(params, function(err, data) {
         if(err) return reject(err);
         if(!data || !data.Items) {
           return reject();
         }
-        return resolve(data.Items);
+        return resolve(data.Items.slice(0, limit));
       });
     });
   } else if(sortBy == 'date') {
@@ -178,7 +183,7 @@ Post.prototype.findByBranch = function(branchid, timeafter, sortBy, stat, last) 
       };
     }
     return new Promise(function(resolve, reject) {
-      aws.dbClient.query({
+      var params = {
         TableName: self.config.table,
         IndexName: index,
         Select: 'ALL_PROJECTED_ATTRIBUTES',
@@ -192,14 +197,19 @@ Post.prototype.findByBranch = function(branchid, timeafter, sortBy, stat, last) 
           ":timeafter": Number(timeafter)
         },
         ExclusiveStartKey: last || null,  // fetch results which come _after_ this
-        Limit: limit,
         ScanIndexForward: false   // return results highest first
-      }, function(err, data) {
+      };
+      if(postType !== 'all') {
+        params.FilterExpression = "#type = :postType";
+        params.ExpressionAttributeNames["#type"] = "type";
+        params.ExpressionAttributeValues[":postType"] = String(postType);
+      }
+      aws.dbClient.query(params, function(err, data) {
         if(err) return reject(err);
         if(!data || !data.Items) {
           return reject();
         }
-        return resolve(data.Items);
+        return resolve(data.Items.slice(0, limit));
       });
     });
   } else if(sortBy == 'comment_count') {
@@ -211,7 +221,7 @@ Post.prototype.findByBranch = function(branchid, timeafter, sortBy, stat, last) 
       };
     }
     return new Promise(function(resolve, reject) {
-      aws.dbClient.query({
+      var params = {
         TableName: self.config.table,
         IndexName: index,
         Select: 'ALL_PROJECTED_ATTRIBUTES',
@@ -226,14 +236,19 @@ Post.prototype.findByBranch = function(branchid, timeafter, sortBy, stat, last) 
           ":timeafter": Number(timeafter)
         },
         ExclusiveStartKey: last || null,  // fetch results which come _after_ this
-        Limit: limit,
         ScanIndexForward: false   // return results highest first
-      }, function(err, data) {
+      };
+      if(postType !== 'all') {
+        params.FilterExpression += " AND #type = :postType";
+        params.ExpressionAttributeNames["#type"] = "type";
+        params.ExpressionAttributeValues[":postType"] = String(postType);
+      }
+      aws.dbClient.query(params, function(err, data) {
         if(err) return reject(err);
         if(!data || !data.Items) {
           return reject();
         }
-        return resolve(data.Items);
+        return resolve(data.Items.slice(0, limit));
       });
     });
   }

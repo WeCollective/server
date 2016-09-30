@@ -37,6 +37,14 @@ module.exports = {
       sortBy = flag ? 'date' : 'points';
     }
 
+    // check for valid postType parameter
+    var postType = req.query.postType;
+    if(!req.query.postType) {
+      postType = 'all';
+    } else if(['all', 'text', 'image', 'page', 'video', 'audio'].indexOf(req.query.postType) === -1) {
+      return error.BadRequest(res, 'Invalid postType')
+    }
+
     var posts = [];
     var postDatas = [];
     var lastPost = null;
@@ -90,7 +98,7 @@ module.exports = {
       if(!req.query.stat) {
         stat = 'individual';
       }
-      return (flag ? new FlaggedPost() : new Post()).findByBranch(req.params.branchid, timeafter, sortBy, stat, lastPost);
+      return (flag ? new FlaggedPost() : new Post()).findByBranch(req.params.branchid, timeafter, sortBy, stat, postType, lastPost);
     }).then(function(results) {
       posts = results;
       var promises = [];

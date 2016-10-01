@@ -106,7 +106,7 @@ Comment.prototype.findById = function(id) {
 };
 
 Comment.prototype.findByParent = function(postid, parentid, sortBy, last) {
-  var limit = 10;
+  var limit = 20;
   var self = this;
   var index = self.config.keys.globalIndexes[0];
   switch(sortBy) {

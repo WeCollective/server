@@ -117,7 +117,8 @@ Branch.prototype.findById = function(id) {
 // TODO: this has an upper limit on the number of results; if so, a LastEvaluatedKey
 // will be supplied to indicate where to continue the search from
 // (see: http://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/DynamoDB.html#query-property)
-Branch.prototype.findSubbranches = function(parentid, timeafter, sortBy) {
+Branch.prototype.findSubbranches = function(parentid, timeafter, sortBy, last) {
+  var limit = 20;
   var self = this;
   var index;
   switch(sortBy) {
@@ -139,6 +140,14 @@ Branch.prototype.findSubbranches = function(parentid, timeafter, sortBy) {
   }
 
   if(sortBy == 'date') {
+    if(last) {
+      var tmp = {
+        id: last.id,
+        parentid: last.parentid,
+        date: last.date
+      };
+      last = tmp;
+    }
     return new Promise(function(resolve, reject) {
       aws.dbClient.query({
         TableName: self.config.table,
@@ -153,16 +162,25 @@ Branch.prototype.findSubbranches = function(parentid, timeafter, sortBy) {
           ":parentid": String(parentid),
           ":timeafter": Number(timeafter)
         },
+        ExclusiveStartKey: last || null,  // fetch results which come _after_ this
         ScanIndexForward: false   // return results highest first
       }, function(err, data) {
         if(err) return reject(err);
         if(!data || !data.Items) {
           return reject();
         }
-        return resolve(data.Items);
+        return resolve(data.Items.slice(0, limit));
       });
     });
   } else {
+    if(last) {
+      var tmp = {
+        id: last.id,
+        parentid: last.parentid
+      };
+      tmp[sortBy] = last[sortBy];
+      last = tmp;
+    }
     return new Promise(function(resolve, reject) {
       aws.dbClient.query({
         TableName: self.config.table,
@@ -178,13 +196,14 @@ Branch.prototype.findSubbranches = function(parentid, timeafter, sortBy) {
           ":parentid": String(parentid),
           ":timeafter": Number(timeafter)
         },
+        ExclusiveStartKey: last || null,  // fetch results which come _after_ this
         ScanIndexForward: false   // return results highest first
       }, function(err, data) {
         if(err) return reject(err);
         if(!data || !data.Items) {
           return reject();
         }
-        return resolve(data.Items);
+        return resolve(data.Items.slice(0, limit));
       });
     });
   }

@@ -433,10 +433,79 @@ module.exports = {
       sortBy = 'date';
     }
 
+    var lastBranch = null;
     var branch = new Branch();
-    branch.findSubbranches(req.params.branchid, req.query.timeafter, sortBy).then(function(data) {
-      return success.OK(res, data);
-    }, function() {
+    var branches = [];
+    // if lastBranchId is specified, client wants results which appear _after_ this branch (pagination)
+    new Promise(function(resolve, reject) {
+      if(req.query.lastBranchId) {
+        var last = new Branch();
+        // get the branch
+        last.findById(req.query.lastBranchId).then(function () {
+          // create lastBranch object
+          lastBranch = last.data;
+          resolve();
+        }).catch(function(err) {
+          if(err) reject();
+          return error.NotFound(res); // lastBranchId is invalid
+        });
+      } else {
+        // no last branch specified, continue
+        resolve();
+      }
+    }).then(function () {
+      return branch.findSubbranches(req.params.branchid, req.query.timeafter, sortBy, lastBranch);
+    }).then(function(results) {
+      branches = results;
+      var promises = [];
+      for(var i = 0; i < branches.length; i++) {
+        // fetch each branch's signed image url
+        promises.push(new Promise(function(resolve, reject) {
+          new BranchImage().findById(branches[i].id, 'picture').then(function(branchimage) {
+            aws.s3Client.getSignedUrl('getObject', {
+              Bucket: fs.Bucket.BranchImagesResized,
+              Key: branchimage.id + '-640.' + branchimage.extension
+            }, function(err, url) {
+              if(err) reject(err);
+              resolve(url);
+            });
+          }, function(err) {
+            if(err) reject();
+            resolve('');
+          });
+        }));
+      }
+      return Promise.all(promises);
+    }).then(function(urls) {
+      var promises = [];
+      for(var i = 0; i < branches.length; i++) {
+        // attach branch image url to each branch
+        branches[i].profileUrl = urls[i];
+        // fetch each branch's signed image url thumbnail
+        promises.push(new Promise(function(resolve, reject) {
+          new BranchImage().findById(branches[i].id, 'picture').then(function(branchimage) {
+            aws.s3Client.getSignedUrl('getObject', {
+              Bucket: fs.Bucket.BranchImagesResized,
+              Key: branchimage.id + '-200.' + branchimage.extension
+            }, function(err, url) {
+              if(err) reject(err);
+              resolve(url);
+            });
+          }, function(err) {
+            if(err) reject();
+            resolve('');
+          });
+        }));
+      }
+      return Promise.all(promises);
+    }).then(function(urls) {
+      // attach branch image thumbnail url to each branch
+      for(var i = 0; i < branches.length; i++) {
+        branches[i].profileUrlThumb = urls[i];
+      }
+      return success.OK(res, branches);
+    }).catch(function(err) {
+      console.error("Error fetching subbranches:", err);
       return error.InternalServerError(res);
     });
   },

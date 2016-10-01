@@ -62,7 +62,7 @@ BranchImage.prototype.findById = function(id, type) {
         return reject();
       }
       self.data = data.Item;
-      return resolve();
+      return resolve(data.Item);
     });
   });
 };

@@ -105,7 +105,8 @@ Comment.prototype.findById = function(id) {
   });
 };
 
-Comment.prototype.findByParent = function(postid, parentid, sortBy) {
+Comment.prototype.findByParent = function(postid, parentid, sortBy, last) {
+  var limit = 10;
   var self = this;
   var index = self.config.keys.globalIndexes[0];
   switch(sortBy) {
@@ -120,6 +121,19 @@ Comment.prototype.findByParent = function(postid, parentid, sortBy) {
       break;
   }
 
+  if(last) {
+    var tmp = {
+      id: last.id,
+      postid: last.postid
+    };
+    if(sortBy === 'points') {
+      tmp.individual = last.individual;
+    } else {
+      tmp[sortBy] = last[sortBy];
+    }
+    last = tmp;
+  }
+
   return new Promise(function(resolve, reject) {
     aws.dbClient.query({
       TableName: self.config.table,
@@ -131,13 +145,14 @@ Comment.prototype.findByParent = function(postid, parentid, sortBy) {
         ":postid": postid,
         ":parentid": parentid
       },
+      ExclusiveStartKey: last || null,  // fetch results which come _after_ this
       ScanIndexForward: false   // return results highest first
     }, function(err, data) {
       if(err) return reject(err);
       if(!data || !data.Items) {
         return reject();
       }
-      resolve(data.Items);
+      resolve(data.Items.slice(0, limit));
     });
   });
 };

@@ -612,12 +612,45 @@ module.exports = {
       sort = 'points';
     }
 
-    new Comment().findByParent(req.params.postid, req.query.parentid, sort).then(function(comments) {
-      if(!comments || comments.length == 0) {
-        return error.NotFound(res);
+    var lastComment = null;
+    var comments = [];
+    var commentDatas = [];
+    // if lastCommentId is specified, client wants results which appear _after_ this comment (pagination)
+    new Promise(function(resolve, reject) {
+      if(req.query.lastCommentId) {
+        var comment = new Comment();
+        // get the comment
+        comment.findById(req.query.lastCommentId).then(function () {
+          // create lastComment object
+          lastComment = comment.data;
+          resolve();
+        }).catch(function(err) {
+          if(err) reject();
+          return error.NotFound(res); // lastCommentId is invalid
+        });
+      } else {
+        // no last comment specified, continue
+        resolve();
+      }
+    }).then(function () {
+      return new Comment().findByParent(req.params.postid, req.query.parentid, sort, lastComment);
+    }).then(function(results) {
+      comments = results;
+      var promises = [];
+      // fetch post data for each post
+      for(var i = 0; i < comments.length; i++) {
+        var commentdata = new CommentData();
+        promises.push(commentdata.findById(comments[i].id));
+        commentDatas.push(commentdata);
+      }
+      return Promise.all(promises);
+    }).then(function() {
+      // attach comment data to each comment
+      for(var i = 0; i < comments.length; i++) {
+        comments[i].data = commentDatas[i].data;
       }
       return success.OK(res, comments);
-    }, function(err) {
+    }).catch(function(err) {
       if(err) {
         console.error("Error fetching comments", err);
         return error.InternalServerError(res);

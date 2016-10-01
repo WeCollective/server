@@ -87,8 +87,17 @@ Notification.prototype.findById = function(id) {
 };
 
 
-Notification.prototype.findByUsername = function(username, unreadCount) {
+Notification.prototype.findByUsername = function(username, unreadCount, last) {
   var self = this;
+  var limit = 20;
+  if(last) {
+    var tmp = {
+      id: last.id,
+      date: last.date,
+      user: last.user
+    };
+    last = tmp;
+  }
   return new Promise(function(resolve, reject) {
     var options = {
       TableName: self.config.table,
@@ -102,6 +111,7 @@ Notification.prototype.findByUsername = function(username, unreadCount) {
       ExpressionAttributeValues: {
         ":username": String(username)
       },
+      ExclusiveStartKey: last || null,  // fetch results which come _after_ this
       ScanIndexForward: false   // return results highest first
     };
     if(unreadCount) {
@@ -119,7 +129,8 @@ Notification.prototype.findByUsername = function(username, unreadCount) {
           return reject();
         }
       }
-      return resolve(data.Items || data.Count);
+      var result = data.Items ? data.Items.slice(0, limit) : data.Count;
+      return resolve(result);
     });
   });
 }

@@ -177,11 +177,31 @@ module.exports = {
     }
 
     var unreadCount = false;
-    if(req.query.unreadCount == 'true') {
+    if(req.query.unreadCount === 'true') {
       unreadCount = true;
     }
 
-    new Notification().findByUsername(req.user.username, unreadCount).then(function(notifications) {
+    // if lastPostId is specified, client wants results which appear _after_ this notification (pagination)
+    var lastNotification = null;
+    new Promise(function(resolve, reject) {
+      if(req.query.lastNotificationId) {
+        var notification = new Notification();
+        // get the post
+        notification.findById(req.query.lastNotificationId).then(function () {
+          // create lastNotification object
+          lastNotification = notification.data;
+          resolve();
+        }).catch(function(err) {
+          if(err) reject();
+          return error.NotFound(res); // lastNotificationId is invalid
+        });
+      } else {
+        // no last notification specified, continue
+        resolve();
+      }
+    }).then(function () {
+      return new Notification().findByUsername(req.user.username, unreadCount, lastNotification);
+    }).then(function(notifications) {
       return success.OK(res, notifications);
     }, function(err) {
       if(err) {

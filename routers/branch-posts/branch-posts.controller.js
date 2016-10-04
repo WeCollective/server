@@ -76,7 +76,7 @@ module.exports = {
       return new Promise(function(resolve, reject) {
         if(flag) {
           // ensure valid sortBy param supplied for fetching flagged posts
-          if(['date', 'branch_rules', 'site_rules', 'wrong_type'].indexOf(sortBy) == -1) {
+          if(['date', 'branch_rules', 'site_rules', 'wrong_type', 'nsfw'].indexOf(sortBy) == -1) {
             return error.BadRequest(res, 'Invalid sortBy parameter');
           }
           // if requesting flagged posts ensure user is authenticated and is a mod
@@ -313,7 +313,7 @@ module.exports = {
       return error.InternalServerError(res);
     }
 
-    if(!req.body.action || (req.body.action !== 'change_type' && req.body.action !== 'remove' && req.body.action !== 'approve')) {
+    if(!req.body.action || (req.body.action !== 'change_type' && req.body.action !== 'remove' && req.body.action !== 'approve' && req.body.action !== 'mark_nsfw')) {
       return error.BadRequest(res, 'Missing/invalid action parameter');
     }
 
@@ -324,32 +324,43 @@ module.exports = {
       return error.BadRequest(res, 'Missing reason parameter');
     }
 
-    if(req.body.action === 'change_type') {
+    if(req.body.action === 'change_type' || req.body.action === 'mark_nsfw') {
+      var originalpost = new Post();
       var postdata = new PostData();
-      // get the original post
+      // get the post's data
       postdata.findById(req.params.postid).then(function() {
-        // change post type for all branches it appears in
-        return new Post().findById(req.params.postid);
+        if(req.body.action === 'change_type') {
+          // change post type for all branches it appears in
+          return new Post().findById(req.params.postid);
+        } else {
+          // get the original post
+          return originalpost.findByPostAndBranchIds(req.params.postid, req.params.branchid);
+        }
       }).then(function(posts) {
-        if(!posts || posts.length === 0) {
-          return error.NotFound(res);
-        }
-        var promises = [];
-        for(var i = 0; i < posts.length; i++) {
-          var post = new Post();
-          post.set('type', req.body.type);
-          // validate post properties
-          var propertiesToCheck = ['type'];
-          var invalids = post.validate(propertiesToCheck);
-          if(invalids.length > 0) {
-            return error.BadRequest(res, 'Invalid type parameter');
+        if(req.body.action === 'change_type') {
+          if(!posts || posts.length === 0) {
+            return error.NotFound(res);
           }
-          promises.push(post.update({
-            id: posts[i].id,
-            branchid: posts[i].branchid
-          }));
+          var promises = [];
+          for(var i = 0; i < posts.length; i++) {
+            var post = new Post();
+            post.set('type', req.body.type);
+            // validate post properties
+            var propertiesToCheck = ['type'];
+            var invalids = post.validate(propertiesToCheck);
+            if(invalids.length > 0) {
+              return error.BadRequest(res, 'Invalid type parameter');
+            }
+            promises.push(post.update({
+              id: posts[i].id,
+              branchid: posts[i].branchid
+            }));
+          }
+          return Promise.all(promises);
+        } else {
+          originalpost.set('nsfw', true);
+          return originalpost.update();
         }
-        return Promise.all(promises);
       }).then(function () {
         // now delete post flags
         return new FlaggedPost().delete({
@@ -364,14 +375,15 @@ module.exports = {
           user: postdata.data.creator,
           date: time,
           unread: true,
-          type: NotificationTypes.POST_TYPE_CHANGED,
+          type: (req.body.action === 'change_type') ? NotificationTypes.POST_TYPE_CHANGED : NotificationTypes.POST_MARKED_NSFW,
           data: {
             branchid: req.params.branchid,
             username: req.user.username,
-            postid: req.params.postid,
-            type: req.body.type
+            postid: req.params.postid
           }
         });
+        if(req.body.action === 'change_type') notification.data.data.type = req.body.type;
+
         var propertiesToCheck = ['id', 'user', 'date', 'unread', 'type', 'data'];
         var invalids = notification.validate(propertiesToCheck);
         if(invalids.length > 0) {

@@ -134,6 +134,8 @@ FlaggedPost.prototype.findByBranch = function(branchid, timeafter, sortBy, stat,
     index = self.config.keys.globalIndexes[2];
   } else if(sortBy == 'wrong_type') {
     index = self.config.keys.globalIndexes[3];
+  } else if(sortBy == 'nsfw') {
+    index = self.config.keys.globalIndexes[4];
   }
 
   if(sortBy == 'date') {

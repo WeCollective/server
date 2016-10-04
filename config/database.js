@@ -196,7 +196,7 @@ var Keys = {
   FlaggedPosts: {
     primary: 'id',
     sort: 'branchid',
-    globalIndexes: ['branchid-date-index', 'branchid-branch_rules_count-index', 'branchid-site_rules_count-index', 'branchid-wrong_type_count-index']
+    globalIndexes: ['branchid-date-index', 'branchid-branch_rules_count-index', 'branchid-site_rules_count-index', 'branchid-wrong_type_count-index', 'branchid-nsfw_count-index']
   },
   Comments: {
     primary: 'id',

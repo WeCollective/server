@@ -58,7 +58,8 @@ module.exports = function(passport) {
             'num_posts': 0,
             'num_comments': 0,
             'num_branches': 0,
-            'num_mod_positions': 0
+            'num_mod_positions': 0,
+            'show_nsfw': false
           });
 
           // validate user properties

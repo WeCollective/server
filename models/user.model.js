@@ -118,6 +118,12 @@ User.prototype.validate = function(properties) {
     }
   }
 
+  if(properties.indexOf('show_nsfw') > -1) {
+    if(!validate.boolean(this.data.show_nsfw)) {
+      invalids.push('show_nsfw');
+    }
+  }
+
   return invalids;
 };
 

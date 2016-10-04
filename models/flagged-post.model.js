@@ -71,6 +71,11 @@ FlaggedPost.prototype.validate = function(properties) {
       invalids.push('wrong_type_count');
     }
   }
+  if(properties.indexOf('nsfw_count') > -1) {
+    if(isNaN(this.data.nsfw_count)) {
+      invalids.push('nsfw_count');
+    }
+  }
 
   return invalids;
 };

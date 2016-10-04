@@ -94,7 +94,7 @@ module.exports = {
           up: 0,
           down: 0,
           comment_count: 0,
-          nsfw: req.body.nsfw === 'true'
+          nsfw: req.body.nsfw
         });
 
         // validate post properties
@@ -320,7 +320,8 @@ module.exports = {
       return error.BadRequest(res, 'Missing postid');
     }
 
-    if(!req.body.flag_type || (req.body.flag_type !== 'branch_rules' && req.body.flag_type !== 'site_rules' && req.body.flag_type !== 'wrong_type')) {
+    if(!req.body.flag_type || (req.body.flag_type !== 'branch_rules' && req.body.flag_type !== 'site_rules'
+       && req.body.flag_type !== 'wrong_type' && req.body.flag_type !== 'nsfw')) {
       return error.BadRequest(res, 'Missing/invalid flag_type');
     }
 
@@ -351,7 +352,8 @@ module.exports = {
           date: new Date().getTime(),
           branch_rules_count: 0,
           site_rules_count: 0,
-          wrong_type_count: 0
+          wrong_type_count: 0,
+          nsfw_count: 0
         });
         return flaggedpost.save();
       }).then(resolve, reject);

@@ -88,6 +88,10 @@ module.exports = {
       user.set('dob', Number(req.body.dob));
       propertiesToCheck.push('dob');
     }
+    if(req.body.show_nsfw) {
+      user.set('show_nsfw', req.body.show_nsfw === 'true');
+      propertiesToCheck.push('show_nsfw');
+    }
 
     // Check new parameters are valid, ignoring username and password validity
     var invalids = user.validate(propertiesToCheck);

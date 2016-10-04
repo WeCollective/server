@@ -63,7 +63,8 @@ ACL.Schema = function(role, model) {
           num_posts: null,
           num_comments: null,
           num_branches: null,
-          num_mod_positions: null
+          num_mod_positions: null,
+          show_nsfw: null
         };
         break;
       default:

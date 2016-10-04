@@ -16,7 +16,8 @@ var Schema = {
     num_posts: null,
     num_comments: null,
     num_branches: null,
-    num_mod_positions: null
+    num_mod_positions: null,
+    show_nsfw: null
   },
   UserImages: {
     id: null,
@@ -99,7 +100,8 @@ var Schema = {
     date: null,
     branch_rules_count: null,
     site_rules_count: null,
-    wrong_type_count: null
+    wrong_type_count: null,
+    nsfw_count: null
   },
   Comment: {
     id: null,

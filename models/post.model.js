@@ -118,7 +118,7 @@ Post.prototype.findById = function(id) {
 };
 
 // Fetch the posts on a specific branch, using a specific stat, and filtered by time
-Post.prototype.findByBranch = function(branchid, timeafter, sortBy, stat, postType, last) {
+Post.prototype.findByBranch = function(branchid, timeafter, nsfw, sortBy, stat, postType, last) {
   var limit = 30;
   var self = this;
   var index = self.config.keys.globalIndexes[0];
@@ -171,6 +171,10 @@ Post.prototype.findByBranch = function(branchid, timeafter, sortBy, stat, postTy
         params.FilterExpression += " AND #type = :postType";
         params.ExpressionAttributeNames["#type"] = "type";
         params.ExpressionAttributeValues[":postType"] = String(postType);
+      }
+      if(!nsfw) {
+        params.FilterExpression += " AND nsfw = :nsfw";
+        params.ExpressionAttributeValues[":nsfw"] = false;
       }
       aws.dbClient.query(params, function(err, data) {
         if(err) return reject(err);

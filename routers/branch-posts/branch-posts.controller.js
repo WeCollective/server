@@ -11,6 +11,7 @@ var PostImage = require('../../models/post-image.model.js');
 var FlaggedPost = require('../../models/flagged-post.model.js');
 var Notification = require('../../models/notification.model.js');
 var Branch = require('../../models/branch.model.js');
+var User = require('../../models/user.model.js');
 var Mod = require('../../models/mod.model.js');
 var UserVote = require('../../models/user-vote.model.js');
 
@@ -50,6 +51,7 @@ module.exports = {
     var postDatas = [];
     var postImages = [];
     var lastPost = null;
+    var nsfw = false;
     // if lastPostId is specified, client wants results which appear _after_ this post (pagination)
     new Promise(function(resolve, reject) {
       if(req.query.lastPostId) {
@@ -72,6 +74,19 @@ module.exports = {
         // no last post specified, continue
         resolve();
       }
+    }).then(function() {
+      // if user is authenticated, fetch whether they should see nsfw posts
+      return new Promise(function(resolve, reject) {
+        if(req.isAuthenticated() && req.user.username) {
+          var user = new User();
+          user.findByUsername(req.user.username).then(function() {
+            nsfw = user.data.show_nsfw;
+            resolve();
+          }, reject);
+        } else {
+          resolve();
+        }
+      });
     }).then(function () {
       return new Promise(function(resolve, reject) {
         if(flag) {
@@ -100,7 +115,7 @@ module.exports = {
       if(!req.query.stat) {
         stat = 'individual';
       }
-      return (flag ? new FlaggedPost() : new Post()).findByBranch(req.params.branchid, timeafter, sortBy, stat, postType, lastPost);
+      return (flag ? new FlaggedPost() : new Post()).findByBranch(req.params.branchid, timeafter, nsfw, sortBy, stat, postType, lastPost);
     }).then(function(results) {
       posts = results;
       var promises = [];

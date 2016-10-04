@@ -57,8 +57,10 @@ module.exports = function(app, passport) {
    */
   router.route('/login')
     .post(function(req, res, next) {
+      console.log("PASSPORT BEFORE");
       // local-login with override of done() method to access info object from passport strategy
       passport.authenticate('local-login', function(err, user, info) {
+        console.log("PASSPORT AFTER", err, user, info);
         if (err) { return next(err); }
         // if no user object, send error response
         if (!user) {

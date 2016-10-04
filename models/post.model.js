@@ -87,6 +87,12 @@ Post.prototype.validate = function(properties) {
     }
   }
 
+  if(properties.indexOf('nsfw') > -1) {
+    if(!validate.boolean(this.data.nsfw)) {
+      invalids.push('nsfw');
+    }
+  }
+
   return invalids;
 };
 

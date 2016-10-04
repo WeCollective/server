@@ -77,7 +77,8 @@ var Schema = {
     global: null,
     up: null,
     down: null,
-    comment_count: null
+    comment_count: null,
+    nsfw: null
   },
   PostData: {
     id: null,

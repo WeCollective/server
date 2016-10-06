@@ -172,8 +172,6 @@ Post.prototype.findByBranch = function(branchid, timeafter, nsfw, sortBy, stat, 
         params.ExpressionAttributeNames["#type"] = "type";
         params.ExpressionAttributeValues[":postType"] = String(postType);
       }
-      console.log("NSFW ::: ", nsfw);
-      console.log("TYPE ::: ", typeof nsfw);
       if(!nsfw) {
         params.FilterExpression += " AND nsfw = :nsfw";
         params.ExpressionAttributeValues[":nsfw"] = false;
@@ -216,6 +214,10 @@ Post.prototype.findByBranch = function(branchid, timeafter, nsfw, sortBy, stat, 
         params.ExpressionAttributeNames["#type"] = "type";
         params.ExpressionAttributeValues[":postType"] = String(postType);
       }
+      if(!nsfw) {
+        params.FilterExpression = (params.FilterExpression) ? params.FilterExpression + " AND nsfw = :nsfw" : "nsfw = :nsfw";
+        params.ExpressionAttributeValues[":nsfw"] = false;
+      }
       aws.dbClient.query(params, function(err, data) {
         if(err) return reject(err);
         if(!data || !data.Items) {
@@ -254,6 +256,10 @@ Post.prototype.findByBranch = function(branchid, timeafter, nsfw, sortBy, stat, 
         params.FilterExpression += " AND #type = :postType";
         params.ExpressionAttributeNames["#type"] = "type";
         params.ExpressionAttributeValues[":postType"] = String(postType);
+      }
+      if(!nsfw) {
+        params.FilterExpression += " AND nsfw = :nsfw";
+        params.ExpressionAttributeValues[":nsfw"] = false;
       }
       aws.dbClient.query(params, function(err, data) {
         if(err) return reject(err);

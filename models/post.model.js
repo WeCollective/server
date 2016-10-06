@@ -172,6 +172,8 @@ Post.prototype.findByBranch = function(branchid, timeafter, nsfw, sortBy, stat, 
         params.ExpressionAttributeNames["#type"] = "type";
         params.ExpressionAttributeValues[":postType"] = String(postType);
       }
+      console.log("NSFW ::: ", nsfw);
+      console.log("TYPE ::: ", typeof nsfw);
       if(!nsfw) {
         params.FilterExpression += " AND nsfw = :nsfw";
         params.ExpressionAttributeValues[":nsfw"] = false;

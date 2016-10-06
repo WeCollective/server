@@ -123,11 +123,12 @@ FlaggedPost.prototype.findByPostAndBranchIds = function(postid, branchid) {
 };
 
 // Fetch the flagged posts on a specific branch
-FlaggedPost.prototype.findByBranch = function(branchid, timeafter, sortBy, stat, postType, last) {
+FlaggedPost.prototype.findByBranch = function(branchid, timeafter, nsfw, sortBy, stat, postType, last) {
   var limit = 30;
   var self = this;
+  var index;
   if(sortBy == 'date') {
-    var index = self.config.keys.globalIndexes[0];
+    index = self.config.keys.globalIndexes[0];
   } else if(sortBy == 'branch_rules') {
     index = self.config.keys.globalIndexes[1];
   } else if(sortBy == 'site_rules') {

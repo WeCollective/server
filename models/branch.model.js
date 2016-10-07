@@ -60,7 +60,7 @@ Branch.prototype.validate = function(properties) {
 
   // ensure description is of valid length
   if(properties.indexOf('description') > -1) {
-    if(!this.data.description || this.data.description.length > 250 || this.data.description.length < 1) {
+    if(!this.data.description || this.data.description.length > 10000 || this.data.description.length < 1) {
       invalids.push('description');
     }
   }

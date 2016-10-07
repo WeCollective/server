@@ -135,6 +135,10 @@ var Schema = {
     sess: null,
     type: null,
     socketID: null
+  },
+  Constant: {
+    id: null,
+    data: null
   }
 };
 
@@ -215,6 +219,10 @@ var Keys = {
   Sessions: {
     primary: 'id',
     sort: null
+  },
+  Constants: {
+    primary: 'id',
+    sort: null
   }
 };
 
@@ -238,7 +246,8 @@ var config = {
     FlaggedPosts: 'FlaggedPosts',
     Comments: 'Comments',
     CommentData: 'CommentData',
-    Notifications: 'Notifications'
+    Notifications: 'Notifications',
+    Constants: 'Constants'
   },
   // Model schemas
   Schema: Schema,

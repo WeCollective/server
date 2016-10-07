@@ -37,6 +37,10 @@ module.exports = function(app, passport) {
     });
   });
 
+  // CONSTANT ROUTER
+  var constantRouter = require('./constant/constant.router.js')(app, passport);
+  app.use(version + '/constant', constantRouter);
+
   // USER ROUTER
   var userRouter = require('./user/user.router.js')(app, passport);
   app.use(version + '/user', userRouter);

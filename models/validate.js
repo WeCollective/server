@@ -133,4 +133,26 @@ validate.notificationType = function(value) {
   return false;
 };
 
+validate.wecoConstantId = function(value) {
+  // ensure value is one of the valid site wide constants
+  if(['donation_total', 'raised_total', 'user_count', 'branch_count'].indexOf(value) > -1) {
+    return true;
+  }
+  return false;
+};
+
+validate.wecoConstantValue = function(id, value) {
+  switch(id) {
+    case 'donation_total':
+    case 'raised_total':
+    case 'user_count':
+    case 'branch_count':
+      console.log("TYPEOF: ", typeof value);
+      if(typeof value === "number") return true;
+      return false;
+    default:
+      return false;
+  }
+};
+
 module.exports = validate;

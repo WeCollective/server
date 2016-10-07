@@ -67,7 +67,7 @@ Branch.prototype.validate = function(properties) {
 
   // ensure rules text is of valid length
   if(properties.indexOf('rules') > -1) {
-    if(!this.data.rules || this.data.rules.length > 250 || this.data.rules.length < 1) {
+    if(!this.data.rules || this.data.rules.length > 10000 || this.data.rules.length < 1) {
       invalids.push('rules');
     }
   }

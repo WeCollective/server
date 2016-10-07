@@ -33,7 +33,7 @@ module.exports = {
     if(!req.params.id) {
       return error.BadRequest(res, 'Missing id parameter');
     }
-    if(!req.body.data) {
+    if(!req.body.data && req.body.data !== 0) {
       return error.BadRequest(res, 'Missing data parameter');
     }
 

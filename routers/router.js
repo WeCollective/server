@@ -15,7 +15,7 @@ var https = require('https');
 module.exports = function(app, passport) {
   var version = '/v1';
 
-  // Route used to proxy resources on secure endpoints through
+  // Route used to proxy resources on insecure endpoints through
   // this secure server to ensure all content is served over https.
   // URL of resource should be supplied as a query argument.
   app.get(version + '/proxy', function(req, res) {

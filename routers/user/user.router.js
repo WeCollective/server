@@ -5,6 +5,8 @@ var router = express.Router();
 var success = require('../../responses/successes.js');
 var ACL = require('../../config/acl.js');
 
+var Constant = require('../../models/constant.model.js');
+
 module.exports = function(app, passport) {
   var controller = require('./user.controller.js');
 
@@ -38,7 +40,17 @@ module.exports = function(app, passport) {
           return res.status(status).json({ message: info.message });
         }
         req.logout();
-        return success.OK(res);
+
+        var userCount = new Constant();
+        userCount.findById('user_count').then(function() {
+          userCount.set('data', userCount.data.data + 1);
+          return userCount.update();
+        }).then(function() {
+          return success.OK(res);
+        }).catch(function(err) {
+          console.error("Error updating user count:", err);
+          return success.OK(res);
+        });
       })(req, res, next);
     });
 

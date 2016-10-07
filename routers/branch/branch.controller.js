@@ -206,6 +206,7 @@ module.exports = {
     var branch = new Branch();
     var profile = new BranchImage();
     var cover = new BranchImage();
+    var branchCount = new Constant();
     branch.findById(req.params.branchid).then(function() {
       // ensure the branch is a root branch
       if(branch.data.parentid != 'root') {
@@ -364,6 +365,12 @@ module.exports = {
         promises.push(b.update());
       }
       return Promise.all(promises);
+    }).then(function() {
+      return branchCount.findById('branch_count');
+    }).then(function() {
+      // decrement branch_count constant
+      branchCount.set('data', branchCount.data.data - 1);
+      return branchCount.update();
     }).then(function() {
       return success.OK(res);
     }, function(err) {

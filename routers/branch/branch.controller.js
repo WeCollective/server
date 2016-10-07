@@ -11,6 +11,7 @@ var ModLogEntry = require('../../models/mod-log-entry.model.js');
 var User = require('../../models/user.model.js');
 var SubBranchRequest = require('../../models/subbranch-request.model.js');
 var Tag = require('../../models/tag.model.js');
+var Constant = require('../../models/constant.model.js');
 
 var success = require('../../responses/successes.js');
 var error = require('../../responses/errors.js');
@@ -51,6 +52,7 @@ module.exports = {
       }
 
       var user = new User();
+      var branchCount = new Constant();
       // ensure the specified parent branch exists
       return new Branch().findById(req.body.parentid).then(function() {
         // save a subbranch request iff. the parentid is not the root branch
@@ -131,6 +133,12 @@ module.exports = {
       }).then(function () {
         // update the SendGrid contact list with the new user data
         return mailer.addContact(user.data, true);
+      }).then(function() {
+        // update the branch_count constant
+        return branchCount.findById('branch_count');
+      }).then(function() {
+        branchCount.set('data', branchCount.data.data + 1);
+        return branchCount.update();
       }).then(function() {
         return success.OK(res);
       }).catch(function() {

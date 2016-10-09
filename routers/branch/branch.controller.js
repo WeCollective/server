@@ -208,174 +208,220 @@ module.exports = {
     var cover = new BranchImage();
     var branchCount = new Constant();
     branch.findById(req.params.branchid).then(function() {
-      // ensure the branch is a root branch
-      if(branch.data.parentid != 'root') {
-        return error.BadRequest(res, 'Branch must be a root branch');
+      // IF THE BRANCH IS A ROOT BRANCH, DELETE PERMANENTLY
+      if(branch.data.parentid === 'root') {
+        // delete the branch
+        return branch.delete({
+          id: req.params.branchid
+        }).then(function() {
+          // get branch profile picture
+          return new Promise(function(resolve, reject) {
+            profile.findById(req.params.branchid, 'picture').then(resolve, function(err) {
+              if(err) return reject();
+              resolve();
+            });
+          });
+        }).then(function () {
+          // get branch cover picture
+          return new Promise(function(resolve, reject) {
+            profile.findById(req.params.branchid, 'cover').then(resolve, function(err) {
+              if(err) return reject();
+              resolve();
+            });
+          });
+        }).then(function() {
+          // delete orig branch profile and cover pictures from s3
+          return new Promise(function(resolve, reject) {
+            var objects = [];
+            if(profile.data.id) {
+              objects.push({
+                Key: profile.data.id + '-orig.' + profile.data.extension
+              });
+            }
+            if(cover.data.id) {
+              objects.push({
+                Key: cover.data.id + '-orig.' + cover.data.extension
+              });
+            }
+            if(objects.length == 0) {
+              return resolve();
+            }
+            aws.s3Client.deleteObjects({
+              Bucket: fs.Bucket.BranchImages,
+              Delete: {
+                Objects: objects
+              }
+            }, function(err) {
+              if(err) return reject(err);
+              resolve();
+            });
+          });
+        }).then(function() {
+          // delete resized branch profile and cover pictures from s3
+          return new Promise(function(resolve, reject) {
+            var objects = [];
+            if(profile.data.id) {
+              objects.push({
+                Key: profile.data.id + '-640.' + profile.data.extension
+              });
+            }
+            if(cover.data.id) {
+              objects.push({
+                Key: cover.data.id + '-1920.' + cover.data.extension
+              });
+            }
+            if(objects.length == 0) {
+              return resolve();
+            }
+            aws.s3Client.deleteObjects({
+              Bucket: fs.Bucket.BranchImagesResized,
+              Delete: {
+                Objects: objects
+              }
+            }, function(err) {
+              if(err) return reject(err);
+              resolve();
+            });
+          });
+        }).then(function () {
+          // delete branch profile image from db
+          return new BranchImage().delete({
+            id: req.params.branchid + '-picture'
+          });
+        }).then(function() {
+          // delete branch cover image from db
+          var cover = new BranchImage();
+          return cover.delete({
+            id: req.params.branchid + '-cover'
+          });
+        }).then(function() {
+          // get mod log entries for this branch
+          return new ModLogEntry().findByBranch(req.params.branchid);
+        }).then(function(entries) {
+          // delete all mod log entries
+          var promises = [];
+          for(var i = 0; i < entries.length; i++) {
+            promises.push(new ModLogEntry().delete({
+              branchid: entries[i].branchid,
+              date: entries[i].date
+            }));
+          }
+          return Promise.all(promises);
+        }).then(function () {
+          // fetch all mods for this branch
+          return new Mod().findByBranch(req.params.branchid);
+        }).then(function(mods) {
+          // delete all mods
+          var promises = [];
+          for(var i = 0; i < mods.length; i++) {
+            promises.push(new Mod().delete({
+              branchid: mods[i].branchid,
+              date: mods[i].date
+            }));
+          }
+          return Promise.all(promises);
+        }).then(function() {
+          // fetch all tags on this branch
+          return new Tag().findByBranch(req.params.branchid);
+        }).then(function(tags) {
+          // delete all tags
+          var promises = [];
+          for(var i = 0; i < tags.length; i++) {
+            promises.push(new Tag().delete({
+              branchid: tags[i].branchid,
+              tag: tags[i].tag
+            }));
+          }
+          return Promise.all(promises);
+        }).then(function() {
+          // fetch all tags of this branch on other branches
+          return new Tag().findByTag(req.params.branchid);
+        }).then(function(tags) {
+          // delete all tags
+          var promises = [];
+          for(var i = 0; i < tags.length; i++) {
+            promises.push(new Tag().delete({
+              branchid: tags[i].branchid,
+              tag: tags[i].tag
+            }));
+          }
+          return Promise.all(promises);
+        }).then(function() {
+          // get the deleted branch's subbranches
+          return branch.findSubbranches(req.params.branchid, 0, 'date');
+        }).then(function(subbranches) {
+          // update all subbranches parents to 'root'
+          var promises = [];
+          for(var i = 0; i < subbranches.length; i++) {
+            var b = new Branch(subbranches[i]);
+            b.set('parentid', 'root');
+            promises.push(b.update());
+          }
+          return Promise.all(promises);
+        }).then(function() {
+          return branchCount.findById('branch_count');
+        }).then(function() {
+          // decrement branch_count constant
+          branchCount.set('data', branchCount.data.data - 1);
+          return branchCount.update();
+        }).then(function() {
+          return success.OK(res);
+        }, function(err) {
+          console.error("Error deleting branch:", err);
+          return error.InternalServerError(res);
+        });
+      } else {
+        // IF THE BRANCH IS A CHILD BRANCH, DETACH IT FROM ITS PARENT
+        // AND MAKE IT A ROOT BRANCH (KEEPING ITS SUBTREE INTACT)
+        branch.set('parentid', 'root');
+        var tagsToRemove = [];
+        branch.update().then(function() {
+          // remove all tags from branch to be removed (except self)
+          // and remember these - they'll be removed from all children too
+          new Tag().findByBranch(branch.data.id).then(function(tags) {
+            var promises = [];
+            for(var i = 0; i < tags.length; i++) {
+              if(tags[i].tag !== branch.data.id && tags[i].tag !== 'root') {
+                tagsToRemove.push(tags[i].tag);
+                promises.push(new Tag().delete({
+                  branchid: branch.data.id,
+                  tag: tags[i].tag
+                }));
+              }
+            }
+            return Promise.all(promises);
+          }).then(function() {
+            // get all children of the branch being removed on path to leaves
+            return new Tag().findByTag(branch.data.id);
+          }).then(function(children) {
+            // remove the tags from all children
+            var promises = [];
+            for(var i = 0; i < children.length; i++) {
+              for(var j = 0; j < tagsToRemove.length; j++) {
+                promises.push(new Tag().delete({
+                  branchid: children[i].branchid,
+                  tag: tagsToRemove[j]
+                }));
+              }
+            }
+            return Promise.all(promises);
+          }).then(function() {
+            return success.OK(res);
+          }).catch(function(err) {
+            console.error("Error deleting child branch:", err);
+            return error.InternalServerError(res);
+          });
+        }).catch(function(err) {
+          if(err) {
+            console.error("Error deleting child branch:", err);
+            return error.InternalServerError(res);
+          }
+        });
       }
-      // delete the branch
-      return branch.delete({
-        id: req.params.branchid
-      });
     }, function(err) {
       if(err) return error.InternalServerError(res);
       // no err, branch was not found
       return error.NotFound(res);
-    }).then(function() {
-      // get branch profile picture
-      return new Promise(function(resolve, reject) {
-        profile.findById(req.params.branchid, 'picture').then(resolve, function(err) {
-          if(err) return reject();
-          resolve();
-        });
-      });
-    }).then(function () {
-      // get branch cover picture
-      return new Promise(function(resolve, reject) {
-        profile.findById(req.params.branchid, 'cover').then(resolve, function(err) {
-          if(err) return reject();
-          resolve();
-        });
-      });
-    }).then(function() {
-      // delete orig branch profile and cover pictures from s3
-      return new Promise(function(resolve, reject) {
-        var objects = [];
-        if(profile.data.id) {
-          objects.push({
-            Key: profile.data.id + '-orig.' + profile.data.extension
-          });
-        }
-        if(cover.data.id) {
-          objects.push({
-            Key: cover.data.id + '-orig.' + cover.data.extension
-          });
-        }
-        if(objects.length == 0) {
-          return resolve();
-        }
-        aws.s3Client.deleteObjects({
-          Bucket: fs.Bucket.BranchImages,
-          Delete: {
-            Objects: objects
-          }
-        }, function(err) {
-          if(err) return reject(err);
-          resolve();
-        });
-      });
-    }).then(function() {
-      // delete resized branch profile and cover pictures from s3
-      return new Promise(function(resolve, reject) {
-        var objects = [];
-        if(profile.data.id) {
-          objects.push({
-            Key: profile.data.id + '-640.' + profile.data.extension
-          });
-        }
-        if(cover.data.id) {
-          objects.push({
-            Key: cover.data.id + '-1920.' + cover.data.extension
-          });
-        }
-        if(objects.length == 0) {
-          return resolve();
-        }
-        aws.s3Client.deleteObjects({
-          Bucket: fs.Bucket.BranchImagesResized,
-          Delete: {
-            Objects: objects
-          }
-        }, function(err) {
-          if(err) return reject(err);
-          resolve();
-        });
-      });
-    }).then(function () {
-      // delete branch profile image from db
-      return new BranchImage().delete({
-        id: req.params.branchid + '-picture'
-      });
-    }).then(function() {
-      // delete branch cover image from db
-      var cover = new BranchImage();
-      return cover.delete({
-        id: req.params.branchid + '-cover'
-      });
-    }).then(function() {
-      // get mod log entries for this branch
-      return new ModLogEntry().findByBranch(req.params.branchid);
-    }).then(function(entries) {
-      // delete all mod log entries
-      var promises = [];
-      for(var i = 0; i < entries.length; i++) {
-        promises.push(new ModLogEntry().delete({
-          branchid: entries[i].branchid,
-          date: entries[i].date
-        }));
-      }
-      return Promise.all(promises);
-    }).then(function () {
-      // fetch all mods for this branch
-      return new Mod().findByBranch(req.params.branchid);
-    }).then(function(mods) {
-      // delete all mods
-      var promises = [];
-      for(var i = 0; i < mods.length; i++) {
-        promises.push(new Mod().delete({
-          branchid: mods[i].branchid,
-          date: mods[i].date
-        }));
-      }
-      return Promise.all(promises);
-    }).then(function() {
-      // fetch all tags on this branch
-      return new Tag().findByBranch(req.params.branchid);
-    }).then(function(tags) {
-      // delete all tags
-      var promises = [];
-      for(var i = 0; i < tags.length; i++) {
-        promises.push(new Tag().delete({
-          branchid: tags[i].branchid,
-          tag: tags[i].tag
-        }));
-      }
-      return Promise.all(promises);
-    }).then(function() {
-      // fetch all tags of this branch on other branches
-      return new Tag().findByTag(req.params.branchid);
-    }).then(function(tags) {
-      // delete all tags
-      var promises = [];
-      for(var i = 0; i < tags.length; i++) {
-        promises.push(new Tag().delete({
-          branchid: tags[i].branchid,
-          tag: tags[i].tag
-        }));
-      }
-      return Promise.all(promises);
-    }).then(function() {
-      // get the deleted branch's subbranches
-      return branch.findSubbranches(req.params.branchid, 0, 'date');
-    }).then(function(subbranches) {
-      // update all subbranches parents to 'root'
-      var promises = [];
-      for(var i = 0; i < subbranches.length; i++) {
-        var b = new Branch(subbranches[i]);
-        b.set('parentid', 'root');
-        promises.push(b.update());
-      }
-      return Promise.all(promises);
-    }).then(function() {
-      return branchCount.findById('branch_count');
-    }).then(function() {
-      // decrement branch_count constant
-      branchCount.set('data', branchCount.data.data - 1);
-      return branchCount.update();
-    }).then(function() {
-      return success.OK(res);
-    }, function(err) {
-      console.error("Error deleting branch:", err);
-      return error.InternalServerError(res);
     });
   },
   getPictureUploadUrl: function(req, res, type) {

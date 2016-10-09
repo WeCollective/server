@@ -72,7 +72,7 @@ module.exports = function(app, passport) {
      * @apiUse InternalServerError
      */
     .delete(function(req, res, next) {
-      ACL.validateRole(ACL.Roles.Admin)(req, res, next);
+      ACL.validateRole(ACL.Roles.Moderator, req.params.branchid)(req, res, next);
     }, controller.delete);
 
   router.route('/:branchid/picture-upload-url')

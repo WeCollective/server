@@ -86,9 +86,10 @@ function isLoggedIn(req, res, next) {
 
 // Middleware to ensure a user is logged in as the specified user
 function isLoggedInAsSelf(req, res, next, username) {
-  if (req.isAuthenticated() && req.user.username === username)
+  if(req.isAuthenticated() && req.user.username === username) {
     req.ACLRole = ACL.Roles.Self;
     return next();
+  }
   return error.Forbidden(res);
 };
 

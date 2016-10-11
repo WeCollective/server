@@ -583,5 +583,15 @@ module.exports = function(app, passport) {
   router.route('/:username/verify/:token')
     .get(ACL.attachRole(ACL.Roles.Guest), controller.verify);
 
+
+  router.route('/:username/branches/followed')
+    .get(ACL.attachRole(ACL.Roles.Guest), controller.getFollowedBranches)
+    .post(ACL.validateRole(ACL.Roles.AuthenticatedUser), function(req, res, next) {
+      ACL.validateRole(ACL.Roles.Self, req.params.username)(req, res, next);
+    }, controller.followBranch)
+    .delete(ACL.validateRole(ACL.Roles.AuthenticatedUser), function(req, res, next) {
+      ACL.validateRole(ACL.Roles.Self, req.params.username)(req, res, next);
+    }, controller.unfollowBranch);
+
   return router;
 };

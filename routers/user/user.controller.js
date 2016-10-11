@@ -11,6 +11,8 @@ var User = require('../../models/user.model.js');
 var UserImage = require('../../models/user-image.model.js');
 var Notification = require('../../models/notification.model.js');
 var Session = require('../../models/session.model.js');
+var Branch = require('../../models/branch.model.js');
+var FollowedBranch = require('../../models/followed-branch.model.js');
 
 // Responses
 var success = require('../../responses/successes.js');
@@ -425,6 +427,82 @@ module.exports = {
     }).catch(function(err) {
       if(err) {
         console.error("Error verifying user: ", err);
+        return error.InternalServerError(res);
+      }
+      return error.NotFound(res);
+    });
+  },
+  getFollowedBranches: function(req, res) {
+    if(!req.params.username) {
+      return error.InternalServerError(res);
+    }
+
+    new FollowedBranch().findByUsername(req.params.username).then(function(branches) {
+      return success.OK(res, branches);
+    }).catch(function() {
+      if(err) {
+        console.error("Error fetching followed branches:", err);
+        return error.InternalServerError(res);
+      }
+      return error.NotFound(res);
+    });
+  },
+  followBranch: function(req, res) {
+    if(!req.user.username) {
+      return error.InternalServerError(res);
+    }
+
+    if(!req.body.branchid) {
+      return error.BadRequest(res, 'Missing branchid');
+    }
+
+    var follow = new FollowedBranch({
+      username: req.user.username,
+      branchid: req.body.branchid
+    });
+
+    // Check new parameters are valid, ignoring username and password validity
+    var propertiesToCheck = ['username', 'branchid'];
+    var invalids = follow.validate(propertiesToCheck);
+    if(invalids.length > 0) {
+      return error.BadRequest(res, 'Invalid ' + invalids[0]);
+    }
+
+    // ensure specified branchid exists
+    var branch = new Branch();
+    branch.findById(req.body.branchid).then(function() {
+      return follow.save();
+    }).then(function() {
+      return success.OK(res);
+    }).catch(function(err) {
+      if(err) {
+        console.error("Error following branch:", err);
+        return error.InternalServerError(res);
+      }
+      return error.NotFound(res);
+    });
+  },
+  unfollowBranch: function(req, res) {
+    if(!req.user.username) {
+      return error.InternalServerError(res);
+    }
+
+    if(!req.query.branchid) {
+      return error.BadRequest(res, 'Missing branchid');
+    }
+
+    // ensure specified branchid exists
+    var branch = new Branch();
+    branch.findById(req.query.branchid).then(function() {
+      return new FollowedBranch().delete({
+        username: req.user.username,
+        branchid: req.query.branchid
+      });
+    }).then(function() {
+      return success.OK(res);
+    }).catch(function(err) {
+      if(err) {
+        console.error("Error following branch:", err);
         return error.InternalServerError(res);
       }
       return error.NotFound(res);

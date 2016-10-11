@@ -139,6 +139,10 @@ var Schema = {
   Constant: {
     id: null,
     data: null
+  },
+  FollowedBranch: {
+    username: null,
+    branchid: null
   }
 };
 
@@ -223,6 +227,10 @@ var Keys = {
   Constants: {
     primary: 'id',
     sort: null
+  },
+  FollowedBranches: {
+    primary: 'username',
+    sort: 'branchid'
   }
 };
 
@@ -247,7 +255,8 @@ var config = {
     Comments: 'Comments',
     CommentData: 'CommentData',
     Notifications: 'Notifications',
-    Constants: 'Constants'
+    Constants: 'Constants',
+    FollowedBranches: 'FollowedBranches'
   },
   // Model schemas
   Schema: Schema,

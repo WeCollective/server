@@ -18,6 +18,8 @@ var FollowedBranch = require('../../models/followed-branch.model.js');
 var success = require('../../responses/successes.js');
 var error = require('../../responses/errors.js');
 
+var _ = require('lodash');
+
 module.exports = {
   get:  function(req, res) {
     var username;
@@ -438,7 +440,8 @@ module.exports = {
     }
 
     new FollowedBranch().findByUsername(req.params.username).then(function(branches) {
-      return success.OK(res, branches);
+      var branchIds = _.map(branches, 'branchid');
+      return success.OK(res, branchIds);
     }).catch(function() {
       if(err) {
         console.error("Error fetching followed branches:", err);

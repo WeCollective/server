@@ -13,6 +13,7 @@ module.exports = function(app, passport) {
      * @apiName Create Branch
      * @apiGroup Branch
      * @apiPermission auth
+     * @apiVersion 1.0.0
      *
      * @apiParam (Body Parameters) {String} id Branch unique id.
      * @apiParam (Body Parameters) {String} name Branch name. (6-30 chars, no whitespace)
@@ -30,6 +31,7 @@ module.exports = function(app, passport) {
      * @apiName Get Branch
      * @apiGroup Branch
      * @apiPermission guest
+     * @apiVersion 1.0.0
      *
      * @apiParam (URL Parameters) {String} branchid Branch unique id.
      *
@@ -43,6 +45,7 @@ module.exports = function(app, passport) {
      * @apiName Update Branch
      * @apiGroup Branch
      * @apiPermission mod
+     * @apiVersion 1.0.0
      *
      * @apiParam (URL Parameters) {String} branchid Branch unique id.
      * @apiParam (Body Parameters) {String} name Branch visible name. [optional]
@@ -63,6 +66,7 @@ module.exports = function(app, passport) {
      * @apiDescription Permanently delete a root branch. The child branches are made into root branches.
      * @apiGroup Branch
      * @apiPermission admin
+     * @apiVersion 1.0.0
      *
      * @apiParam (URL Parameters) {String} branchid Branch unique id.
      *
@@ -82,6 +86,7 @@ module.exports = function(app, passport) {
      * @apiDescription Get a pre-signed URL to which a profile picture for the specified branch can be uploaded.
      * @apiGroup Branch
      * @apiPermission mod
+     * @apiVersion 1.0.0
      *
      * @apiParam (URL Parameters) {String} branchid Branch unique id.
      *
@@ -110,6 +115,7 @@ module.exports = function(app, passport) {
      * @apiDescription Get a pre-signed URL to which a cover picture for the specified branch can be uploaded.
      * @apiGroup Branch
      * @apiPermission mod
+     * @apiVersion 1.0.0
      *
      * @apiParam (URL Parameters) {String} branchid Branch unique id.
      *
@@ -138,6 +144,7 @@ module.exports = function(app, passport) {
      * @apiDescription Get a pre-signed URL where the specified branch's profile picture can be accessed.
      * @apiGroup Branch
      * @apiPermission guest
+     * @apiVersion 1.0.0
      *
      * @apiParam (URL Parameters) {String} branchid Branch unique id.
      *
@@ -163,6 +170,7 @@ module.exports = function(app, passport) {
      * @apiDescription Get a pre-signed URL where the thumbnail for the specified branch's profile picture can be accessed.
      * @apiGroup Branch
      * @apiPermission guest
+     * @apiVersion 1.0.0
      *
      * @apiParam (URL Parameters) {String} branchid Branch unique id.
      *
@@ -188,6 +196,7 @@ module.exports = function(app, passport) {
      * @apiDescription Get a pre-signed URL where the specified branch's cover picture can be accessed.
      * @apiGroup Branch
      * @apiPermission guest
+     * @apiVersion 1.0.0
      *
      * @apiParam (URL Parameters) {String} branchid Branch unique id.
      *
@@ -213,6 +222,7 @@ module.exports = function(app, passport) {
      * @apiDescription Get a pre-signed URL where the thumbnail for the specified branch's cover picture can be accessed.
      * @apiGroup Branch
      * @apiPermission guest
+     * @apiVersion 1.0.0
      *
      * @apiParam (URL Parameters) {String} branchid Branch unique id.
      *
@@ -238,9 +248,11 @@ module.exports = function(app, passport) {
      * @apiDescription Get the child branches of the specified branch
      * @apiGroup Branch
      * @apiPermission guest
+     * @apiVersion 1.0.0
      *
      * @apiParam (URL Parameters) {String} branchid Branch unique id.
      * @apiParam (Query Parameters) {Number} timeafter Only fetch child branches created after this time (UNIX timestamp)
+     * @apiParam (Query Parameters) {String} lastBranchId The id of the last branch seen by the client. Results _after_ this branch will be returned, facilitating pagination.
      *
      * @apiSuccess (Successes) {String} data An array of child branch objects.
      * @apiSuccessExample {json} SuccessResponse:
@@ -284,6 +296,7 @@ module.exports = function(app, passport) {
      * @apiDescription Get a list of actions performed by moderators on this branch
      * @apiGroup Branch
      * @apiPermission mod
+     * @apiVersion 1.0.0
      *
      * @apiParam (URL Parameters) {String} branchid Branch unique id.
      *

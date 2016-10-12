@@ -18,6 +18,21 @@ module.exports = function(app, passport) {
   // Route used to proxy resources on insecure endpoints through
   // this secure server to ensure all content is served over https.
   // URL of resource should be supplied as a query argument.
+
+  /**
+   * @api {get} /proxy Proxy insecure resource
+   * @apiName Proxy insecure resource
+   * @apiDescription Proxy a resource on an insecure endpoint over https
+   * @apiGroup Misc
+   * @apiPermission guest
+   * @apiVersion 1.0.0
+   *
+   * @apiParam (URL Parameters) {String} url The url of the resource to proxy
+   *
+   * @apiUse OK
+   * @apiUse Forbidden
+   * @apiUse InternalServerError
+   */
   app.get(version + '/proxy', function(req, res) {
     if(!req.query.url) return error.NotFound(res);
 

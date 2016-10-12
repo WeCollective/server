@@ -16,6 +16,7 @@ module.exports = function(app, passport) {
      * @apiName Create Post
      * @apiGroup Posts
      * @apiPermission auth
+     * @apiVersion 1.0.0
      *
      * @apiParam (Body Parameters) {String} title Post title
      * @apiParam (Body Parameters) {String[]} branchids Array of unique branch ids to which the post should be tagged. The post will also be tagged to all branches which appear above these branches.
@@ -42,6 +43,7 @@ module.exports = function(app, passport) {
      * @apiName Get Post
      * @apiGroup Posts
      * @apiPermission guest
+     * @apiVersion 1.0.0
      *
      * @apiParam (URL Parameters) {String} postid The unique id of the post
      *
@@ -74,6 +76,20 @@ module.exports = function(app, passport) {
      * @apiUse InternalServerError
      */
     .get(controller.get)
+    /**
+     * @api {delete} /post/:postid Delete Post
+     * @apiName Delete Post
+     * @apiGroup Posts
+     * @apiPermission guest
+     * @apiVersion 1.0.0
+     *
+     * @apiParam (URL Parameters) {String} postid The unique id of the post
+     *
+     * @apiUse OK
+     * @apiUse NotFound
+     * @apiUse BadRequest
+     * @apiUse InternalServerError
+     */
     .delete(controller.delete);
 
   router.route('/:postid/picture-upload-url')
@@ -83,6 +99,7 @@ module.exports = function(app, passport) {
      * @apiDescription Get a pre-signed URL to which a picture for the specified post can be uploaded.
      * @apiGroup Posts
      * @apiPermission auth
+     * @apiVersion 1.0.0
      *
      * @apiParam (URL Parameters) {String} postid Post unique id.
      *
@@ -109,6 +126,7 @@ module.exports = function(app, passport) {
      * @apiDescription Get a pre-signed URL where the specified post's picture can be accessed.
      * @apiGroup Posts
      * @apiPermission guest
+     * @apiVersion 1.0.0
      *
      * @apiParam (URL Parameters) {String} postid Post unique id.
      *
@@ -134,6 +152,7 @@ module.exports = function(app, passport) {
      * @apiDescription Get a pre-signed URL where the thumbnail for the specified post's picture can be accessed.
      * @apiGroup Posts
      * @apiPermission guest
+     * @apiVersion 1.0.0
      *
      * @apiParam (URL Parameters) {String} postid Post unique id.
      *
@@ -153,6 +172,23 @@ module.exports = function(app, passport) {
     });
 
   router.route('/:postid/flag')
+    /**
+     * @api {post} /post/:postid/flag Flag post
+     * @apiName Flag post
+     * @apiDescription Flag a post to the branch moderators
+     * @apiGroup Posts
+     * @apiPermission auth
+     * @apiVersion 1.0.0
+     *
+     * @apiParam (URL Parameters) {String} postid Post unique id.
+     *
+     * @apiParam (Body Parameters) {String} flag_type The reason the post is being flagged. One of: branch_rules, site_rules, wrong_type, nsfw
+     * @apiParam (Body Parameters) {String} branchid The id of the branch on which to flag the post
+     *
+     * @apiUse OK
+     * @apiUse NotFound
+     * @apiUse InternalServerError
+     */
     .post(ACL.validateRole(ACL.Roles.AuthenticatedUser), controller.flagPost);
 
 
@@ -162,10 +198,12 @@ module.exports = function(app, passport) {
      * @apiName Get Comments
      * @apiGroup Posts
      * @apiPermission guest
+     * @apiVersion 1.0.0
      *
      * @apiParam (URL Parameters) {String} postid Post unique id.
      * @apiParam (Query Parameters) {String} parentid The unique id of the parent comment (for root comments, parentid=none)
      * @apiParam (Query Parameters) {String} sort The metric by which to sort the comments ['points', 'replies', 'date']
+     * @apiParam (Query Parameters) {String} lastCommentId The id of the last comment seen by the client. Results _after_ this comment will be returned, facilitating pagination.
      *
      * @apiSuccess (Successes) {String} data An array of comment objects.
      * @apiSuccessExample {json} SuccessResponse:
@@ -209,6 +247,7 @@ module.exports = function(app, passport) {
      * @apiName Create Comment
      * @apiGroup Posts
      * @apiPermission auth
+     * @apiVersion 1.0.0
      *
      * @apiParam (URL Parameters) {String} postid Post unique id.
      * @apiParam (Body Parameters) {String} parentid Parent comment's unique id.
@@ -234,6 +273,7 @@ module.exports = function(app, passport) {
      * @apiName Get Comment
      * @apiGroup Posts
      * @apiPermission guest
+     * @apiVersion 1.0.0
      *
      * @apiParam (URL Parameters) {String} postid Post unique id.
      * @apiParam (URL Parameters) {String} commentid Comment unique id
@@ -274,6 +314,7 @@ module.exports = function(app, passport) {
      * @apiName Update/Vote Comment
      * @apiGroup Posts
      * @apiPermission auth
+     * @apiVersion 1.0.0
      *
      * @apiParam (URL Parameters) {String} postid Post unique id.
      * @apiParam (URL Parameters) {String} commentid Comment unique id

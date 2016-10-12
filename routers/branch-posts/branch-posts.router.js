@@ -13,10 +13,13 @@ module.exports = function(app, passport) {
      * @apiName Get Branch Posts
      * @apiGroup Posts
      * @apiPermission guest
+     * @apiVersion 1.0.0
      *
      * @apiParam (URL Parameters) {String} branchid Branch unique id.
      * @apiParam (Query Parameters) {Number} timeafter Only fetch posts created after this time (UNIX timestamp). [optional; default 0]
      * @apiParam (Query Parameters) {String} stat The stat type to sort the posts by ['global', 'local', 'individual'] [optional; default 'individual']
+     * @apiParam (Query Parameters) {String} flag Boolean indicating whether to only fetched flagged posts
+     * @apiParam (Query Parameters) {String} lastPostId The id of the last post seen by the client. Results _after_ this post will be returned, facilitating pagination.
      *
      * @apiSuccess (Successes) {String} data An array of post objects.
      * @apiSuccessExample {json} SuccessResponse:
@@ -59,6 +62,7 @@ module.exports = function(app, passport) {
      * @apiName Get Post on Branch
      * @apiGroup Posts
      * @apiPermission guest
+     * @apiVersion 1.0.0
      *
      * @apiParam (URL Parameters) {String} branchid Branch unique id.
      * @apiParam (URL Parameters) {String} postid Post unique id.
@@ -95,6 +99,7 @@ module.exports = function(app, passport) {
      * @apiName Vote on Post
      * @apiGroup Posts
      * @apiPermission auth
+     * @apiVersion 1.0.0
      *
      * @apiParam (URL Parameters) {String} branchid Branch unique id.
      * @apiParam (URL Parameters) {String} postid Post unique id.
@@ -108,6 +113,26 @@ module.exports = function(app, passport) {
     .put(ACL.validateRole(ACL.Roles.AuthenticatedUser), controller.put);
 
   router.route('/:postid/resolve')
+    /**
+     * @api {post} /branch/:branchid/posts/:postid/resolve Resolve the flags on a Post
+     * @apiName Resolve the flags on a Post
+     * @apiGroup Posts
+     * @apiPermission mod
+     * @apiVersion 1.0.0
+     *
+     * @apiParam (URL Parameters) {String} branchid Branch unique id.
+     * @apiParam (URL Parameters) {String} postid Post unique id.
+     *
+     * @apiParam (Body Parameters) {String} action The action to take to resolve the post. One of: change_type, remove, approve, mark_nsfw
+     * @apiParam (Body Parameters) {String} type Required iff. action=change_type. The new type of the post
+     * @apiParam (Body Parameters) {String} reason Required iff. action=remove. One of: site_rules, branch_rules
+     * @apiParam (Body Parameters) {String} message Required iff. action=remove. An explanatory reason to send to the OP for why the post is being removed.
+     *
+     * @apiUse OK
+     * @apiUse NotFound
+     * @apiUse BadRequest
+     * @apiUse InternalServerError
+     */
     .post(function(req, res, next) {
       ACL.validateRole(ACL.Roles.Moderator, req.params.branchid)(req, res, next);
     }, controller.resolveFlag);

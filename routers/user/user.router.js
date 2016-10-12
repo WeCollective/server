@@ -15,6 +15,7 @@ module.exports = function(app, passport) {
    * @apiName Sign up
    * @apiGroup User
    * @apiPermission guest
+   * @apiVersion 1.0.0
    *
    * @apiParam (Body Parameters) {String} username User's unique username. (1-20 lowercase chars, no whitespace, not numeric, not one of 'me', 'orig', 'picture', 'cover')
    * @apiParam (Body Parameters) {String} password User's password. (6-30 chars, no whitespace)
@@ -58,7 +59,8 @@ module.exports = function(app, passport) {
    * @api {post} /user/login Login
    * @apiName Login
    * @apiGroup User
-   * @apiPermission guest
+   * @apiPermission guest#
+   * @apiVersion 1.0.0
    *
    * @apiParam (Body Parameters) {String} username User's unique username. (1-20 lowercase chars, no whitespace, not numeric, not one of 'me', 'orig', 'picture', 'cover')
    * @apiParam (Body Parameters) {String} password User's password. (6-30 chars, no whitespace)
@@ -91,6 +93,7 @@ module.exports = function(app, passport) {
    * @apiName Logout
    * @apiGroup User
    * @apiPermission guest
+   * @apiVersion 1.0.0
    *
    * @apiUse OK
    * @apiUse InternalServerError
@@ -107,6 +110,7 @@ module.exports = function(app, passport) {
      * @apiName Get Self
      * @apiGroup User
      * @apiPermission self
+     * @apiVersion 1.0.0
      *
      * @apiSuccess (Successes) {String} username User's unique username.
      * @apiSuccess (Successes) {String} email User's email address.
@@ -138,6 +142,7 @@ module.exports = function(app, passport) {
      * @apiName Delete Self
      * @apiGroup User
      * @apiPermission self
+     * @apiVersion 1.0.0
      *
      * @apiUse OK
      * @apiUse Forbidden
@@ -151,6 +156,7 @@ module.exports = function(app, passport) {
      * @apiName Update Self
      * @apiGroup User
      * @apiPermission self
+     * @apiVersion 1.0.0
      *
      * @apiParam (Body Parameters) {String} firstname User's new first name. (2-30 chars, no whitespace) [optional]
      * @apiParam (Body Parameters) {String} lastname  User's new last name. (2-30 chars, no whitespace) [optional]
@@ -171,6 +177,7 @@ module.exports = function(app, passport) {
      * @apiGroup User
      * @apiPermission guest
      * @apiPermission auth
+     * @apiVersion 1.0.0
      *
      * @apiParam (URL Parameters) {String} username User's unique username.
      *
@@ -219,6 +226,7 @@ module.exports = function(app, passport) {
      * @apiDescription Get a pre-signed URL to which a profile picture for the authenticated user can be uploaded.
      * @apiGroup User
      * @apiPermission self
+     * @apiVersion 1.0.0
      *
      * @apiSuccess (Successes) {String} data The presigned URL.
      * @apiSuccessExample {json} SuccessResponse:
@@ -242,6 +250,7 @@ module.exports = function(app, passport) {
      * @apiDescription Get a pre-signed URL to which a cover picture for the authenticated user can be uploaded.
      * @apiGroup User
      * @apiPermission self
+     * @apiVersion 1.0.0
      *
      * @apiSuccess (Successes) {String} data The presigned URL.
      * @apiSuccessExample {json} SuccessResponse:
@@ -265,6 +274,7 @@ module.exports = function(app, passport) {
      * @apiDescription Get a pre-signed URL where the authenticated user's profile picture can be accessed.
      * @apiGroup User
      * @apiPermission self
+     * @apiVersion 1.0.0
      *
      * @apiSuccess (Successes) {String} data The presigned URL.
      * @apiSuccessExample {json} SuccessResponse:
@@ -288,6 +298,7 @@ module.exports = function(app, passport) {
      * @apiDescription Get a pre-signed URL where the thumbnail for the authenticated user's profile picture can be accessed.
      * @apiGroup User
      * @apiPermission self
+     * @apiVersion 1.0.0
      *
      * @apiSuccess (Successes) {String} data The presigned URL.
      * @apiSuccessExample {json} SuccessResponse:
@@ -311,6 +322,7 @@ module.exports = function(app, passport) {
      * @apiDescription Get a pre-signed URL where the authenticated user's cover picture can be accessed.
      * @apiGroup User
      * @apiPermission self
+     * @apiVersion 1.0.0
      *
      * @apiSuccess (Successes) {String} data The presigned URL.
      * @apiSuccessExample {json} SuccessResponse:
@@ -334,6 +346,7 @@ module.exports = function(app, passport) {
      * @apiDescription Get a pre-signed URL where the thumbnail for the authenticated user's cover picture can be accessed.
      * @apiGroup User
      * @apiPermission self
+     * @apiVersion 1.0.0
      *
      * @apiSuccess (Successes) {String} data The presigned URL.
      * @apiSuccessExample {json} SuccessResponse:
@@ -358,6 +371,7 @@ module.exports = function(app, passport) {
      * @apiGroup User
      * @apiPermission guest
      * @apiPermission self
+     * @apiVersion 1.0.0
      *
      * @apiParam (URL Parameters) {String} username User's unique username.
      *
@@ -394,6 +408,7 @@ module.exports = function(app, passport) {
      * @apiGroup User
      * @apiPermission guest
      * @apiPermission self
+     * @apiVersion 1.0.0
      *
      * @apiParam (URL Parameters) {String} username User's unique username.
      *
@@ -430,6 +445,7 @@ module.exports = function(app, passport) {
      * @apiGroup User
      * @apiPermission guest
      * @apiPermission self
+     * @apiVersion 1.0.0
      *
      * @apiParam (URL Parameters) {String} username User's unique username.
      *
@@ -466,6 +482,7 @@ module.exports = function(app, passport) {
      * @apiGroup User
      * @apiPermission guest
      * @apiPermission self
+     * @apiVersion 1.0.0
      *
      * @apiParam (URL Parameters) {String} username User's unique username.
      *
@@ -501,9 +518,11 @@ module.exports = function(app, passport) {
      * @apiDescription Get a list of notifications for the specified user, or a count of the number of unread ones.
      * @apiGroup User
      * @apiPermission self
+     * @apiVersion 1.0.0
      *
      * @apiParam (URL Parameters) {String} username User's unique username.
      * @apiParam (Query Parameters) {String} unreadCount Boolean indicating whether to fetch the number of unread notifications rather than notifications themselves.
+     * @apiParam (Query Parameters) {String} lastNotificationId The id of the last notification seen by the client. Results _after_ this notification will be returned, facilitating pagination.
      *
      * @apiSuccess (Successes) {String} data The notifications array, or a count
      * @apiSuccessExample {json} SuccessResponse:
@@ -517,7 +536,9 @@ module.exports = function(app, passport) {
      * @apiUse InternalServerError
      * @apiUse NotFound
      */
-    .get(ACL.validateRole(ACL.Roles.AuthenticatedUser), ACL.attachRole(ACL.Roles.Self), controller.getNotifications)
+    .get(ACL.validateRole(ACL.Roles.AuthenticatedUser), function(req, res, next) {
+      ACL.validateRole(ACL.Roles.Self, req.params.username)(req, res, next);
+    }, controller.getNotifications)
 
     /**
      * @api {put} /:username/notifications Subscribe to Notifications
@@ -525,6 +546,7 @@ module.exports = function(app, passport) {
      * @apiDescription Subscribe the user to receive real-time notifications using Web Sockets.
      * @apiGroup User
      * @apiPermission self
+     * @apiVersion 1.0.0
      *
      * @apiParam (URL Parameters) {String} username User's unique username.
      * @apiParam (URL Parameters) {String} socketID User's unique web socket ID (provided by Socket.io)
@@ -534,7 +556,9 @@ module.exports = function(app, passport) {
      * @apiUse InternalServerError
      * @apiUse NotFound
      */
-    .put(ACL.validateRole(ACL.Roles.AuthenticatedUser), ACL.attachRole(ACL.Roles.Self), controller.subscribeToNotifications)
+    .put(ACL.validateRole(ACL.Roles.AuthenticatedUser), function(req, res, next) {
+      ACL.validateRole(ACL.Roles.Self, req.params.username)(req, res, next);
+    }, controller.subscribeToNotifications)
 
     /**
      * @api {delete} /:username/notifications Unsubscribe from Notifications
@@ -542,6 +566,7 @@ module.exports = function(app, passport) {
      * @apiDescription Unsubscribe the user from receiving real-time notifications using Web Sockets.
      * @apiGroup User
      * @apiPermission self
+     * @apiVersion 1.0.0
      *
      * @apiParam (URL Parameters) {String} username User's unique username.
      *
@@ -559,6 +584,7 @@ module.exports = function(app, passport) {
      * @apiDescription Mark notification as read/unread
      * @apiGroup User
      * @apiPermission self
+     * @apiVersion 1.0.0
      *
      * @apiParam (URL Parameters) {String} username User's unique username.
      * @apiParam (URL Parameters) {String} notificationid Notification's unique ID.
@@ -570,25 +596,138 @@ module.exports = function(app, passport) {
      * @apiUse InternalServerError
      * @apiUse NotFound
      */
-    .put(ACL.validateRole(ACL.Roles.AuthenticatedUser), ACL.attachRole(ACL.Roles.Self), controller.putNotification);
+    .put(ACL.validateRole(ACL.Roles.AuthenticatedUser), function(req, res, next) {
+      ACL.validateRole(ACL.Roles.Self, req.params.username)(req, res, next);
+    }, controller.putNotification);
 
   router.route('/:username/reset-password')
+    /**
+     * @api {get} /:username/reset-password Request password reset
+     * @apiName Request password reset
+     * @apiDescription Request a password reset link to the users inbox
+     * @apiGroup User
+     * @apiPermission guest
+     * @apiVersion 1.0.0
+     *
+     * @apiParam (URL Parameters) {String} username User's unique username.
+     *
+     * @apiUse OK
+     * @apiUse InternalServerError
+     * @apiUse NotFound
+     */
     .get(ACL.attachRole(ACL.Roles.Guest), controller.sendResetPasswordLink);
 
   router.route('/:username/reset-password/:token')
+    /**
+     * @api {post} /:username/reset-password/:token Perform password reset
+     * @apiName Perform password reset
+     * @apiDescription Reset a users password using a valid token obtained via a password reset email
+     * @apiGroup User
+     * @apiPermission guest
+     * @apiVersion 1.0.0
+     *
+     * @apiParam (URL Parameters) {String} username User's unique username.
+     * @apiParam (URL Parameters) {String} token Valid password reset token
+     *
+     * @apiParam (Body Parameters) {String} password The new password for the user
+     *
+     * @apiUse OK
+     * @apiUse BadRequest
+     * @apiUse InternalServerError
+     * @apiUse NotFound
+     */
     .post(ACL.attachRole(ACL.Roles.Guest), controller.resetPassword);
 
   router.route('/:username/reverify')
+    /**
+     * @api {get} /:username/reverify Resend a user verification email
+     * @apiName Resend a user verification email
+     * @apiDescription Request a new verification email to be sent to the users inbox
+     * @apiGroup User
+     * @apiPermission guest
+     * @apiVersion 1.0.0
+     *
+     * @apiParam (URL Parameters) {String} username User's unique username.
+     *
+     * @apiUse OK
+     * @apiUse BadRequest
+     * @apiUse InternalServerError
+     * @apiUse NotFound
+     */
     .get(ACL.attachRole(ACL.Roles.Guest), controller.resendVerification);
   router.route('/:username/verify/:token')
+    /**
+     * @api {get} /:username/verify/:token Verify a user
+     * @apiName Verify a user
+     * @apiDescription Verify a user using a valid token from a verification email sent to their inbox
+     * @apiGroup User
+     * @apiPermission guest
+     * @apiVersion 1.0.0
+     *
+     * @apiParam (URL Parameters) {String} username User's unique username.
+     *
+     * @apiUse OK
+     * @apiUse BadRequest
+     * @apiUse InternalServerError
+     * @apiUse NotFound
+     */
     .get(ACL.attachRole(ACL.Roles.Guest), controller.verify);
 
 
   router.route('/:username/branches/followed')
+    /**
+     * @api {get} /:username/branches/followed Get followed branches
+     * @apiName Get followed branches
+     * @apiDescription Get the branches a user follows
+     * @apiGroup User
+     * @apiPermission guest
+     * @apiVersion 1.0.0
+     *
+     * @apiParam (URL Parameters) {String} username User's unique username.
+     *
+     * @apiUse OK
+     * @apiUse BadRequest
+     * @apiUse InternalServerError
+     * @apiUse NotFound
+     */
     .get(ACL.attachRole(ACL.Roles.Guest), controller.getFollowedBranches)
+    /**
+     * @api {post} /:username/branches/followed Follow a branch
+     * @apiName Follow a branch
+     * @apiDescription Follow a branch
+     * @apiGroup User
+     * @apiPermission self
+     * @apiVersion 1.0.0
+     *
+     * @apiParam (URL Parameters) {String} username User's unique username.
+     *
+     * @apiParam (Body Parameters) {String} branchid The id of the branch to follow
+     *
+     * @apiUse OK
+     * @apiUse BadRequest
+     * @apiUse InternalServerError
+     * @apiUse NotFound
+     */
     .post(ACL.validateRole(ACL.Roles.AuthenticatedUser), function(req, res, next) {
       ACL.validateRole(ACL.Roles.Self, req.params.username)(req, res, next);
     }, controller.followBranch)
+    /**
+     * @api {delete} /:username/branches/followed Unfollow a branch
+     * @apiName Unfollow a branch
+     * @apiDescription Unfollow a branch
+     * @apiGroup User
+     * @apiPermission self
+     * @apiVersion 1.0.0
+     *
+     * @apiParam (URL Parameters) {String} username User's unique username.
+     *
+     * @apiParam (Query Parameters) {String} branchid The id of the branch to stop following
+     *
+     * @apiUse OK
+     * @apiUse BadRequest
+     * @apiUse InternalServerError
+     * @apiUse NotFound
+     */
     .delete(ACL.validateRole(ACL.Roles.AuthenticatedUser), function(req, res, next) {
       ACL.validateRole(ACL.Roles.Self, req.params.username)(req, res, next);
     }, controller.unfollowBranch);

@@ -189,7 +189,7 @@ module.exports = {
       unreadCount = true;
     }
 
-    // if lastPostId is specified, client wants results which appear _after_ this notification (pagination)
+    // if lastNotificationId is specified, client wants results which appear _after_ this notification (pagination)
     var lastNotification = null;
     new Promise(function(resolve, reject) {
       if(req.query.lastNotificationId) {

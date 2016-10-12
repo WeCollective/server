@@ -14,6 +14,7 @@ module.exports = function(app, passport) {
      * @apiName Get Child Branch Requests
      * @apiGroup Requests
      * @apiPermission mod
+     * @apiVersion 1.0.0
      *
      * @apiParam (URL Parameters) {String} branchid Branch unique id.
      *
@@ -45,6 +46,7 @@ module.exports = function(app, passport) {
      * @apiName Create Child Branch Request
      * @apiGroup Requests
      * @apiPermission mod
+     * @apiVersion 1.0.0
      *
      * @apiParam (URL Parameters) {String} branchid Branch unique id.
      * @apiParam (URL Parameters) {String} childid Child Branch unique id.
@@ -62,6 +64,7 @@ module.exports = function(app, passport) {
      * @apiName Answer Child Branch Request
      * @apiGroup Requests
      * @apiPermission mod
+     * @apiVersion 1.0.0
      *
      * @apiParam (URL Parameters) {String} branchid Branch unique id.
      * @apiParam (URL Parameters) {String} childid Child Branch unique id.

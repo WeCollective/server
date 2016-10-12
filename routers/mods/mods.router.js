@@ -14,6 +14,7 @@ module.exports = function(app, passport) {
      * @apiName Get Branch Mods
      * @apiGroup Mods
      * @apiPermission guest
+     * @apiVersion 1.0.0
      *
      * @apiParam (URL Parameters) {String} branchid Branch unique id.
      *
@@ -27,6 +28,7 @@ module.exports = function(app, passport) {
      * @apiName Add Branch Mod
      * @apiGroup Mods
      * @apiPermission mod
+     * @apiVersion 1.0.0
      *
      * @apiParam (URL Parameters) {String} branchid Branch unique id.
      * @apiParam (Body Parameters) {String} username New moderator's username.
@@ -48,6 +50,7 @@ module.exports = function(app, passport) {
      * @apiDescription Delete a moderator of a branch. A moderator can only remove mods who were added after themselves.
      * @apiGroup Mods
      * @apiPermission mod
+     * @apiVersion 1.0.0
      *
      * @apiParam (URL Parameters) {String} branchid Branch unique id.
      * @apiParam (URL Parameters) {String} username Moderator username

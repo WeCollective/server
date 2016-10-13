@@ -573,7 +573,7 @@ module.exports = {
       var propertiesToCheck = ['id', 'user', 'date', 'unread', 'type', 'data'];
       var invalids = notification.validate(propertiesToCheck);
       if(invalids.length > 0) {
-        console.error('Error creating notification.');
+        console.error('Error creating notification. Invalids: ', invalids);
         return error.InternalServerError(res);
       }
 

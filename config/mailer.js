@@ -74,7 +74,10 @@ module.exports = {
         }
       ];
       if(user.dob) request.body[0]["dob"] = mmddyyyy(new Date(user.dob));
-      
+
+      console.log("USER ::: \n%j", user);
+      console.log("REQ  ::: \n%j", request.body[0]);
+
       request.method = update ? 'PATCH' : 'POST';
       request.path = '/v3/contactdb/recipients';
 

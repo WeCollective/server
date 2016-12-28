@@ -135,17 +135,13 @@ module.exports = {
         return mailer.addContact(user.data, true);
       }).then(function() {
         // update the branch_count constant
-        console.log("NEXT! branchCount:");
-        console.log(branchCount);
         return branchCount.findById('branch_count');
       }).then(function() {
-        console.log("SETTING");
         branchCount.set('data', branchCount.data.data + 1);
         return branchCount.update();
       }).then(function() {
         return success.OK(res);
       }).catch(function(err) {
-        console.log("ERROR CAUGHT HERE::: %j", err);
         return error.InternalServerError(res);
       });
     });

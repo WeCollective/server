@@ -75,19 +75,12 @@ module.exports = {
       ];
       if(user.dob) request.body[0]["dob"] = mmddyyyy(new Date(user.dob));
 
-      console.log("USER ::: \n%j", user);
-
       request.method = update ? 'PATCH' : 'POST';
       request.path = '/v3/contactdb/recipients';
 
-      console.log("REQ  ::: \n%j", request);
       sendgrid.API(request, function (error, response) {
-        console.log("ERR  ::: \n%j", error);
         if(error) reject();
-        console.log("RES  ::: \n%j", response);
-        console.log("PARSE :: ", response.body.error_count);
         if(response.body.error_count > 0) reject();
-        console.log("RESOLVED!");
         resolve();
       });
     });

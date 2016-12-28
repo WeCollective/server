@@ -85,7 +85,7 @@ module.exports = {
         console.log("ERR  ::: \n%j", error);
         if(error) reject();
         console.log("RES  ::: \n%j", response);
-        console.log("PARSE :: ", JSON.parse(response.body).error_count);
+        console.log("PARSE :: ", response.body.error_count);
         if(JSON.parse(response.body).error_count > 0) reject();
         console.log("RESOLVED!");
         resolve();

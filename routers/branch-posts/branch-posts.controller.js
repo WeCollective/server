@@ -43,7 +43,7 @@ module.exports = {
     var postType = req.query.postType;
     if(!req.query.postType) {
       postType = 'all';
-    } else if(['all', 'text', 'image', 'page', 'video', 'audio'].indexOf(req.query.postType) === -1) {
+    } else if(['all', 'text', 'image', 'page', 'video', 'audio', 'poll'].indexOf(req.query.postType) === -1) {
       return error.BadRequest(res, 'Invalid postType')
     }
 

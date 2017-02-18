@@ -9,7 +9,7 @@ module.exports = function(app, passport) {
 
   router.route('/')
     /**
-     * @api {get} /branch/:branchid/posts?timeafter=<timeafter>&stat=<stat> Get Branch Posts
+     * @api {get} /branch/:branchid/posts?timeafter=<timeafter>&stat=<stat>&postType=<postType>&sortBy=<sortBy> Get Branch Posts
      * @apiName Get Branch Posts
      * @apiGroup Posts
      * @apiPermission guest
@@ -18,6 +18,9 @@ module.exports = function(app, passport) {
      * @apiParam (URL Parameters) {String} branchid Branch unique id.
      * @apiParam (Query Parameters) {Number} timeafter Only fetch posts created after this time (UNIX timestamp). [optional; default 0]
      * @apiParam (Query Parameters) {String} stat The stat type to sort the posts by ['global', 'local', 'individual'] [optional; default 'individual']
+     * @apiParam (Query Parameters) {String} flag Boolean indicating whether to only fetched flagged posts
+     * @apiParam (Query Parameters) {String} postType String indicating the type of post to fetch ['all', 'text', 'image', 'page', 'video', 'audio', 'poll']
+     * @apiParam (Query Parameters) {String} sortBy String indicating how to sort the results ['date, 'points']
      * @apiParam (Query Parameters) {String} flag Boolean indicating whether to only fetched flagged posts
      * @apiParam (Query Parameters) {String} lastPostId The id of the last post seen by the client. Results _after_ this post will be returned, facilitating pagination.
      *

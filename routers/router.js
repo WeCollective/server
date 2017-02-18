@@ -80,5 +80,9 @@ module.exports = function(app, passport) {
   var postRouter = require('./post/post.router.js')(app, passport);
   app.use(version + '/post', postRouter);
 
+  // POLL ROUTER
+  var pollRouter = require('./poll/poll.router.js')(app, passport);
+  app.use(version + '/poll', pollRouter);
+
   return router;
 };

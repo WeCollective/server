@@ -103,6 +103,14 @@ var Schema = {
     wrong_type_count: null,
     nsfw_count: null
   },
+  PollAnswer: {
+    id: null,
+    postid: null,
+    votes: null,
+    text: null,
+    creator: null,
+    date: null
+  },
   Comment: {
     id: null,
     postid: null,
@@ -206,6 +214,11 @@ var Keys = {
     sort: 'branchid',
     globalIndexes: ['branchid-date-index', 'branchid-branch_rules_count-index', 'branchid-site_rules_count-index', 'branchid-wrong_type_count-index', 'branchid-nsfw_count-index']
   },
+  PollAnswers: {
+    primary: 'id',
+    sort: null,
+    globalIndexes: ['creator-date-index']
+  },
   Comments: {
     primary: 'id',
     sort: null,
@@ -252,6 +265,7 @@ var config = {
     PostData: 'PostData',
     PostImages: 'PostImages',
     FlaggedPosts: 'FlaggedPosts',
+    PollAnswers: 'PollAnswers',
     Comments: 'Comments',
     CommentData: 'CommentData',
     Notifications: 'Notifications',

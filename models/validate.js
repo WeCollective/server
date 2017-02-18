@@ -86,6 +86,23 @@ validate.postid = function(id) {
   return true;
 };
 
+validate.pollanswerid = function(id) {
+  if(!id || id.length < 1 || id.length > 45) {
+    return false;
+  }
+  // ensure id contains no whitespace
+  if(/\s/g.test(id)) {
+    return false;
+  }
+  // ensure id is a lowercase string
+  if(!(typeof id === 'string' || id instanceof String) ||
+      id != id.toLowerCase()) {
+    return false;
+  }
+
+  return true;
+};
+
 validate.commentid = function(id) {
   if(!id || id.length < 1 || id.length > 45) {
     return false;

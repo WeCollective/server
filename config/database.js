@@ -217,7 +217,7 @@ var Keys = {
   PollAnswers: {
     primary: 'id',
     sort: null,
-    globalIndexes: ['creator-date-index']
+    globalIndexes: ['creator-date-index', 'postid-date-index', 'postid-votes-index']
   },
   Comments: {
     primary: 'id',

@@ -90,4 +90,43 @@ PollAnswer.prototype.findById = function(id) {
   });
 };
 
+
+// Fetch the answers on a specific poll sorted by either date or number of votes
+PollAnswer.prototype.findByPost = function(postid, sortBy, last) {
+  var limit = 30;
+  var self = this;
+  var index = self.config.keys.globalIndexes[1];
+  if(sortBy == 'date') {
+    index = self.config.keys.globalIndexes[1];
+  } else if(sortBy == 'votes') {
+    index = self.config.keys.globalIndexes[2];
+  }
+  if(last) {
+    last = {
+      id: last.id,
+      postid: last.postid
+    };
+  }
+  return new Promise(function(resolve, reject) {
+    var params = {
+      TableName: self.config.table,
+      IndexName: index,
+      Select: 'ALL_PROJECTED_ATTRIBUTES',
+      KeyConditionExpression: "postid = :postid",
+      ExpressionAttributeValues: {
+        ":postid": String(postid)
+      },
+      ExclusiveStartKey: last || null,  // fetch results which come _after_ this
+      ScanIndexForward: false   // return results highest first
+    };
+    aws.dbClient.query(params, function(err, data) {
+      if(err) return reject(err);
+      if(!data || !data.Items) {
+        return reject();
+      }
+      return resolve(data.Items.slice(0, limit));
+    });
+  });
+};
+
 module.exports = PollAnswer;

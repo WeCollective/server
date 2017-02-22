@@ -18,7 +18,7 @@ module.exports = function(app, passport) {
      * @apiPermission auth
      * @apiVersion 1.0.0
      *
-     * @apiParam (Body Parameters) {String} postid Id of the post (of type=poll) that the Answer belongs to
+     * @apiParam (URL Parameters) {String} postid Id of the post (of type=poll) that the Answer belongs to
      * @apiParam (Body Parameters) {String} text The textual description of the Answer
      *
      * @apiUse OK
@@ -26,7 +26,23 @@ module.exports = function(app, passport) {
      * @apiUse BadRequest
      * @apiUse InternalServerError
      */
-    .post(ACL.validateRole(ACL.Roles.AuthenticatedUser), controller.post);
+    .post(ACL.validateRole(ACL.Roles.AuthenticatedUser), controller.post)
+    /**
+     * @api {poll} /:postid/answer Get the answers for a particular poll
+     * @apiName Get Poll Answers
+     * @apiGroup Polls
+     * @apiPermission guest
+     * @apiVersion 1.0.0
+     *
+     * @apiParam (URL Parameters) {String} postid The unique id of the post
+     * @apiParam (Query Parameters) {String} sortBy Whether to sort the results by 'votes' or 'date'
+     *
+     * @apiUse OK
+     * @apiUse NotFound
+     * @apiUse BadRequest
+     * @apiUse InternalServerError
+     */
+    .get(controller.get);
 
   return router;
 }

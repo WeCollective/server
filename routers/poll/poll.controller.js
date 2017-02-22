@@ -48,5 +48,48 @@ module.exports = {
     }, function() {
       return error.NotFound(res);
     });
+  },
+  get: function(req, res) {
+    if(!req.params.postid) {
+      return error.BadRequest(res, 'Missing postid');
+    }
+
+    var sortBy = req.query.sortBy;
+    if(!req.query.sortBy) {
+      sortBy = 'date';
+    }
+
+    // if lastAnswerId is specified, client wants results which appear _after_ this answer (pagination)
+    var lastAnswer;
+    new Promise(function(resolve, reject) {
+      if(req.query.lastAnswerId) {
+        var answer = new PollAnswer();
+        // get the post
+        answer.findById(req.query.lastAnswerId).then(function() {
+          // create lastAnswer object
+          lastAnswer = answer.data;
+          resolve();
+        }).catch(function(err) {
+          if(err) reject();
+          return error.NotFound(res); // lastAnswerId is invalid
+        });
+      } else {
+        // no last answer specified, continue
+        resolve();
+      }
+    }).then(function() {
+      return new PollAnswer().findByPost(req.params.postid, sortBy, lastAnswer);
+    }).then(function(answers) {
+      if(!answers || answers.length == 0) {
+        return error.NotFound(res);
+      }
+      return success.OK(res, answers);
+    }).catch(function(err) {
+      if(err) {
+        console.error("Error fetching post data: ", err);
+        return error.InternalServerError(res);
+      }
+      return error.NotFound(res);
+    });
   }
 };

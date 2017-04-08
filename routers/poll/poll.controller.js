@@ -91,5 +91,36 @@ module.exports = {
       }
       return error.NotFound(res);
     });
+  },
+  votePoll: function(req, res) {
+    if(!req.params.postid) {
+      return error.BadRequest(res, 'Missing postid');
+    }
+    if(!req.params.answerid) {
+      return error.BadRequest(res, 'Missing answerid');
+    }
+
+    if(!req.body.vote || (req.body.vote !== 'up' && req.body.vote !== 'down')) {
+      return error.BadRequest(res, 'Missing or malformed vote parameter');
+    }
+
+    var updatedAnswer = new PollAnswer();
+    updatedAnswer.findById(req.params.answerid).then(function() {
+      if(updatedAnswer.data.postid !== req.params.postid) {
+        return error.NotFound(res);
+      }
+
+      var inc = req.body.vote === 'up' ? 1 : -1;
+      updatedAnswer.set('votes', updatedAnswer.data.votes + inc);
+      return updatedAnswer.update();
+    }).then(function (response) {
+      return success.OK(res);
+    }).catch(function(err) {
+      if(err) {
+        console.error("Error voting on poll answer: ", err);
+        return error.InternalServerError(res);
+      }
+      return error.NotFound(res);
+    });
   }
 };

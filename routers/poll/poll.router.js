@@ -44,5 +44,24 @@ module.exports = function(app, passport) {
      */
     .get(controller.get);
 
+  router.route('/:postid/answer/:answerid/vote')
+    /**
+     * @api {put} /poll/:postid/vote Vote Poll Answer
+     * @apiName Vote Poll Answer
+     * @apiGroup Polls
+     * @apiPermission auth
+     * @apiVersion 1.0.0
+     *
+     * @apiParam (URL Parameters) {String} postid The unique id of the post.
+     * @apiParam (URL Parameters) {String} postid The unique id of the poll answer.
+     * @apiParam (Body Parameters) {String} vote Vote direction ['up', 'down']
+     *
+     * @apiUse OK
+     * @apiUse BadRequest
+     * @apiUse NotFound
+     * @apiUse InternalServerError
+     */
+    .put(ACL.validateRole(ACL.Roles.AuthenticatedUser), controller.votePoll);
+
   return router;
 }

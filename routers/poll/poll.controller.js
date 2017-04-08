@@ -5,6 +5,7 @@ var error = require('../../responses/errors.js');
 
 var Post = require('../../models/post.model.js');
 var PollAnswer = require('../../models/poll-answer.model.js');
+var UserVote = require('../../models/user-vote.model.js');
 
 var _ = require('lodash');
 
@@ -100,7 +101,7 @@ module.exports = {
       return error.BadRequest(res, 'Missing answerid');
     }
 
-    if(!req.body.vote || (req.body.vote !== 'up' && req.body.vote !== 'down')) {
+    if(req.body.vote !== 'up') {
       return error.BadRequest(res, 'Missing or malformed vote parameter');
     }
 
@@ -110,10 +111,25 @@ module.exports = {
         return error.NotFound(res);
       }
 
-      var inc = req.body.vote === 'up' ? 1 : -1;
-      updatedAnswer.set('votes', updatedAnswer.data.votes + inc);
+      var uservote = new UserVote();
+      return uservote.findByUsernameAndItemId(req.user.username, 'poll-' + req.params.postid);
+    }, function () {
+      return error.NotFound(res);
+    }).then(function () {
+      // user has voted on this poll before
+      return error.BadRequest(res, 'User has already voted on this poll');
+    }, function () {
+      // user has not voted on this poll before
+      updatedAnswer.set('votes', updatedAnswer.data.votes + 1);
       return updatedAnswer.update();
     }).then(function (response) {
+      var vote = new UserVote({
+        username: req.user.username,
+        itemid: 'poll-' + req.params.postid,
+        direction: req.body.vote
+      });
+      return vote.save();
+    }).then(function () {
       return success.OK(res);
     }).catch(function(err) {
       if(err) {

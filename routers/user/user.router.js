@@ -690,7 +690,19 @@ module.exports = function(app, passport) {
      * @apiUse InternalServerError
      * @apiUse NotFound
      */
-    .get(ACL.attachRole(ACL.Roles.Guest), controller.getFollowedBranches)
+    .get(function(req, res) {
+      if(req.isAuthenticated() && req.user) {
+        if(req.user.username == req.params.username || req.params.username == 'me') {
+          ACL.attachRole(ACL.Roles.Self)(req, res);
+        } else {
+          ACL.attachRole(ACL.Roles.AuthenticatedUser)(req, res);
+        }
+        controller.getFollowedBranches(req, res);
+      } else {
+        ACL.attachRole(ACL.Roles.Guest)(req, res);
+        controller.getFollowedBranches(req, res);
+      }
+    })
     /**
      * @api {post} /:username/branches/followed Follow a branch
      * @apiName Follow a branch

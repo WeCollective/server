@@ -435,11 +435,23 @@ module.exports = {
     });
   },
   getFollowedBranches: function(req, res) {
-    if(!req.params.username) {
-      return error.InternalServerError(res);
+    var username;
+    if(req.ACLRole == ACL.Roles.Self) {
+      // ensure user object has been attached by passport
+      if(!req.user.username) {
+        console.error("No username found in session.");
+        return error.InternalServerError(res);
+      }
+      username = req.user.username;
+    } else {
+      // ensure username is specified
+      if(!req.params.username) {
+        return error.BadRequest(res);
+      }
+      username = req.params.username;
     }
 
-    new FollowedBranch().findByUsername(req.params.username).then(function(branches) {
+    new FollowedBranch().findByUsername(username).then(function(branches) {
       var branchIds = _.map(branches, 'branchid');
       return success.OK(res, branchIds);
     }).catch(function() {

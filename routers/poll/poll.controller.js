@@ -4,6 +4,7 @@ var success = require('../../responses/successes.js');
 var error = require('../../responses/errors.js');
 
 var Post = require('../../models/post.model.js');
+var PostData = require('../../models/post-data.model.js');
 var PollAnswer = require('../../models/poll-answer.model.js');
 var UserVote = require('../../models/user-vote.model.js');
 
@@ -17,16 +18,28 @@ module.exports = {
     }
 
     // ensure postid exists
+    var postdata = new PostData();
     new Post().findById(req.params.postid).then(function(posts) {
       if(posts.length === 0) {
         return error.NotFound(res);
       }
-      
-      // if locked, the poster needs to be the post creator
-      if(posts[i].locked && req.user.username !== posts[i].creator) {
-        return error.Forbidden(res, 'Post is locked, only the creator can submit answers');
-      }
 
+      return new Promise(function(resolve, reject) {
+        if(posts[0].locked) {
+          postdata.findById(req.params.postid).then(function () {
+            if(req.user.username !== postdata.data.creator) {
+              return error.Forbidden(res, 'Post is locked, only the creator can submit answers');
+            } else {
+              return resolve();
+            }
+          }).catch(function (err) {
+            return error.InternalServerError(res);
+          });
+        } else {
+          return resolve();
+        }
+      });
+    }).then(function () {
       var date = new Date().getTime();
 
       // create new poll answer

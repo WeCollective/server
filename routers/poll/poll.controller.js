@@ -21,6 +21,11 @@ module.exports = {
       if(posts.length === 0) {
         return error.NotFound(res);
       }
+      
+      // if locked, the poster needs to be the post creator
+      if(posts[i].locked && req.user.username !== posts[i].creator) {
+        return error.Forbidden(res, 'Post is locked, only the creator can submit answers');
+      }
 
       var date = new Date().getTime();
 

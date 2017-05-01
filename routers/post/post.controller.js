@@ -94,11 +94,12 @@ module.exports = {
           up: 0,
           down: 0,
           comment_count: 0,
-          nsfw: req.body.nsfw
+          nsfw: !!req.body.nsfw,
+          locked: !!req.body.locked
         });
 
         // validate post properties
-        propertiesToCheck = ['id', 'branchid', 'date', 'type', 'local', 'individual', 'global', 'up', 'down', 'comment_count', 'nsfw'];
+        propertiesToCheck = ['id', 'branchid', 'date', 'type', 'local', 'individual', 'global', 'up', 'down', 'comment_count', 'nsfw', 'locked'];
         invalids = post.validate(propertiesToCheck);
         if(invalids.length > 0) {
           return error.BadRequest(res, 'Invalid ' + invalids[0]);

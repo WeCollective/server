@@ -93,6 +93,12 @@ Post.prototype.validate = function(properties) {
     }
   }
 
+  if(properties.indexOf('locked') > -1) {
+    if(!validate.boolean(this.data.locked)) {
+      invalids.push('locked');
+    }
+  }
+
   return invalids;
 };
 

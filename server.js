@@ -12,6 +12,7 @@
 'use strict';
 
 // REQUIRE MODULES
+require('dotenv').config()
 var express    = require("express");              // call express
 var app        = express();                       // define our app using express
 var helmet = require('helmet');                   // protect against common web vulnerabilities
@@ -62,6 +63,8 @@ app.use(function(req, res, next) {
   res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Authorization, Accept");
   next();
 });
+
+//console.log(process.env)
 
 // AUTHENTICATION AND SESSION MANAGEMENT
 var options = {

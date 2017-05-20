@@ -12,18 +12,18 @@
 'use strict';
 
 // REQUIRE MODULES
-require('dotenv').config()
-var express    = require("express");              // call express
+require('dotenv').config();                       // load any environment variables from the .env file
+var express    = require('express');              // call express
 var app        = express();                       // define our app using express
-var helmet = require('helmet');                   // protect against common web vulnerabilities
-var bodyParser = require("body-parser");          // reading request bodies
-var cookieParser = require('cookie-parser');      // reading cookies
-var passport = require('passport');               // authentication
-var session      = require('express-session');    // session middleware
+var helmet     = require('helmet');               // protect against common web vulnerabilities
+var bodyParser = require('body-parser');          // reading request bodies
+var cookieParser  = require('cookie-parser');     // reading cookies
+var passport      = require('passport');          // authentication
+var session       = require('express-session');   // session middleware
 var DynamoDBStore = require('connect-dynamodb')({ // dynamodb session store
   session: session
 });
-var db = require("./config/database.js");         // database config vars
+var db = require('./config/database.js');         // database config vars
 
 // DISABLE LOGGING IF IN TEST MODE
 if (process.env.NODE_ENV == 'test') {
@@ -31,7 +31,7 @@ if (process.env.NODE_ENV == 'test') {
 }
 
 // SET ENVIRONMENT AND PORT
-var env = (process.env.NODE_ENV || "development");
+var env = (process.env.NODE_ENV || 'development');
 var port = process.env.PORT || 8080;
 
 // MIDDLEWARE
@@ -58,13 +58,11 @@ app.use(function(req, res, next) {
   if(allowedOrigins.indexOf(origin) > -1) {
     res.setHeader('Access-Control-Allow-Origin', origin);
   }
-  res.header("Access-Control-Allow-Credentials", "true");
+  res.header('Access-Control-Allow-Credentials', 'true');
   res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,PATCH,OPTIONS');
-  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Authorization, Accept");
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Authorization, Accept');
   next();
 });
-
-//console.log(process.env)
 
 // AUTHENTICATION AND SESSION MANAGEMENT
 var options = {
@@ -76,7 +74,7 @@ var options = {
     },
     region: 'eu-west-1',
     sslEnabled: true,
-    logger: process.env.NODE_ENV == "development" ? process.stdout : undefined
+    logger: process.env.NODE_ENV == 'development' ? process.stdout : undefined
   },
   reapInterval: 600000  // clean up expired sessions every 10 mins
 };

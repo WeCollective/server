@@ -1,17 +1,17 @@
 module.exports = function(grunt) {
   // Load tasks
+  grunt.loadNpmTasks('grunt-apidoc');
+  grunt.loadNpmTasks('grunt-concurrent');
   grunt.loadNpmTasks('grunt-contrib-jshint');
   grunt.loadNpmTasks('grunt-contrib-watch');
-  grunt.loadNpmTasks('grunt-nodemon');
-  grunt.loadNpmTasks('grunt-concurrent');
   grunt.loadNpmTasks('grunt-exec');
   grunt.loadNpmTasks('grunt-mocha-test');
-  grunt.loadNpmTasks('grunt-apidoc');
+  grunt.loadNpmTasks('grunt-nodemon');
   grunt.loadNpmTasks('grunt-preprocess');
 
   // Configure tasks
   grunt.initConfig({
-    // javascript linting
+    // Javascript linting
     jshint: {
       files: ['Gruntfile.js', 'server.js', 'public/**/*.js'],
       options: {
@@ -37,7 +37,7 @@ module.exports = function(grunt) {
         script: 'server.js'
       }
     },
-    // concurrently run the server and watch for file changes
+    // Concurrently run the server and watch for file changes
     concurrent: {
       serve: {
         options: {
@@ -46,7 +46,7 @@ module.exports = function(grunt) {
         tasks: ['nodemon', 'watch']
       }
     },
-    // execute shell commands
+    // Execute shell commands
     exec: {
       publish: 'git checkout production && git merge master && git checkout master',
       deploy: {
@@ -83,7 +83,7 @@ module.exports = function(grunt) {
         }
       }
     },
-    preprocess : {
+    preprocess: {
       local: {
         files : {
           '.ebextensions/securelistener.config'   : '.ebextensions/securelistener.template.config.js'

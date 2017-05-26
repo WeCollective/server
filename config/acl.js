@@ -1,32 +1,32 @@
 'use strict';
 
-var _ = require('lodash');
-var Branch = require('../models/branch.model.js');
-var Mod = require('../models/mod.model.js');
-var error = require('../responses/errors.js');
+const _ = require('lodash');
+const Branch = require('../models/branch.model.js');
+const error = require('../responses/errors.js');
+const Mod = require('../models/mod.model.js');
 
-var ACL = {};
+let ACL = {};
 
 /**
  * @apiDefine guest Guest access
  * Anyone can access this route, without authentication.
  */
 /**
-* @apiDefine auth User access
-* All authenticated users can access this route.
-*/
+ * @apiDefine auth User access
+ * All authenticated users can access this route.
+ */
 /**
  * @apiDefine self Self access
  * Only authenticated users can access themselves on this route.
  */
 /**
-* @apiDefine mod Mod access
-* Only authenticated moderators of the specified branch can access this route.
-*/
+ * @apiDefine mod Mod access
+ * Only authenticated moderators of the specified branch can access this route.
+ */
 /**
-* @apiDefine admin Admin access
-* Only authenticated site administrators can access this route (moderators of the root branch).
-*/
+ * @apiDefine admin Admin access
+ * Only authenticated site administrators can access this route (moderators of the root branch).
+ */
 ACL.Roles = {
   Guest: 0,
   AuthenticatedUser: 1,
@@ -35,42 +35,43 @@ ACL.Roles = {
   Admin: 4
 };
 
-ACL.Schema = function(role, model) {
-  if(model === 'User') {
+ACL.Schema = (role, model) => {
+  if ('User' === model) {
     switch(role) {
       case ACL.Roles.Guest:
       case ACL.Roles.AuthenticatedUser:
         return {
-          username: null,
+          datejoined: null,
+          dob: null,
           firstname: null,
           lastname: null,
-          dob: null,
-          datejoined: null,
-          num_posts: null,
-          num_comments: null,
           num_branches: null,
-          num_mod_positions: null
+          num_comments: null,
+          num_mod_positions: null,
+          num_posts: null,
+          username: null
         };
-        break;
+
       case ACL.Roles.Self:
         return {
-          username: null,
+          datejoined: null,
+          dob: null,
           email: null,
           firstname: null,
           lastname: null,
-          dob: null,
-          datejoined: null,
-          num_posts: null,
-          num_comments: null,
           num_branches: null,
+          num_comments: null,
           num_mod_positions: null,
-          show_nsfw: null
+          num_posts: null,
+          show_nsfw: null,
+          username: null
         };
-        break;
+
       default:
         return {};
     }
-  } else {
+  }
+  else {
     return {};
   }
 };
@@ -82,7 +83,7 @@ function isLoggedIn(req, res, next) {
     return next();
   }
   return error.Forbidden(res);
-};
+}
 
 // Middleware to ensure a user is logged in as the specified user
 function isLoggedInAsSelf(req, res, next, username) {
@@ -91,52 +92,59 @@ function isLoggedInAsSelf(req, res, next, username) {
     return next();
   }
   return error.Forbidden(res);
-};
+}
 
 // Attach the specified role to the request body if the role's conditions are met
-ACL.validateRole = function(role, resourceId) {
+ACL.validateRole = (role, resourceId) => {
   return function(req, res, next) {
+    const mod = new Mod();
+
     switch(role) {
+      // Anyone can be a Guest
       case ACL.Roles.Guest:
-        // anyone can be a Guest
         req.ACLRole = ACL.Roles.Guest;
         next();
         break;
+
+      // AuthenticatedUser must be logged in
       case ACL.Roles.AuthenticatedUser:
-        // AuthenticatedUser must be logged in
         isLoggedIn(req, res, next);
         break;
+
+      // Self must be logged in with username matching the provided param
       case ACL.Roles.Self:
-        // Self must be logged in with username matching the provided param
         isLoggedInAsSelf(req, res, next, resourceId);
         break;
+
+      // Moderator must be logged in
       case ACL.Roles.Moderator:
-        // Moderator must be logged in
         if (!req.isAuthenticated()) {
           return error.Forbidden(res);
         }
+
         // Moderator must be one of the mods of the specified branch
-        var mod = new Mod();
-        mod.findByBranch(resourceId).then(function(mods) {
-          if(!mods) {
-            console.error("No mods object received.");
+        mod.findByBranch(resourceId).then( mods => {
+          if (!mods) {
+            console.error('No mods object received.');
             return error.InternalServerError(res);
           }
-          for(var i = 0; i < mods.length; i++) {
-            if(mods[i].username == req.user.username) {
+
+          for (let i = 0; i < mods.length; i++) {
+            if (mods[i].username == req.user.username) {
               req.ACLRole = ACL.Roles.Moderator;
               return next();
             }
           }
           return error.Forbidden(res);
-        }, function(err) {
-          if(err) {
+        }, err => {
+          if (err) {
             console.error('Error fetching branch mods: ', err);
             return error.InternalServerError(res);
           }
           return error.NotFound(res);
         });
         break;
+
       case ACL.Roles.Admin:
         // Admin must be logged in
         if (!req.isAuthenticated()) {
@@ -144,42 +152,43 @@ ACL.validateRole = function(role, resourceId) {
         }
 
         // Admin is a moderator of the root branch
-        var mod = new Mod();
-        mod.findByBranch('root').then(function(mods) {
-          if(!mods) {
-            console.error("No mods object received.");
+        mod.findByBranch('root').then( mods => {
+          if (!mods) {
+            console.error('No mods object received.');
             return error.InternalServerError(res);
           }
-          for(var i = 0; i < mods.length; i++) {
-            if(mods[i].username == req.user.username) {
+          
+          for (let i = 0; i < mods.length; i++) {
+            if (mods[i].username == req.user.username) {
               req.ACLRole = ACL.Roles.Admin;
               return next();
             }
           }
           return error.Forbidden(res);
-        }, function(err) {
-          if(err) {
+        }, err => {
+          if (err) {
             console.error('Error fetching branch mods:', err);
             return error.InternalServerError(res);
           }
           return error.NotFound(res);
         });
         break;
+
       default:
-        console.error("Unknown ACL Role");
+        console.error('Unknown ACL Role');
         return;
     }
-  }
+  };
 };
 
 // Forcibly attach a role to the request body without performing checks
-ACL.attachRole = function(role) {
-  return function(req, res, next) {
+ACL.attachRole = role => {
+  return (req, res, next) => {
     req.ACLRole = role;
-    if(next) {
+    if (next) {
       next();
     }
-  }
+  };
 };
 
 module.exports = ACL;

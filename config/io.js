@@ -1,8 +1,8 @@
-var io;
-var namespaces = {};
+let namespaces = {},
+  io;
 
 // initialise socket with the server object
-function init(server) {
+function init (server) {
   io = require('socket.io')(server);
   namespaces = {
     notifications: io.of('/notifications'),
@@ -10,10 +10,10 @@ function init(server) {
   };
 }
 
-module.exports = function(server) {
+module.exports = server => {
   // if socket.io hasn't been initialised with the server object, init first
-  if(!io) {
-    if(!server) {
+  if (!io) {
+    if (!server) {
       throw 'Cannot initialise socket.io with empty server object!';
     }
     init(server);

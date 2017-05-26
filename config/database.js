@@ -1,292 +1,349 @@
 'use strict';
 
-// Database model schemas
-var Schema = {
-  User: {
-    username: null,
-    password: null,
-    email: null,
-    firstname: null,
-    lastname: null,
-    dob: null,
-    datejoined: null,
-    verified: null,
-    token: null,
-    resetPasswordToken: null,
-    num_posts: null,
-    num_comments: null,
-    num_branches: null,
-    num_mod_positions: null,
-    show_nsfw: null
-  },
-  UserImages: {
-    id: null,
-    date: null,
-    extension: null
-  },
-  UserVote: {
-    username: null,
-    itemid: null,
-    direction: null
-  },
+const ModelSchemas = {
   Branch: {
-    id: null,
-    name: null,
     creator: null,
     date: null,
-    parentid: null,
     description: null,
-    rules: null,
+    id: null,
+    name: null,
+    parentid: null,
+    post_comments: null,
     post_count: null,
     post_points: null,
-    post_comments: null
+    rules: null,
   },
+  
   BranchImages: {
-    id: null,
     date: null,
-    extension: null
+    extension: null,
+    id: null
   },
+
+  Comment: {
+    date: null,
+    down: null,
+    id: null,
+    individual: null,
+    parentid: null,
+    postid: null,
+    rank: null,
+    replies: null,
+    up: null
+  },
+  
+  CommentData: {
+    creator: null,
+    date: null,
+    edited: null,
+    id: null,
+    text: null
+  },
+
+  Constant: {
+    data: null,
+    id: null
+  },
+  
+  FlaggedPost: {
+    branch_rules_count: null,
+    branchid: null,
+    date: null,
+    id: null,
+    nsfw_count: null,
+    site_rules_count: null,
+    type: null,
+    wrong_type_count: null
+  },
+
+  FollowedBranch: {
+    branchid: null,
+    username: null
+  },
+
   Mod: {
     branchid: null,
     date: null,
     username: null
   },
+  
   ModLogEntry: {
-    branchid: null,
-    username: null,
-    date: null,
     action: null,
-    data: null
-  },
-  SubBranchRequest: {
-    parentid: null,
-    childid: null,
+    branchid: null,
+    data: null,
     date: null,
-    creator: null
+    username: null
   },
+
+  Notification: {
+    data: null,
+    date: null,
+    id: null,
+    type: null,
+    unread: null,
+    user: null
+  },
+
+  PollAnswer: {
+    creator: null,
+    date: null,
+    id: null,
+    postid: null,
+    text: null,
+    votes: null
+  },
+  
+  Post: {
+    branchid: null,
+    comment_count: null,
+    date: null,
+    down: null,
+    global: null,
+    id: null,
+    individual: null,
+    local: null,
+    locked: null,
+    nsfw: null,
+    type: null,
+    up: null
+  },
+  
+  PostData: {
+    creator: null,
+    id: null,
+    original_branches: null,
+    text: null,
+    title: null
+  },
+  
+  PostImages: {
+    date: null,
+    extension: null,
+    id: null
+  },
+
+  Session: {
+    expires: null,
+    id: null,
+    sess: null,
+    socketID: null,
+    type: null
+  },
+  
+  SubBranchRequest: {
+    childid: null,
+    creator: null,
+    date: null,
+    parentid: null
+  },
+  
   Tag: {
     branchid: null,
     tag: null
   },
-  Post: {
-    id: null,
-    branchid: null,
-    date: null,
-    type: null,
-    local: null,
-    individual: null,
-    global: null,
-    up: null,
-    down: null,
-    comment_count: null,
-    nsfw: null,
-    locked: null
-  },
-  PostData: {
-    id: null,
-    creator: null,
-    title: null,
-    text: null,
-    original_branches: null
-  },
-  PostImages: {
-    id: null,
-    date: null,
-    extension: null
-  },
-  FlaggedPost: {
-    id: null,
-    branchid: null,
-    type: null,
-    date: null,
-    branch_rules_count: null,
-    site_rules_count: null,
-    wrong_type_count: null,
-    nsfw_count: null
-  },
-  PollAnswer: {
-    id: null,
-    postid: null,
-    votes: null,
-    text: null,
-    creator: null,
-    date: null
-  },
-  Comment: {
-    id: null,
-    postid: null,
-    parentid: null,
-    individual: null,
-    replies: null,
-    up: null,
-    down: null,
-    date: null,
-    rank: null
-  },
-  CommentData: {
-    id: null,
-    text: null,
-    creator: null,
-    date: null,
-    edited: null
-  },
-  Notification: {
-    id: null,
-    user: null,
-    date: null,
-    unread: null,
-    type: null,
-    data: null
-  },
-  Session: {
-    id: null,
-    expires: null,
-    sess: null,
-    type: null,
-    socketID: null
-  },
-  Constant: {
-    id: null,
-    data: null
-  },
-  FollowedBranch: {
+  
+  User: {
+    datejoined: null,
+    dob: null,
+    email: null,
+    firstname: null,
+    lastname: null,
+    num_branches: null,
+    num_comments: null,
+    num_mod_positions: null,
+    num_posts: null,
+    password: null,
+    resetPasswordToken: null,
+    show_nsfw: null,
+    token: null,
     username: null,
-    branchid: null
+    verified: null,
+  },
+  
+  UserImages: {
+    extension: null,
+    date: null,
+    id: null
+  },
+  
+  UserVote: {
+    direction: null,
+    itemid: null,
+    username: null
   }
 };
 
-// Database table keys
-var Keys = {
-  Users: {
-    primary: 'username',
-    sort: null,
-    globalIndexes: ['email-index']
-  },
-  UserImages: {
+const TableKeys = {
+  Branches: {
+    globalIndexes: [
+      'parentid-date-index',
+      'parentid-post_comments-index',
+      'parentid-post_count-index',
+      'parentid-post_points-index'
+    ],
     primary: 'id',
     sort: null
   },
-  UserVotes: {
-    primary: 'username',
-    sort: 'itemid'
-  },
-  Branches: {
-    primary: 'id',
-    sort: null,
-    globalIndexes: ['parentid-date-index', 'parentid-post_count-index', 'parentid-post_points-index', 'parentid-post_comments-index']
-  },
+  
   BranchImages: {
     primary: 'id',
     sort: null
   },
-  Mods: {
-    primary: 'branchid',
-    sort: 'date'
-  },
-  ModLog: {
-    primary: 'branchid',
-    sort: 'date'
-  },
-  SubBranchRequests: {
-    primary: 'parentid',
-    sort: 'childid',
-    globalIndexes: ['parentid-date-index']
-  },
-  Tags: {
-    primary: 'branchid',
-    sort: 'tag',
-    globalIndexes: ['tag-branchid-index']
-  },
-  Posts: {
-    primary: 'id',
-    sort: 'branchid',
-    globalIndexes: ['branchid-individual-index', 'branchid-local-index', 'branchid-date-index', 'branchid-comment_count-index', 'branchid-global-index']
-  },
-  PostData: {
-    primary: 'id',
-    sort: null
-  },
-  PostImages: {
-    primary: 'id',
-    sort: null
-  },
-  FlaggedPosts: {
-    primary: 'id',
-    sort: 'branchid',
-    globalIndexes: ['branchid-date-index', 'branchid-branch_rules_count-index', 'branchid-site_rules_count-index', 'branchid-wrong_type_count-index', 'branchid-nsfw_count-index']
-  },
-  PollAnswers: {
-    primary: 'id',
-    sort: null,
-    globalIndexes: ['creator-date-index', 'postid-date-index', 'postid-votes-index']
-  },
+
   Comments: {
+    globalIndexes: [
+      'postid-date-index',
+      'postid-individual-index',
+      'postid-replies-index'
+    ],
     primary: 'id',
-    sort: null,
-    globalIndexes: ['postid-individual-index', 'postid-date-index', 'postid-replies-index']
+    sort: null
   },
+  
   CommentData: {
     primary: 'id',
     sort: null
   },
-  Notifications: {
-    primary: 'id',
-    sort: null,
-    globalIndexes: ['user-date-index']
-  },
-  Sessions: {
-    primary: 'id',
-    sort: null
-  },
+  
   Constants: {
     primary: 'id',
     sort: null
   },
+
+  FlaggedPosts: {
+    globalIndexes: [
+      'branchid-branch_rules_count-index',
+      'branchid-date-index',
+      'branchid-nsfw_count-index',
+      'branchid-site_rules_count-index',
+      'branchid-wrong_type_count-index'
+    ],
+    primary: 'id',
+    sort: 'branchid'
+  },
+  
   FollowedBranches: {
     primary: 'username',
     sort: 'branchid'
+  },
+  
+  Mods: {
+    primary: 'branchid',
+    sort: 'date'
+  },
+  
+  ModLog: {
+    primary: 'branchid',
+    sort: 'date'
+  },
+
+  Notifications: {
+    globalIndexes: ['user-date-index'],
+    primary: 'id',
+    sort: null
+  },
+
+  PollAnswers: {
+    globalIndexes: [
+      'creator-date-index',
+      'postid-date-index',
+      'postid-votes-index'
+    ],
+    primary: 'id',
+    sort: null
+  },
+
+  Posts: {
+    globalIndexes: [
+      'branchid-comment_count-index',
+      'branchid-date-index',
+      'branchid-global-index',
+      'branchid-individual-index',
+      'branchid-local-index'
+    ],
+    primary: 'id',
+    sort: 'branchid'
+  },
+  
+  PostData: {
+    primary: 'id',
+    sort: null
+  },
+  
+  PostImages: {
+    primary: 'id',
+    sort: null
+  },
+
+  Sessions: {
+    primary: 'id',
+    sort: null
+  },
+  
+  SubBranchRequests: {
+    globalIndexes: ['parentid-date-index'],
+    primary: 'parentid',
+    sort: 'childid'
+  },
+  
+  Tags: {
+    globalIndexes: ['tag-branchid-index'],
+    primary: 'branchid',
+    sort: 'tag'
+  },
+
+  Users: {
+    globalIndexes: ['email-index'],
+    primary: 'username',
+    sort: null
+  },
+
+  UserImages: {
+    primary: 'id',
+    sort: null
+  },
+
+  UserVotes: {
+    primary: 'username',
+    sort: 'itemid'
   }
 };
 
-// DynamoDB config info.
-var config = {
-  // Table names
+const DynamoDBConfig = {
+  Keys: TableKeys,
+  Schema: ModelSchemas,
   Table: {
-    Sessions: 'Sessions',
-    Users: 'Users',
-    UserImages: 'UserImages',
-    UserVotes: 'UserVotes',
     Branches: 'Branches',
     BranchImages: 'BranchImages',
-    Mods: 'Mods',
+    Comments: 'Comments',
+    CommentData: 'CommentData',
+    Constants: 'Constants',
+    FlaggedPosts: 'FlaggedPosts',
+    FollowedBranches: 'FollowedBranches',
     ModLog: 'ModLog',
-    SubBranchRequests: 'SubBranchRequests',
-    Tags: 'Tags',
+    Mods: 'Mods',
+    Notifications: 'Notifications',
+    PollAnswers: 'PollAnswers',
     Posts: 'Posts',
     PostData: 'PostData',
     PostImages: 'PostImages',
-    FlaggedPosts: 'FlaggedPosts',
-    PollAnswers: 'PollAnswers',
-    Comments: 'Comments',
-    CommentData: 'CommentData',
-    Notifications: 'Notifications',
-    Constants: 'Constants',
-    FollowedBranches: 'FollowedBranches'
-  },
-  // Model schemas
-  Schema: Schema,
-  // Database keys
-  Keys: Keys
-}
+    Sessions: 'Sessions',
+    SubBranchRequests: 'SubBranchRequests',
+    Tags: 'Tags',
+    Users: 'Users',
+    UserImages: 'UserImages',
+    UserVotes: 'UserVotes'
+  }
+};
 
-// If in a development environment we should user the development tables.
-// Iterate over config object and append the prefix 'dev' to all table names.
-if(process.env.NODE_ENV != 'production') {
-  for(var name in config.Table) {
-    if(config.Table.hasOwnProperty(name)) {
-      config.Table[name] = 'dev' + config.Table[name];
+// If in a development environment we should use the development tables.
+// Iterate over DynamoDBConfig object and append the prefix 'dev' to all table names.
+if ('production' !== process.env.NODE_ENV) {
+  for (const name in DynamoDBConfig.Table) {
+    if (DynamoDBConfig.Table.hasOwnProperty(name)) {
+      DynamoDBConfig.Table[name] = `dev${DynamoDBConfig.Table[name]}`;
     }
   }
 }
 
-module.exports = config;
+module.exports = DynamoDBConfig;

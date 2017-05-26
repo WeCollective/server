@@ -1,24 +1,22 @@
 'use strict';
 
-// S3 config info.
-var config = {
-  // Bucket names
+const S3Config = {
   Bucket: {
-    UserImages: 'weco-user-images',
-    UserImagesResized: 'weco-user-images-resized',
     BranchImages: 'weco-branch-images',
     BranchImagesResized: 'weco-branch-images-resized',
     PostImages: 'weco-post-images',
-    PostImagesResized: 'weco-post-images-resized'
+    PostImagesResized: 'weco-post-images-resized',
+    UserImages: 'weco-user-images',
+    UserImagesResized: 'weco-user-images-resized'
   }
-}
+};
 
-// If in a development environment we should user the development tables.
-// Iterate over config object and append the prefix 'dev' to all table names.
-if(process.env.NODE_ENV != 'production') {
-  for(var name in config.Bucket) {
-    if(config.Bucket.hasOwnProperty(name)) {
-      config.Bucket[name] = 'dev-' + config.Bucket[name];
+// If in a development environment we should use the development tables.
+// Iterate over S3Config object and append the prefix 'dev-' to all table names.
+if ('production' !== process.env.NODE_ENV) {
+  for (const name in S3Config.Bucket) {
+    if (S3Config.Bucket.hasOwnProperty(name)) {
+      S3Config.Bucket[name] = `dev-${S3Config.Bucket[name]}`;
     }
   }
 }

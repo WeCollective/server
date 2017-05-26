@@ -287,7 +287,7 @@ module.exports = function(app, passport) {
      * @apiUse Forbidden
      * @apiUse InternalServerError
      */
-    .get(ACL.validateRole(ACL.Roles.AuthenticatedUser), ACL.attachRole(ACL.Roles.Self), function(req, res) {
+    .get(ACL.validateRole(ACL.Roles.AuthenticatedUser), ACL.attachRole(ACL.Roles.Self), (req, res) => {
       controller.getPicture(req, res, 'picture', false);
     });
 

@@ -1,4 +1,4 @@
-module.exports = function(grunt) {
+module.exports = grunt => {
   // Load tasks
   grunt.loadNpmTasks('grunt-apidoc');
   grunt.loadNpmTasks('grunt-concurrent');
@@ -15,10 +15,12 @@ module.exports = function(grunt) {
     jshint: {
       files: ['Gruntfile.js', 'server.js', 'public/**/*.js'],
       options: {
-        node: true, // tell jshint we are using nodejs to avoid incorrect errors
+        esversion: 6,
         globals: {  // list of global variables and whether they are assignable
-          "angular": false
-        }
+          angular: false
+        },
+        node: true, // tell jshint we are using nodejs to avoid incorrect errors
+        unused: true
       }
     },
     // File watching
@@ -50,16 +52,20 @@ module.exports = function(grunt) {
     exec: {
       publish: 'git checkout production && git merge master && git checkout master',
       deploy: {
-        cmd: function(environment) {
-          var checkout;
-          if(environment == 'development') {
+        cmd: environment => {
+          let checkout;
+          
+          if ('development' === environment) {
             checkout = 'master';
-          } else if(environment == 'production') {
+          }
+          else if ('production' === environment) {
             checkout = 'production';
-          } else {
+          }
+          else {
             return '';
           }
-          return 'echo Checking out ' + checkout + ' && git checkout ' + checkout + ' && echo Deploying... && eb deploy && git checkout master';
+
+          return `echo Checking out ${checkout} && git checkout ${checkout} && echo Deploying... && eb deploy && git checkout master`;
         }
       },
       commit: 'git add -u && git commit -m "automatic build commit"'
@@ -86,7 +92,7 @@ module.exports = function(grunt) {
     preprocess: {
       local: {
         files : {
-          '.ebextensions/securelistener.config'   : '.ebextensions/securelistener.template.config.js'
+          '.ebextensions/securelistener.config': '.ebextensions/securelistener.template.config.js'
         },
         options: {
           context: {
@@ -97,7 +103,7 @@ module.exports = function(grunt) {
       },
       development: {
         files : {
-          '.ebextensions/securelistener.config'   : '.ebextensions/securelistener.template.config.js'
+          '.ebextensions/securelistener.config': '.ebextensions/securelistener.template.config.js'
         },
         options: {
           context: {
@@ -108,7 +114,7 @@ module.exports = function(grunt) {
       },
       production: {
         files : {
-          '.ebextensions/securelistener.config'   : '.ebextensions/securelistener.template.config.js'
+          '.ebextensions/securelistener.config': '.ebextensions/securelistener.template.config.js'
         },
         options: {
           context: {
@@ -132,4 +138,5 @@ module.exports = function(grunt) {
   grunt.registerTask('publish', ['apidoc', 'test', 'preprocess:production', 'exec:commit', 'exec:publish']);
   grunt.registerTask('deploy:development', ['apidoc', 'test', 'preprocess:development', 'exec:commit', 'exec:deploy:development']);
   grunt.registerTask('deploy:production', ['publish', 'exec:deploy:production']);
+  grunt.registerTask('default', ['serve']);
 };

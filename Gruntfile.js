@@ -65,7 +65,7 @@ module.exports = grunt => {
             return '';
           }
 
-          return `echo Checking out ${checkout} && git checkout ${checkout} && echo Deploying... && eb deploy && git checkout master`;
+          return `echo "Checking out ${checkout}" && git checkout ${checkout} && echo "Deploying..." && eb deploy && git checkout master`;
         }
       },
       commit: 'git add -u && git commit -m "automatic build commit"'

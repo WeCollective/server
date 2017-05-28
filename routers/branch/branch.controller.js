@@ -11,7 +11,7 @@ var ModLogEntry = require('../../models/mod-log-entry.model.js');
 var User = require('../../models/user.model.js');
 var SubBranchRequest = require('../../models/subbranch-request.model.js');
 var Tag = require('../../models/tag.model.js');
-var Constant = require('../../models/constant.model.js');
+const Constant = require('../../models/constant');
 
 var success = require('../../responses/successes.js');
 var error = require('../../responses/errors.js');

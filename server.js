@@ -22,15 +22,13 @@ const cookieParser  = require('cookie-parser');     // reading cookies
 let   passport      = require('passport');          // authentication
 const session       = require('express-session');   // session middleware
 const DynamoDBStore = require('connect-dynamodb')({ session });// dynamodb session store
-const db = require('./config/database.js');         // database config vars
+const db = require('./config/database');            // database config vars
 
 // DISABLE LOGGING IF IN TEST MODE
 if ('test' === process.env.NODE_ENV) {
   console.error = function () {};
 }
 
-// SET ENVIRONMENT AND PORT
-const env  = process.env.NODE_ENV || 'development';
 const port = process.env.PORT || 8080;
 
 // MIDDLEWARE
@@ -105,7 +103,7 @@ app.use(passport.session());
 
 // INITIALISE SOCKET.IO FOR EACH NAMESPACE
 const server = require('http').Server(app);
-const io = require('./config/io.js')(server);
+const io = require('./config/io')(server);
 
 io.notifications.on('connection', socket => {
   // Give the client their socket id so they can subscribe to real time notifications
@@ -118,11 +116,11 @@ io.notifications.on('connection', socket => {
 });
 
 // THE API ROUTES
-const apiRouter = require('./routers/router.js')(app, passport);
+const apiRouter = require('./routers/router')(app, passport);
 app.use('/', apiRouter);
 
 // SERVE THE DOCS ON THE BASE ROUTE
-app.use('/docs', express.static(__dirname + '/docs'));
+app.use('/docs', express.static(`${__dirname}/docs`));
 
 // START THE SERVER
 server.listen(port);

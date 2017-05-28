@@ -12,8 +12,7 @@ module.exports = function(server) {
       .send('username=username1')
       .send('password=password')
       .send('email=test@email.com')
-      .send('firstname=John')
-      .send('lastname=Smith')
+      .send('name=John')
       .expect(200, done);
   });
   it('branch A should be successfully created', function(done) {
@@ -58,8 +57,7 @@ module.exports = function(server) {
       .send('username=username2')
       .send('password=password')
       .send('email=test@email.com')
-      .send('firstname=John')
-      .send('lastname=Smith')
+      .send('name=John')
       .expect(200, done);
   });
   it('should fail to accept subbranch request on A', function(done) {

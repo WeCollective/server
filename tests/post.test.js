@@ -9,8 +9,7 @@ module.exports = function(server) {
       .send('username=username')
       .send('password=password')
       .send('email=test@email.com')
-      .send('firstname=John')
-      .send('lastname=Smith')
+      .send('name=John')
       .expect(200, done);
   });
   it('branch 1 should be successfully created', function(done) {

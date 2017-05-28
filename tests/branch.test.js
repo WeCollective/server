@@ -12,8 +12,7 @@ module.exports = function(server) {
       .send('username=username')
       .send('password=password')
       .send('email=test@email.com')
-      .send('firstname=John')
-      .send('lastname=Smith')
+      .send('name=John')
       .expect(200, done);
   });
   it('id should be invalid (too long)', function(done) {
@@ -161,8 +160,7 @@ module.exports = function(server) {
       .send('username=username2')
       .send('password=password')
       .send('email=test@email.com')
-      .send('firstname=John')
-      .send('lastname=Smith')
+      .send('name=John')
       .expect(200, done);
   });
   it('fail to update branch (not mod)', function(done) {

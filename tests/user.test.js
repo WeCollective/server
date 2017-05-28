@@ -26,12 +26,11 @@ module.exports = function(server) {
       .expect({
         message: 'Success',
         data: {
-          username: 'username',
-          firstname: 'John',
-          lastname: 'Smith',
-          email: 'test@email.com',
+          datejoined: 0,
           dob: 0,
-          datejoined: 0
+          email: 'test@email.com',
+          name: 'John',
+          username: 'username'
         }
       })
       .end(done);
@@ -41,8 +40,7 @@ module.exports = function(server) {
       .send('username=username2')
       .send('password=password')
       .send('email=test@email.com')
-      .send('firstname=John')
-      .send('lastname=Smith')
+      .send('name=John')
       .expect(200, done);
   });
   it('should successfully get user (someone else)', function(done) {
@@ -61,11 +59,10 @@ module.exports = function(server) {
       .expect({
         message: 'Success',
         data: {
-          username: 'username',
-          firstname: 'John',
-          lastname: 'Smith',
+          datejoined: 0,
           dob: 0,
-          datejoined: 0
+          name: 'John',
+          username: 'username'
         }
       })
       .end(done);
@@ -91,11 +88,10 @@ module.exports = function(server) {
       .expect({
         message: 'Success',
         data: {
-          username: 'username',
-          firstname: 'John',
-          lastname: 'Smith',
+          datejoined: 0,
           dob: 0,
-          datejoined: 0
+          name: 'John',
+          username: 'username'
         }
       })
       .end(done);
@@ -106,12 +102,12 @@ module.exports = function(server) {
       .send('password=password')
       .expect(200, done);
   });
-  it('should fail to update user (me) invalid firstname', function(done) {
+  it('should fail to update user (me) invalid name', function(done) {
     server.put('/user/me')
-      .send('firstname=a')
+      .send('name=a')
       .expect(400)
       .expect({
-        message: 'Invalid firstname'
+        message: 'Invalid name'
       }, done);
   });
   it('should fail to update user (me) invalid lastname', function(done) {
@@ -132,8 +128,7 @@ module.exports = function(server) {
   });
   it('should update user (me)', function(done) {
     server.put('/user/me')
-      .send('firstname=Joe')
-      .send('lastname=Bloggs')
+      .send('name=Joe')
       .send('email=new@email.com')
       .expect(200)
       .expect({

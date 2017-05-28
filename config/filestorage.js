@@ -2,17 +2,16 @@
 
 const S3Config = {
   Bucket: {
-    BranchImages: 'weco-branch-images',
+    BranchImages:        'weco-branch-images',
     BranchImagesResized: 'weco-branch-images-resized',
-    PostImages: 'weco-post-images',
-    PostImagesResized: 'weco-post-images-resized',
-    UserImages: 'weco-user-images',
-    UserImagesResized: 'weco-user-images-resized'
+    PostImages:          'weco-post-images',
+    PostImagesResized:   'weco-post-images-resized',
+    UserImages:          'weco-user-images',
+    UserImagesResized:   'weco-user-images-resized'
   }
 };
 
-// If in a development environment we should use the development tables.
-// Iterate over S3Config object and append the prefix 'dev-' to all table names.
+// Use development tables in the development environment.
 if ('production' !== process.env.NODE_ENV) {
   for (const name in S3Config.Bucket) {
     if (S3Config.Bucket.hasOwnProperty(name)) {
@@ -21,4 +20,4 @@ if ('production' !== process.env.NODE_ENV) {
   }
 }
 
-module.exports = config;
+module.exports = S3Config;

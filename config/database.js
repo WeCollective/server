@@ -146,8 +146,7 @@ const ModelSchemas = {
     datejoined: null,
     dob: null,
     email: null,
-    firstname: null,
-    lastname: null,
+    name: null,
     num_branches: null,
     num_comments: null,
     num_mod_positions: null,
@@ -336,8 +335,7 @@ const DynamoDBConfig = {
   }
 };
 
-// If in a development environment we should use the development tables.
-// Iterate over DynamoDBConfig object and append the prefix 'dev' to all table names.
+// Use development tables in the development environment.
 if ('production' !== process.env.NODE_ENV) {
   for (const name in DynamoDBConfig.Table) {
     if (DynamoDBConfig.Table.hasOwnProperty(name)) {

@@ -5,7 +5,7 @@ var fs = require('../../config/filestorage.js');
 var ACL = require('../../config/acl.js');
 
 // Models
-var Constant = require('../../models/constant.model.js');
+const Constant = require('../../models/constant');
 
 // Responses
 var success = require('../../responses/successes.js');

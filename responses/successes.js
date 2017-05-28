@@ -9,13 +9,15 @@
  *       "message": "Success"
  *     }
  */
-module.exports.OK = function(res, data) {
+module.exports.OK = (res, data) => {
   res.statusCode = 200;
-  var success = {};
-  success.message = 'Success';
-  if(data) {
+  
+  let success = { message: 'Success' };
+  
+  if (data) {
     success.data = data;
   }
+
   res.send(success);
 };
 
@@ -28,9 +30,8 @@ module.exports.OK = function(res, data) {
  *       "message": "The request has been fulfilled and resulted in a new resource being created"
  *     }
  */
-module.exports.Created = function(res) {
+module.exports.Created = res => {
   res.statusCode = 201;
-  var success = {};
-  success.message = 'The request has been fulfilled and resulted in a new resource being created';
+  const success = { message: `The request has been fulfilled and resulted in a new resource being created` };
   res.send(success);
 };

@@ -1,14 +1,14 @@
 'use strict';
 
-var express = require('express');
-var router = express.Router();
-var success = require('../../responses/successes.js');
-var ACL = require('../../config/acl.js');
+const express = require('express');
+const router  = express.Router();
 
-var Constant = require('../../models/constant.model.js');
+const ACL = require('../../config/acl');
+const Constant = require('../../models/constant');
+const success  = require('../../responses/successes');
 
-module.exports = function(app, passport) {
-  var controller = require('./user.controller.js');
+module.exports = (app, passport) => {
+  const controller = require('./controller');
 
   /**
    * @api {post} /user Sign up
@@ -17,41 +17,44 @@ module.exports = function(app, passport) {
    * @apiPermission guest
    * @apiVersion 1.0.0
    *
-   * @apiParam (Body Parameters) {String} username User's unique username. (1-20 lowercase chars, no whitespace, not numeric, not one of 'me', 'orig', 'picture', 'cover')
-   * @apiParam (Body Parameters) {String} password User's password. (6-30 chars, no whitespace)
-   * @apiParam (Body Parameters) {String} firstname User's first name. (2-30 chars, no whitespace)
-   * @apiParam (Body Parameters) {String} lastname  User's last name. (2-30 chars, no whitespace)
    * @apiParam (Body Parameters) {String} email User's email.
+   * @apiParam (Body Parameters) {String} firstname User's first name. (2-30 chars, no whitespace)
+   * @apiParam (Body Parameters) {String} password User's password. (6-30 chars, no whitespace)
+   * @apiParam (Body Parameters) {String} username User's unique username. (1-20 lowercase chars, no whitespace, not numeric, not one of 'me', 'orig', 'picture', 'cover')
    *
    * @apiUse OK
    * @apiUse BadRequest
    * @apiUse InternalServerError
    */
   router.route('/')
-    .post(function(req, res, next) {
+    .post( (req, res, next) => {
       // local-signup with override of done() method to access info object from passport strategy
-      passport.authenticate('local-signup', function(err, user, info) {
-        if (err) { return next(err); }
-        // if no user object, send error response
-        if (!user) {
-          var status = 403;
-          if(info.status) {
-            status = info.status;
-          }
-          return res.status(status).json({ message: info.message });
+      passport.authenticate('local-signup', (err, user, info) => {
+        if (err) {
+          return next(err);
         }
+        
+        // If no user object, send error response
+        if (!user) {
+          return res.status(info.status || 403).json({ message: info.message });
+        }
+
         req.logout();
 
-        var userCount = new Constant();
-        userCount.findById('user_count').then(function() {
-          userCount.set('data', userCount.data.data + 1);
-          return userCount.update();
-        }).then(function() {
-          return success.OK(res);
-        }).catch(function(err) {
-          console.error("Error updating user count:", err);
-          return success.OK(res);
-        });
+        const userCount = new Constant();
+        
+        userCount.findById('user_count')
+          .then( () => {
+            userCount.set('data', userCount.data.data + 1);
+            return userCount.update();
+          })
+          .then( () => {
+            return success.OK(res);
+          })
+          .catch( err => {
+            console.error('Error updating user count:', err);
+            return success.OK(res);
+          });
       })(req, res, next);
     });
 
@@ -70,19 +73,24 @@ module.exports = function(app, passport) {
    * @apiUse InternalServerError
    */
   router.route('/login')
-    .post(function(req, res, next) {
-      console.log("PASSPORT BEFORE");
+    .post( (req, res, next) => {
       // local-login with override of done() method to access info object from passport strategy
-      passport.authenticate('local-login', function(err, user, info) {
-        console.log("PASSPORT AFTER", err, user, info);
-        if (err) { return next(err); }
+      passport.authenticate('LocalSignIn', (err, user, info) => {
+        if (err) {
+          return next(err);
+        }
+        
         // if no user object, send error response
         if (!user) {
           return res.status(info.status).json({ message: info.message });
         }
+
         // manually log in user to establish session
-        req.logIn(user, function(err) {
-          if (err) { return next(err); }
+        req.logIn(user, err => {
+          if (err) {
+            return next(err);
+          }
+
           return success.OK(res);
         });
       })(req, res, next);
@@ -99,7 +107,7 @@ module.exports = function(app, passport) {
    * @apiUse InternalServerError
    */
   router.route('/logout')
-    .get(function(req, res, next) {
+    .get( (req, res, next) => {
       req.logout();
       return success.OK(res);
     });
@@ -112,22 +120,20 @@ module.exports = function(app, passport) {
      * @apiPermission self
      * @apiVersion 1.0.0
      *
-     * @apiSuccess (Successes) {String} username User's unique username.
-     * @apiSuccess (Successes) {String} email User's email address.
-     * @apiSuccess (Successes) {String} firstname User's first name.
-     * @apiSuccess (Successes) {String} lastname User's last name.
-     * @apiSuccess (Successes) {Number} dob User's date of birth (UNIX timestamp).
      * @apiSuccess (Successes) {Number} datejoined Date the user joined (UNIX timestamp).
+     * @apiSuccess (Successes) {Number} dob User's date of birth (UNIX timestamp).
+     * @apiSuccess (Successes) {String} email User's email address.
+     * @apiSuccess (Successes) {String} firstname User's name.
+     * @apiSuccess (Successes) {String} username User's unique username.
      * @apiSuccessExample {json} SuccessResponse:
      *  {
      *    "message": "Success",
      *    "data": {
-     *      "username": "johndoe",
+     *      "datejoined": 1469017726490,
+     *      "dob": null, 
      *      "email": "john@doe.com",
-     *      "firstname": "John",
-     *      "lastname": "Doe",
-     *      "dob": null,
-     *      "datejoined": 1469017726490
+     *      "name": "John",
+     *      "username": "johndoe"
      *    }
      *  }
      *
@@ -158,10 +164,9 @@ module.exports = function(app, passport) {
      * @apiPermission self
      * @apiVersion 1.0.0
      *
-     * @apiParam (Body Parameters) {String} firstname User's new first name. (2-30 chars, no whitespace) [optional]
-     * @apiParam (Body Parameters) {String} lastname  User's new last name. (2-30 chars, no whitespace) [optional]
-     * @apiParam (Body Parameters) {String} email User's new email. [optional]
      * @apiParam (Body Parameters) {Number} dob User's new date of birth (UNIX timestamp). [optional]
+     * @apiParam (Body Parameters) {String} email User's new email. [optional]
+     * @apiParam (Body Parameters) {String} name  User's new name. (2-30 chars, no whitespace) [optional]
      *
      * @apiUse OK
      * @apiUse Forbidden
@@ -181,22 +186,20 @@ module.exports = function(app, passport) {
      *
      * @apiParam (URL Parameters) {String} username User's unique username.
      *
-     * @apiSuccess (Successes) {String} username User's unique username.
-     * @apiSuccess (Successes) {String} email User's email address. [iff. the specified user is the authenticated user]
-     * @apiSuccess (Successes) {String} firstname User's first name.
-     * @apiSuccess (Successes) {String} lastname User's last name.
-     * @apiSuccess (Successes) {Number} dob User's date of birth (UNIX timestamp).
      * @apiSuccess (Successes) {Number} datejoined Date the user joined (UNIX timestamp).
+     * @apiSuccess (Successes) {Number} dob User's date of birth (UNIX timestamp).
+     * @apiSuccess (Successes) {String} email User's email address. [iff. the specified user is the authenticated user]
+     * @apiSuccess (Successes) {String} name User's name.
+     * @apiSuccess (Successes) {String} username User's unique username.
      * @apiSuccessExample {json} SuccessResponse:
      *  HTTP/1.1 200
      *  {
      *    "message": "Success",
      *    "data": {
-     *      "username": "johndoe",
-     *      "firstname": "John",
-     *      "lastname": "Doe",
+     *      "datejoined": 1469017726490,
      *      "dob": null,
-     *      "datejoined": 1469017726490
+     *      "name": "John",
+     *      "username": "johndoe"
      *    }
      *  }
      *

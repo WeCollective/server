@@ -4,8 +4,7 @@ module.exports = function(server) {
       .send('username=thisusernameiswaytoolong')
       .send('password=password')
       .send('email=test@email.com')
-      .send('firstname=John')
-      .send('lastname=Smith')
+      .send('name=John')
       .expect(400)
       .expect({ message: 'Invalid username' }, done);
   });
@@ -14,8 +13,7 @@ module.exports = function(server) {
       .send('username=orig')
       .send('password=password')
       .send('email=test@email.com')
-      .send('firstname=John')
-      .send('lastname=Smith')
+      .send('name=John')
       .expect(400)
       .expect({ message: 'Invalid username' }, done);
   });
@@ -24,8 +22,7 @@ module.exports = function(server) {
       .send('username=me')
       .send('password=password')
       .send('email=test@email.com')
-      .send('firstname=John')
-      .send('lastname=Smith')
+      .send('name=John')
       .expect(400)
       .expect({ message: 'Invalid username' }, done);
   });
@@ -34,8 +31,7 @@ module.exports = function(server) {
       .send('username=picture')
       .send('password=password')
       .send('email=test@email.com')
-      .send('firstname=John')
-      .send('lastname=Smith')
+      .send('name=John')
       .expect(400)
       .expect({ message: 'Invalid username' }, done);
   });
@@ -44,8 +40,7 @@ module.exports = function(server) {
       .send('username=cover')
       .send('password=password')
       .send('email=test@email.com')
-      .send('firstname=John')
-      .send('lastname=Smith')
+      .send('name=John')
       .expect(400)
       .expect({ message: 'Invalid username' }, done);
   });
@@ -54,8 +49,7 @@ module.exports = function(server) {
       .send('username=123')
       .send('password=password')
       .send('email=test@email.com')
-      .send('firstname=John')
-      .send('lastname=Smith')
+      .send('name=John')
       .expect(400)
       .expect({ message: 'Invalid username' }, done);
   });
@@ -64,8 +58,7 @@ module.exports = function(server) {
       .send('username=username')
       .send('password=pass word')
       .send('email=test@email.com')
-      .send('firstname=John')
-      .send('lastname=Smith')
+      .send('name=John')
       .expect(400)
       .expect({ message: 'Invalid password' }, done);
   });
@@ -74,8 +67,7 @@ module.exports = function(server) {
       .send('username=username')
       .send('password=pass')
       .send('email=test@email.com')
-      .send('firstname=John')
-      .send('lastname=Smith')
+      .send('name=John')
       .expect(400)
       .expect({ message: 'Invalid password' }, done);
   });
@@ -84,8 +76,7 @@ module.exports = function(server) {
       .send('username=username')
       .send('password=thispasswordiswaywaywaywaytoolong')
       .send('email=test@email.com')
-      .send('firstname=John')
-      .send('lastname=Smith')
+      .send('name=John')
       .expect(400)
       .expect({ message: 'Invalid password' }, done);
   });
@@ -94,58 +85,34 @@ module.exports = function(server) {
       .send('username=username')
       .send('password=password')
       .send('email=email')
-      .send('firstname=John')
-      .send('lastname=Smith')
+      .send('name=John')
       .expect(400)
       .expect({ message: 'Invalid email' }, done);
   });
-  it('first name should be invalid (too short)', function(done) {
+  it('name should be invalid (too short)', function(done) {
     server.post('/user')
       .send('username=username')
       .send('password=password')
       .send('email=test@email.com')
-      .send('firstname=a')
-      .send('lastname=Smith')
+      .send('name=a')
       .expect(400)
-      .expect({ message: 'Invalid firstname' }, done);
+      .expect({ message: 'Invalid name' }, done);
   });
-  it('first name should be invalid (contains whitespace)', function(done) {
+  it('name should be invalid (contains whitespace)', function(done) {
     server.post('/user')
       .send('username=username')
       .send('password=password')
       .send('email=test@email.com')
-      .send('firstname=white space')
-      .send('lastname=Smith')
+      .send('name=white space')
       .expect(400)
-      .expect({ message: 'Invalid firstname' }, done);
-  });
-  it('last name should be invalid (too short)', function(done) {
-    server.post('/user')
-      .send('username=username')
-      .send('password=password')
-      .send('email=test@email.com')
-      .send('firstname=John')
-      .send('lastname=a')
-      .expect(400)
-      .expect({ message: 'Invalid lastname' }, done);
-  });
-  it('last name should be invalid (contains whitespace)', function(done) {
-    server.post('/user')
-      .send('username=username')
-      .send('password=password')
-      .send('email=test@email.com')
-      .send('firstname=John')
-      .send('lastname=white space')
-      .expect(400)
-      .expect({ message: 'Invalid lastname' }, done);
+      .expect({ message: 'Invalid name' }, done);
   });
   it('should sign up successfully', function(done) {
     server.post('/user')
       .send('username=username')
       .send('password=password')
       .send('email=test@email.com')
-      .send('firstname=John')
-      .send('lastname=Smith')
+      .send('name=John')
       .expect(200, done);
   });
   it('user should already exist', function(done) {
@@ -153,8 +120,7 @@ module.exports = function(server) {
       .send('username=username')
       .send('password=password')
       .send('email=test@email.com')
-      .send('firstname=John')
-      .send('lastname=Smith')
+      .send('name=John')
       .expect(400)
       .expect({ message: 'Username already exists' }, done);
   });

@@ -5,11 +5,10 @@
  * 
  * Visit http://passportjs.org/docs to learn how the Strategies work.
  */
-
-const auth = require('./auth.js');
+const auth = require('./auth');
 const LocalStrategy = require('passport-local').Strategy;
-const mailer = require('./mailer.js');
-const User = require('../models/user.model.js');
+const mailer = require('./mailer');
+const User = require('../models/user.model');
 
 module.exports = passport => {
   passport.serializeUser( (user, done) => {
@@ -27,8 +26,48 @@ module.exports = passport => {
       });
   });
 
-  // SIGN UP STRATEGY
-  passport.use('local-signup', new LocalStrategy({ passReqToCallback: true }, (req, username, password, done) => {
+  passport.use('LocalSignIn', new LocalStrategy({ passReqToCallback: true }, (req, username, password, done) => {
+    process.nextTick( () => {
+      // check whether a user with this username exists in the database
+      const user = new User();
+      user.findByUsername(username)
+        .then( () => {
+          
+          // Unverified account.
+          if (!user.data.verified) {
+            return done(null, false, {
+              status: 403,
+              message: 'Your account has not been verified'
+            });
+          }
+
+          auth.compare(password, user.data.password)
+            .then( () => {
+              return done(null, user.data);
+            })
+            // Incorrect password.
+            .catch( err => {
+              console.error('Error logging in:', err);
+              return done(null, false, err);
+            });
+        }, err => {
+          if (err) {
+            console.error('Error logging in:', err);
+            return done(err, false, {
+              status: 500,
+              message: 'Something went wrong'
+            });
+          }
+
+          return done(null, false, {
+            status: 400,
+            message: `User doesn't exist`
+          });
+        });
+    });
+  }));
+
+  passport.use('LocalSignUp', new LocalStrategy({ passReqToCallback: true }, (req, username, password, done) => {
     process.nextTick( () => {
       // check whether a user with this username already exists in the database
       const user = new User();
@@ -71,8 +110,7 @@ module.exports = passport => {
               const newUser = new User({
                 datejoined: new Date().getTime(),
                 email: req.body.email,
-                firstname: req.body.firstname,
-                lastname: req.body.lastname,
+                name: req.body.name,
                 num_branches: 0,
                 num_comments: 0,
                 num_mod_positions: 0,
@@ -88,8 +126,7 @@ module.exports = passport => {
               const propertiesToCheck = [
                 'datejoined',
                 'email',
-                'firstname',
-                'lastname',
+                'name',
                 'num_branches',
                 'num_comments',
                 'num_mod_positions',
@@ -140,49 +177,9 @@ module.exports = passport => {
     });
   }));
 
-  // LOGIN STRATEGY
-  passport.use('local-login', new LocalStrategy({ passReqToCallback: true }, (req, username, password, done) => {
-    process.nextTick( () => {
-      // check whether a user with this username exists in the database
-      const user = new User();
-      user.findByUsername(username)
-        .then( () => {
-          // check user has verified their account
-          if(!user.data.verified) {
-            return done(null, false, {
-              status: 403,
-              message: 'Your account has not been verified'
-            });
-          }
-
-          // compare password with stored hash from database using bcrypt
-          auth.compare(password, user.data.password)
-            .then( () => {
-              return done(null, user.data);
-            })
-            .catch( err => {
-              console.error('Error logging in:', err);
-              return done(null, false, err);
-            });
-        }, err => {
-          if (err) {
-            console.error('Error logging in:', err);
-            return done(err, false, {
-              status: 500,
-              message: 'Something went wrong'
-            });
-          }
-          return done(null, false, {
-            status: 400,
-            message: `User doesn't exist`
-          });
-        });
-    });
-  }));
-
-  // Alias the strategies for future API using camelcase.
-  passport._strategies.LocalSignIn = passport._strategies['local-login'];
-  passport._strategies.LocalSignUp = passport._strategies['local-signup'];
+  // Alias the strategies for legacy API using hyphens.
+  passport._strategies['local-login']  = passport._strategies.LocalSignIn;
+  passport._strategies['local-signup'] = passport._strategies.LocalSignUp;
 
   return passport;
 };

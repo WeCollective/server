@@ -10,11 +10,9 @@
  *       "message": "Description of invalid parameter"
  *     }
  */
-module.exports.BadRequest = function(res, message) {
+module.exports.BadRequest = (res, msg) => {
   res.statusCode = 400;
-  var error = {};
-  error.message = message || 'The server could not process the request';
-  res.send(error);
+  res.send({ message: msg || `The server could not process the request` });
   return Promise.reject();
 };
 
@@ -27,11 +25,9 @@ module.exports.BadRequest = function(res, message) {
  *       "message": "Access denied"
  *     }
  */
-module.exports.Forbidden = function(res) {
+module.exports.Forbidden = res => {
   res.statusCode = 403;
-  var error = {};
-  error.message = 'Access denied';
-  res.send(error);
+  res.send({ message: 'Access denied' });
   return Promise.reject();
 };
 
@@ -44,11 +40,9 @@ module.exports.Forbidden = function(res) {
  *       "message": "The requested resource couldn't be found"
  *     }
  */
-module.exports.NotFound = function(res, message) {
+module.exports.NotFound = (res, msg) => {
   res.statusCode = 404;
-  var error = {};
-  error.message = message || 'The requested resource couldn\'t be found';
-  res.send(error);
+  res.send({ message: msg || `The requested resource couldn't be found` });
   return Promise.reject();
 };
 
@@ -61,10 +55,8 @@ module.exports.NotFound = function(res, message) {
  *       "message": "Something went wrong. We're looking into it."
  *     }
  */
-module.exports.InternalServerError = function(res, message) {
+module.exports.InternalServerError = (res, msg) => {
   res.statusCode = 500;
-  var error = {};
-  error.message = message || 'Something went wrong. We\'re looking into it.';
-  res.send(error);
+  res.send({ message: msg || `Something went wrong. We're looking into it.` });
   return Promise.reject();
 };

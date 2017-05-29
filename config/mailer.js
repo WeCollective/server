@@ -45,7 +45,7 @@ module.exports = {
       const personalization = new mailHelper.Personalization();
 
       personalization.addTo(new mailHelper.Email(user.email));
-      personalization.addSubstitution(new mailHelper.Substitution('%firstname%', user.firstname));
+      personalization.addSubstitution(new mailHelper.Substitution('%name%', user.name));
       personalization.addSubstitution(new mailHelper.Substitution('%username%', user.username));
       personalization.addSubstitution(new mailHelper.Substitution('%reset_url%', `${process.env.WEBAPP_URL}reset-password/${user.username}/${token}`));
 
@@ -76,7 +76,7 @@ module.exports = {
       const personalization = new mailHelper.Personalization();
 
       personalization.addTo(new mailHelper.Email(user.email));
-      personalization.addSubstitution(new mailHelper.Substitution('%firstname%', user.firstname));
+      personalization.addSubstitution(new mailHelper.Substitution('%name%', user.name));
       personalization.addSubstitution(new mailHelper.Substitution('%username%', user.username));
       personalization.addSubstitution(new mailHelper.Substitution('%verify_url%', `${process.env.WEBAPP_URL + user.username}/verify/${token}`));
 
@@ -107,7 +107,7 @@ module.exports = {
       const personalization = new mailHelper.Personalization();
 
       personalization.addTo(new mailHelper.Email(user.email));
-      personalization.addSubstitution(new mailHelper.Substitution('%firstname%', user.firstname));
+      personalization.addSubstitution(new mailHelper.Substitution('%name%', user.name));
       personalization.addSubstitution(new mailHelper.Substitution('%username%', user.username));
 
       mail.addPersonalization(personalization);

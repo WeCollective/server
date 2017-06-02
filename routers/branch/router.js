@@ -1,11 +1,11 @@
 'use strict';
 
-var express = require('express');
-var router = express.Router();
-var ACL = require('../../config/acl.js');
+const express = require('express');
+const router = express.Router();
+const ACL = require('../../config/acl');
 
-module.exports = function(app, passport) {
-  var controller = require('./branch.controller.js');
+module.exports = (app, passport) => {
+  const controller = require('./controller');
 
   router.route('/')
     /**
@@ -57,7 +57,7 @@ module.exports = function(app, passport) {
      * @apiUse BadRequest
      * @apiUse InternalServerError
      */
-    .put(function(req, res, next) {
+    .put( (req, res, next) => {
       ACL.validateRole(ACL.Roles.Moderator, req.params.branchid)(req, res, next);
     }, controller.put)
     /**
@@ -75,7 +75,7 @@ module.exports = function(app, passport) {
      * @apiUse BadRequest
      * @apiUse InternalServerError
      */
-    .delete(function(req, res, next) {
+    .delete( (req, res, next) => {
       ACL.validateRole(ACL.Roles.Moderator, req.params.branchid)(req, res, next);
     }, controller.delete);
 
@@ -102,9 +102,9 @@ module.exports = function(app, passport) {
      * @apiUse NotFound
      * @apiUse InternalServerError
      */
-    .get(function(req, res, next) {
+    .get( (req, res, next) => {
       ACL.validateRole(ACL.Roles.Moderator, req.params.branchid)(req, res, next);
-    }, function(req, res) {
+    }, (req, res) => {
       controller.getPictureUploadUrl(req, res, 'picture');
     });
 
@@ -131,9 +131,9 @@ module.exports = function(app, passport) {
      * @apiUse NotFound
      * @apiUse InternalServerError
      */
-    .get(function(req, res, next) {
+    .get( (req, res, next) => {
       ACL.validateRole(ACL.Roles.Moderator, req.params.branchid)(req, res, next);
-    }, function(req, res) {
+    }, (req, res) => {
       controller.getPictureUploadUrl(req, res, 'cover');
     });
 
@@ -159,7 +159,7 @@ module.exports = function(app, passport) {
      * @apiUse NotFound
      * @apiUse InternalServerError
      */
-    .get(function(req, res) {
+    .get( (req, res) => {
       controller.getPicture(req, res, 'picture', false);
     });
 
@@ -185,7 +185,7 @@ module.exports = function(app, passport) {
      * @apiUse NotFound
      * @apiUse InternalServerError
      */
-    .get(function(req, res) {
+    .get( (req, res) => {
       controller.getPicture(req, res, 'picture', true);
     });
 
@@ -211,7 +211,7 @@ module.exports = function(app, passport) {
      * @apiUse NotFound
      * @apiUse InternalServerError
      */
-    .get(function(req, res) {
+    .get( (req, res) => {
       controller.getPicture(req, res, 'cover', false);
     });
 
@@ -237,7 +237,7 @@ module.exports = function(app, passport) {
      * @apiUse NotFound
      * @apiUse InternalServerError
      */
-    .get(function(req, res) {
+    .get( (req, res) => {
       controller.getPicture(req, res, 'cover', true);
     });
 
@@ -333,7 +333,7 @@ module.exports = function(app, passport) {
      * @apiUse NotFound
      * @apiUse InternalServerError
      */
-    .get(function(req, res, next) {
+    .get( (req, res, next) => {
       ACL.validateRole(ACL.Roles.Moderator, req.params.branchid)(req, res, next);
     }, controller.getModLog);
 

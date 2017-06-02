@@ -1,11 +1,11 @@
 'use strict';
 
-var express = require('express');
-var router = express.Router({ mergeParams: true });
-var ACL = require('../../config/acl.js');
+const express = require('express');
+const router = express.Router({ mergeParams: true });
+const ACL = require('../../config/acl');
 
-module.exports = function(app, passport) {
-  var controller = require('./mods.controller.js');
+module.exports = (app, passport) => {
+  const controller = require('./controller');
 
   // branch moderators
   router.route('/')
@@ -39,7 +39,7 @@ module.exports = function(app, passport) {
      * @apiUse Forbidden
      * @apiUse InternalServerError
      */
-    .post(function(req, res, next) {
+    .post( (req, res, next) => {
       ACL.validateRole(ACL.Roles.Moderator, req.params.branchid)(req, res, next);
     }, controller.post)
 
@@ -61,7 +61,7 @@ module.exports = function(app, passport) {
      * @apiUse Forbidden
      * @apiUse InternalServerError
      */
-    .delete(function(req, res, next) {
+    .delete( (req, res, next) => {
       ACL.validateRole(ACL.Roles.Moderator, req.params.branchid)(req, res, next);
     }, controller.delete);
 

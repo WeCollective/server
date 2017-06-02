@@ -59,29 +59,23 @@ module.exports = (app, passport) => {
     });
   });
 
-  const constantRouter = require('./constant/constant.router')(app, passport);
-  app.use(`${version}/constant`, constantRouter);
-
+  const branchModsRouter = require('./mods/router')(app, passport);
+  const branchPostsRouter = require('./branch-posts/router')(app, passport);
+  const branchRouter = require('./branch/router')(app, passport);
+  const branchSubbranchesRouter = require('./requests/router')(app, passport);
+  const constantRouter = require('./constant/router')(app, passport);
+  const pollRouter = require('./poll/router')(app, passport);
+  const postRouter = require('./post/router')(app, passport);
   const userRouter = require('./user/router')(app, passport);
-  app.use(`${version}/user`, userRouter);
 
-  const branchRouter = require('./branch/branch.router')(app, passport);
   app.use(`${version}/branch`, branchRouter);
-
-  const modsRouter = require('./mods/mods.router')(app, passport);
-  app.use(`${version}/branch/:branchid/mods`, modsRouter);
-
-  const branchPostsRouter = require('./branch-posts/branch-posts.router')(app, passport);
+  app.use(`${version}/branch/:branchid/mods`, branchModsRouter);
   app.use(`${version}/branch/:branchid/posts`, branchPostsRouter);
-
-  const subbranchRequestsRouter = require('./requests/subbranches.router')(app, passport);
-  app.use(`${version}/branch/:branchid/requests/subbranches`, subbranchRequestsRouter);
-
-  const postRouter = require('./post/post.router')(app, passport);
-  app.use(`${version}/post`, postRouter);
-
-  const pollRouter = require('./poll/poll.router')(app, passport);
+  app.use(`${version}/branch/:branchid/requests/subbranches`, branchSubbranchesRouter);
+  app.use(`${version}/constant`, constantRouter);
   app.use(`${version}/poll`, pollRouter);
+  app.use(`${version}/post`, postRouter);
+  app.use(`${version}/user`, userRouter);
 
   return router;
 };

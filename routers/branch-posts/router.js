@@ -1,11 +1,11 @@
 'use strict';
 
-var express = require('express');
-var router = express.Router({ mergeParams: true });
-var ACL = require('../../config/acl.js');
+const express = require('express');
+const router = express.Router({ mergeParams: true });
+const ACL = require('../../config/acl');
 
-module.exports = function(app, passport) {
-  var controller = require('./branch-posts.controller.js');
+module.exports = (app, passport) => {
+  const controller = require('./controller');
 
   router.route('/')
     /**
@@ -136,7 +136,7 @@ module.exports = function(app, passport) {
      * @apiUse BadRequest
      * @apiUse InternalServerError
      */
-    .post(function(req, res, next) {
+    .post( (req, res, next) => {
       ACL.validateRole(ACL.Roles.Moderator, req.params.branchid)(req, res, next);
     }, controller.resolveFlag);
 

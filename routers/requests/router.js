@@ -1,11 +1,11 @@
 'use strict';
 
-var express = require('express');
-var router = express.Router({ mergeParams: true });
-var ACL = require('../../config/acl.js');
+const express = require('express');
+const router = express.Router({ mergeParams: true });
+const ACL = require('../../config/acl');
 
 module.exports = function(app, passport) {
-  var controller = require('./subbranches.controller.js');
+  const controller = require('./controller');
 
   // get subbranch requests
   router.route('/')

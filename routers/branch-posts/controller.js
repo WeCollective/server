@@ -1,186 +1,226 @@
 'use strict';
 
-var aws = require('../../config/aws.js');
-var fs = require('../../config/filestorage.js');
-var ACL = require('../../config/acl.js');
-var NotificationTypes = require('../../config/notification-types.js');
+const ACL = require('../../config/acl');
+const aws = require('../../config/aws');
+const Branch = require('../../models/branch.model');
+const error  = require('../../responses/errors');
+const FlaggedPost = require('../../models/flagged-post.model');
+const fs  = require('../../config/filestorage');
+const Mod = require('../../models/mod.model');
+const Notification = require('../../models/notification.model');
+const NotificationTypes = require('../../config/notification-types');
+const Post = require('../../models/post.model');
+const PostData  = require('../../models/post-data.model');
+const PostImage = require('../../models/post-image.model');
+const success   = require('../../responses/successes');
+const User = require('../../models/user.model');
+const UserVote = require('../../models/user-vote.model');
 
-var Post = require('../../models/post.model.js');
-var PostData = require('../../models/post-data.model.js');
-var PostImage = require('../../models/post-image.model.js');
-var FlaggedPost = require('../../models/flagged-post.model.js');
-var Notification = require('../../models/notification.model.js');
-var Branch = require('../../models/branch.model.js');
-var User = require('../../models/user.model.js');
-var Mod = require('../../models/mod.model.js');
-var UserVote = require('../../models/user-vote.model.js');
+const VALID_POST_TYPE_VALUES = ['all', 'audio', 'image', 'page', 'poll', 'text', 'video'];
+const VALID_SORT_BY_MOD_VALUES = ['branch_rules', 'date', 'nsfw', 'site_rules', 'wrong_type'];
+const VALID_SORT_BY_USER_VALUES = ['comment_count', 'date', 'points'];
 
-var success = require('../../responses/successes.js');
-var error = require('../../responses/errors.js');
+function userCanDisplayNSFWPosts(req) {
+  return new Promise( (resolve, reject) => {
+    if (req.isAuthenticated() && req.user.username) {
+      const user = new User();
+
+      user.findByUsername(req.user.username)
+        .then( () => resolve(user.data.show_nsfw) )
+        .catch(reject);
+    }
+    else {
+      return resolve(false);
+    }
+  });
+}
 
 module.exports = {
-  get: function(req, res) {
-    if(!req.params.branchid) {
+  get: (req, res) => {
+    if (!req.params.branchid) {
       return error.BadRequest(res, 'Missing branchid');
     }
 
-    var timeafter = req.query.timeafter;
-    if(!req.query.timeafter) {
-      timeafter = 0;
-    }
+    let opts = {
+      fetchOnlyflaggedPosts: 'true' === req.query.flag,
+      nsfw: false,
+      postType: req.query.postType  || 'all',
+      // points, date, comment_count [if normal posts]
+      // date, branch_rules, site_rules, wrong_type [if flagged posts i.e. flag = true]
+      sortBy: '',
+      // individual/local/global stats [if normal posts]
+      stat: req.query.stat || 'individual',
+      timeafter: req.query.timeafter || 0
+    };
 
-    // indicates whether to fetch flagged posts only
-    var flag = req.query.flag === 'true';
-
-    // points, date, comment_count [if normal posts]
-    // date, branch_rules, site_rules, wrong_type [if flagged posts i.e. flag = true]
-    var sortBy = req.query.sortBy;
-    if(!req.query.sortBy) {
-      sortBy = flag ? 'date' : 'points';
-    }
-
-    // check for valid postType parameter
-    var postType = req.query.postType;
-    if(!req.query.postType) {
-      postType = 'all';
-    } else if(['all', 'text', 'image', 'page', 'video', 'audio', 'poll'].indexOf(req.query.postType) === -1) {
+    opts.sortBy = req.query.sortBy || (opts.fetchOnlyflaggedPosts ? 'date' : 'points');
+    
+    if (VALID_POST_TYPE_VALUES.indexOf(opts.postType) === -1) {
       return error.BadRequest(res, 'Invalid postType')
     }
 
-    var posts = [];
-    var postDatas = [];
-    var postImages = [];
-    var lastPost = null;
-    var nsfw = false;
-    // if lastPostId is specified, client wants results which appear _after_ this post (pagination)
-    new Promise(function(resolve, reject) {
-      if(req.query.lastPostId) {
-        var post = new Post();
-        var postdata = new PostData();
+    let lastPost = null;
+    let posts = [];
+    let postDatas  = [];
+    let postImages = [];
+    
+    new Promise( (resolve, reject) => {
+      // Client wants only results that appear after this post (pagination).
+      if (req.query.lastPostId) {
+        const post = new Post();
+        const postdata = new PostData();
+
         // get the post
-        post.findByPostAndBranchIds(req.query.lastPostId, req.params.branchid).then(function() {
-          // fetch post data
-          return postdata.findById(req.query.lastPostId);
-        }).then(function () {
-          // create lastPost object
-          lastPost = post.data;
-          lastPost.data = postdata.data;
-          resolve();
-        }).catch(function(err) {
-          if(err) reject();
-          return error.NotFound(res); // lastPostId is invalid
-        });
-      } else {
-        // no last post specified, continue
-        resolve();
+        post.findByPostAndBranchIds(req.query.lastPostId, req.params.branchid)
+          .then( () => {
+            // fetch post data
+            return postdata.findById(req.query.lastPostId);
+          })
+          .then( () => {
+            // create lastPost object
+            lastPost = post.data;
+            lastPost.data = postdata.data;
+            return resolve();
+          })
+          .catch( err => {
+            if (err) {
+              return reject();
+            }
+
+            // Invalid lastPostId.
+            return error.NotFound(res);
+          });
       }
-    }).then(function() {
-      // if user is authenticated, fetch whether they should see nsfw posts
-      return new Promise(function(resolve, reject) {
-        if(req.isAuthenticated() && req.user.username) {
-          var user = new User();
-          user.findByUsername(req.user.username).then(function() {
-            nsfw = user.data.show_nsfw;
-            resolve();
-          }, reject);
-        } else {
-          resolve();
+      else {
+        // No last post specified, continue...
+        return resolve();
+      }
+    })
+      // Authenticated users can set to display nsfw posts.
+      .then( () => new Promise( (resolve, reject) => {
+          userCanDisplayNSFWPosts(req)
+            .then( displayNSFWPosts => {
+              opts.nsfw = displayNSFWPosts;
+              return resolve();
+            })
+            .catch(reject);
+      }))
+      .then( () => new Promise( (resolve, reject) => {
+        const validValues = opts.fetchOnlyflaggedPosts ? VALID_SORT_BY_MOD_VALUES : VALID_SORT_BY_USER_VALUES;
+
+        if (validValues.indexOf(opts.sortBy) === -1) {
+          return error.BadRequest(res, 'Invalid sortBy parameter');
         }
-      });
-    }).then(function () {
-      return new Promise(function(resolve, reject) {
-        if(flag) {
-          // ensure valid sortBy param supplied for fetching flagged posts
-          if(['date', 'branch_rules', 'site_rules', 'wrong_type', 'nsfw'].indexOf(sortBy) == -1) {
-            return error.BadRequest(res, 'Invalid sortBy parameter');
-          }
-          // if requesting flagged posts ensure user is authenticated and is a mod
-          if(!req.user) {
+
+        if (opts.fetchOnlyflaggedPosts) {          
+          if (!req.user) {
             return error.Forbidden(res);
-          } else {
-            ACL.validateRole(ACL.Roles.Moderator, req.params.branchid)(req, res, resolve);
           }
-        } else {
-          // ensure valid sortBy param supplied for fetching normal posts
-          if(['date', 'points', 'comment_count'].indexOf(sortBy) == -1) {
-            return error.BadRequest(res, 'Invalid sortBy parameter');
-          } else {
-            resolve();
-          }
+
+          // User must be a mod.
+          ACL.validateRole(ACL.Roles.Moderator, req.params.branchid)(req, res, resolve);
         }
+        else {
+          return resolve();
+        }
+      }))
+      .then( () => {
+        const post = opts.fetchOnlyflaggedPosts ? new FlaggedPost() : new Post();
+        return post.findByBranch(req.params.branchid, opts.timeafter, opts.nsfw, opts.sortBy, opts.stat, opts.postType, lastPost);
+      })
+      .then( results => {
+        console.log('-----------------')
+        console.log(results)
+        console.log('-----------------')
+        let promises = [];
+        posts = results;
+        
+        // fetch post data for each post
+        for (let i = 0; i < posts.length; i++) {
+          const postdata = new PostData();
+          promises.push(postdata.findById(posts[i].id));
+          postDatas.push(postdata);
+        }
+
+        return Promise.all(promises);
+      })
+      .then( () => {
+        let promises = [];
+        for (let i = 0; i < posts.length; i++) {
+          // attach post data to each post
+          posts[i].data = postDatas[i].data;
+          // fetch each post's signed image url and attach it to the postimage object
+          promises.push(new Promise( (resolve, reject) => {
+            new PostImage().findById(posts[i].id)
+              .then( postimage => {
+                aws.s3Client.getSignedUrl('getObject', {
+                  Bucket: fs.Bucket.PostImagesResized,
+                  Key: `${postimage.id}-640.${postimage.extension}`
+                }, (err, url) => {
+                  if (err) {
+                    return reject(err);
+                  }
+
+                  return resolve(url);
+                });
+              }, err => {
+                if (err) {
+                  return reject();
+                }
+
+                return resolve('');
+              });
+          }));
+        }
+
+        return Promise.all(promises);
+      })
+      .then( urls => {
+        let promises = [];
+
+        for (let i = 0; i < posts.length; i++) {
+          // attach post image url to each post
+          posts[i].profileUrl = urls[i];
+          // fetch each post's signed image url and attach it to the postimage object
+          promises.push(new Promise( (resolve, reject) => {
+            new PostImage().findById(posts[i].id)
+              .then( postimage => {
+                aws.s3Client.getSignedUrl('getObject', {
+                  Bucket: fs.Bucket.PostImagesResized,
+                  Key: `${postimage.id}-200.${postimage.extension}`
+                }, (err, url) => {
+                  if (err) {
+                    return reject(err);
+                  }
+
+                  return resolve(url);
+                });
+              }, err => {
+                if (err) {
+                  return reject();
+                }
+
+                return resolve('');
+              });
+          }));
+        }
+
+        return Promise.all(promises);
+      })
+      .then( urls => {
+        // attach post image thumbnail url to each post
+        for (let i = 0; i < posts.length; i++) {
+          posts[i].profileUrlThumb = urls[i];
+        }
+
+        return success.OK(res, posts);
+      })
+      .catch( err => {
+        console.error('Error fetching posts:', err);
+        return error.InternalServerError(res);
       });
-    }).then(function() {
-      // ind/local/global stats [if normal posts]
-      var stat = req.query.stat;
-      if(!req.query.stat) {
-        stat = 'individual';
-      }
-      return (flag ? new FlaggedPost() : new Post()).findByBranch(req.params.branchid, timeafter, nsfw, sortBy, stat, postType, lastPost);
-    }).then(function(results) {
-      posts = results;
-      var promises = [];
-      // fetch post data for each post
-      for(var i = 0; i < posts.length; i++) {
-        var postdata = new PostData();
-        promises.push(postdata.findById(posts[i].id));
-        postDatas.push(postdata);
-      }
-      return Promise.all(promises);
-    }).then(function() {
-      var promises = [];
-      for(var i = 0; i < posts.length; i++) {
-        // attach post data to each post
-        posts[i].data = postDatas[i].data;
-        // fetch each post's signed image url and attach it to the postimage object
-        promises.push(new Promise(function(resolve, reject) {
-          new PostImage().findById(posts[i].id).then(function(postimage) {
-            aws.s3Client.getSignedUrl('getObject', {
-              Bucket: fs.Bucket.PostImagesResized,
-              Key: postimage.id + '-640.' + postimage.extension
-            }, function(err, url) {
-              if(err) reject(err);
-              resolve(url);
-            });
-          }, function(err) {
-            if(err) reject();
-            resolve('');
-          });
-        }));
-      }
-      return Promise.all(promises);
-    }).then(function(urls) {
-      var promises = [];
-      for(var i = 0; i < posts.length; i++) {
-        // attach post image url to each post
-        posts[i].profileUrl = urls[i];
-        // fetch each post's signed image url and attach it to the postimage object
-        promises.push(new Promise(function(resolve, reject) {
-          new PostImage().findById(posts[i].id).then(function(postimage) {
-            aws.s3Client.getSignedUrl('getObject', {
-              Bucket: fs.Bucket.PostImagesResized,
-              Key: postimage.id + '-200.' + postimage.extension
-            }, function(err, url) {
-              if(err) reject(err);
-              resolve(url);
-            });
-          }, function(err) {
-            if(err) reject();
-            resolve('');
-          });
-        }));
-      }
-      return Promise.all(promises);
-    }).then(function(urls) {
-      // attach post image thumbnail url to each post
-      for(var i = 0; i < posts.length; i++) {
-        posts[i].profileUrlThumb = urls[i];
-      }
-      return success.OK(res, posts);
-    }).catch(function(err) {
-      console.error("Error fetching posts:", err);
-      return error.InternalServerError(res);
-    });
   },
+
   put: function(req, res) {
     if(!req.params.branchid) {
       return error.BadRequest(res, 'Missing branchid');

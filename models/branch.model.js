@@ -1,16 +1,18 @@
 'use strict';
 
-var Model = require('./model.js');
-var db = require('../config/database.js');
-var aws = require('../config/aws.js');
-var validate = require('./validate.js');
+
+const aws = require('../config/aws');
+const db = require('../config/database');
+const Model = require('./model');
+const validate = require('./validate');
 
 var Branch = function(data) {
   this.config = {
+    keys: db.Keys.Branches,
     schema: db.Schema.Branch,
-    table: db.Table.Branches,
-    keys: db.Keys.Branches
+    table: db.Table.Branches
   };
+
   this.data = this.sanitize(data);
 };
 
@@ -18,72 +20,101 @@ var Branch = function(data) {
 Branch.prototype = Object.create(Model.prototype);
 Branch.prototype.constructor = Branch;
 
+// Get a branch by its id from the db, and
+// instantiate the object with this data.
+// Rejects promise with true if database error, with false if no user found.
+Branch.prototype.findById = function (id) {
+  const self = this;
+
+  return new Promise( (resolve, reject) => {
+    aws.dbClient.get({
+      Key: { id },
+      TableName: self.config.table
+    }, (err, data) => {
+      console.log(err, data)
+      if (err) {
+        return reject(err);
+      }
+      
+      if (!data || !data.Item) {
+        return reject();
+      }
+
+      self.data = data.Item;
+      
+      return resolve();
+    });
+  });
+};
+
 // Validate the properties specified in 'properties' on the branch object,
 // returning an array of any invalid ones
-Branch.prototype.validate = function(properties) {
-  var invalids = [];
+Branch.prototype.validate = function (properties) {
+  let invalids = [];
 
   // ensure id exists and is of correct length
-  if(properties.indexOf('id') > -1) {
-    if(!validate.branchid(this.data.id)) {
+  if (properties.indexOf('id') !== -1) {
+    if (!validate.branchid(this.data.id)) {
       invalids.push('id');
     }
   }
 
   // ensure name exists and is of correct length
-  if(properties.indexOf('name') > -1) {
-    if(!this.data.name || this.data.name.length < 1 || this.data.name.length > 30) {
+  if (properties.indexOf('name') !== -1) {
+    if (!this.data.name || this.data.name.length < 1 || this.data.name.length > 30) {
       invalids.push('name');
     }
   }
 
   // ensure creator is valid username
-  if(properties.indexOf('creator') > -1) {
-    if(!validate.username(this.data.creator)) {
+  if (properties.indexOf('creator') !== -1) {
+    if (!validate.username(this.data.creator)) {
       invalids.push('creator');
     }
   }
 
   // ensure creation date is valid
-  if(properties.indexOf('date') > -1) {
-    if(!validate.date(this.data.date)) {
+  if (properties.indexOf('date') !== -1) {
+    if (!validate.date(this.data.date)) {
       invalids.push('date');
     }
   }
 
   // ensure valid parentid
-  if(properties.indexOf('parentid') > -1) {
-    if(!validate.branchid(this.data.parentid)) {
+  if (properties.indexOf('parentid') !== -1) {
+    if (!validate.branchid(this.data.parentid)) {
       invalids.push('parentid');
     }
   }
 
   // ensure description is of valid length
-  if(properties.indexOf('description') > -1) {
-    if(!this.data.description || this.data.description.length > 10000 || this.data.description.length < 1) {
+  if (properties.indexOf('description') !== -1) {
+    if (!this.data.description || this.data.description.length > 10000 || this.data.description.length < 1) {
       invalids.push('description');
     }
   }
 
   // ensure rules text is of valid length
-  if(properties.indexOf('rules') > -1) {
-    if(!this.data.rules || this.data.rules.length > 10000 || this.data.rules.length < 1) {
+  if (properties.indexOf('rules') !== -1) {
+    if (!this.data.rules || this.data.rules.length > 10000 || this.data.rules.length < 1) {
       invalids.push('rules');
     }
   }
 
-  if(properties.indexOf('post_count') > -1) {
-    if(isNaN(this.data.post_count)) {
+  if (properties.indexOf('post_count') !== -1) {
+    if (isNaN(this.data.post_count)) {
       invalids.push('post_count');
     }
   }
-  if(properties.indexOf('post_points') > -1) {
-    if(isNaN(this.data.post_points)) {
+  
+  if (properties.indexOf('post_points') !== -1) {
+    if (isNaN(this.data.post_points)) {
       invalids.push('post_points');
     }
   }
-  if(properties.indexOf('post_comments') > -1) {
-    if(isNaN(this.data.post_comments)) {
+
+  if (properties.indexOf('post_comments') !== -1) {
+    if (isNaN(this.data.post_comments)) {
       invalids.push('post_comments');
     }
   }
@@ -91,27 +122,7 @@ Branch.prototype.validate = function(properties) {
   return invalids;
 };
 
-// Get a branch by its id from the db, and
-// instantiate the object with this data.
-// Rejects promise with true if database error, with false if no user found.
-Branch.prototype.findById = function(id) {
-  var self = this;
-  return new Promise(function(resolve, reject) {
-    aws.dbClient.get({
-      TableName: self.config.table,
-      Key: {
-        'id': id
-      }
-    }, function(err, data) {
-      if(err) return reject(err);
-      if(!data || !data.Item) {
-        return reject();
-      }
-      self.data = data.Item;
-      return resolve();
-    });
-  });
-};
+
 
 // Get root branches using the GSI 'parentid', which will be set to 'root'.
 // TODO: this has an upper limit on the number of results; if so, a LastEvaluatedKey

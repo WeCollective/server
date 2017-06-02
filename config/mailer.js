@@ -30,6 +30,8 @@ module.exports = {
       req.path = '/v3/contactdb/recipients';
 
       sendgrid.API(req, (err, res) => {
+        console.log(res.body)
+
         if (err || res.body.error_count > 0) {
           return reject();
         }

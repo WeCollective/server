@@ -1,22 +1,39 @@
 'use strict';
 
-var aws = require('../../config/aws.js');
-var fs = require('../../config/filestorage.js');
-var mailer = require('../../config/mailer.js');
-
-var Branch = require('../../models/branch.model.js');
-var BranchImage = require('../../models/branch-image.model.js');
-var Mod = require('../../models/mod.model.js');
-var ModLogEntry = require('../../models/mod-log-entry.model.js');
-var User = require('../../models/user.model.js');
-var SubBranchRequest = require('../../models/subbranch-request.model.js');
-var Tag = require('../../models/tag.model.js');
+const aws = require('../../config/aws');
+const Branch = require('../../models/branch.model');
+const BranchImage = require('../../models/branch-image.model');
 const Constant = require('../../models/constant');
-
-var success = require('../../responses/successes.js');
-var error = require('../../responses/errors.js');
+const error = require('../../responses/errors');
+const fs = require('../../config/filestorage');
+const mailer = require('../../config/mailer');
+const Mod = require('../../models/mod.model');
+const ModLogEntry = require('../../models/mod-log-entry.model');
+const SubBranchRequest = require('../../models/subbranch-request.model');
+const success = require('../../responses/successes');
+const Tag = require('../../models/tag.model');
+const User = require('../../models/user.model');
 
 module.exports = {
+  get: (req, res) => {
+    if (!req.params.branchid) {
+      return error.BadRequest(res, 'Missing branchid');
+    }
+
+    const branch = new Branch();
+
+    branch.findById(req.params.branchid)
+      .then( () => {
+        return success.OK(res, branch.data);
+      }, err => {
+        if (err) {
+          return error.InternalServerError(res);
+        }
+
+        return error.NotFound(res);
+      });
+  },
+
   post: function(req, res) {
     if(!req.user.username) {
       console.error("No username found in session.");
@@ -146,21 +163,7 @@ module.exports = {
       });
     });
   },
-  get: function(req, res) {
-    if(!req.params.branchid) {
-      return error.BadRequest(res, 'Missing branchid');
-    }
-
-    var branch = new Branch();
-    branch.findById(req.params.branchid).then(function() {
-      return success.OK(res, branch.data);
-    }, function(err) {
-      if(err) {
-        return error.InternalServerError(res);
-      }
-      return error.NotFound(res);
-    });
-  },
+  
   put: function(req, res) {
     if(!req.params.branchid) {
       return error.BadRequest(res, 'Missing branchid');

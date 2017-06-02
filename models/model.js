@@ -36,46 +36,6 @@ Model.prototype.set = function (name, value) {
   }
 };
 
-// Update the existing database entry according to the model data
-// The key should be the Primary key values identifying the object to be updated
-Model.prototype.update = function (Key) {
-  const self = this;
-
-  return new Promise( (resolve, reject) => {
-    // Construct key to identify the entry to be updated if it isnt provided
-    if (!Key) {
-      Key = {};
-      Key[self.config.keys.primary] = self.data[self.config.keys.primary];
-      if (self.config.keys.sort) {
-        Key[self.config.keys.sort] = self.data[self.config.keys.sort];
-      }
-    }
-
-    // Update the entry with values which have changed in the model
-    let AttributeUpdates = {};
-    for (let i = 0; i < self.dirtys.length; i++) {
-      const name = self.dirtys[i];
-      AttributeUpdates[name] = {
-        Action: 'PUT',
-        Value: self.data[name]
-      }
-    }
-
-    // Perform the update
-    aws.dbClient.update({
-      AttributeUpdates,
-      Key,
-      TableName: self.config.table
-    }, (err, data) => {
-      if (err) {
-        return reject(err);
-      }
-      self.dirtys.splice(0, self.dirtys.length); // clear dirtys array
-      return resolve();
-    });
-  });
-};
-
 // Save a new database entry according to the model data
 Model.prototype.save = function () {
   const self = this;
@@ -117,6 +77,46 @@ Model.prototype.delete = function (Key) {
         return reject(err);
       }
       self.data = self.sanitize({});
+      return resolve();
+    });
+  });
+};
+
+// Update the existing database entry according to the model data
+// The key should be the Primary key values identifying the object to be updated
+Model.prototype.update = function (Key) {
+  const self = this;
+
+  return new Promise( (resolve, reject) => {
+    // Construct key to identify the entry to be updated if it isnt provided
+    if (!Key) {
+      Key = {};
+      Key[self.config.keys.primary] = self.data[self.config.keys.primary];
+      if (self.config.keys.sort) {
+        Key[self.config.keys.sort] = self.data[self.config.keys.sort];
+      }
+    }
+
+    // Update the entry with values which have changed in the model
+    let AttributeUpdates = {};
+    for (let i = 0; i < self.dirtys.length; i++) {
+      const name = self.dirtys[i];
+      AttributeUpdates[name] = {
+        Action: 'PUT',
+        Value: self.data[name]
+      }
+    }
+
+    // Perform the update
+    aws.dbClient.update({
+      AttributeUpdates,
+      Key,
+      TableName: self.config.table
+    }, err => {
+      if (err) {
+        return reject(err);
+      }
+      self.dirtys.splice(0, self.dirtys.length); // clear dirtys array
       return resolve();
     });
   });

@@ -69,9 +69,8 @@ ACL.Schema = (role, model) => {
         return {};
     }
   }
-  else {
-    return {};
-  }
+
+  return {};
 };
 
 // Middleware to ensure a user is logged in
@@ -80,6 +79,7 @@ function isLoggedIn(req, res, next) {
     req.ACLRole = ACL.Roles.AuthenticatedUser;
     return next();
   }
+  
   return error.Forbidden(res);
 }
 
@@ -89,12 +89,13 @@ function isLoggedInAsSelf(req, res, next, username) {
     req.ACLRole = ACL.Roles.Self;
     return next();
   }
+
   return error.Forbidden(res);
 }
 
 // Attach the specified role to the request body if the role's conditions are met
 ACL.validateRole = (role, resourceId) => {
-  return function(req, res, next) {
+  return (req, res, next) => {
     const mod = new Mod();
 
     switch(role) {
@@ -121,59 +122,67 @@ ACL.validateRole = (role, resourceId) => {
         }
 
         // Moderator must be one of the mods of the specified branch
-        mod.findByBranch(resourceId).then( mods => {
-          if (!mods) {
-            console.error('No mods object received.');
-            return error.InternalServerError(res);
-          }
-
-          for (let i = 0; i < mods.length; i++) {
-            if (mods[i].username == req.user.username) {
-              req.ACLRole = ACL.Roles.Moderator;
-              return next();
+        mod.findByBranch(resourceId)
+          .then( mods => {
+            if (!mods) {
+              console.error(`No mods object received.`);
+              return error.InternalServerError(res);
             }
-          }
-          return error.Forbidden(res);
-        }, err => {
-          if (err) {
-            console.error('Error fetching branch mods: ', err);
-            return error.InternalServerError(res);
-          }
-          return error.NotFound(res);
-        });
+
+            for (let i = 0; i < mods.length; i++) {
+              if (mods[i].username == req.user.username) {
+                req.ACLRole = ACL.Roles.Moderator;
+                return next();
+              }
+            }
+
+            return error.Forbidden(res);
+          })
+          .catch( err => {
+            if (err) {
+              console.error(`Error fetching branch mods:`, err);
+              return error.InternalServerError(res);
+            }
+
+            return error.NotFound(res);
+          });
         break;
 
       case ACL.Roles.Admin:
-        // Admin must be logged in
+        // Admin must be logged in.
         if (!req.isAuthenticated()) {
           return error.Forbidden(res);
         }
 
         // Admin is a moderator of the root branch
-        mod.findByBranch('root').then( mods => {
-          if (!mods) {
-            console.error('No mods object received.');
-            return error.InternalServerError(res);
-          }
-          
-          for (let i = 0; i < mods.length; i++) {
-            if (mods[i].username == req.user.username) {
-              req.ACLRole = ACL.Roles.Admin;
-              return next();
+        mod.findByBranch('root')
+          .then( mods => {
+            if (!mods) {
+              console.error(`No mods object received.`);
+              return error.InternalServerError(res);
             }
-          }
-          return error.Forbidden(res);
-        }, err => {
-          if (err) {
-            console.error('Error fetching branch mods:', err);
-            return error.InternalServerError(res);
-          }
-          return error.NotFound(res);
-        });
+            
+            for (let i = 0; i < mods.length; i++) {
+              if (mods[i].username == req.user.username) {
+                req.ACLRole = ACL.Roles.Admin;
+                return next();
+              }
+            }
+
+            return error.Forbidden(res);
+          })
+          .catch( err => {
+            if (err) {
+              console.error(`Error fetching branch mods:`, err);
+              return error.InternalServerError(res);
+            }
+
+            return error.NotFound(res);
+          });
         break;
 
       default:
-        console.error('Unknown ACL Role');
+        console.error(`Unknown ACL Role`);
         return;
     }
   };

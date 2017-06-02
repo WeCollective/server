@@ -176,9 +176,9 @@ const TableKeys = {
   Branches: {
     globalIndexes: [
       'parentid-date-index',
-      'parentid-post_comments-index',
       'parentid-post_count-index',
-      'parentid-post_points-index'
+      'parentid-post_points-index',
+      'parentid-post_comments-index'
     ],
     primary: 'id',
     sort: null
@@ -191,8 +191,8 @@ const TableKeys = {
 
   Comments: {
     globalIndexes: [
-      'postid-date-index',
       'postid-individual-index',
+      'postid-date-index',
       'postid-replies-index'
     ],
     primary: 'id',
@@ -211,11 +211,11 @@ const TableKeys = {
 
   FlaggedPosts: {
     globalIndexes: [
-      'branchid-branch_rules_count-index',
       'branchid-date-index',
-      'branchid-nsfw_count-index',
+      'branchid-branch_rules_count-index',
       'branchid-site_rules_count-index',
-      'branchid-wrong_type_count-index'
+      'branchid-wrong_type_count-index',
+      'branchid-nsfw_count-index'
     ],
     primary: 'id',
     sort: 'branchid'
@@ -254,11 +254,11 @@ const TableKeys = {
 
   Posts: {
     globalIndexes: [
-      'branchid-comment_count-index',
-      'branchid-date-index',
-      'branchid-global-index',
       'branchid-individual-index',
-      'branchid-local-index'
+      'branchid-local-index',
+      'branchid-date-index',
+      'branchid-comment_count-index',
+      'branchid-global-index'
     ],
     primary: 'id',
     sort: 'branchid'

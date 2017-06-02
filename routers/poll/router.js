@@ -1,14 +1,13 @@
 'use strict';
 
-var express = require('express');
-var router = express.Router();
-var ACL = require('../../config/acl.js');
+const express = require('express');
+const router = express.Router();
+const ACL = require('../../config/acl');
+const error = require('../../responses/errors');
+const success = require('../../responses/successes');
 
-var success = require('../../responses/successes.js');
-var error = require('../../responses/errors.js');
-
-module.exports = function(app, passport) {
-  var controller = require('./poll.controller.js');
+module.exports = (app, passport) => {
+  const controller = require('./controller');
 
   router.route('/:postid/answer')
     /**

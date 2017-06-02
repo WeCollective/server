@@ -315,9 +315,11 @@ module.exports = {
         return mailer.addContact(user.data, true);
       })
       .then( () => {
+        console.log('SUCCESS 2');
         return success.OK(res);
       })
       .catch( () => {
+        console.log('ERROR 3');
         console.error(`Error updating user.`);
         return error.InternalServerError(res);
       });

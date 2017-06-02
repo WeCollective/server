@@ -1,14 +1,13 @@
 'use strict';
 
-var express = require('express');
-var router = express.Router();
-var ACL = require('../../config/acl.js');
+const express = require('express');
+const router = express.Router();
+const ACL = require('../../config/acl');
+const error = require('../../responses/errors');
+const success = require('../../responses/successes');
 
-var success = require('../../responses/successes.js');
-var error = require('../../responses/errors.js');
-
-module.exports = function(app, passport) {
-  var controller = require('./post.controller.js');
+module.exports = (app, passport) => {
+  const controller = require('./controller');
 
   router.route('/')
     /**
@@ -115,7 +114,7 @@ module.exports = function(app, passport) {
      * @apiUse NotFound
      * @apiUse InternalServerError
      */
-    .get(ACL.validateRole(ACL.Roles.AuthenticatedUser), function(req, res) {
+    .get(ACL.validateRole(ACL.Roles.AuthenticatedUser), (req, res) => {
       controller.getPictureUploadUrl(req, res);
     });
 
@@ -141,7 +140,7 @@ module.exports = function(app, passport) {
      * @apiUse NotFound
      * @apiUse InternalServerError
      */
-    .get(function(req, res) {
+    .get( (req, res) => {
       controller.getPicture(req, res, false);
     });
 
@@ -167,7 +166,7 @@ module.exports = function(app, passport) {
      * @apiUse NotFound
      * @apiUse InternalServerError
      */
-    .get(function(req, res) {
+    .get( (req, res) => {
       controller.getPicture(req, res, true);
     });
 
@@ -326,12 +325,14 @@ module.exports = function(app, passport) {
      * @apiUse NotFound
      * @apiUse InternalServerError
      */
-    .put(ACL.validateRole(ACL.Roles.AuthenticatedUser), function(req, res) {
-      if(req.body.vote) {
+    .put(ACL.validateRole(ACL.Roles.AuthenticatedUser), (req, res) => {
+      if (req.body.vote) {
         controller.voteComment(req, res);
-      } else if(req.body.text) {
+      }
+      else if (req.body.text) {
         controller.putComment(req, res);
-      } else {
+      }
+      else {
         return error.BadRequest(res, 'Must specify either vote or text in body');
       }
     });

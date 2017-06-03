@@ -4,6 +4,8 @@
   "description": "The RESTful API for WECO.",
   "main": "server.js",
   "scripts": {
+    "deploy:dev": "eb deploy api-dev --profile weco-iam",
+    "deploy:production": "eb deploy api-prod --profile weco-iam",
     "test": "mocha tests/test.js",
     "start": "node server.js"
   },

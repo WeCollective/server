@@ -136,7 +136,7 @@ module.exports = grunt => {
   grunt.registerTask('test', ['jshint', 'mochaTest']);
   grunt.registerTask('serve', ['apidoc', 'jshint', 'preprocess:local', 'concurrent:serve']);
   grunt.registerTask('publish', ['apidoc', 'test', 'preprocess:production', 'exec:commit', 'exec:publish']);
-  grunt.registerTask('deploy:development', ['apidoc', 'test', 'preprocess:development', 'exec:commit', 'exec:deploy:development']);
+  grunt.registerTask('deploy:dev', ['apidoc', 'test', 'preprocess:development', 'exec:commit', 'exec:deploy:development']);
   grunt.registerTask('deploy:production', ['publish', 'exec:deploy:production']);
   grunt.registerTask('default', ['serve']);
 };

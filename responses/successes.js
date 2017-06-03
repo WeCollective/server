@@ -14,7 +14,7 @@ module.exports.OK = (res, data) => {
   
   let success = { message: 'Success' };
   
-  if (data) {
+  if (data !== undefined) {
     success.data = data;
   }
 

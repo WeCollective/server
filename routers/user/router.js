@@ -208,15 +208,18 @@ module.exports = (app, passport) => {
      * @apiUse InternalServerError
      * @apiUse NotFound
      */
-    .get(function(req, res) {
-      if(req.isAuthenticated() && req.user) {
-        if(req.user.username == req.params.username) {
+    .get( (req, res) => {
+      if (req.isAuthenticated() && req.user) {
+        if (req.user.username === req.params.username) {
           ACL.attachRole(ACL.Roles.Self)(req, res);
-        } else {
+        }
+        else {
           ACL.attachRole(ACL.Roles.AuthenticatedUser)(req, res);
         }
+
         controller.get(req, res);
-      } else {
+      }
+      else {
         ACL.attachRole(ACL.Roles.Guest)(req, res);
         controller.get(req, res);
       }
@@ -242,7 +245,7 @@ module.exports = (app, passport) => {
      * @apiUse Forbidden
      * @apiUse InternalServerError
      */
-    .get(ACL.validateRole(ACL.Roles.AuthenticatedUser), ACL.attachRole(ACL.Roles.Self), function(req, res) {
+    .get(ACL.validateRole(ACL.Roles.AuthenticatedUser), ACL.attachRole(ACL.Roles.Self), (req, res) => {
       controller.getPictureUploadUrl(req, res, 'picture');
     });
 
@@ -266,7 +269,7 @@ module.exports = (app, passport) => {
      * @apiUse Forbidden
      * @apiUse InternalServerError
      */
-    .get(ACL.validateRole(ACL.Roles.AuthenticatedUser), ACL.attachRole(ACL.Roles.Self), function(req, res) {
+    .get(ACL.validateRole(ACL.Roles.AuthenticatedUser), ACL.attachRole(ACL.Roles.Self), (req, res) => {
       controller.getPictureUploadUrl(req, res, 'cover');
     });
 
@@ -314,7 +317,7 @@ module.exports = (app, passport) => {
      * @apiUse Forbidden
      * @apiUse InternalServerError
      */
-    .get(ACL.validateRole(ACL.Roles.AuthenticatedUser), ACL.attachRole(ACL.Roles.Self), function(req, res) {
+    .get(ACL.validateRole(ACL.Roles.AuthenticatedUser), ACL.attachRole(ACL.Roles.Self), (req, res) => {
       controller.getPicture(req, res, 'picture', true);
     });
 
@@ -338,7 +341,7 @@ module.exports = (app, passport) => {
      * @apiUse Forbidden
      * @apiUse InternalServerError
      */
-    .get(ACL.validateRole(ACL.Roles.AuthenticatedUser), ACL.attachRole(ACL.Roles.Self), function(req, res) {
+    .get(ACL.validateRole(ACL.Roles.AuthenticatedUser), ACL.attachRole(ACL.Roles.Self), (req, res) => {
       controller.getPicture(req, res, 'cover', false);
     });
 
@@ -362,7 +365,7 @@ module.exports = (app, passport) => {
      * @apiUse Forbidden
      * @apiUse InternalServerError
      */
-    .get(ACL.validateRole(ACL.Roles.AuthenticatedUser), ACL.attachRole(ACL.Roles.Self), function(req, res) {
+    .get(ACL.validateRole(ACL.Roles.AuthenticatedUser), ACL.attachRole(ACL.Roles.Self), (req, res) => {
       controller.getPicture(req, res, 'cover', true);
     });
 
@@ -389,15 +392,18 @@ module.exports = (app, passport) => {
      * @apiUse Forbidden
      * @apiUse InternalServerError
      */
-    .get(function(req, res) {
-      if(req.isAuthenticated() && req.user) {
-        if(req.user.username == req.params.username) {
+    .get( (req, res) => {
+      if (req.isAuthenticated() && req.user) {
+        if (req.user.username === req.params.username) {
           ACL.attachRole(ACL.Roles.Self)(req, res);
-        } else {
+        }
+        else {
           ACL.attachRole(ACL.Roles.AuthenticatedUser)(req, res);
         }
+
         controller.getPicture(req, res, 'picture', false);
-      } else {
+      }
+      else {
         ACL.attachRole(ACL.Roles.Guest)(req, res);
         controller.getPicture(req, res, 'picture', false);
       }
@@ -426,15 +432,18 @@ module.exports = (app, passport) => {
      * @apiUse Forbidden
      * @apiUse InternalServerError
      */
-    .get(function(req, res) {
-      if(req.isAuthenticated() && req.user) {
-        if(req.user.username == req.params.username) {
+    .get( (req, res) => {
+      if (req.isAuthenticated() && req.user) {
+        if (req.user.username === req.params.username) {
           ACL.attachRole(ACL.Roles.Self)(req, res);
-        } else {
+        }
+        else {
           ACL.attachRole(ACL.Roles.AuthenticatedUser)(req, res);
         }
+
         controller.getPicture(req, res, 'picture', true);
-      } else {
+      }
+      else {
         ACL.attachRole(ACL.Roles.Guest)(req, res);
         controller.getPicture(req, res, 'picture', true);
       }
@@ -463,15 +472,18 @@ module.exports = (app, passport) => {
      * @apiUse Forbidden
      * @apiUse InternalServerError
      */
-    .get(function(req, res) {
-      if(req.isAuthenticated() && req.user) {
-        if(req.user.username == req.params.username) {
+    .get( (req, res) => {
+      if (req.isAuthenticated() && req.user) {
+        if (req.user.username === req.params.username) {
           ACL.attachRole(ACL.Roles.Self)(req, res);
-        } else {
+        }
+        else {
           ACL.attachRole(ACL.Roles.AuthenticatedUser)(req, res);
         }
+
         controller.getPicture(req, res, 'cover', false);
-      } else {
+      }
+      else {
         ACL.attachRole(ACL.Roles.Guest)(req, res);
         controller.getPicture(req, res, 'cover', false);
       }
@@ -500,15 +512,18 @@ module.exports = (app, passport) => {
      * @apiUse Forbidden
      * @apiUse InternalServerError
      */
-    .get(function(req, res) {
-      if(req.isAuthenticated() && req.user) {
-        if(req.user.username == req.params.username) {
+    .get( (req, res) => {
+      if (req.isAuthenticated() && req.user) {
+        if (req.user.username === req.params.username) {
           ACL.attachRole(ACL.Roles.Self)(req, res);
-        } else {
+        }
+        else {
           ACL.attachRole(ACL.Roles.AuthenticatedUser)(req, res);
         }
+
         controller.getPicture(req, res, 'cover', true);
-      } else {
+      }
+      else {
         ACL.attachRole(ACL.Roles.Guest)(req, res);
         controller.getPicture(req, res, 'cover', true);
       }
@@ -539,7 +554,7 @@ module.exports = (app, passport) => {
      * @apiUse InternalServerError
      * @apiUse NotFound
      */
-    .get(ACL.validateRole(ACL.Roles.AuthenticatedUser), function(req, res, next) {
+    .get(ACL.validateRole(ACL.Roles.AuthenticatedUser), (req, res, next) => {
       ACL.validateRole(ACL.Roles.Self, req.params.username)(req, res, next);
     }, controller.getNotifications)
 
@@ -559,7 +574,7 @@ module.exports = (app, passport) => {
      * @apiUse InternalServerError
      * @apiUse NotFound
      */
-    .put(ACL.validateRole(ACL.Roles.AuthenticatedUser), function(req, res, next) {
+    .put(ACL.validateRole(ACL.Roles.AuthenticatedUser), (req, res, next) => {
       ACL.validateRole(ACL.Roles.Self, req.params.username)(req, res, next);
     }, controller.subscribeToNotifications)
 
@@ -599,7 +614,7 @@ module.exports = (app, passport) => {
      * @apiUse InternalServerError
      * @apiUse NotFound
      */
-    .put(ACL.validateRole(ACL.Roles.AuthenticatedUser), function(req, res, next) {
+    .put(ACL.validateRole(ACL.Roles.AuthenticatedUser), (req, res, next) => {
       ACL.validateRole(ACL.Roles.Self, req.params.username)(req, res, next);
     }, controller.putNotification);
 
@@ -693,15 +708,18 @@ module.exports = (app, passport) => {
      * @apiUse InternalServerError
      * @apiUse NotFound
      */
-    .get(function(req, res) {
-      if(req.isAuthenticated() && req.user) {
-        if(req.user.username == req.params.username || req.params.username == 'me') {
+    .get( (req, res) => {
+      if (req.isAuthenticated() && req.user) {
+        if (req.user.username === req.params.username || 'me' === req.params.username) {
           ACL.attachRole(ACL.Roles.Self)(req, res);
-        } else {
+        }
+        else {
           ACL.attachRole(ACL.Roles.AuthenticatedUser)(req, res);
         }
+
         controller.getFollowedBranches(req, res);
-      } else {
+      }
+      else {
         ACL.attachRole(ACL.Roles.Guest)(req, res);
         controller.getFollowedBranches(req, res);
       }
@@ -723,7 +741,7 @@ module.exports = (app, passport) => {
      * @apiUse InternalServerError
      * @apiUse NotFound
      */
-    .post(ACL.validateRole(ACL.Roles.AuthenticatedUser), function(req, res, next) {
+    .post(ACL.validateRole(ACL.Roles.AuthenticatedUser), (req, res, next) => {
       ACL.validateRole(ACL.Roles.Self, req.params.username)(req, res, next);
     }, controller.followBranch)
     /**
@@ -743,7 +761,7 @@ module.exports = (app, passport) => {
      * @apiUse InternalServerError
      * @apiUse NotFound
      */
-    .delete(ACL.validateRole(ACL.Roles.AuthenticatedUser), function(req, res, next) {
+    .delete(ACL.validateRole(ACL.Roles.AuthenticatedUser), (req, res, next) => {
       ACL.validateRole(ACL.Roles.Self, req.params.username)(req, res, next);
     }, controller.unfollowBranch);
 

@@ -129,9 +129,6 @@ module.exports = {
         return post.findByBranch(req.params.branchid, opts.timeafter, opts.nsfw, opts.sortBy, opts.stat, opts.postType, lastPost);
       })
       .then( results => {
-        console.log('-----------------')
-        console.log(results)
-        console.log('-----------------')
         let promises = [];
         posts = results;
         

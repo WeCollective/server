@@ -21,7 +21,7 @@ Notification.prototype.constructor = Notification;
 
 // Validate the properties specified in 'properties' on the Notification object,
 // returning an array of any invalid ones
-Notification.prototype.validate = function(properties) {
+Notification.prototype.validate = function (properties) {
   var invalids = [];
 
   // ensure id exists and is of correct length
@@ -87,49 +87,61 @@ Notification.prototype.findById = function(id) {
 };
 
 
-Notification.prototype.findByUsername = function(username, unreadCount, last) {
-  var self = this;
-  var limit = 20;
-  if(last) {
-    var tmp = {
+Notification.prototype.findByUsername = function (username, unreadCount, last) {
+  const self = this;
+  const limit = 20;
+  
+  if (last) {
+    const tmp = {
       id: last.id,
       date: last.date,
       user: last.user
     };
+
     last = tmp;
   }
-  return new Promise(function(resolve, reject) {
-    var options = {
-      TableName: self.config.table,
-      IndexName: self.config.keys.globalIndexes[0],
-      Select: unreadCount ? 'COUNT' : 'ALL_PROJECTED_ATTRIBUTES',
-      KeyConditionExpression: '#user = :username',
+
+  return new Promise( (resolve, reject) => {
+    let options = {
+      // fetch results which come _after_ this
+      ExclusiveStartKey: last || null,
       // date is a reserved dynamodb keyword so must use this alias:
       ExpressionAttributeNames: {
-        "#user": "user"
+        '#user': 'user'
       },
       ExpressionAttributeValues: {
-        ":username": String(username)
+        ':username': String(username)
       },
-      ExclusiveStartKey: last || null,  // fetch results which come _after_ this
-      ScanIndexForward: false   // return results highest first
+      IndexName: self.config.keys.globalIndexes[0],
+      KeyConditionExpression: '#user = :username',
+      // return results highest first
+      ScanIndexForward: false,
+      Select: unreadCount ? 'COUNT' : 'ALL_PROJECTED_ATTRIBUTES',
+      TableName: self.config.table
     };
-    if(unreadCount) {
+
+    if (unreadCount) {
       options.FilterExpression = 'unread = :unread';
       options.ExpressionAttributeValues[':unread'] = true;
     }
-    aws.dbClient.query(options, function(err, data) {
-      if(err) return reject(err);
-      if(unreadCount) {
-        if(!data || !data.Count) {
+
+    aws.dbClient.query(options, (err, data) => {
+      if (err) {
+        return reject(err);
+      }
+
+      if (unreadCount) {
+        if (!data || !data.Count) {
           return resolve(0);
         }
-      } else {
-        if(!data || !data.Items) {
+      }
+      else {
+        if (!data || !data.Items) {
           return reject();
         }
       }
-      var result = data.Items ? data.Items.slice(0, limit) : data.Count;
+
+      const result = data.Items ? data.Items.slice(0, limit) : data.Count;
       return resolve(result);
     });
   });

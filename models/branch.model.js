@@ -31,7 +31,6 @@ Branch.prototype.findById = function (id) {
       Key: { id },
       TableName: self.config.table
     }, (err, data) => {
-      console.log(err, data)
       if (err) {
         return reject(err);
       }

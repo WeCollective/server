@@ -48,10 +48,11 @@ module.exports = {
     const user = new User();
 
     user.delete({ username: req.user.username })
-      .then( () => {
+      .then( _ => {
         req.logout();
         return success.OK(res);
-      }, () => {
+      })
+      .catch( _ => {
         console.error(`Error deleting user from database.`);
         return error.InternalServerError(res);
       });
@@ -83,12 +84,8 @@ module.exports = {
     const branch = new Branch();
 
     branch.findById(req.body.branchid)
-      .then( () => {
-        return follow.save();
-      })
-      .then( () => {
-        return success.OK(res);
-      })
+      .then( _ => follow.save() )
+      .then( _ => success.OK(res) )
       .catch( err => {
         if (err) {
           console.error(`Error following branch:`, err);
@@ -104,10 +101,11 @@ module.exports = {
       const user = new User();
       
       user.findByUsername(username)
-        .then( () => {
+        .then( _ => {
           const sanitized = user.sanitize(user.data, ACL.Schema(req.ACLRole, 'User'));
           return success.OK(res, sanitized);
-        }, err => {
+        })
+        .catch( err => {
           if (err) {
             console.error(`Error fetching user:`, err);
             return error.InternalServerError(res);
@@ -130,7 +128,7 @@ module.exports = {
           var branchIds = _.map(branches, 'branchid');
           return success.OK(res, branchIds);
         })
-        .catch( () => {
+        .catch( _ => {
           if (err) {
             console.error(`Error fetching followed branches:`, err);
             return error.InternalServerError(res);
@@ -159,7 +157,7 @@ module.exports = {
         const notification = new Notification();
         // get the post
         notification.findById(req.query.lastNotificationId)
-          .then( () => {
+          .then( _ => {
             // create lastNotification object
             lastNotification = notification.data;
             return resolve();
@@ -177,16 +175,14 @@ module.exports = {
         return resolve();
       }
     })
-      .then( () => {
-        return new Notification().findByUsername(req.user.username, unreadCount, lastNotification);
-      })
-      .then( notifications => {
-        return success.OK(res, notifications);
-      }, err => {
+      .then( _ => new Notification().findByUsername(req.user.username, unreadCount, lastNotification) )
+      .then( notifications => success.OK(res, notifications) )
+      .catch( err => {
         if (err) {
-          console.error(`Error fetching user notifications: `, err);
+          console.error(`Error fetching user notifications:`, err);
           return error.InternalServerError(res);
         }
+
         return error.NotFound(res);
       });
   },
@@ -227,7 +223,7 @@ module.exports = {
     const image = new UserImage();
 
     image.findByUsername(username, type)
-      .then( () => {
+      .then( _ => {
         aws.s3Client.getSignedUrl('getObject', {
           Bucket: fs.Bucket.UserImagesResized,
           Key: `${image.data.id}-${size}.${image.data.extension}`
@@ -310,16 +306,12 @@ module.exports = {
     }
 
     user.update()
-      .then( () => {
+      .then( _ => {
         // update the SendGrid contact list with the new user data
         return mailer.addContact(user.data, true);
       })
-      .then( () => {
-        console.log('SUCCESS 2');
-        return success.OK(res);
-      })
-      .catch( () => {
-        console.log('ERROR 3');
+      .then( _ => success.OK(res) )
+      .catch( _ => {
         console.error(`Error updating user.`);
         return error.InternalServerError(res);
       });
@@ -341,7 +333,7 @@ module.exports = {
     const notification = new Notification();
 
     notification.findById(req.params.notificationid)
-      .then( () => {
+      .then( _ => {
         // check notification actually belongs to user
         if (notification.data.user !== req.user.username) {
           return error.Forbidden(res);
@@ -351,9 +343,7 @@ module.exports = {
         notification.set('unread', Boolean(req.body.unread));
         return notification.save(req.sessionID);
       })
-      .then( () => {
-        return success.OK(res);
-      })
+      .then( _ => success.OK(res) )
       .catch( err => {
         if (err) {
           console.error(`Error updating notification unread: `, err);
@@ -372,7 +362,7 @@ module.exports = {
     const user = new User();
 
     user.findByUsername(req.params.username)
-      .then( () => {
+      .then( _ => {
         // return error if already verified
         if (user.data.verified) {
           return error.BadRequest(res, 'Account is already verified');
@@ -380,9 +370,7 @@ module.exports = {
 
         return mailer.sendVerification(user.data, user.data.token);
       })
-      .then( () => {
-        return success.OK(res);
-      })
+      .then( _ => success.OK(res) )
       .catch( err => {
         if (err) {
           console.error(`Error resending verification email: `, err);
@@ -405,7 +393,7 @@ module.exports = {
     const user = new User();
     
     user.findByUsername(req.params.username)
-      .then( () => {
+      .then( _ => {
         const token = JSON.parse(user.data.resetPasswordToken);
         
         // check token matches
@@ -440,14 +428,12 @@ module.exports = {
             user.set('resetPasswordToken', null);
             return user.update();
           })
-          .then( () => {
-            return success.OK(res);
-          })
-          .catch( () => {
+          .then( _ => success.OK(res) )
+          .catch( _ => {
             return error.InternalServerError(res);
           });
       })
-      .catch( () => {
+      .catch( _ => {
         if (err) {
           console.error(`Error changing password: `, err);
           return error.InternalServerError(res);
@@ -466,7 +452,7 @@ module.exports = {
     let token;
 
     user.findByUsername(req.params.username)
-      .then( () => {
+      .then( _ => {
         let expires = new Date();
         expires.setHours(expires.getHours() + 1);
         token = {
@@ -483,12 +469,8 @@ module.exports = {
 
         return error.NotFound(res);
       })
-      .then( () => {
-        return mailer.sendResetPasswordLink(user.data, token.token);
-      })
-      .then( () => {
-        return success.OK(res);
-      })
+      .then( _ => mailer.sendResetPasswordLink(user.data, token.token) )
+      .then( _ => success.OK(res) )
       .catch( err => {
         return error.InternalServerError(res);
       });
@@ -507,14 +489,12 @@ module.exports = {
     const session = new Session();
     
     session.findById(`sess:${req.sessionID}`)
-      .then( () => {
+      .then( _ => {
         // add the socketID and save
         session.set('socketID', req.body.socketID);
         return session.save();
       })
-      .then( () => {
-        return success.OK(res);
-      })
+      .then( _ => success.OK(res) )
       .catch( err => {
         if (err) {
           console.error(`Error subscribing to notifications: `, err);
@@ -538,15 +518,13 @@ module.exports = {
     const branch = new Branch();
 
     branch.findById(req.query.branchid)
-      .then( () => {
+      .then( _ => {
         return new FollowedBranch().delete({
           username: req.user.username,
           branchid: req.query.branchid
         });
       })
-      .then( () => {
-        return success.OK(res);
-      })
+      .then( _ => success.OK(res) )
       .catch( err => {
         if (err) {
           console.error(`Error following branch:`, err);
@@ -566,12 +544,12 @@ module.exports = {
     const session = new Session();
     
     session.findById(`sess:${req.sessionID}`)
-      .then( () => {
+      .then( _ => {
         // add the socketID and save
         session.set('socketID', null);
         return session.save();
       })
-      .then( () => {
+      .then( _ => {
         return success.OK(res);
       })
       .catch( err => {
@@ -592,7 +570,7 @@ module.exports = {
     const user = new User();
 
     user.findByUsername(req.params.username)
-      .then( () => {
+      .then( _ => {
         // return success if already verified
         if (user.data.verified) {
           return success.OK(res);
@@ -606,18 +584,14 @@ module.exports = {
         user.set('verified', true);
         return user.update();
       })
-      .then( () => {
+      .then( _ => {
         // save the user's contact info in SendGrid contact list for email marketing
         const sanitized = user.sanitize(user.data, ACL.Schema(ACL.Roles.Self, 'User'));
         return mailer.addContact(sanitized);
       })
-      .then( () => {
-        // send the user a welcome email
-        return mailer.sendWelcome(user.data);
-      })
-      .then( () => {
-        return success.OK(res);
-      })
+      // send the user a welcome email
+      .then( _ => mailer.sendWelcome(user.data) )
+      .then( _ => success.OK(res) )
       .catch( err => {
         if (err) {
           console.error(`Error verifying user: `, err);

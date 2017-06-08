@@ -40,7 +40,7 @@ function getUsername (req) {
 }
 
 module.exports = {
-  delete: (req, res) => {
+  delete (req, res) {
     if (req.ACLRole !== ACL.Roles.Self || !req.user || !req.user.username) {
       return error.Forbidden(res);
     }
@@ -58,7 +58,7 @@ module.exports = {
       });
   },
 
-  followBranch: (req, res) => {
+  followBranch (req, res) {
     if (!req.user.username) {
       return error.InternalServerError(res);
     }
@@ -96,30 +96,44 @@ module.exports = {
       });
   },
 
-  get: (req, res) => {
+  get (req, res) {
     getUsername(req).then( username => {
-      const user = new User();
-      
-      user.findByUsername(username)
-        .then( _ => {
-          const sanitized = user.sanitize(user.data, ACL.Schema(req.ACLRole, 'User'));
-          return success.OK(res, sanitized);
-        })
-        .catch( err => {
-          if (err) {
-            console.error(`Error fetching user:`, err);
-            return error.InternalServerError(res);
-          }
-          
-          return error.NotFound(res);
-        });
+      const p1 = module.exports.getUserPicture(username, 'picture', false);
+      const p2 = module.exports.getUserPicture(username, 'picture', true);
+      const p3 = module.exports.getUserPicture(username, 'cover', false);
+      const p4 = module.exports.getUserPicture(username, 'cover', true);
+      const p5 = module.exports.getUserFollowedBranches(username);
+
+      Promise.all([p1, p2, p3, p4, p5]).then( values => {
+        const user = new User();
+        
+        user.findByUsername(username)
+          .then( _ => {
+            let sanitized = user.sanitize(user.data, ACL.Schema(req.ACLRole, 'User'));
+            sanitized.profileUrl = values[0];
+            sanitized.profileUrlThumb = values[1];
+            sanitized.coverUrl = values[2];
+            sanitized.coverUrlThumb = values[3];
+            sanitized.followed_branches = values[4];
+            return success.OK(res, sanitized);
+          })
+          .catch( err => {
+            if (err) {
+              console.error(`Error fetching user:`, err);
+              return error.InternalServerError(res);
+            }
+            
+            return error.NotFound(res);
+          });
+      });
     })
     .catch( errorCb => {
       return errorCb(res);
     });
   },
 
-  getFollowedBranches: (req, res) => {
+  // Legacy version.
+  getFollowedBranches (req, res) {
     getUsername(req).then( username => {
       const branch = new FollowedBranch();
 
@@ -128,7 +142,7 @@ module.exports = {
           var branchIds = _.map(branches, 'branchid');
           return success.OK(res, branchIds);
         })
-        .catch( _ => {
+        .catch( err => {
           if (err) {
             console.error(`Error fetching followed branches:`, err);
             return error.InternalServerError(res);
@@ -142,12 +156,12 @@ module.exports = {
     });
   },
 
-  getNotifications: (req, res) => {
+  getNotifications (req, res) {
     if (!req.user.username) {
       return error.InternalServerError(res);
     }
 
-    const unreadCount = req.query.unreadCount === 'true' ? true : false;
+    const unreadCount = req.query.unreadCount === 'true';
 
     // if lastNotificationId is specified, client wants results which appear _after_ this notification (pagination)
     let lastNotification = null;
@@ -187,7 +201,8 @@ module.exports = {
       });
   },
 
-  getPicture: (req, res, type, thumbnail) => {
+  // Legacy version.
+  getPicture (req, res, type, thumbnail) {
     let size,
       username;
 
@@ -245,12 +260,13 @@ module.exports = {
       });
   },
 
-  getPictureUploadUrl: (req, res, type) => {
+  // Legacy version.
+  getPictureUploadUrl (req, res, type) {
     if (!req.user || !req.user.username) {
       return error.Forbidden(res);
     }
 
-    if (type !== 'picture' && type !== 'cover') {
+    if ('picture' !== type && 'cover' !== type) {
       console.error(`Invalid picture type.`);
       return error.InternalServerError(res);
     }
@@ -261,12 +277,73 @@ module.exports = {
       Key: `${req.user.username}-${type}-orig.jpg`
     }
 
-    let url = aws.s3Client.getSignedUrl('putObject', params, (err, url) => {
-      return success.OK(res, url);
+    let url = aws.s3Client.getSignedUrl('putObject', params, (err, url) => success.OK(res, url) );
+  },
+
+  getUserFollowedBranches (username) {
+    return new Promise( (resolve, reject) => {
+      let branches = [];
+
+      if (!username) return resolve(branches);
+
+      const branch = new FollowedBranch();
+
+      branch.findByUsername(username)
+        .then( branches => {
+          branches = _.map(branches, 'branchid');
+          return resolve(branches);
+        })
+        .catch( err => {
+          if (err) {
+            console.error(`Error fetching followed branches:`, err);
+          }
+
+          return resolve(branches);
+        });
     });
   },
 
-  put: (req, res) => {
+  getUserPicture (username, type, thumbnail = false) {
+    return new Promise( (resolve, reject) => {
+      if (!username || ('picture' !== type && 'cover' !== type)) return resolve('');
+
+      let size;
+
+      if ('picture' === type) {
+        size = thumbnail ? 200 : 640;
+      }
+      else if ('cover' === type) {
+        size = thumbnail ? 800 : 1920;
+      }
+
+      const image = new UserImage();
+
+      image.findByUsername(username, type)
+        .then( _ => {
+          aws.s3Client.getObject({
+            Bucket: fs.Bucket.UserImages,
+            Key: `${image.data.id}-${size}.${image.data.extension}`
+          }, (err, data) => {
+            if (err) {
+              console.error(`Error getting image:`, err);
+              return resolve('');
+            }
+
+            return resolve(data);
+          });
+        })
+        .catch( err => {
+          if (err) {
+            console.error(`Error fetching user image:`, err);
+            return resolve('');
+          }
+
+          return resolve('');
+        });
+    });
+  },
+
+  put (req, res) {
     if (req.ACLRole !== ACL.Roles.Self || !req.user || !req.user.username) {
       return error.Forbidden(res);
     }
@@ -317,7 +394,7 @@ module.exports = {
       });
   },
 
-  putNotification: (req, res) => {
+  putNotification (req, res) {
     if (!req.user.username) {
       return error.InternalServerError(res);
     }
@@ -354,7 +431,7 @@ module.exports = {
       });
   },
 
-  resendVerification: (req, res) => {
+  resendVerification (req, res) {
     if (!req.params.username) {
       return error.BadRequest(res, 'Missing username parameter');
     }
@@ -381,7 +458,7 @@ module.exports = {
       });
   },
 
-  resetPassword: (req, res) => {
+  resetPassword (req, res) {
     if (!req.params.username || !req.params.token) {
       return error.BadRequest(res, 'Missing username or token parameter');
     }
@@ -443,7 +520,7 @@ module.exports = {
       });
   },
 
-  sendResetPasswordLink: (req, res) => {
+  sendResetPasswordLink (req, res) {
     if (!req.params.username) {
       return error.BadRequest(res, 'Missing username parameter');
     }
@@ -476,7 +553,7 @@ module.exports = {
       });
   },
 
-  subscribeToNotifications: (req, res) => {
+  subscribeToNotifications (req, res) {
     if (!req.user.username || !req.sessionID) {
       return error.InternalServerError(res);
     }
@@ -505,7 +582,7 @@ module.exports = {
       });
   },
 
-  unfollowBranch: (req, res) => {
+  unfollowBranch (req, res) {
     if (!req.user.username) {
       return error.InternalServerError(res);
     }
@@ -535,7 +612,7 @@ module.exports = {
       });
   },
 
-  unsubscribeFromNotifications: (req, res) => {
+  unsubscribeFromNotifications (req, res) {
     if (!req.user.username || !req.sessionID) {
       return error.InternalServerError(res);
     }
@@ -562,7 +639,7 @@ module.exports = {
       });
   },
 
-  verify: (req, res) => {
+  verify (req, res) {
     if (!req.params.username || !req.params.token) {
       return error.BadRequest(res, 'Missing username or token parameter');
     }

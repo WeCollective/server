@@ -44,13 +44,11 @@ module.exports = (app, passport) => {
         const userCount = new Constant();
         
         userCount.findById('user_count')
-          .then( () => {
+          .then( _ => {
             userCount.set('data', userCount.data.data + 1);
             return userCount.update();
           })
-          .then( () => {
-            return success.OK(res);
-          })
+          .then( _ => success.OK(res) )
           .catch( err => {
             console.error('Error updating user count:', err);
             return success.OK(res);
@@ -690,7 +688,6 @@ module.exports = (app, passport) => {
      * @apiUse NotFound
      */
     .get(ACL.attachRole(ACL.Roles.Guest), controller.verify);
-
 
   router.route('/:username/branches/followed')
     /**

@@ -36,7 +36,7 @@ function userCanDisplayNSFWPosts(req) {
 }
 
 module.exports = {
-  get: (req, res) => {
+  get (req, res) {
     if (!req.params.branchid) {
       return error.BadRequest(res, 'Missing branchid');
     }
@@ -55,7 +55,7 @@ module.exports = {
 
     opts.sortBy = req.query.sortBy || (opts.fetchOnlyflaggedPosts ? 'date' : 'points');
     
-    if (VALID_POST_TYPE_VALUES.indexOf(opts.postType) === -1) {
+    if (!VALID_POST_TYPE_VALUES.includes(opts.postType)) {
       return error.BadRequest(res, 'Invalid postType')
     }
 
@@ -72,11 +72,9 @@ module.exports = {
 
         // get the post
         post.findByPostAndBranchIds(req.query.lastPostId, req.params.branchid)
-          .then( () => {
-            // fetch post data
-            return postdata.findById(req.query.lastPostId);
-          })
-          .then( () => {
+          // fetch post data
+          .then( _ => postdata.findById(req.query.lastPostId) )
+          .then( _ => {
             // create lastPost object
             lastPost = post.data;
             lastPost.data = postdata.data;
@@ -97,7 +95,7 @@ module.exports = {
       }
     })
       // Authenticated users can set to display nsfw posts.
-      .then( () => new Promise( (resolve, reject) => {
+      .then( _ => new Promise( (resolve, reject) => {
           userCanDisplayNSFWPosts(req)
             .then( displayNSFWPosts => {
               opts.nsfw = displayNSFWPosts;
@@ -105,14 +103,14 @@ module.exports = {
             })
             .catch(reject);
       }))
-      .then( () => new Promise( (resolve, reject) => {
+      .then( _ => new Promise( (resolve, reject) => {
         const validValues = opts.fetchOnlyflaggedPosts ? VALID_SORT_BY_MOD_VALUES : VALID_SORT_BY_USER_VALUES;
 
-        if (validValues.indexOf(opts.sortBy) === -1) {
+        if (!validValues.includes(opts.sortBy)) {
           return error.BadRequest(res, 'Invalid sortBy parameter');
         }
 
-        if (opts.fetchOnlyflaggedPosts) {          
+        if (opts.fetchOnlyflaggedPosts) {
           if (!req.user) {
             return error.Forbidden(res);
           }
@@ -124,13 +122,17 @@ module.exports = {
           return resolve();
         }
       }))
-      .then( () => {
+      .then( _ => {
         const post = opts.fetchOnlyflaggedPosts ? new FlaggedPost() : new Post();
         return post.findByBranch(req.params.branchid, opts.timeafter, opts.nsfw, opts.sortBy, opts.stat, opts.postType, lastPost);
       })
       .then( results => {
         let promises = [];
         posts = results;
+
+        console.log(require('chalk').red('++++++++++++++++++++++++'));
+        console.log(posts);
+        console.log(require('chalk').red('++++++++++++++++++++++++'));
         
         // fetch post data for each post
         for (let i = 0; i < posts.length; i++) {
@@ -139,10 +141,17 @@ module.exports = {
           postDatas.push(postdata);
         }
 
-        return Promise.all(promises);
+        return Promise.all(promises).then( _ => {
+          console.log('RESOLVEDDDDD');
+        });
       })
-      .then( () => {
+      .then( _ => {
         let promises = [];
+
+        console.log(require('chalk').red('++++++++++++++++++++++++'));
+        console.log(posts);
+        console.log(require('chalk').red('++++++++++++++++++++++++'));
+
         for (let i = 0; i < posts.length; i++) {
           // attach post data to each post
           posts[i].data = postDatas[i].data;
@@ -174,6 +183,10 @@ module.exports = {
       })
       .then( urls => {
         let promises = [];
+
+        console.log(require('chalk').red('++++++++++++++++++++++++'));
+        console.log(posts);
+        console.log(require('chalk').red('++++++++++++++++++++++++'));
 
         for (let i = 0; i < posts.length; i++) {
           // attach post image url to each post
@@ -218,7 +231,7 @@ module.exports = {
       });
   },
 
-  put: function(req, res) {
+  put (req, res) {
     if(!req.params.branchid) {
       return error.BadRequest(res, 'Missing branchid');
     }
@@ -334,7 +347,8 @@ module.exports = {
       return error.NotFound(res);
     });
   },
-  getPost: function(req, res) {
+
+  getPost (req, res) {
     if(!req.params.branchid) {
       return error.BadRequest(res, 'Missing branchid');
     }
@@ -353,7 +367,8 @@ module.exports = {
       return error.NotFound(res);
     });
   },
-  resolveFlag: function(req, res) {
+
+  resolveFlag (req, res) {
     if(!req.params.branchid) {
       return error.BadRequest(res, 'Missing branchid');
     }

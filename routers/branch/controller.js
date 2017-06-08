@@ -15,26 +15,88 @@ const Tag = require('../../models/tag.model');
 const User = require('../../models/user.model');
 
 module.exports = {
-  get: (req, res) => {
-    if (!req.params.branchid) {
+  get (req, res) {
+    const branchid = req.params.branchid;
+
+    if (!branchid) {
       return error.BadRequest(res, 'Missing branchid');
     }
 
-    const branch = new Branch();
+    const p1 = module.exports.getBranchPicture(branchid, 'picture', false);
+    const p2 = module.exports.getBranchPicture(branchid, 'picture', true);
+    const p3 = module.exports.getBranchPicture(branchid, 'cover', false);
+    const p4 = module.exports.getBranchPicture(branchid, 'cover', true);
 
-    branch.findById(req.params.branchid)
-      .then( () => {
-        return success.OK(res, branch.data);
-      }, err => {
-        if (err) {
-          return error.InternalServerError(res);
-        }
+    Promise.all([p1, p2, p3, p4]).then( values => {
+      const branch = new Branch();
 
-        return error.NotFound(res);
-      });
+      branch.findById(branchid)
+        .then( _ => {
+          // Attach parent branch
+          /*
+          if ('root' === branch.parentid || 'none' === branch.parentid) {
+            branch.parent = {
+              id: branch.parentid
+            };
+          }
+          else {
+            res = yield this.API.fetch('/branch/:branchid', { branchid: branch.parentid });
+            branch.parent = res.data;
+          }
+
+          delete branch.parentid;
+          */
+
+          branch.data.profileUrl = values[0];
+          branch.data.profileUrlThumb = values[1];
+          branch.data.coverUrl = values[2];
+          branch.data.coverUrlThumb = values[3];
+          return success.OK(res, branch.data);
+        })
+        .catch( err => {
+          if (err) {
+            console.error(`Error fetching branch:`, err);
+            return error.InternalServerError(res);
+          }
+
+          return error.NotFound(res);
+        });
+    });
   },
 
-  post: function(req, res) {
+  getBranchPicture (branchid, type, thumbnail = false) {
+    return new Promise( (resolve, reject) => {
+      if (!branchid || ('picture' !== type && 'cover' !== type)) return resolve('');
+
+      let size;
+
+      if ('picture' === type) {
+        size = thumbnail ? 200 : 640;
+      }
+      else {
+        size = thumbnail ? 800 : 1920;
+      }
+
+      const image = new BranchImage();
+
+      image.findById(branchid, type)
+        .then( _ => {
+          const Bucket = fs.Bucket.BranchImagesResized;
+          const Key = `${image.data.id}-${size}.${image.data.extension}`;
+          return resolve(`https://${Bucket}.s3-eu-west-1.amazonaws.com/${Key}`);
+        })
+        .catch( err => {
+          if (err) {
+            console.error(`Error fetching branch image:`, err);
+            return resolve('');
+          }
+
+          return resolve('');
+        });
+    });
+  },
+
+  post (req, res) {
     if(!req.user.username) {
       console.error("No username found in session.");
       return error.InternalServerError(res);
@@ -164,7 +226,7 @@ module.exports = {
     });
   },
   
-  put: function(req, res) {
+  put (req, res) {
     if(!req.params.branchid) {
       return error.BadRequest(res, 'Missing branchid');
     }
@@ -201,7 +263,8 @@ module.exports = {
       return error.InternalServerError(res);
     });
   },
-  delete: function(req, res) {
+
+  delete (req, res) {
     if(!req.params.branchid) {
       return error.BadRequest(res, 'Missing branchid');
     }
@@ -427,7 +490,8 @@ module.exports = {
       return error.NotFound(res);
     });
   },
-  getPictureUploadUrl: function(req, res, type) {
+
+  getPictureUploadUrl (req, res, type) {
     if(!req.user || !req.user.username) {
       return error.Forbidden(res);
     }
@@ -450,7 +514,8 @@ module.exports = {
       return success.OK(res, url);
     });
   },
-  getPicture: function(req, res, type, thumbnail) {
+
+  getPicture (req, res, type, thumbnail) {
     if(!req.params.branchid) {
       return error.BadRequest(res, 'Missing branchid');
     }
@@ -483,97 +548,114 @@ module.exports = {
       return error.NotFound(res);
     });
   },
-  getSubbranches: function(req, res) {
-    if(!req.params.branchid) {
+
+  getSubbranches (req, res) {
+    if (!req.params.branchid) {
       return error.BadRequest(res, 'Missing branchid');
     }
 
-    if(!req.query.timeafter) {
+    if (!req.query.timeafter) {
       return error.BadRequest(res, 'Missing timeafter');
     }
 
-    var sortBy = req.query.sortBy;
-    if(!req.query.sortBy) {
-      sortBy = 'date';
-    }
+    const branch = new Branch();
+    const sortBy = req.query.sortBy || 'date';
 
-    var lastBranch = null;
-    var branch = new Branch();
-    var branches = [];
+    let branches = [];
+    let lastBranch = null;
+    
     // if lastBranchId is specified, client wants results which appear _after_ this branch (pagination)
-    new Promise(function(resolve, reject) {
-      if(req.query.lastBranchId) {
-        var last = new Branch();
+    new Promise( (resolve, reject) => {
+      if (req.query.lastBranchId) {
+        const last = new Branch();
+
         // get the branch
-        last.findById(req.query.lastBranchId).then(function () {
-          // create lastBranch object
-          lastBranch = last.data;
-          resolve();
-        }).catch(function(err) {
-          if(err) reject();
-          return error.NotFound(res); // lastBranchId is invalid
-        });
-      } else {
-        // no last branch specified, continue
-        resolve();
-      }
-    }).then(function () {
-      return branch.findSubbranches(req.params.branchid, req.query.timeafter, sortBy, lastBranch);
-    }).then(function(results) {
-      branches = results;
-      var promises = [];
-      for(var i = 0; i < branches.length; i++) {
-        // fetch each branch's signed image url
-        promises.push(new Promise(function(resolve, reject) {
-          new BranchImage().findById(branches[i].id, 'picture').then(function(branchimage) {
-            aws.s3Client.getSignedUrl('getObject', {
-              Bucket: fs.Bucket.BranchImagesResized,
-              Key: branchimage.id + '-640.' + branchimage.extension
-            }, function(err, url) {
-              if(err) reject(err);
-              resolve(url);
-            });
-          }, function(err) {
-            if(err) reject();
-            resolve('');
+        last.findById(req.query.lastBranchId)
+          .then( _ => {
+            // create lastBranch object
+            lastBranch = last.data;
+            return resolve();
+          })
+          .catch( err => {
+            if (err) {
+              return reject();
+            }
+
+            return error.NotFound(res); // lastBranchId is invalid
           });
+      }
+      else {
+        // no last branch specified, continue
+        return resolve();
+      }
+    })
+    .then( _ => branch.findSubbranches(req.params.branchid, req.query.timeafter, sortBy, lastBranch) )
+    .then( results => {
+      branches = results;
+
+      let promises = [];
+
+      for (let i = 0; i < branches.length; i++) {
+        promises.push( new Promise( (resolve, reject) => {
+          new BranchImage().findById(branches[i].id, 'picture')
+            .then( branchimage => {
+              const Bucket = fs.Bucket.BranchImagesResized;
+              const Key = `${branchimage.id}-640.${branchimage.extension}`;
+              return resolve(`https://${Bucket}.s3-eu-west-1.amazonaws.com/${Key}`);
+            })
+            .catch( err => {
+              if (err) {
+                return reject();
+              }
+
+              return resolve('');
+            });
         }));
       }
+
       return Promise.all(promises);
-    }).then(function(urls) {
-      var promises = [];
-      for(var i = 0; i < branches.length; i++) {
+    })
+    .then( urls => {
+      let promises = [];
+      
+      for (let i = 0; i < branches.length; i++) {
         // attach branch image url to each branch
         branches[i].profileUrl = urls[i];
-        // fetch each branch's signed image url thumbnail
+        
         promises.push(new Promise(function(resolve, reject) {
-          new BranchImage().findById(branches[i].id, 'picture').then(function(branchimage) {
-            aws.s3Client.getSignedUrl('getObject', {
-              Bucket: fs.Bucket.BranchImagesResized,
-              Key: branchimage.id + '-200.' + branchimage.extension
-            }, function(err, url) {
-              if(err) reject(err);
-              resolve(url);
+          new BranchImage().findById(branches[i].id, 'picture')
+            .then( branchimage => {
+              const Bucket = fs.Bucket.BranchImagesResized;
+              const Key = `${branchimage.id}-200.${branchimage.extension}`;
+              return resolve(`https://${Bucket}.s3-eu-west-1.amazonaws.com/${Key}`);
+            })
+            .catch( err => {
+              if (err) {
+                return reject();
+              }
+
+              return resolve('');
             });
-          }, function(err) {
-            if(err) reject();
-            resolve('');
-          });
         }));
       }
+
       return Promise.all(promises);
-    }).then(function(urls) {
+    })
+    .then( urls => {
       // attach branch image thumbnail url to each branch
-      for(var i = 0; i < branches.length; i++) {
+      for (let i = 0; i < branches.length; i++) {
         branches[i].profileUrlThumb = urls[i];
       }
+
       return success.OK(res, branches);
-    }).catch(function(err) {
-      console.error("Error fetching subbranches:", err);
+    })
+    .catch( err => {
+      console.error(`Error fetching subbranches:`, err);
       return error.InternalServerError(res);
     });
   },
-  getModLog: function(req, res) {
+
+  getModLog (req, res) {
     if(!req.params.branchid) {
       return error.BadRequest(res, 'Missing branchid');
     }

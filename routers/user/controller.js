@@ -320,17 +320,9 @@ module.exports = {
 
       image.findByUsername(username, type)
         .then( _ => {
-          aws.s3Client.getObject({
-            Bucket: fs.Bucket.UserImages,
-            Key: `${image.data.id}-${size}.${image.data.extension}`
-          }, (err, data) => {
-            if (err) {
-              console.error(`Error getting image:`, err);
-              return resolve('');
-            }
-
-            return resolve(data);
-          });
+          const Bucket = fs.Bucket.UserImagesResized;
+          const Key = `${image.data.id}-${size}.${image.data.extension}`;
+          return resolve(`https://${Bucket}.s3-eu-west-1.amazonaws.com/${Key}`);
         })
         .catch( err => {
           if (err) {

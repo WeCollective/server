@@ -129,10 +129,6 @@ module.exports = {
       .then( results => {
         let promises = [];
         posts = results;
-
-        console.log(require('chalk').red('++++++++++++++++++++++++'));
-        console.log(posts);
-        console.log(require('chalk').red('++++++++++++++++++++++++'));
         
         // fetch post data for each post
         for (let i = 0; i < posts.length; i++) {
@@ -141,35 +137,23 @@ module.exports = {
           postDatas.push(postdata);
         }
 
-        return Promise.all(promises).then( _ => {
-          console.log('RESOLVEDDDDD');
-        });
+        return Promise.all(promises);
       })
       .then( _ => {
         let promises = [];
 
-        console.log(require('chalk').red('++++++++++++++++++++++++'));
-        console.log(posts);
-        console.log(require('chalk').red('++++++++++++++++++++++++'));
-
         for (let i = 0; i < posts.length; i++) {
           // attach post data to each post
           posts[i].data = postDatas[i].data;
-          // fetch each post's signed image url and attach it to the postimage object
+          
           promises.push(new Promise( (resolve, reject) => {
             new PostImage().findById(posts[i].id)
               .then( postimage => {
-                aws.s3Client.getSignedUrl('getObject', {
-                  Bucket: fs.Bucket.PostImagesResized,
-                  Key: `${postimage.id}-640.${postimage.extension}`
-                }, (err, url) => {
-                  if (err) {
-                    return reject(err);
-                  }
-
-                  return resolve(url);
-                });
-              }, err => {
+                const Bucket = fs.Bucket.PostImagesResized;
+                const Key = `${postimage.id}-640.${postimage.extension}`;
+                return resolve(`https://${Bucket}.s3-eu-west-1.amazonaws.com/${Key}`);
+              })
+              .catch( err => {
                 if (err) {
                   return reject();
                 }
@@ -184,28 +168,18 @@ module.exports = {
       .then( urls => {
         let promises = [];
 
-        console.log(require('chalk').red('++++++++++++++++++++++++'));
-        console.log(posts);
-        console.log(require('chalk').red('++++++++++++++++++++++++'));
-
         for (let i = 0; i < posts.length; i++) {
           // attach post image url to each post
           posts[i].profileUrl = urls[i];
-          // fetch each post's signed image url and attach it to the postimage object
+          
           promises.push(new Promise( (resolve, reject) => {
             new PostImage().findById(posts[i].id)
               .then( postimage => {
-                aws.s3Client.getSignedUrl('getObject', {
-                  Bucket: fs.Bucket.PostImagesResized,
-                  Key: `${postimage.id}-200.${postimage.extension}`
-                }, (err, url) => {
-                  if (err) {
-                    return reject(err);
-                  }
-
-                  return resolve(url);
-                });
-              }, err => {
+                const Bucket = fs.Bucket.PostImagesResized;
+                const Key = `${postimage.id}-200.${postimage.extension}`;
+                return resolve(`https://${Bucket}.s3-eu-west-1.amazonaws.com/${Key}`);
+              })
+              .catch( err => {
                 if (err) {
                   return reject();
                 }

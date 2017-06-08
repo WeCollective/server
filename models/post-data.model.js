@@ -24,19 +24,11 @@ PostData.prototype.constructor = PostData;
 PostData.prototype.findById = function (id) {
   const self = this;
 
-  console.log(require('chalk').blue('---------------------'));
-  console.log(id, self.config.table);
-  console.log(require('chalk').blue('---------------------'));
-
   return new Promise( (resolve, reject) => {
     aws.dbClient.get({
       Key: { id },
       TableName: self.config.table
     }, (err, data) => {
-      console.log(require('chalk').blue('---------------------'));
-      console.log(err, data);
-      console.log(require('chalk').blue('---------------------'));
-
       if (err) {
         return reject(err);
       }

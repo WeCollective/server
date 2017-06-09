@@ -57,8 +57,8 @@ module.exports = {
         })
         .then(_ => {
           post.data = postdata.data;
-          post.data.profileUrl = values[0];
-          post.data.profileUrlThumb = values[1];
+          post.profileUrl = values[0];
+          post.profileUrlThumb = values[1];
           return success.OK(res, post);
         })
         .catch(err => {

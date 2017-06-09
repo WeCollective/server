@@ -1,30 +1,102 @@
 'use strict';
 
-var aws = require('../../config/aws.js');
-var fs = require('../../config/filestorage.js');
-var mailer = require('../../config/mailer.js');
-var NotificationTypes = require('../../config/notification-types.js');
-
-var Branch = require('../../models/branch.model.js');
-var Post = require('../../models/post.model.js');
-var PostData = require('../../models/post-data.model.js');
-var PostImage = require('../../models/post-image.model.js');
-var FlaggedPost = require('../../models/flagged-post.model.js');
-var Tag = require('../../models/tag.model.js');
+const _ = require('lodash');
+const aws = require('../../config/aws');
+const Branch = require('../../models/branch.model');
 const Comment = require('../../models/comment');
-var CommentData = require('../../models/comment-data.model.js');
-var Notification = require('../../models/notification.model.js');
-var User = require('../../models/user.model.js');
-var Mod = require('../../models/mod.model.js');
-var UserVote = require('../../models/user-vote.model.js');
-
-var success = require('../../responses/successes.js');
-var error = require('../../responses/errors.js');
-
-var _ = require('lodash');
+const CommentData = require('../../models/comment-data.model');
+const error = require('../../responses/errors');
+const FlaggedPost = require('../../models/flagged-post.model');
+const fs = require('../../config/filestorage');
+const mailer = require('../../config/mailer');
+const Mod = require('../../models/mod.model');
+const Notification = require('../../models/notification.model');
+const NotificationTypes = require('../../config/notification-types');
+const Post = require('../../models/post.model');
+const PostData = require('../../models/post-data.model');
+const PostImage = require('../../models/post-image.model');
+const success = require('../../responses/successes');
+const Tag = require('../../models/tag.model');
+const User = require('../../models/user.model');
+const UserVote = require('../../models/user-vote.model');
 
 module.exports = {
-  post: function(req, res) {
+  get (req, res) {
+    const postid = req.params.postid;
+
+    if (!postid) {
+      return error.BadRequest(res, 'Missing postid');
+    }
+
+    const p1 = module.exports.getPostPicture(postid, false);
+    const p2 = module.exports.getPostPicture(postid, true);
+
+    let post;
+
+    Promise.all([p1, p2]).then(values => {
+      const postdata = new PostData();
+
+      new Post().findById(req.params.postid)
+        .then(posts => {
+          if (!posts || !posts.length) {
+            return error.NotFound(res);
+          }
+
+          let idx = 0;
+
+          for (let i = 0; i < posts.length; i++) {
+            if (posts[i].branchid === 'root') {
+              idx = i;
+              break;
+            }
+          }
+
+          post = posts[idx];
+
+          return postdata.findById(postid);
+        })
+        .then(_ => {
+          post.data = postdata.data;
+          post.data.profileUrl = values[0];
+          post.data.profileUrlThumb = values[1];
+          return success.OK(res, post);
+        })
+        .catch(err => {
+          if (err) {
+            console.error(`Error fetching post data: `, err);
+            return error.InternalServerError(res);
+          }
+
+          return error.NotFound(res);
+        });
+    });
+  },
+
+  getPostPicture (postid, thumbnail = false) {
+    return new Promise((resolve, reject) => {
+      if (!postid) return resolve('');
+
+      const image = new PostImage();
+      const size = thumbnail ? 200 : 640;
+
+      image.findById(postid)
+        .then(_ => {
+          const Bucket = fs.Bucket.PostImagesResized;
+          const Key = `${image.data.id}-${size}.${image.data.extension}`;
+          return resolve(`https://${Bucket}.s3-eu-west-1.amazonaws.com/${Key}`);
+        })
+        .catch(err => {
+          if (err) {
+            console.error(`Error fetching post image:`, err);
+            return resolve('');
+          }
+
+          return resolve('');
+        });
+    });
+  },
+
+  post (req, res) {
     if(!req.user.username) {
       console.error("No username found in session.");
       return error.InternalServerError(res);
@@ -179,37 +251,8 @@ module.exports = {
       return error.InternalServerError(res);
     });
   },
-  get: function(req, res) {
-    if(!req.params.postid) {
-      return error.BadRequest(res, 'Missing postid');
-    }
 
-    var post, date, type;
-    var postdata = new PostData();
-    new Post().findById(req.params.postid).then(function(posts) {
-      if(!posts || posts.length == 0) {
-        return error.NotFound(res);
-      }
-      var idx = 0;
-      for(var i = 0; i < posts.length; i++) {
-        if(posts[i].branchid == 'root') {
-          idx = i;
-        }
-      }
-      post = posts[idx];
-      return postdata.findById(req.params.postid);
-    }).then(function() {
-      post.data = postdata.data;
-      return success.OK(res, post);
-    }).catch(function(err) {
-      if(err) {
-        console.error("Error fetching post data: ", err);
-        return error.InternalServerError(res);
-      }
-      return error.NotFound(res);
-    });
-  },
-  delete: function(req, res) {
+  delete (req, res) {
     if(!req.user || !req.user.username) {
       return error.Forbidden(res);
     }
@@ -251,7 +294,8 @@ module.exports = {
       return error.NotFound(res);
     });
   },
-  getPictureUploadUrl: function(req, res) {
+
+  getPictureUploadUrl (req, res) {
     if(!req.user || !req.user.username) {
       return error.Forbidden(res);
     }
@@ -285,7 +329,8 @@ module.exports = {
       return error.NotFound(res);
     });
   },
-  getPicture: function(req, res, thumbnail) {
+
+  getPicture (req, res, thumbnail) {
     if(!req.params.postid) {
       return error.BadRequest(res, 'Missing postid');
     }
@@ -312,7 +357,8 @@ module.exports = {
       return error.NotFound(res);
     });
   },
-  flagPost: function(req, res) {
+
+  flagPost (req, res) {
     if(!req.user || !req.user.username) {
       return error.Forbidden(res);
     }
@@ -402,7 +448,8 @@ module.exports = {
       return error.NotFound(res);
     });
   },
-  postComment: function(req, res) {
+
+  postComment (req, res) {
     if(!req.user || !req.user.username) {
       return error.Forbidden(res);
     }
@@ -600,7 +647,8 @@ module.exports = {
       return error.NotFound(res);
     });
   },
-  getComments: function(req, res) {
+
+  getComments (req, res) {
     if(!req.params.postid) {
       return error.BadRequest(res, 'Missing postid');
     }
@@ -662,7 +710,8 @@ module.exports = {
       return error.NotFound(res);
     });
   },
-  getComment: function(req, res) {
+
+  getComment (req, res) {
     if(!req.params.postid) {
       return error.BadRequest(res, 'Missing postid');
     }
@@ -687,7 +736,8 @@ module.exports = {
       return error.NotFound(res);
     });
   },
-  voteComment: function(req, res) {
+
+  voteComment (req, res) {
     if(!req.params.postid) {
       return error.BadRequest(res, 'Missing postid');
     }
@@ -788,7 +838,8 @@ module.exports = {
       return error.NotFound(res);
     });
   },
-  putComment: function(req, res) {
+
+  putComment (req, res) {
     if(!req.params.postid) {
       return error.BadRequest(res, 'Missing postid');
     }

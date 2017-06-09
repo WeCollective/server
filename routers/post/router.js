@@ -140,7 +140,7 @@ module.exports = (app, passport) => {
      * @apiUse NotFound
      * @apiUse InternalServerError
      */
-    .get( (req, res) => {
+    .get((req, res) => {
       controller.getPicture(req, res, false);
     });
 
@@ -166,7 +166,7 @@ module.exports = (app, passport) => {
      * @apiUse NotFound
      * @apiUse InternalServerError
      */
-    .get( (req, res) => {
+    .get((req, res) => {
       controller.getPicture(req, res, true);
     });
 

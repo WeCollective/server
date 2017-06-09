@@ -27,7 +27,7 @@ module.exports = {
     const p3 = module.exports.getBranchPicture(branchid, 'cover', false);
     const p4 = module.exports.getBranchPicture(branchid, 'cover', true);
 
-    Promise.all([p1, p2, p3, p4]).then( values => {
+    Promise.all([p1, p2, p3, p4]).then(values => {
       const branch = new Branch();
 
       branch.findById(branchid)
@@ -53,7 +53,7 @@ module.exports = {
           branch.data.coverUrlThumb = values[3];
           return success.OK(res, branch.data);
         })
-        .catch( err => {
+        .catch(err => {
           if (err) {
             console.error(`Error fetching branch:`, err);
             return error.InternalServerError(res);
@@ -65,7 +65,7 @@ module.exports = {
   },
 
   getBranchPicture (branchid, type, thumbnail = false) {
-    return new Promise( (resolve, reject) => {
+    return new Promise((resolve, reject) => {
       if (!branchid || ('picture' !== type && 'cover' !== type)) return resolve('');
 
       let size;
@@ -85,7 +85,7 @@ module.exports = {
           const Key = `${image.data.id}-${size}.${image.data.extension}`;
           return resolve(`https://${Bucket}.s3-eu-west-1.amazonaws.com/${Key}`);
         })
-        .catch( err => {
+        .catch(err => {
           if (err) {
             console.error(`Error fetching branch image:`, err);
             return resolve('');

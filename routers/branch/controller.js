@@ -81,9 +81,16 @@ module.exports = {
 
       image.findById(branchid, type)
         .then( _ => {
+          let params = '';
+
+          // Append timestamp for correct caching on the client.
+          if (image.data.date) {
+            params = `?time=${image.data.date}`;
+          }
+
           const Bucket = fs.Bucket.BranchImagesResized;
           const Key = `${image.data.id}-${size}.${image.data.extension}`;
-          return resolve(`https://${Bucket}.s3-eu-west-1.amazonaws.com/${Key}`);
+          return resolve(`https://${Bucket}.s3-eu-west-1.amazonaws.com/${Key}${params}`);
         })
         .catch(err => {
           if (err) {
@@ -496,9 +503,7 @@ module.exports = {
       return error.Forbidden(res);
     }
 
-    const branchid = req.params.branchid;
-
-    if (!branchid) {
+    if (!req.params.branchid) {
       return error.BadRequest(res, 'Missing branchid');
     }
 
@@ -506,15 +511,17 @@ module.exports = {
       return error.InternalServerError(res);
     }
 
-    const Bucket = fs.Bucket.BranchImages;
-    const Key = `${req.params.branchid}-${type}-orig.jpg`;
-    return success.OK(res, `https://${Bucket}.s3-eu-west-1.amazonaws.com/${Key}`);
+    aws.s3Client.getSignedUrl('putObject', {
+      Bucket: fs.Bucket.BranchImages,
+      ContentType: 'image/*',
+      Key: `${req.params.branchid}-${type}-orig.jpg`
+    }, (err, url) => {
+      return success.OK(res, url);
+    });
   },
 
   getPicture (req, res, type, thumbnail) {
-    const branchid = req.params.branchid;
-
-    if (!branchid) {
+    if (!req.params.branchid) {
       return error.BadRequest(res, 'Missing branchid');
     }
 
@@ -522,9 +529,37 @@ module.exports = {
       return error.InternalServerError(res);
     }
 
-    getBranchPicture(branchid, type, thumbnail).then(url => {
-      return success.OK(res, url);
-    });
+    let size;
+
+    if (type === 'picture') {
+      size = thumbnail ? 200 : 640;
+    }
+    else {
+      size = thumbnail ? 800 : 1920;
+    }
+
+    const image = new BranchImage();
+
+    image.findById(req.params.branchid, type)
+      .then(_ => {
+        aws.s3Client.getSignedUrl('getObject', {
+          Bucket: fs.Bucket.BranchImagesResized,
+          Key: `${image.data.id}-${size}.${image.data.extension}`
+        }, (err, url) => {
+          if (err) {
+            return error.InternalServerError(res);
+          }
+
+          return success.OK(res, url);
+        });
+      })
+      .catch(err => {
+        if (err) {
+          return error.InternalServerError(res);
+        }
+
+        return error.NotFound(res);
+      });
   },
 
   getSubbranches (req, res) {

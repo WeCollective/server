@@ -60,14 +60,9 @@ validate.date = date => {
   return true;
 };
 
-validate.extension = extension => {
-  let extensions = ['jpg', 'JPG', 'jpe', 'JPE', 'jpeg', 'JPEG', 'png', 'PNG', 'bmp', 'BMP'];
-  
-  if (extensions.indexOf(extension) === -1) {
-    return false;
-  }
-
-  return true;
+validate.extension = ext => {
+  const allowedExt = ['jpg', 'JPG', 'jpe', 'JPE', 'jpeg', 'JPEG', 'png', 'PNG', 'bmp', 'BMP'];
+  return allowedExt.includes(ext);
 };
 
 validate.notificationid = id => {
@@ -157,7 +152,7 @@ validate.username = username => {
   // ensure username is not one of the banned words
   // (these words are used in user image urls and routes)
   const bannedUsernames = ['me', 'orig', 'picture', 'cover'];
-  if (bannedUsernames.indexOf(username) !== -1) {
+  if (bannedUsernames.includes(username)) {
     return false;
   }
   
@@ -170,12 +165,8 @@ validate.username = username => {
 };
 
 validate.wecoConstantId = value => {
-  // ensure value is one of the valid site wide constants
-  if(['donation_total', 'raised_total', 'user_count', 'branch_count'].indexOf(value) !== -1) {
-    return true;
-  }
-
-  return false;
+  const allowedConstants = ['donation_total', 'raised_total', 'user_count', 'branch_count'];
+  return allowedConstants.includes(value);
 };
 
 validate.wecoConstantValue = (id, value) => {

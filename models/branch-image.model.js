@@ -45,17 +45,15 @@ BranchImage.prototype.validate = function () {
 // instantiate the object with this data.
 // Rejects promise with true if database error, with false if no image entry found.
 BranchImage.prototype.findById = function (id, type) {
-  if (type != 'picture' && type != 'cover') {
+  if (type !== 'picture' && type !== 'cover') {
     return reject();
   }
 
   const self = this;
 
-  return new Promise( (resolve, reject) => {
+  return new Promise((resolve, reject) => {
     aws.dbClient.get({
-      Key: {
-        'id': `${id}-${type}`
-      },
+      Key: { id: `${id}-${type}` },
       TableName: self.config.table
     }, (err, data) => {
       if (err) {

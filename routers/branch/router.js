@@ -57,7 +57,7 @@ module.exports = (app, passport) => {
      * @apiUse BadRequest
      * @apiUse InternalServerError
      */
-    .put( (req, res, next) => {
+    .put((req, res, next) => {
       ACL.validateRole(ACL.Roles.Moderator, req.params.branchid)(req, res, next);
     }, controller.put)
     /**
@@ -75,7 +75,7 @@ module.exports = (app, passport) => {
      * @apiUse BadRequest
      * @apiUse InternalServerError
      */
-    .delete( (req, res, next) => {
+    .delete((req, res, next) => {
       ACL.validateRole(ACL.Roles.Moderator, req.params.branchid)(req, res, next);
     }, controller.delete);
 
@@ -102,7 +102,7 @@ module.exports = (app, passport) => {
      * @apiUse NotFound
      * @apiUse InternalServerError
      */
-    .get( (req, res, next) => {
+    .get((req, res, next) => {
       ACL.validateRole(ACL.Roles.Moderator, req.params.branchid)(req, res, next);
     }, (req, res) => {
       controller.getPictureUploadUrl(req, res, 'picture');
@@ -131,7 +131,7 @@ module.exports = (app, passport) => {
      * @apiUse NotFound
      * @apiUse InternalServerError
      */
-    .get( (req, res, next) => {
+    .get((req, res, next) => {
       ACL.validateRole(ACL.Roles.Moderator, req.params.branchid)(req, res, next);
     }, (req, res) => {
       controller.getPictureUploadUrl(req, res, 'cover');
@@ -159,7 +159,7 @@ module.exports = (app, passport) => {
      * @apiUse NotFound
      * @apiUse InternalServerError
      */
-    .get( (req, res) => {
+    .get((req, res) => {
       controller.getPicture(req, res, 'picture', false);
     });
 
@@ -185,7 +185,7 @@ module.exports = (app, passport) => {
      * @apiUse NotFound
      * @apiUse InternalServerError
      */
-    .get( (req, res) => {
+    .get((req, res) => {
       controller.getPicture(req, res, 'picture', true);
     });
 
@@ -211,7 +211,7 @@ module.exports = (app, passport) => {
      * @apiUse NotFound
      * @apiUse InternalServerError
      */
-    .get( (req, res) => {
+    .get((req, res) => {
       controller.getPicture(req, res, 'cover', false);
     });
 
@@ -237,7 +237,7 @@ module.exports = (app, passport) => {
      * @apiUse NotFound
      * @apiUse InternalServerError
      */
-    .get( (req, res) => {
+    .get((req, res) => {
       controller.getPicture(req, res, 'cover', true);
     });
 
@@ -333,7 +333,7 @@ module.exports = (app, passport) => {
      * @apiUse NotFound
      * @apiUse InternalServerError
      */
-    .get( (req, res, next) => {
+    .get((req, res, next) => {
       ACL.validateRole(ACL.Roles.Moderator, req.params.branchid)(req, res, next);
     }, controller.getModLog);
 

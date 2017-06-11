@@ -492,60 +492,38 @@ module.exports = {
   },
 
   getPictureUploadUrl (req, res, type) {
-    if(!req.user || !req.user.username) {
+    if (!req.user || !req.user.username) {
       return error.Forbidden(res);
     }
 
-    if(!req.params.branchid) {
+    const branchid = req.params.branchid;
+
+    if (!branchid) {
       return error.BadRequest(res, 'Missing branchid');
     }
 
-    if(type != 'picture' && type != 'cover') {
+    if (type !== 'picture' && type !== 'cover') {
       return error.InternalServerError(res);
     }
 
-    var filename = req.params.branchid + '-' + type + '-orig.jpg';
-    var params = {
-      Bucket: fs.Bucket.BranchImages,
-      Key: filename,
-      ContentType: 'image/*'
-    }
-    var url = aws.s3Client.getSignedUrl('putObject', params, function(err, url) {
-      return success.OK(res, url);
-    });
+    const Bucket = fs.Bucket.BranchImages;
+    const Key = `${req.params.branchid}-${type}-orig.jpg`;
+    return success.OK(res, `https://${Bucket}.s3-eu-west-1.amazonaws.com/${Key}`);
   },
 
   getPicture (req, res, type, thumbnail) {
-    if(!req.params.branchid) {
+    const branchid = req.params.branchid;
+
+    if (!branchid) {
       return error.BadRequest(res, 'Missing branchid');
     }
 
-    if(type != 'picture' && type != 'cover') {
+    if (type !== 'picture' && type !== 'cover') {
       return error.InternalServerError(res);
     }
-    var size;
-    if(type == 'picture') {
-      size = thumbnail ? 200 : 640;
-    } else {
-      size = thumbnail ? 800 : 1920;
-    }
 
-    var image = new BranchImage();
-    image.findById(req.params.branchid, type).then(function() {
-      aws.s3Client.getSignedUrl('getObject', {
-        Bucket: fs.Bucket.BranchImagesResized,
-        Key: image.data.id + '-' + size + '.' + image.data.extension
-      }, function(err, url) {
-        if(err) {
-          return error.InternalServerError(res);
-        }
-        return success.OK(res, url);
-      });
-    }, function(err) {
-      if(err) {
-        return error.InternalServerError(res);
-      }
-      return error.NotFound(res);
+    getBranchPicture(branchid, type, thumbnail).then(url => {
+      return success.OK(res, url);
     });
   },
 

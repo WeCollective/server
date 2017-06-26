@@ -11,15 +11,15 @@ const mailer = require('./mailer');
 const User = require('../models/user.model');
 
 module.exports = passport => {
-  passport.serializeUser( (user, done) => {
+  passport.serializeUser((user, done) => {
     done(null, user.username);
   });
 
-  passport.deserializeUser( (username, done) => {
+  passport.deserializeUser((username, done) => {
     const user = new User();
     
     user.findByUsername(username)
-      .then( () => {
+      .then(() => {
         return done(null, user.data);
       }, () => {
         return done(true);
@@ -31,7 +31,7 @@ module.exports = passport => {
       // check whether a user with this username exists in the database
       const user = new User();
       user.findByUsername(username)
-        .then( () => {
+        .then(() => {
           
           // Unverified account.
           if (!user.data.verified) {
@@ -42,11 +42,11 @@ module.exports = passport => {
           }
 
           auth.compare(password, user.data.password)
-            .then( () => {
+            .then(() => {
               return done(null, user.data);
             })
             // Incorrect password.
-            .catch( err => {
+            .catch(err => {
               console.error('Error logging in:', err);
               return done(null, false, err);
             });
@@ -68,13 +68,13 @@ module.exports = passport => {
   }));
 
   passport.use('LocalSignUp', new LocalStrategy({ passReqToCallback: true }, (req, username, password, done) => {
-    process.nextTick( () => {
+    process.nextTick(() => {
       // check whether a user with this username already exists in the database
       const user = new User();
       username = username.toLowerCase();
       
       user.findByUsername(username)
-        .then( () => {
+        .then(() => {
           return done(null, false, {
             status: 400,
             message: 'Username already exists'
@@ -90,7 +90,7 @@ module.exports = passport => {
           }
 
           new User().findByEmail(req.body.email)
-            .then( () => {
+            .then(() => {
               return done(null, false, {
                 status: 400,
                 message: 'Email already exists'
@@ -145,17 +145,17 @@ module.exports = passport => {
               }
 
               mailer.sendVerification(newUser.data, token)
-                .then( () => {
+                .then(() => {
                   return auth.generateSalt(10);
                 })
-                .then( salt => {
+                .then(salt => {
                   return auth.hash(password, salt);
                 })
-                .then( hash => {
+                .then(hash => {
                   // Save new user to database using hashed password
                   newUser.set('password', hash);
                   newUser.save()
-                    .then( () => {
+                    .then(() => {
                       return done(null, { username });
                     }, err => {
                       console.error('Error signing up:', err);
@@ -165,7 +165,7 @@ module.exports = passport => {
                       });
                     });
                 })
-                .catch( err => {
+                .catch(err => {
                   console.error('Error signing up:', err);
                   return done(err, false, {
                     status: 500,

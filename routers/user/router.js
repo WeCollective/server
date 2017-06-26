@@ -1,11 +1,11 @@
 'use strict';
 
 const express = require('express');
-const router  = express.Router();
+const router = express.Router();
 
 const ACL = require('../../config/acl');
 const Constant = require('../../models/constant');
-const success  = require('../../responses/successes');
+const success = require('../../responses/successes');
 
 module.exports = (app, passport) => {
   const controller = require('./controller');
@@ -27,7 +27,7 @@ module.exports = (app, passport) => {
    * @apiUse InternalServerError
    */
   router.route('/')
-    .post( (req, res, next) => {
+    .post((req, res, next) => {
       // local-signup with override of done() method to access info object from passport strategy
       passport.authenticate('local-signup', (err, user, info) => {
         if (err) {
@@ -71,7 +71,7 @@ module.exports = (app, passport) => {
    * @apiUse InternalServerError
    */
   router.route('/login')
-    .post( (req, res, next) => {
+    .post((req, res, next) => {
       // local-login with override of done() method to access info object from passport strategy
       passport.authenticate('LocalSignIn', (err, user, info) => {
         if (err) {
@@ -105,7 +105,7 @@ module.exports = (app, passport) => {
    * @apiUse InternalServerError
    */
   router.route('/logout')
-    .get( (req, res, next) => {
+    .get((req, res, next) => {
       req.logout();
       return success.OK(res);
     });

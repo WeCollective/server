@@ -1,15 +1,15 @@
 'use strict';
 
 const express = require('express');
-const router  = express.Router();
+const router = express.Router();
 
-const error   = require('../responses/errors');
+const error = require('../responses/errors');
 const success = require('../responses/successes');
 
-const ACL   = require('../config/acl');
-const http  = require('http');
+const ACL = require('../config/acl');
+const http = require('http');
 const https = require('https');
-const url   = require('url');
+const url = require('url');
 
 module.exports = (app, passport) => {
   const version = '/v1';
@@ -38,8 +38,8 @@ module.exports = (app, passport) => {
     }
 
     const url_parts = url.parse(req.query.url, true);
-    
-    if ('http:' !== url_parts.protocol) {
+
+    if (url_parts.protocol !== 'http:') {
       return error.BadRequest(res, 'Only http resources can be proxied');
     }
     

@@ -21,7 +21,7 @@ const User = require('../../models/user.model');
 const UserVote = require('../../models/user-vote.model');
 
 module.exports = {
-  get (req, res) {
+  get(req, res) {
     const postid = req.params.postid;
 
     if (!postid) {
@@ -72,7 +72,7 @@ module.exports = {
     });
   },
 
-  getPostPicture (postid, thumbnail = false) {
+  getPostPicture(postid, thumbnail = false) {
     return new Promise((resolve, reject) => {
       if (!postid) return resolve('');
 
@@ -96,7 +96,7 @@ module.exports = {
     });
   },
 
-  post (req, res) {
+  post(req, res) {
     if(!req.user.username) {
       console.error("No username found in session.");
       return error.InternalServerError(res);
@@ -252,7 +252,7 @@ module.exports = {
     });
   },
 
-  delete (req, res) {
+  delete(req, res) {
     if(!req.user || !req.user.username) {
       return error.Forbidden(res);
     }
@@ -295,7 +295,7 @@ module.exports = {
     });
   },
 
-  getPictureUploadUrl (req, res) {
+  getPictureUploadUrl(req, res) {
     if(!req.user || !req.user.username) {
       return error.Forbidden(res);
     }
@@ -330,7 +330,7 @@ module.exports = {
     });
   },
 
-  getPicture (req, res, thumbnail) {
+  getPicture(req, res, thumbnail) {
     if(!req.params.postid) {
       return error.BadRequest(res, 'Missing postid');
     }
@@ -358,7 +358,7 @@ module.exports = {
     });
   },
 
-  flagPost (req, res) {
+  flagPost(req, res) {
     if(!req.user || !req.user.username) {
       return error.Forbidden(res);
     }
@@ -449,7 +449,7 @@ module.exports = {
     });
   },
 
-  postComment (req, res) {
+  postComment(req, res) {
     if(!req.user || !req.user.username) {
       return error.Forbidden(res);
     }
@@ -648,7 +648,7 @@ module.exports = {
     });
   },
 
-  getComments (req, res) {
+  getComments(req, res) {
     if(!req.params.postid) {
       return error.BadRequest(res, 'Missing postid');
     }
@@ -711,7 +711,7 @@ module.exports = {
     });
   },
 
-  getComment (req, res) {
+  getComment(req, res) {
     if(!req.params.postid) {
       return error.BadRequest(res, 'Missing postid');
     }
@@ -737,7 +737,7 @@ module.exports = {
     });
   },
 
-  voteComment (req, res) {
+  voteComment(req, res) {
     if(!req.params.postid) {
       return error.BadRequest(res, 'Missing postid');
     }
@@ -839,7 +839,7 @@ module.exports = {
     });
   },
 
-  putComment (req, res) {
+  putComment(req, res) {
     if(!req.params.postid) {
       return error.BadRequest(res, 'Missing postid');
     }

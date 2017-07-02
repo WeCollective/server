@@ -65,7 +65,7 @@ app.use((req, res, next) => {
   ];
   const origin = req.headers.origin;
 
-  if (allowedOrigins.indexOf(origin) !== -1) {
+  if (allowedOrigins.includes(origin)) {
     res.header('Access-Control-Allow-Origin', origin);
   }
 
@@ -86,7 +86,7 @@ const options = {
     },
     logger: process.env.NODE_ENV === 'development' ? process.stdout : undefined,
     region: 'eu-west-1',
-    sslEnabled: true
+    sslEnabled: true,
   },
   reapInterval: 600000  // clean up expired sessions every 10 mins
 };

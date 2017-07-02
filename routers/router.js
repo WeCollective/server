@@ -33,7 +33,7 @@ module.exports = (app, passport) => {
    * @apiUse InternalServerError
    */
   app.get(`${version}/proxy`, (req, res) => {
-    if(!req.query.url) {
+    if (!req.query.url) {
       return error.NotFound(res);
     }
 

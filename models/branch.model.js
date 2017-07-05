@@ -9,7 +9,7 @@ var Branch = function(data) {
   this.config = {
     keys: db.Keys.Branches,
     schema: db.Schema.Branch,
-    table: db.Table.Branches
+    table: db.Table.Branches,
   };
 
   this.data = this.sanitize(data);
@@ -170,12 +170,12 @@ Branch.prototype.findSubbranches = function(parentid, timeafter, sortBy, last) {
     ExpressionAttributeNames: { '#date': 'date' },
     ExpressionAttributeValues: {
       ':parentid': String(parentid),
-      ':timeafter': Number(timeafter)
+      ':timeafter': Number(timeafter),
     },
     IndexName,
     ScanIndexForward: false,   // return results highest first
     Select: 'ALL_PROJECTED_ATTRIBUTES',
-    TableName: self.config.table
+    TableName: self.config.table,
   };
 
   if (sortBy === 'date') {

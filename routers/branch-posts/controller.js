@@ -63,8 +63,6 @@ module.exports = {
     let posts = [];
     let postDatas  = [];
     let postImages = [];
-
-    console.log(opts);
     
     new Promise((resolve, reject) => {
       // Client wants only results that appear after this post (pagination).

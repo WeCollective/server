@@ -9,7 +9,7 @@ var BranchImage = function (data) {
   this.config = {
     keys: db.Keys.BranchImages,
     schema: db.Schema.BranchImages,
-    table: db.Table.BranchImages
+    table: db.Table.BranchImages,
   };
   this.data = this.sanitize(data);
   this.restricted = ['id'];

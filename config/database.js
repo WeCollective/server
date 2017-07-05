@@ -1,6 +1,6 @@
 'use strict';
 
-const ModelSchemas = {
+const Schema = {
   Branch: {
     creator: null,
     date: null,
@@ -17,7 +17,7 @@ const ModelSchemas = {
   BranchImages: {
     date: null,
     extension: null,
-    id: null
+    id: null,
   },
 
   Comment: {
@@ -29,7 +29,7 @@ const ModelSchemas = {
     postid: null,
     rank: null,
     replies: null,
-    up: null
+    up: null,
   },
   
   CommentData: {
@@ -37,12 +37,12 @@ const ModelSchemas = {
     date: null,
     edited: null,
     id: null,
-    text: null
+    text: null,
   },
 
   Constant: {
     data: null,
-    id: null
+    id: null,
   },
   
   FlaggedPost: {
@@ -53,18 +53,18 @@ const ModelSchemas = {
     nsfw_count: null,
     site_rules_count: null,
     type: null,
-    wrong_type_count: null
+    wrong_type_count: null,
   },
 
   FollowedBranch: {
     branchid: null,
-    username: null
+    username: null,
   },
 
   Mod: {
     branchid: null,
     date: null,
-    username: null
+    username: null,
   },
   
   ModLogEntry: {
@@ -72,7 +72,7 @@ const ModelSchemas = {
     branchid: null,
     data: null,
     date: null,
-    username: null
+    username: null,
   },
 
   Notification: {
@@ -81,7 +81,7 @@ const ModelSchemas = {
     id: null,
     type: null,
     unread: null,
-    user: null
+    user: null,
   },
 
   PollAnswer: {
@@ -90,7 +90,7 @@ const ModelSchemas = {
     id: null,
     postid: null,
     text: null,
-    votes: null
+    votes: null,
   },
   
   Post: {
@@ -105,7 +105,7 @@ const ModelSchemas = {
     locked: null,
     nsfw: null,
     type: null,
-    up: null
+    up: null,
   },
   
   PostData: {
@@ -113,13 +113,13 @@ const ModelSchemas = {
     id: null,
     original_branches: null,
     text: null,
-    title: null
+    title: null,
   },
   
   PostImages: {
     date: null,
     extension: null,
-    id: null
+    id: null,
   },
 
   Session: {
@@ -127,19 +127,19 @@ const ModelSchemas = {
     id: null,
     sess: null,
     socketID: null,
-    type: null
+    type: null,
   },
   
   SubBranchRequest: {
     childid: null,
     creator: null,
     date: null,
-    parentid: null
+    parentid: null,
   },
   
   Tag: {
     branchid: null,
-    tag: null
+    tag: null,
   },
   
   User: {
@@ -162,51 +162,51 @@ const ModelSchemas = {
   UserImages: {
     extension: null,
     date: null,
-    id: null
+    id: null,
   },
   
   UserVote: {
     direction: null,
     itemid: null,
-    username: null
-  }
+    username: null,
+  },
 };
 
-const TableKeys = {
+const Keys = {
   Branches: {
     globalIndexes: [
       'parentid-date-index',
       'parentid-post_count-index',
       'parentid-post_points-index',
-      'parentid-post_comments-index'
+      'parentid-post_comments-index',
     ],
     primary: 'id',
-    sort: null
+    sort: null,
   },
   
   BranchImages: {
     primary: 'id',
-    sort: null
+    sort: null,
   },
 
   Comments: {
     globalIndexes: [
       'postid-individual-index',
       'postid-date-index',
-      'postid-replies-index'
+      'postid-replies-index',
     ],
     primary: 'id',
-    sort: null
+    sort: null,
   },
   
   CommentData: {
     primary: 'id',
-    sort: null
+    sort: null,
   },
   
   Constants: {
     primary: 'id',
-    sort: null
+    sort: null,
   },
 
   FlaggedPosts: {
@@ -215,41 +215,41 @@ const TableKeys = {
       'branchid-branch_rules_count-index',
       'branchid-site_rules_count-index',
       'branchid-wrong_type_count-index',
-      'branchid-nsfw_count-index'
+      'branchid-nsfw_count-index',
     ],
     primary: 'id',
-    sort: 'branchid'
+    sort: 'branchid',
   },
   
   FollowedBranches: {
     primary: 'username',
-    sort: 'branchid'
+    sort: 'branchid',
   },
   
   Mods: {
     primary: 'branchid',
-    sort: 'date'
+    sort: 'date',
   },
   
   ModLog: {
     primary: 'branchid',
-    sort: 'date'
+    sort: 'date',
   },
 
   Notifications: {
     globalIndexes: ['user-date-index'],
     primary: 'id',
-    sort: null
+    sort: null,
   },
 
   PollAnswers: {
     globalIndexes: [
       'creator-date-index',
       'postid-date-index',
-      'postid-votes-index'
+      'postid-votes-index',
     ],
     primary: 'id',
-    sort: null
+    sort: null,
   },
 
   Posts: {
@@ -258,59 +258,59 @@ const TableKeys = {
       'branchid-local-index',
       'branchid-date-index',
       'branchid-comment_count-index',
-      'branchid-global-index'
+      'branchid-global-index',
     ],
     primary: 'id',
-    sort: 'branchid'
+    sort: 'branchid',
   },
   
   PostData: {
     primary: 'id',
-    sort: null
+    sort: null,
   },
   
   PostImages: {
     primary: 'id',
-    sort: null
+    sort: null,
   },
 
   Sessions: {
     primary: 'id',
-    sort: null
+    sort: null,
   },
   
   SubBranchRequests: {
     globalIndexes: ['parentid-date-index'],
     primary: 'parentid',
-    sort: 'childid'
+    sort: 'childid',
   },
   
   Tags: {
     globalIndexes: ['tag-branchid-index'],
     primary: 'branchid',
-    sort: 'tag'
+    sort: 'tag',
   },
 
   Users: {
     globalIndexes: ['email-index'],
     primary: 'username',
-    sort: null
+    sort: null,
   },
 
   UserImages: {
     primary: 'id',
-    sort: null
+    sort: null,
   },
 
   UserVotes: {
     primary: 'username',
-    sort: 'itemid'
-  }
+    sort: 'itemid',
+  },
 };
 
 const DynamoDBConfig = {
-  Keys: TableKeys,
-  Schema: ModelSchemas,
+  Keys,
+  Schema,
   Table: {
     Branches: 'Branches',
     BranchImages: 'BranchImages',
@@ -331,7 +331,7 @@ const DynamoDBConfig = {
     Tags: 'Tags',
     Users: 'Users',
     UserImages: 'UserImages',
-    UserVotes: 'UserVotes'
+    UserVotes: 'UserVotes',
   }
 };
 

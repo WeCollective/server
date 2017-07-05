@@ -12,7 +12,7 @@ var Model = function() {
 };
 
 Model.prototype.config = {};      // model config inc. table name, schema, db keys
-Model.prototype.data   = {};      // the actual model data
+Model.prototype.data = {};      // the actual model data
 Model.prototype.dirtys = [];      // array of changed model data properties
 
 // Ensure data adheres to the schema
@@ -31,7 +31,7 @@ Model.prototype.set = function (name, value) {
   this.data[name] = value;
 
   // set dirty flag for this property
-  if (this.dirtys.indexOf(name) === -1) {
+  if (!this.dirtys.includes(name)) {
     this.dirtys.push(name);
   }
 };
@@ -43,7 +43,7 @@ Model.prototype.save = function () {
   return new Promise( (resolve, reject) => {
     aws.dbClient.put({
       Item: self.data,
-      TableName: self.config.table
+      TableName: self.config.table,
     }, (err, data) => {
       if (err) {
         return reject(err);
@@ -103,7 +103,7 @@ Model.prototype.update = function (Key) {
       const name = self.dirtys[i];
       AttributeUpdates[name] = {
         Action: 'PUT',
-        Value: self.data[name]
+        Value: self.data[name],
       }
     }
 
@@ -111,7 +111,7 @@ Model.prototype.update = function (Key) {
     aws.dbClient.update({
       AttributeUpdates,
       Key,
-      TableName: self.config.table
+      TableName: self.config.table,
     }, err => {
       if (err) {
         return reject(err);

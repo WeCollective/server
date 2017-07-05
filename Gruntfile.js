@@ -7,7 +7,6 @@ module.exports = grunt => {
   grunt.loadNpmTasks('grunt-exec');
   grunt.loadNpmTasks('grunt-mocha-test');
   grunt.loadNpmTasks('grunt-nodemon');
-  grunt.loadNpmTasks('grunt-preprocess');
 
   // Configure tasks
   grunt.initConfig({
@@ -88,41 +87,6 @@ module.exports = grunt => {
           //debug: true
         }
       }
-    },
-    preprocess: {
-      local: {
-        files : {
-          '.ebextensions/securelistener.config': '.ebextensions/securelistener.template.config.js'
-        },
-        options: {
-          context: {
-            ENV: 'local',
-            SSL: 'false'
-          }
-        }
-      },
-      development: {
-        files : {
-          '.ebextensions/securelistener.config': '.ebextensions/securelistener.template.config.js'
-        },
-        options: {
-          context: {
-            ENV: 'development',
-            SSL: 'false'
-          }
-        }
-      },
-      production: {
-        files : {
-          '.ebextensions/securelistener.config': '.ebextensions/securelistener.template.config.js'
-        },
-        options: {
-          context: {
-            ENV: 'production',
-            SSL: 'true'
-          }
-        }
-      }
     }
   });
 
@@ -134,9 +98,9 @@ module.exports = grunt => {
   **                          (either "development" or "production"), merging into production if needed.
   */
   grunt.registerTask('test', ['jshint', 'mochaTest']);
-  grunt.registerTask('serve', ['apidoc', 'jshint', 'preprocess:local', 'concurrent:serve']);
-  grunt.registerTask('publish', ['apidoc', 'test', 'preprocess:production', 'exec:commit', 'exec:publish']);
-  grunt.registerTask('deploy:dev', ['apidoc', 'test', 'preprocess:development', 'exec:commit', 'exec:deploy:development']);
+  grunt.registerTask('serve', ['apidoc', 'jshint', 'concurrent:serve']);
+  grunt.registerTask('publish', ['apidoc', 'test', 'exec:commit', 'exec:publish']);
+  grunt.registerTask('deploy:dev', ['apidoc', 'test', 'exec:commit', 'exec:deploy:development']);
   grunt.registerTask('deploy:production', ['publish', 'exec:deploy:production']);
   grunt.registerTask('default', ['serve']);
 };

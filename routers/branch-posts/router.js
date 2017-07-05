@@ -136,7 +136,7 @@ module.exports = (app, passport) => {
      * @apiUse BadRequest
      * @apiUse InternalServerError
      */
-    .post( (req, res, next) => {
+    .post((req, res, next) => {
       ACL.validateRole(ACL.Roles.Moderator, req.params.branchid)(req, res, next);
     }, controller.resolveFlag);
 

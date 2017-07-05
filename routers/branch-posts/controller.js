@@ -36,7 +36,7 @@ function userCanDisplayNSFWPosts(req) {
 }
 
 module.exports = {
-  get (req, res) {
+  get(req, res) {
     if (!req.params.branchid) {
       return error.BadRequest(res, 'Missing branchid');
     }
@@ -50,7 +50,7 @@ module.exports = {
       sortBy: '',
       // individual/local/global stats [if normal posts]
       stat: req.query.stat || 'individual',
-      timeafter: req.query.timeafter || 0
+      timeafter: req.query.timeafter || 0,
     };
 
     opts.sortBy = req.query.sortBy || (opts.fetchOnlyflaggedPosts ? 'date' : 'points');
@@ -63,8 +63,10 @@ module.exports = {
     let posts = [];
     let postDatas  = [];
     let postImages = [];
+
+    console.log(opts);
     
-    new Promise( (resolve, reject) => {
+    new Promise((resolve, reject) => {
       // Client wants only results that appear after this post (pagination).
       if (req.query.lastPostId) {
         const post = new Post();
@@ -73,8 +75,8 @@ module.exports = {
         // get the post
         post.findByPostAndBranchIds(req.query.lastPostId, req.params.branchid)
           // fetch post data
-          .then( _ => postdata.findById(req.query.lastPostId) )
-          .then( _ => {
+          .then(() => postdata.findById(req.query.lastPostId) )
+          .then(() => {
             // create lastPost object
             lastPost = post.data;
             lastPost.data = postdata.data;
@@ -95,15 +97,15 @@ module.exports = {
       }
     })
       // Authenticated users can set to display nsfw posts.
-      .then( _ => new Promise( (resolve, reject) => {
+      .then(() => new Promise( (resolve, reject) => {
           userCanDisplayNSFWPosts(req)
-            .then( displayNSFWPosts => {
+            .then(displayNSFWPosts => {
               opts.nsfw = displayNSFWPosts;
               return resolve();
             })
             .catch(reject);
       }))
-      .then( _ => new Promise( (resolve, reject) => {
+      .then(() => new Promise((resolve, reject) => {
         const validValues = opts.fetchOnlyflaggedPosts ? VALID_SORT_BY_MOD_VALUES : VALID_SORT_BY_USER_VALUES;
 
         if (!validValues.includes(opts.sortBy)) {
@@ -122,16 +124,16 @@ module.exports = {
           return resolve();
         }
       }))
-      .then( _ => {
+      .then(() => {
         const post = opts.fetchOnlyflaggedPosts ? new FlaggedPost() : new Post();
         return post.findByBranch(req.params.branchid, opts.timeafter, opts.nsfw, opts.sortBy, opts.stat, opts.postType, lastPost);
       })
-      .then( results => {
+      .then(results => {
         let promises = [];
         posts = results;
         
         // fetch post data for each post
-        for (let i = 0; i < posts.length; i++) {
+        for (let i = 0; i < posts.length; i += 1) {
           const postdata = new PostData();
           promises.push(postdata.findById(posts[i].id));
           postDatas.push(postdata);
@@ -139,21 +141,21 @@ module.exports = {
 
         return Promise.all(promises);
       })
-      .then( _ => {
+      .then(() => {
         let promises = [];
 
-        for (let i = 0; i < posts.length; i++) {
+        for (let i = 0; i < posts.length; i += 1) {
           // attach post data to each post
           posts[i].data = postDatas[i].data;
           
-          promises.push(new Promise( (resolve, reject) => {
+          promises.push(new Promise((resolve, reject) => {
             new PostImage().findById(posts[i].id)
-              .then( postimage => {
+              .then(postimage => {
                 const Bucket = fs.Bucket.PostImagesResized;
                 const Key = `${postimage.id}-640.${postimage.extension}`;
                 return resolve(`https://${Bucket}.s3-eu-west-1.amazonaws.com/${Key}`);
               })
-              .catch( err => {
+              .catch(err => {
                 if (err) {
                   return reject();
                 }
@@ -165,21 +167,21 @@ module.exports = {
 
         return Promise.all(promises);
       })
-      .then( urls => {
+      .then(urls => {
         let promises = [];
 
-        for (let i = 0; i < posts.length; i++) {
+        for (let i = 0; i < posts.length; i += 1) {
           // attach post image url to each post
           posts[i].profileUrl = urls[i];
           
-          promises.push(new Promise( (resolve, reject) => {
+          promises.push(new Promise((resolve, reject) => {
             new PostImage().findById(posts[i].id)
-              .then( postimage => {
+              .then(postimage => {
                 const Bucket = fs.Bucket.PostImagesResized;
                 const Key = `${postimage.id}-200.${postimage.extension}`;
                 return resolve(`https://${Bucket}.s3-eu-west-1.amazonaws.com/${Key}`);
               })
-              .catch( err => {
+              .catch(err => {
                 if (err) {
                   return reject();
                 }
@@ -191,15 +193,16 @@ module.exports = {
 
         return Promise.all(promises);
       })
-      .then( urls => {
+      .then(urls => {
+
         // attach post image thumbnail url to each post
-        for (let i = 0; i < posts.length; i++) {
+        for (let i = 0; i < posts.length; i += 1) {
           posts[i].profileUrlThumb = urls[i];
         }
 
         return success.OK(res, posts);
       })
-      .catch( err => {
+      .catch(err => {
         console.error('Error fetching posts:', err);
         return error.InternalServerError(res);
       });
@@ -251,7 +254,7 @@ module.exports = {
     }).then(function(posts) {
       // find all post entries to get the list of branches it is tagged to
       var promise;
-      for(var i = 0; i < posts.length; i++) {
+      for(var i = 0; i < posts.length; i += 1) {
         branchIds.push(posts[i].branchid);
         // find the post on the specified branchid
         if(posts[i].branchid == req.params.branchid) {
@@ -279,7 +282,7 @@ module.exports = {
       if(voteChanged) {
         inc = inc == 1 ? inc + 1 : inc - 1;
       }
-      for(var i = 0; i < branchIds.length; i++) {
+      for(var i = 0; i < branchIds.length; i += 1) {
         promises.push(new Promise(function(resolve, reject) {
           var branch = new Branch();
           branch.findById(branchIds[i]).then(function() {
@@ -383,7 +386,7 @@ module.exports = {
             return error.NotFound(res);
           }
           var promises = [];
-          for(var i = 0; i < posts.length; i++) {
+          for(var i = 0; i < posts.length; i += 1) {
             var post = new Post();
             post.set('type', req.body.type);
             // validate post properties
@@ -487,7 +490,7 @@ module.exports = {
           var time = new Date().getTime();
           // get global mods
           new Mod().findByBranch('root').then(function(mods) {
-            for(var i = 0; i < mods.length; i++) {
+            for(var i = 0; i < mods.length; i += 1) {
               var notification = new Notification({
                 id: mods[i].username + '-' + time,
                 user: mods[i].username,

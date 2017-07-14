@@ -6,7 +6,7 @@ const db  = require('../config/database');
 const Model = require('./model');
 const validate = require('./validate');
 
-let Post = function(data) {
+const Post = function(data) {
   this.config = {
     keys: db.Keys.Posts,
     schema: db.Schema.Post,
@@ -14,6 +14,22 @@ let Post = function(data) {
   };
   this.data = this.sanitize(data);
 };
+
+function formatPostsToNewAPI (posts) {
+  posts = posts || [];
+
+  posts.forEach(post => {
+    post.votes = {
+      down: post.down,
+      global: post.global,
+      individual: post.individual,
+      local: post.local,
+      up: post.up,
+    };
+  });
+
+  return posts;
+}
 
 // Post model inherits from Model
 Post.prototype = Object.create(Model.prototype);
@@ -121,18 +137,7 @@ Post.prototype.findByBranch = function (branchid, timeafter, nsfw, sortBy, stat,
         return reject();
       }
 
-      const posts = data.Items.slice(0, limit);
-
-      posts.forEach(post => {
-        post.votes = {
-          down: post.down,
-          global: post.global,
-          individual: post.individual,
-          local: post.local,
-          up: post.up,
-        };
-      });
-
+      const posts = formatPostsToNewAPI(data.Items.slice(0, limit));
       return resolve(posts);
     });
   });
@@ -146,10 +151,10 @@ Post.prototype.findById = function (id) {
   return new Promise( (resolve, reject) => {
     aws.dbClient.query({
       ExpressionAttributeValues: {
-        ':id': id
+        ':id': id,
       },
       KeyConditionExpression: 'id = :id',
-      TableName: self.config.table
+      TableName: self.config.table,
     }, (err, data) => {
       if (err) {
         return reject(err);
@@ -159,7 +164,8 @@ Post.prototype.findById = function (id) {
         return reject();
       }
 
-      return resolve(data.Items);
+      const posts = formatPostsToNewAPI(data.Items);
+      return resolve(posts);
     });
   });
 };
@@ -187,7 +193,9 @@ Post.prototype.findByPostAndBranchIds = function (postid, branchid) {
         return reject();
       }
 
-      self.data = data.Items[0];
+      const posts = formatPostsToNewAPI(data.Items);
+
+      self.data = posts[0];
       return resolve();
     });
   });
@@ -196,82 +204,93 @@ Post.prototype.findByPostAndBranchIds = function (postid, branchid) {
 // Validate the properties specified in 'properties' on the Post object,
 // returning an array of any invalid ones
 Post.prototype.validate = function (properties) {
-  let invalids = [];
+  const invalids = [];
 
   // ensure id exists and is of correct length
-  if (properties.indexOf('id') !== -1) {
+  if (properties.includes('id')) {
     if (!validate.postid(this.data.id)) {
       invalids.push('id');
     }
   }
 
   // ensure branchid exists and is of correct length
-  if (properties.indexOf('branchid') !== -1) {
+  if (properties.includes('branchid')) {
     if (!validate.branchid(this.data.branchid)) {
       invalids.push('branchid');
     }
   }
 
   // ensure creation date is valid
-  if (properties.indexOf('date') !== -1) {
+  if (properties.includes('date')) {
     if (!validate.date(this.data.date)) {
       invalids.push('date');
     }
   }
 
   // ensure type is valid
-  if (properties.indexOf('type') !== -1) {
-    if (this.data.type !== 'text' && this.data.type !== 'page' &&
-       this.data.type !== 'image' && this.data.type !== 'audio' &&
-       this.data.type !== 'video' && this.data.type !== 'poll') {
+  if (properties.includes('type')) {
+    /*
+     * todo This should be thrown into a separate module
+     * as it is used elsewhere throughout the API.
+     */
+    const validPostTypes = [
+      'text',
+      'page',
+      'image',
+      'audio',
+      'video',
+      'poll',
+    ];
+
+    if (!validPostTypes.includes(this.data.type)) {
       invalids.push('type');
     }
   }
 
   // ensure stats are valid numbers
-  if (properties.indexOf('individual') !== -1) {
+  if (properties.includes('individual')) {
     if (isNaN(this.data.individual)) {
       invalids.push('individual');
     }
   }
   
-  if (properties.indexOf('local') !== -1) {
+  if (properties.includes('local')) {
     if (isNaN(this.data.local)) {
       invalids.push('local');
     }
   }
 
-  if (properties.indexOf('global') !== -1) {
+  if (properties.includes('global')) {
     if (isNaN(this.data.global)) {
       invalids.push('global');
     }
   }
   
-  if (properties.indexOf('up') !== -1) {
+  if (properties.includes('up')) {
     if (isNaN(this.data.up)) {
       invalids.push('up');
     }
   }
   
-  if (properties.indexOf('down') !== -1) {
+  if (properties.includes('down')) {
     if (isNaN(this.data.down)) {
       invalids.push('down');
     }
   }
 
-  if (properties.indexOf('comment_count') !== -1) {
+  if (properties.includes('comment_count')) {
     if (isNaN(this.data.comment_count)) {
       invalids.push('comment_count');
     }
   }
 
-  if (properties.indexOf('nsfw') !== -1) {
+  if (properties.includes('nsfw')) {
     if (!validate.boolean(this.data.nsfw)) {
       invalids.push('nsfw');
     }
   }
 
-  if (properties.indexOf('locked') !== -1) {
+  if (properties.includes('locked')) {
     if (!validate.boolean(this.data.locked)) {
       invalids.push('locked');
     }

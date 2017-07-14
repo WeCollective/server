@@ -5,11 +5,11 @@ const db = require('../config/database');
 const Model = require('./model');
 const validate = require('./validate');
 
-let PostData = function (data) {
+const PostData = function (data) {
   this.config = {
     keys: db.Keys.PostData,
     schema: db.Schema.PostData,
-    table: db.Table.PostData
+    table: db.Table.PostData,
   };
   this.data = this.sanitize(data);
 };
@@ -27,7 +27,7 @@ PostData.prototype.findById = function (id) {
   return new Promise( (resolve, reject) => {
     aws.dbClient.get({
       Key: { id },
-      TableName: self.config.table
+      TableName: self.config.table,
     }, (err, data) => {
       if (err) {
         return reject(err);
@@ -38,8 +38,7 @@ PostData.prototype.findById = function (id) {
       }
 
       self.data = data.Item;
-
-      return resolve();
+      return resolve(self.data);
     });
   });
 };

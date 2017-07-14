@@ -18,7 +18,7 @@ const PostImage = require('../../models/post-image.model');
 const success = require('../../responses/successes');
 const Tag = require('../../models/tag.model');
 const User = require('../../models/user.model');
-const UserVote = require('../../models/user-vote.model');
+const Vote = require('../../models/user-vote.model');
 
 const self = module.exports = {
   get(req, res) {
@@ -28,7 +28,7 @@ const self = module.exports = {
       return error.BadRequest(res, 'Missing postid');
     }
 
-    self.getOnePost(postid)
+    self.getOnePost(postid, req)
       .then(post => success.OK(res, post))
       .catch(err => {
         if (err) {
@@ -43,9 +43,8 @@ const self = module.exports = {
       });
   },
 
-  getOnePost(id) {
+  getOnePost(id, req) {
     let post;
-    const postdata = new PostData();
 
     return new Promise((resolve, reject) => {
       new Promise((resolve, reject) => {
@@ -67,8 +66,15 @@ const self = module.exports = {
 
         post = posts[idx];
 
-        return postdata.findById(id);
+        new PostData()
+          .findById(id)
+          .then(data => {
+            post.data = data;
+            return Promise.resolve();
+          })
+          .catch(reject);
       })
+      // attach post image url to each post
       .then(() => {
         return Promise.resolve(new Promise((resolve, reject) => {
           this.getPostPicture(id, false)
@@ -78,6 +84,7 @@ const self = module.exports = {
             })
         }));
       })
+      // Attach post image thumbnail url to each post.
       .then(() => {
         return Promise.resolve(new Promise((resolve, reject) => {
           this.getPostPicture(id, true)
@@ -87,13 +94,26 @@ const self = module.exports = {
             })
         }));
       })
+      // Extend the posts with information about user vote.
       .then(() => {
-        post.data = postdata.data;
+        if (req && req.user && req.user.username) {
+          return new Promise((resolve, reject) => {
+            new Vote()
+              .findByUsernameAndItemId(req.user.username, `post-${post.id}`)
+              .then(existingVoteData => {
+                if (existingVoteData) {
+                  post.votes.userVoted = existingVoteData.direction;
+                }
+
+                return resolve();
+              })
+              .catch(reject);
+          });
+        }
+
         return Promise.resolve();
       })
-      .then(() => {
-        return resolve(post);
-      })
+      .then(() => resolve(post))
       .catch(err => {
         if (err) {
           console.error(`Error fetching post data: `, err);
@@ -797,7 +817,7 @@ const self = module.exports = {
 
     var comment = new Comment();
     // check user hasn't already voted on this comment
-    var uservote = new UserVote();
+    var uservote = new Vote();
     var voteChanged = false;
     uservote.findByUsernameAndItemId(req.user.username, 'comment-' + req.params.commentid).then(function () {
       // user has voted on this post before
@@ -845,7 +865,7 @@ const self = module.exports = {
         return uservote.update();
       } else {
         // new vote: store this vote in the table
-        var vote = new UserVote({
+        var vote = new Vote({
           username: req.user.username,
           itemid: 'comment-' + req.params.commentid,
           direction: req.body.vote

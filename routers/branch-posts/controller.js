@@ -10,6 +10,7 @@ const Mod = require('../../models/mod.model');
 const Notification = require('../../models/notification.model');
 const NotificationTypes = require('../../config/notification-types');
 const Post = require('../../models/post.model');
+const PostCtrl = require('../post/controller');
 const PostData  = require('../../models/post-data.model');
 const PostImage = require('../../models/post-image.model');
 const success   = require('../../responses/successes');
@@ -173,101 +174,23 @@ module.exports = {
         const post = opts.fetchOnlyflaggedPosts ? new FlaggedPost() : new Post();
         return post.findByBranch(req.params.branchid, opts.timeafter, opts.nsfw, opts.sortBy, opts.stat, opts.postType, lastPost);
       })
-      // attach post data to each post - title, text, etc.
+      // Get posts.
       .then(results => {
         posts = results;
 
         const promises = [];
-        
-        // fetch post data for each post
-        posts.forEach(post => {
+
+        posts.forEach((post, index) => {
           promises.push(new Promise((resolve, reject) => {
-            const postdata = new PostData();
-            postdata
-              .findById(post.id)
-              .then(() => {
-                post.data = postdata.data;
+            PostCtrl
+              .getOnePost(post.id, req)
+              .then(post => {
+                posts[index] = post;
                 return resolve();
               })
               .catch(reject);
           }));
         });
-
-        return Promise.all(promises);
-      })
-      // attach post image url to each post
-      .then(() => {
-        const promises = [];
-
-        posts.forEach(post => {
-          promises.push(new Promise((resolve, reject) => {
-            new PostImage().findById(post.id)
-              .then(postimage => {
-                const Bucket = fs.Bucket.PostImagesResized;
-                const Key = `${postimage.id}-640.${postimage.extension}`;
-                post.profileUrl = `https://${Bucket}.s3-eu-west-1.amazonaws.com/${Key}`;
-                return resolve();
-              })
-              .catch(err => {
-                if (err) {
-                  return reject();
-                }
-
-                post.profileUrl = '';
-                return resolve();
-              });
-          }));
-        });
-
-        return Promise.all(promises);
-      })
-      // Attach post image thumbnail url to each post.
-      .then(() => {
-        const promises = [];
-
-        posts.forEach(post => {
-          promises.push(new Promise((resolve, reject) => {
-            new PostImage()
-              .findById(post.id)
-              .then(image => {
-                const Bucket = fs.Bucket.PostImagesResized;
-                const Key = `${image.id}-200.${image.extension}`;
-                post.profileUrlThumb = `https://${Bucket}.s3-eu-west-1.amazonaws.com/${Key}`;
-                return resolve();
-              })
-              .catch(err => {
-                if (err) {
-                  return reject();
-                }
-
-                post.profileUrlThumb = '';
-                return resolve();
-              });
-          }));
-        });
-
-        return Promise.all(promises);
-      })
-      // Extend the posts with information about user vote.
-      .then(() => {
-        const promises = [];
-
-        if (req.user && req.user.username) {
-          posts.forEach(post => {
-            promises.push(new Promise((resolve, reject) => {
-              new Vote()
-                .findByUsernameAndItemId(req.user.username, `post-${post.id}`)
-                .then(existingVoteData => {
-                  if (existingVoteData) {
-                    post.votes.userVoted = existingVoteData.direction;
-                  }
-
-                  return resolve();
-                })
-                .catch(reject);
-            }));
-          });
-        }
 
         return Promise.all(promises);
       })

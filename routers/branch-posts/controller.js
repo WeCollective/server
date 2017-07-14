@@ -53,35 +53,37 @@ function userCanDisplayNSFWPosts(req) {
   });
 }
 
-function verifyParamsPut(req) {
-  if (!req.params.branchid) {
-    return Promise.reject({
-      code: 400,
-      message: 'Missing branchid',
-    });
-  }
+const put = {
+  verifyParams(req) {
+    if (!req.params.branchid) {
+      return Promise.reject({
+        code: 400,
+        message: 'Missing branchid',
+      });
+    }
 
-  if (!req.params.postid) {
-    return Promise.reject({
-      code: 400,
-      message: 'Missing postid.',
-    });
-  }
+    if (!req.params.postid) {
+      return Promise.reject({
+        code: 400,
+        message: 'Missing postid.',
+      });
+    }
 
-  if (!req.user.username) {
-    console.error('No username found in session.');
-    return Promise.reject({ code: 500 });
-  }
+    if (!req.user.username) {
+      console.error('No username found in session.');
+      return Promise.reject({ code: 500 });
+    }
 
-  if (!req.body.vote || (req.body.vote !== 'up' && req.body.vote !== 'down')) {
-    return Promise.reject({
-      code: 400,
-      message: 'Missing or malformed vote parameter.',
-    });
-  }
+    if (!req.body.vote || (req.body.vote !== 'up' && req.body.vote !== 'down')) {
+      return Promise.reject({
+        code: 400,
+        message: 'Missing or malformed vote parameter.',
+      });
+    }
 
-  return Promise.resolve();
-}
+    return Promise.resolve();
+  },
+};
 
 module.exports = {
   get(req, res) {
@@ -265,7 +267,7 @@ module.exports = {
     let resData = { delta: 0 };
     let userAlreadyVoted = false;
 
-    verifyParamsPut(req)
+    put.verifyParams(req)
       .then(() => {
         post = new Post({
           branchid: req.params.branchid,
@@ -284,9 +286,10 @@ module.exports = {
             newVoteOppositeDirection = newVoteDirection === 'up' ? 'down' : 'up';
           }
         }
-        
-        return new Post().findById(req.params.postid);
+
+        return Promise.resolve();
       })
+      .then(() => new Post().findById(req.params.postid))
       // Update the post "up" and "down" attributes.
       // Vote stats will be auto-updated by a lambda function.
       .then(posts => {

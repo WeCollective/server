@@ -21,13 +21,14 @@ Post.prototype.constructor = Post;
 
 // Fetch the posts on a specific branch, using a specific stat, and filtered by time
 Post.prototype.findByBranch = function (branchid, timeafter, nsfw, sortBy, stat, postType, last) {
-  return new Promise( (resolve, reject) => {
+  return new Promise((resolve, reject) => {
     const self = this;
     const limit = 30;
+
     let indexName = self.config.keys.globalIndexes[0];
     let params = {};
 
-    if ('points' === sortBy) {
+    if (sortBy === 'points') {
       switch(stat) {
         case 'global':
           indexName = self.config.keys.globalIndexes[4];
@@ -45,7 +46,7 @@ Post.prototype.findByBranch = function (branchid, timeafter, nsfw, sortBy, stat,
       if (last) {
         let tmp = {
           branchid: last.branchid,
-          id: last.id
+          id: last.id,
         };
         tmp[stat] = last[stat];
         last = tmp;
@@ -56,14 +57,14 @@ Post.prototype.findByBranch = function (branchid, timeafter, nsfw, sortBy, stat,
         KeyConditionExpression: 'branchid = :branchid',
       };
     }
-    else if ('date' === sortBy) {
+    else if (sortBy === 'date') {
       indexName = self.config.keys.globalIndexes[2];
 
       if (last) {
         last = {
           branchid: last.branchid,
           date: last.date,
-          id: last.id
+          id: last.id,
         };
       }
 
@@ -71,14 +72,14 @@ Post.prototype.findByBranch = function (branchid, timeafter, nsfw, sortBy, stat,
         KeyConditionExpression: 'branchid = :branchid AND #date >= :timeafter',
       };
     }
-    else if ('comment_count' === sortBy) {
+    else if (sortBy === 'comment_count') {
       indexName = self.config.keys.globalIndexes[3];
 
       if (last) {
         last = {
           branchid: last.branchid,
           comment_count: last.comment_count,
-          id: last.id
+          id: last.id,
         };
       }
 
@@ -90,17 +91,17 @@ Post.prototype.findByBranch = function (branchid, timeafter, nsfw, sortBy, stat,
 
     params.ExclusiveStartKey = last || null;  // fetch results which come _after_ this
     // date is a reserved dynamodb keyword so must use this alias:
-    params.ExpressionAttributeNames  = { '#date': 'date' };
+    params.ExpressionAttributeNames = { '#date': 'date' };
     params.ExpressionAttributeValues = {
       ':branchid': String(branchid),
-      ':timeafter': Number(timeafter)
+      ':timeafter': Number(timeafter),
     };
     params.IndexName = indexName;
     params.ScanIndexForward = false;   // return results highest first
     params.Select = 'ALL_PROJECTED_ATTRIBUTES';
     params.TableName = self.config.table;
 
-    if ('all' !== postType) {
+    if (postType !== 'all') {
       params.FilterExpression = params.FilterExpression ? (params.FilterExpression + ' AND #type = :postType') : '#type = :postType';
       params.ExpressionAttributeNames['#type'] = 'type';
       params.ExpressionAttributeValues[':postType'] = String(postType);
@@ -115,12 +116,24 @@ Post.prototype.findByBranch = function (branchid, timeafter, nsfw, sortBy, stat,
       if (err) {
         return reject(err);
       }
-      
+
       if (!data || !data.Items) {
         return reject();
       }
 
-      return resolve(data.Items.slice(0, limit));
+      const posts = data.Items.slice(0, limit);
+
+      posts.forEach(post => {
+        post.votes = {
+          down: post.down,
+          global: post.global,
+          individual: post.individual,
+          local: post.local,
+          up: post.up,
+        };
+      });
+
+      return resolve(posts);
     });
   });
 };

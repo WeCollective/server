@@ -88,25 +88,28 @@ const put = {
 module.exports = {
   get(req, res) {
     if (!req.params.branchid) {
-      return error.BadRequest(res, 'Missing branchid');
+      return error.BadRequest(res, 'Missing branchid parameter');
     }
 
+    const getFlaggedPosts = req.query.flag === 'true';
+
     let opts = {
-      fetchOnlyflaggedPosts: 'true' === req.query.flag,
+      fetchOnlyflaggedPosts: getFlaggedPosts,
       nsfw: false,
       postType: req.query.postType  || 'all',
-      // points, date, comment_count [if normal posts]
-      // date, branch_rules, site_rules, wrong_type [if flagged posts i.e. flag = true]
-      sortBy: '',
+      sortBy: req.query.sortBy || (getFlaggedPosts ? 'date' : 'points'),
       // individual/local/global stats [if normal posts]
       stat: req.query.stat || 'individual',
       timeafter: req.query.timeafter || 0,
     };
-
-    opts.sortBy = req.query.sortBy || (opts.fetchOnlyflaggedPosts ? 'date' : 'points');
     
     if (!VALID_POST_TYPE_VALUES.includes(opts.postType)) {
-      return error.BadRequest(res, 'Invalid postType');
+      return error.BadRequest(res, 'Invalid postType parameter');
+    }
+
+    const validSortByValues = opts.fetchOnlyflaggedPosts ? VALID_SORT_BY_MOD_VALUES : VALID_SORT_BY_USER_VALUES;
+    if (!validSortByValues.includes(opts.sortBy)) {
+      return error.BadRequest(res, 'Invalid sortBy parameter');
     }
 
     let lastPost = null;
@@ -136,7 +139,7 @@ module.exports = {
             }
 
             // Invalid lastPostId.
-            return error.NotFound(res);
+            return Promise.reject({ code: 404 });
           });
       }
       else {
@@ -153,51 +156,49 @@ module.exports = {
             })
             .catch(reject);
       }))
+      // Check if the user has permissions to fetch the requested posts.
       .then(() => new Promise((resolve, reject) => {
-        const validValues = opts.fetchOnlyflaggedPosts ? VALID_SORT_BY_MOD_VALUES : VALID_SORT_BY_USER_VALUES;
-
-        if (!validValues.includes(opts.sortBy)) {
-          return error.BadRequest(res, 'Invalid sortBy parameter');
-        }
-
         if (opts.fetchOnlyflaggedPosts) {
           if (!req.user) {
-            return error.Forbidden(res);
+            return Promise.reject({ code: 403 });
           }
 
           // User must be a mod.
-          ACL.validateRole(ACL.Roles.Moderator, req.params.branchid)(req, res, resolve);
+          return ACL.validateRole(ACL.Roles.Moderator, req.params.branchid)(req, res, resolve);
         }
-        else {
-          return resolve();
-        }
+        
+        return resolve();
       }))
+      // Get the posts - metadata, votes, etc.
       .then(() => {
         const post = opts.fetchOnlyflaggedPosts ? new FlaggedPost() : new Post();
         return post.findByBranch(req.params.branchid, opts.timeafter, opts.nsfw, opts.sortBy, opts.stat, opts.postType, lastPost);
       })
+      // Get the post data - title, text, etc.
       .then(results => {
-        let promises = [];
         posts = results;
+
+        let promises = [];
         
         // fetch post data for each post
-        for (let i = 0; i < posts.length; i += 1) {
+        posts.forEach(post => {
           const postdata = new PostData();
-          promises.push(postdata.findById(posts[i].id));
+          promises.push(postdata.findById(post.id));
           postDatas.push(postdata);
-        }
+        });
 
         return Promise.all(promises);
       })
+      // Get the post thumbnails.
       .then(() => {
         let promises = [];
 
-        for (let i = 0; i < posts.length; i += 1) {
+        posts.forEach((post, index) => {
           // attach post data to each post
-          posts[i].data = postDatas[i].data;
+          post.data = postDatas[index].data;
           
           promises.push(new Promise((resolve, reject) => {
-            new PostImage().findById(posts[i].id)
+            new PostImage().findById(post.id)
               .then(postimage => {
                 const Bucket = fs.Bucket.PostImagesResized;
                 const Key = `${postimage.id}-640.${postimage.extension}`;
@@ -211,19 +212,20 @@ module.exports = {
                 return resolve('');
               });
           }));
-        }
+        });
 
         return Promise.all(promises);
       })
+      // Get the post thumbnails.
       .then(urls => {
         let promises = [];
 
-        for (let i = 0; i < posts.length; i += 1) {
+        posts.forEach((post, index) => {
           // attach post image url to each post
-          posts[i].profileUrl = urls[i];
+          post.profileUrl = urls[index];
           
           promises.push(new Promise((resolve, reject) => {
-            new PostImage().findById(posts[i].id)
+            new PostImage().findById(post.id)
               .then(postimage => {
                 const Bucket = fs.Bucket.PostImagesResized;
                 const Key = `${postimage.id}-200.${postimage.extension}`;
@@ -237,20 +239,28 @@ module.exports = {
                 return resolve('');
               });
           }));
-        }
+        });
 
         return Promise.all(promises);
       })
+      // Attach post image thumbnail url to each post
       .then(urls => {
+        posts.forEach((post, index) => {
+          post.profileUrlThumb = urls[index];
+        });
 
-        // attach post image thumbnail url to each post
-        for (let i = 0; i < posts.length; i += 1) {
-          posts[i].profileUrlThumb = urls[i];
+        return Promise.resolve();
+      })
+      // Extend the posts with information about user vote.
+      .then(() => {
+        // ...
+      })
+      .then(() => success.OK(res, posts))
+      .catch(err => {
+        if (typeof err === 'object' && err.code) {
+          return error.code(res, err.code, err.message);
         }
 
-        return success.OK(res, posts);
-      })
-      .catch(err => {
         console.error('Error fetching posts:', err);
         return error.InternalServerError(res);
       });

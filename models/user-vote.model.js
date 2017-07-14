@@ -1,36 +1,36 @@
 'use strict';
 
-var Model = require('./model.js');
-var db = require('../config/database.js');
-var aws = require('../config/aws.js');
-var validate = require('./validate.js');
+const aws = require('../config/aws');
+const db = require('../config/database');
+const Model = require('./model');
+const validate = require('./validate');
 
-var UserVote = function(data) {
+const Vote = function (data) {
   this.config = {
+    keys: db.Keys.UserVotes,
     schema: db.Schema.UserVote,
     table: db.Table.UserVotes,
-    keys: db.Keys.UserVotes
   };
   this.data = this.sanitize(data);
 };
 
-// UserVote model inherits from Model
-UserVote.prototype = Object.create(Model.prototype);
-UserVote.prototype.constructor = UserVote;
+// Vote model inherits from Model
+Vote.prototype = Object.create(Model.prototype);
+Vote.prototype.constructor = Vote;
 
-// Validate the properties specified in 'properties' on the UserVote object,
+// Validate the properties specified in 'properties' on the Vote object,
 // returning an array of any invalid ones
-UserVote.prototype.validate = function(properties) {
-  var invalids = [];
+Vote.prototype.validate = function (properties) {
+  const invalids = [];
 
-  if(properties.indexOf('username') > -1) {
-    if(!validate.username(this.data.username)) {
+  if (properties.includes('username')) {
+    if (!validate.username(this.data.username)) {
       invalids.push('username');
     }
   }
 
-  if(properties.indexOf('direction') > -1) {
-    if(this.data.direction !== 'up' && this.data.direction !== 'down') {
+  if (properties.includes('direction')) {
+    if (this.data.direction !== 'up' && this.data.direction !== 'down') {
       invalids.push('direction');
     }
   }
@@ -38,26 +38,30 @@ UserVote.prototype.validate = function(properties) {
   return invalids;
 };
 
+Vote.prototype.findByUsernameAndItemId = function (username, itemid) {
+  const self = this;
 
-UserVote.prototype.findByUsernameAndItemId = function(username, itemid) {
-  var self = this;
-  return new Promise(function(resolve, reject) {
+  return new Promise((resolve, reject) => {
     aws.dbClient.query({
-      TableName: self.config.table,
-      KeyConditionExpression: "username = :username AND itemid = :itemid",
       ExpressionAttributeValues: {
-        ":username": username,
-        ":itemid": itemid
+        ':itemid': itemid,
+        ':username': username,
+      },
+      KeyConditionExpression: 'username = :username AND itemid = :itemid',
+      TableName: self.config.table,
+    }, (err, data) => {
+      if (err) {
+        return reject(err);
       }
-    }, function(err, data) {
-      if(err) return reject(err);
-      if(!data || !data.Items || data.Items.length == 0) {
-        return reject();
+
+      if (!data || !data.Items || data.Items.length === 0) {
+        return resolve();
       }
+
       self.data = data.Items[0];
-      resolve();
+      return resolve(self.data);
     });
   });
 };
 
-module.exports = UserVote;
+module.exports = Vote;

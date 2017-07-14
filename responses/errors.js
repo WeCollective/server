@@ -10,10 +10,19 @@
  *       "message": "Description of invalid parameter"
  *     }
  */
-module.exports.BadRequest = (res, msg) => {
-  res.statusCode = 400;
-  res.send({ message: msg || `The server could not process the request` });
-  return Promise.reject();
+module.exports.BadRequest = (res, msg, rtnPromise) => {
+  return this.code(res, 400, msg || `The server could not process the request`, rtnPromise);
+};
+
+module.exports.code = (res, code, msg, rtnPromise) => {
+  res.statusCode = code || 500;
+  res.send({ message: msg || `Something went wrong. We're looking into it.`});
+
+  if (rtnPromise) {
+    return Promise.reject(code);
+  }
+
+  return false;
 };
 
 /**
@@ -25,10 +34,8 @@ module.exports.BadRequest = (res, msg) => {
  *       "message": "Access denied"
  *     }
  */
-module.exports.Forbidden = res => {
-  res.statusCode = 403;
-  res.send({ message: 'Access denied' });
-  return Promise.reject();
+module.exports.Forbidden = (res, msg, rtnPromise) => {
+  return this.code(res, 403, msg || 'Access denied', rtnPromise);
 };
 
 /**
@@ -40,10 +47,8 @@ module.exports.Forbidden = res => {
  *       "message": "The requested resource couldn't be found"
  *     }
  */
-module.exports.NotFound = (res, msg) => {
-  res.statusCode = 404;
-  res.send({ message: msg || `The requested resource couldn't be found` });
-  return Promise.reject();
+module.exports.NotFound = (res, msg, rtnPromise) => {
+  return this.code(res, 404, msg || `The requested resource couldn't be found`, rtnPromise);
 };
 
 /**
@@ -55,8 +60,6 @@ module.exports.NotFound = (res, msg) => {
  *       "message": "Something went wrong. We're looking into it."
  *     }
  */
-module.exports.InternalServerError = (res, msg) => {
-  res.statusCode = 500;
-  res.send({ message: msg || `Something went wrong. We're looking into it.` });
-  return Promise.reject();
+module.exports.InternalServerError = (res, msg, rtnPromise) => {
+  return this.code(res, 500, msg || `Something went wrong. We're looking into it.`, rtnPromise);
 };

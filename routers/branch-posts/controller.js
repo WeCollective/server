@@ -14,25 +14,73 @@ const PostData  = require('../../models/post-data.model');
 const PostImage = require('../../models/post-image.model');
 const success   = require('../../responses/successes');
 const User = require('../../models/user.model');
-const UserVote = require('../../models/user-vote.model');
+const Vote = require('../../models/user-vote.model');
 
-const VALID_POST_TYPE_VALUES = ['all', 'audio', 'image', 'page', 'poll', 'text', 'video'];
-const VALID_SORT_BY_MOD_VALUES = ['branch_rules', 'date', 'nsfw', 'site_rules', 'wrong_type'];
-const VALID_SORT_BY_USER_VALUES = ['comment_count', 'date', 'points'];
+const VALID_POST_TYPE_VALUES = [
+  'all',
+  'audio',
+  'image',
+  'page',
+  'poll',
+  'text',
+  'video',
+];
+const VALID_SORT_BY_MOD_VALUES = [
+  'branch_rules',
+  'date',
+  'nsfw',
+  'site_rules',
+  'wrong_type',
+];
+const VALID_SORT_BY_USER_VALUES = [
+  'comment_count',
+  'date',
+  'points',
+];
 
 function userCanDisplayNSFWPosts(req) {
-  return new Promise( (resolve, reject) => {
+  return new Promise((resolve, reject) => {
     if (req.isAuthenticated() && req.user.username) {
       const user = new User();
 
       user.findByUsername(req.user.username)
-        .then( () => resolve(user.data.show_nsfw) )
+        .then(() => resolve(user.data.show_nsfw))
         .catch(reject);
     }
     else {
       return resolve(false);
     }
   });
+}
+
+function verifyParamsPut(req) {
+  if (!req.params.branchid) {
+    return Promise.reject({
+      code: 400,
+      message: 'Missing branchid',
+    });
+  }
+
+  if (!req.params.postid) {
+    return Promise.reject({
+      code: 400,
+      message: 'Missing postid.',
+    });
+  }
+
+  if (!req.user.username) {
+    console.error('No username found in session.');
+    return Promise.reject({ code: 500 });
+  }
+
+  if (!req.body.vote || (req.body.vote !== 'up' && req.body.vote !== 'down')) {
+    return Promise.reject({
+      code: 400,
+      message: 'Missing or malformed vote parameter.',
+    });
+  }
+
+  return Promise.resolve();
 }
 
 module.exports = {
@@ -56,7 +104,7 @@ module.exports = {
     opts.sortBy = req.query.sortBy || (opts.fetchOnlyflaggedPosts ? 'date' : 'points');
     
     if (!VALID_POST_TYPE_VALUES.includes(opts.postType)) {
-      return error.BadRequest(res, 'Invalid postType')
+      return error.BadRequest(res, 'Invalid postType');
     }
 
     let lastPost = null;
@@ -80,7 +128,7 @@ module.exports = {
             lastPost.data = postdata.data;
             return resolve();
           })
-          .catch( err => {
+          .catch(err => {
             if (err) {
               return reject();
             }
@@ -95,7 +143,7 @@ module.exports = {
       }
     })
       // Authenticated users can set to display nsfw posts.
-      .then(() => new Promise( (resolve, reject) => {
+      .then(() => new Promise((resolve, reject) => {
           userCanDisplayNSFWPosts(req)
             .then(displayNSFWPosts => {
               opts.nsfw = displayNSFWPosts;
@@ -206,121 +254,160 @@ module.exports = {
       });
   },
 
-  put (req, res) {
-    if(!req.params.branchid) {
-      return error.BadRequest(res, 'Missing branchid');
-    }
-    if(!req.params.postid) {
-      return error.BadRequest(res, 'Missing postid');
-    }
-    if(!req.user.username) {
-      console.error("No username found in session.");
-      return error.InternalServerError(res);
-    }
-
-    if(!req.body.vote || (req.body.vote != 'up' && req.body.vote != 'down')) {
-      return error.BadRequest(res, 'Missing or malformed vote parameter');
-    }
-
-    var post = new Post({
-      id: req.params.postid,
-      branchid: req.params.branchid
-    });
-
-    var branchIds = [];
+  put(req, res) {
+    const branchIds = [];
     // check user hasn't already voted on this post
-    var uservote = new UserVote();
-    var voteChanged = false;
-    uservote.findByUsernameAndItemId(req.user.username, 'post-' + req.params.postid).then(function () {
-      // user has voted on this post before
+    const vote = new Vote();
 
-      // see if vote is the other direction, in which can change their vote
-      if(uservote.data.direction !== req.body.vote) {
-        // get post on all branches
-        voteChanged = true;
-        return new Post().findById(req.params.postid);
-      } else {
-        return error.BadRequest(res, 'User has already voted on this post');
-      }
-    }, function(err) {
-      if(err) {
-        console.error("Error fetching user vote:", err);
-        return error.InternalServerError(res);
-      }
-      // get post on all branches
-      return new Post().findById(req.params.postid);
-    }).then(function(posts) {
-      // find all post entries to get the list of branches it is tagged to
-      var promise;
-      for(var i = 0; i < posts.length; i += 1) {
-        branchIds.push(posts[i].branchid);
-        // find the post on the specified branchid
-        if(posts[i].branchid == req.params.branchid) {
-          // update the post vote up/down parameter
-          // (vote stats will be auto-updated by a lambda function)
-          post.set(req.body.vote, posts[i][req.body.vote] + 1);
+    let newVoteDirection;
+    let newVoteOppositeDirection;
+    let post;
+    let userAlreadyVoted = false;
 
-          // if user is changing their vote, undo the previous vote by decreasing it
-          if(voteChanged) {
-            var opposite = req.body.vote == 'up' ? 'down' : 'up';
-            post.set(opposite, posts[i][opposite] - 1);
+    verifyParamsPut(req)
+      .then(() => {
+        post = new Post({
+          branchid: req.params.branchid,
+          id: req.params.postid,
+        });
+
+        newVoteDirection = req.body.vote;
+
+        return vote.findByUsernameAndItemId(req.user.username, `post-${req.params.postid}`);
+      })
+      .then(existingVoteData => {
+        if (existingVoteData) {
+          userAlreadyVoted = true;
+
+          if (existingVoteData.direction !== newVoteDirection) {
+            newVoteOppositeDirection = newVoteDirection === 'up' ? 'down' : 'up';
           }
-          promise = post.update();
         }
-      }
-      if(!promise) return error.BadRequest(res, 'Invalid branchid');
-      return promise;
-    }).then(function() {
-      // increment/decrement the post points count on each branch object
-      // the post appears in
-      var promises = [];
-      var inc = (req.body.vote == 'up') ? 1 : -1;
-      // if the user is changing their vote, need to also undo effect of their
-      // previous vote, so the vote counts as two
-      if(voteChanged) {
-        inc = inc == 1 ? inc + 1 : inc - 1;
-      }
-      for(var i = 0; i < branchIds.length; i += 1) {
-        promises.push(new Promise(function(resolve, reject) {
-          var branch = new Branch();
-          branch.findById(branchIds[i]).then(function() {
-            branch.set('post_points', branch.data.post_points + inc);
-            branch.update().then(resolve, reject);
-          }, reject);
-        }));
-      }
-      return Promise.all(promises);
-    }).then(function() {
-      if(voteChanged) {
-        // update the vote direction
-        uservote.set('direction', req.body.vote);
-        return uservote.update();
-      } else {
+        
+        return new Post().findById(req.params.postid);
+      })
+      // Update the post "up" and "down" attributes.
+      // Vote stats will be auto-updated by a lambda function.
+      .then(posts => {
+        // find all post entries to get the list of branches it is tagged to
+        let promise;
+
+        for (let i = 0; i < posts.length; i += 1) {
+          branchIds.push(posts[i].branchid);
+
+          // Find the post on the specified branchid.
+          if (posts[i].branchid === req.params.branchid) {
+            if (userAlreadyVoted) {
+              // Undo the last vote and add the new vote.
+              if (newVoteOppositeDirection) {
+                post.set(newVoteOppositeDirection, posts[i][newVoteOppositeDirection] - 1);
+                post.set(newVoteDirection, posts[i][newVoteDirection] + 1);
+              }
+              // Undo the last vote.
+              else {
+                post.set(newVoteDirection, posts[i][newVoteDirection] - 1);
+              }
+            }
+            else {
+              post.set(newVoteDirection, posts[i][newVoteDirection] + 1);
+            }
+
+            promise = post.update();
+          }
+        }
+
+        if (!promise) {
+          return Promise.reject({
+            code: 400,
+            message: 'Invalid branchid',
+          });
+        }
+
+        return promise;
+      })
+      // Update the post points count on each branch object the post appears in.
+      .then(() => {
+        const promises = [];
+
+        let delta = 0;
+
+        if (userAlreadyVoted) {
+          if (newVoteOppositeDirection) {
+            delta = (newVoteOppositeDirection === 'up') ? 2 : -2;
+          }
+          else {
+            delta = (newVoteDirection === 'up') ? -1 : 1;
+          }
+        }
+        else {
+          delta = (newVoteDirection === 'up') ? 1 : -1;
+        }
+
+        for (let i = 0; i < branchIds.length; i += 1) {
+          promises.push(new Promise((resolve, reject) => {
+            const branch = new Branch();
+
+            branch.findById(branchIds[i])
+              .then(() => {
+                branch.set('post_points', branch.data.post_points + delta);
+
+                branch
+                  .update()
+                  .then(resolve)
+                  .catch(reject);
+              })
+              .catch(reject);
+          }));
+        }
+
+        return Promise.all(promises);
+      })
+      // Create, update, or delete the vote record in the database.
+      .then(() => {
+        if (userAlreadyVoted) {
+          if (newVoteOppositeDirection) {
+            vote.set('direction', newVoteDirection);
+            return vote.update();
+          }
+
+          return vote.delete();
+        } 
+        
         // new vote: store this vote in the table
-        var vote = new UserVote({
+        const newVote = new Vote({
+          direction: newVoteDirection,
+          itemid: `post-${req.params.postid}`,
           username: req.user.username,
-          itemid: 'post-' + req.params.postid,
-          direction: req.body.vote
         });
 
         // validate vote properties
-        var propertiesToCheck = ['username', 'itemid'];
-        var invalids = vote.validate(propertiesToCheck);
-        if(invalids.length > 0) {
-          console.error("Error creating UserVote: invalid ", invalids[0]);
+        const propertiesToCheck = [
+          'itemid',
+          'username',
+        ];
+
+        const invalids = newVote.validate(propertiesToCheck);
+
+        if (invalids.length > 0) {
+          console.error('Error creating Vote: invalid ', invalids[0]);
+          return Promise.reject({ code: 500 });
+        }
+
+        return newVote.save();
+      })
+      .then(() => success.OK(res))
+      .catch(err => {
+        if (err) {
+          if (typeof err === 'object' && err.code) {
+            return error.code(res, err.code, err.message);
+          }
+
+          console.error('Error voting on a post: ', err);
           return error.InternalServerError(res);
         }
-        return vote.save();
-      }
-    }).then(function() {
-      return success.OK(res);
-    }).catch(function(err) {
-      if(err) {
-        console.error('Error voting on a post: ', err);
-        return error.InternalServerError(res);
-      }
-      return error.NotFound(res);
-    });
+
+        return error.NotFound(res);
+      });
   },
 
   getPost (req, res) {

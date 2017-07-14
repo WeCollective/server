@@ -122,7 +122,8 @@ module.exports = {
         const postdata = new PostData();
 
         // get the post
-        post.findByPostAndBranchIds(req.query.lastPostId, req.params.branchid)
+        post
+          .findByPostAndBranchIds(req.query.lastPostId, req.params.branchid)
           // fetch post data
           .then(() => postdata.findById(req.query.lastPostId) )
           .then(() => {
@@ -272,18 +273,18 @@ module.exports = {
       })
       .then(() => success.OK(res, posts))
       .catch(err => {
+        console.error('Error fetching posts:', err);
+
         if (typeof err === 'object' && err.code) {
           return error.code(res, err.code, err.message);
         }
 
-        console.error('Error fetching posts:', err);
         return error.InternalServerError(res);
       });
   },
 
   put(req, res) {
     const branchIds = [];
-    // check user hasn't already voted on this post
     const vote = new Vote();
 
     let newVoteDirection;
@@ -429,11 +430,12 @@ module.exports = {
       .then(() => success.OK(res, resData))
       .catch(err => {
         if (err) {
+          console.error('Error voting on a post: ', err);
+
           if (typeof err === 'object' && err.code) {
             return error.code(res, err.code, err.message);
           }
 
-          console.error('Error voting on a post: ', err);
           return error.InternalServerError(res);
         }
 

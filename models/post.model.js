@@ -148,7 +148,7 @@ Post.prototype.findByBranch = function (branchid, timeafter, nsfw, sortBy, stat,
 Post.prototype.findById = function (id) {
   const self = this;
 
-  return new Promise( (resolve, reject) => {
+  return new Promise((resolve, reject) => {
     aws.dbClient.query({
       ExpressionAttributeValues: {
         ':id': id,
@@ -176,7 +176,7 @@ Post.prototype.findById = function (id) {
 Post.prototype.findByPostAndBranchIds = function (postid, branchid) {
   const self = this;
 
-  return new Promise( (resolve, reject) => {
+  return new Promise((resolve, reject) => {
     aws.dbClient.query({
       ExpressionAttributeValues: {
         ':branchid': branchid,

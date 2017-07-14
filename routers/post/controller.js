@@ -20,7 +20,7 @@ const Tag = require('../../models/tag.model');
 const User = require('../../models/user.model');
 const UserVote = require('../../models/user-vote.model');
 
-module.exports = {
+const self = module.exports = {
   get(req, res) {
     const postid = req.params.postid;
 
@@ -28,47 +28,79 @@ module.exports = {
       return error.BadRequest(res, 'Missing postid');
     }
 
-    const p1 = module.exports.getPostPicture(postid, false);
-    const p2 = module.exports.getPostPicture(postid, true);
+    self.getOnePost(postid)
+      .then(post => success.OK(res, post))
+      .catch(err => {
+        if (err) {
+          if (typeof err === 'object' && err.code) {
+            return error.code(res, err.code, err.message);
+          }
 
+          return error.InternalServerError(res);
+        }
+
+        return error.NotFound(res);
+      });
+  },
+
+  getOnePost(id) {
     let post;
+    const postdata = new PostData();
 
-    Promise.all([p1, p2]).then(values => {
-      const postdata = new PostData();
+    return new Promise((resolve, reject) => {
+      new Promise((resolve, reject) => {
+        return resolve(new Post().findById(id));
+      })
+      .then(posts => {
+        if (!posts || posts.length === 0) {
+          return Promise.reject({ code: 404 });
+        }
 
-      new Post().findById(req.params.postid)
-        .then(posts => {
-          if (!posts || !posts.length) {
-            return error.NotFound(res);
+        let idx = 0;
+
+        for (let i = 0; i < posts.length; i++) {
+          if (posts[i].branchid === 'root') {
+            idx = i;
+            break;
           }
+        }
 
-          let idx = 0;
+        post = posts[idx];
 
-          for (let i = 0; i < posts.length; i++) {
-            if (posts[i].branchid === 'root') {
-              idx = i;
-              break;
-            }
-          }
+        return postdata.findById(id);
+      })
+      .then(() => {
+        return Promise.resolve(new Promise((resolve, reject) => {
+          this.getPostPicture(id, false)
+            .then(url => {
+              post.profileUrl = url;
+              return resolve();
+            })
+        }));
+      })
+      .then(() => {
+        return Promise.resolve(new Promise((resolve, reject) => {
+          this.getPostPicture(id, true)
+            .then(url => {
+              post.profileUrlThumb = url;
+              return resolve();
+            })
+        }));
+      })
+      .then(() => {
+        post.data = postdata.data;
+        return Promise.resolve();
+      })
+      .then(() => {
+        return resolve(post);
+      })
+      .catch(err => {
+        if (err) {
+          console.error(`Error fetching post data: `, err);
+        }
 
-          post = posts[idx];
-
-          return postdata.findById(postid);
-        })
-        .then(_ => {
-          post.data = postdata.data;
-          post.profileUrl = values[0];
-          post.profileUrlThumb = values[1];
-          return success.OK(res, post);
-        })
-        .catch(err => {
-          if (err) {
-            console.error(`Error fetching post data: `, err);
-            return error.InternalServerError(res);
-          }
-
-          return error.NotFound(res);
-        });
+        return reject(err);
+      });
     });
   },
 
@@ -80,7 +112,7 @@ module.exports = {
       const size = thumbnail ? 200 : 640;
 
       image.findById(postid)
-        .then(_ => {
+        .then(() => {
           const Bucket = fs.Bucket.PostImagesResized;
           const Key = `${image.data.id}-${size}.${image.data.extension}`;
           return resolve(`https://${Bucket}.s3-eu-west-1.amazonaws.com/${Key}`);

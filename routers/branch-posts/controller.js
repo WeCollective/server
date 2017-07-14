@@ -262,6 +262,7 @@ module.exports = {
     let newVoteDirection;
     let newVoteOppositeDirection;
     let post;
+    let resData = { delta: 0 };
     let userAlreadyVoted = false;
 
     verifyParamsPut(req)
@@ -343,6 +344,8 @@ module.exports = {
           delta = (newVoteDirection === 'up') ? 1 : -1;
         }
 
+        resData.delta = delta;
+
         for (let i = 0; i < branchIds.length; i += 1) {
           promises.push(new Promise((resolve, reject) => {
             const branch = new Branch();
@@ -395,7 +398,7 @@ module.exports = {
 
         return newVote.save();
       })
-      .then(() => success.OK(res))
+      .then(() => success.OK(res, resData))
       .catch(err => {
         if (err) {
           if (typeof err === 'object' && err.code) {

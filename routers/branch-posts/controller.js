@@ -114,8 +114,6 @@ module.exports = {
 
     let lastPost = null;
     let posts = [];
-    let postDatas  = [];
-    let postImages = [];
     
     new Promise((resolve, reject) => {
       // Client wants only results that appear after this post (pagination).
@@ -174,86 +172,103 @@ module.exports = {
         const post = opts.fetchOnlyflaggedPosts ? new FlaggedPost() : new Post();
         return post.findByBranch(req.params.branchid, opts.timeafter, opts.nsfw, opts.sortBy, opts.stat, opts.postType, lastPost);
       })
-      // Get the post data - title, text, etc.
+      // attach post data to each post - title, text, etc.
       .then(results => {
         posts = results;
 
-        let promises = [];
+        const promises = [];
         
         // fetch post data for each post
         posts.forEach(post => {
-          const postdata = new PostData();
-          promises.push(postdata.findById(post.id));
-          postDatas.push(postdata);
+          promises.push(new Promise((resolve, reject) => {
+            const postdata = new PostData();
+            postdata
+              .findById(post.id)
+              .then(() => {
+                post.data = postdata.data;
+                return resolve();
+              })
+              .catch(reject);
+          }));
         });
 
         return Promise.all(promises);
       })
-      // Get the post thumbnails.
+      // attach post image url to each post
       .then(() => {
-        let promises = [];
+        const promises = [];
 
-        posts.forEach((post, index) => {
-          // attach post data to each post
-          post.data = postDatas[index].data;
-          
+        posts.forEach(post => {
           promises.push(new Promise((resolve, reject) => {
             new PostImage().findById(post.id)
               .then(postimage => {
                 const Bucket = fs.Bucket.PostImagesResized;
                 const Key = `${postimage.id}-640.${postimage.extension}`;
-                return resolve(`https://${Bucket}.s3-eu-west-1.amazonaws.com/${Key}`);
+                post.profileUrl = `https://${Bucket}.s3-eu-west-1.amazonaws.com/${Key}`;
+                return resolve();
               })
               .catch(err => {
                 if (err) {
                   return reject();
                 }
 
-                return resolve('');
+                post.profileUrl = '';
+                return resolve();
               });
           }));
         });
 
         return Promise.all(promises);
       })
-      // Get the post thumbnails.
-      .then(urls => {
-        let promises = [];
+      // Attach post image thumbnail url to each post.
+      .then(() => {
+        const promises = [];
 
-        posts.forEach((post, index) => {
-          // attach post image url to each post
-          post.profileUrl = urls[index];
-          
+        posts.forEach(post => {
           promises.push(new Promise((resolve, reject) => {
-            new PostImage().findById(post.id)
-              .then(postimage => {
+            new PostImage()
+              .findById(post.id)
+              .then(image => {
                 const Bucket = fs.Bucket.PostImagesResized;
-                const Key = `${postimage.id}-200.${postimage.extension}`;
-                return resolve(`https://${Bucket}.s3-eu-west-1.amazonaws.com/${Key}`);
+                const Key = `${image.id}-200.${image.extension}`;
+                post.profileUrlThumb = `https://${Bucket}.s3-eu-west-1.amazonaws.com/${Key}`;
+                return resolve();
               })
               .catch(err => {
                 if (err) {
                   return reject();
                 }
 
-                return resolve('');
+                post.profileUrlThumb = '';
+                return resolve();
               });
           }));
         });
 
         return Promise.all(promises);
-      })
-      // Attach post image thumbnail url to each post
-      .then(urls => {
-        posts.forEach((post, index) => {
-          post.profileUrlThumb = urls[index];
-        });
-
-        return Promise.resolve();
       })
       // Extend the posts with information about user vote.
       .then(() => {
-        // ...
+        const promises = [];
+
+        if (req.user && req.user.username) {
+          posts.forEach(post => {
+            promises.push(new Promise((resolve, reject) => {
+              new Vote()
+                .findByUsernameAndItemId(req.user.username, `post-${post.id}`)
+                .then(existingVoteData => {
+                  if (existingVoteData) {
+                    post.votes.userVoted = existingVoteData.direction;
+                  }
+
+                  return resolve();
+                })
+                .catch(reject);
+            }));
+          });
+        }
+
+        return Promise.all(promises);
       })
       .then(() => success.OK(res, posts))
       .catch(err => {

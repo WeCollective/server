@@ -33,73 +33,6 @@ function formatCommentsToNewAPI (comments) {
 Comment.prototype = Object.create(Model.prototype);
 Comment.prototype.constructor = Comment;
 
-// Validate the properties specified in 'properties' on the Comment object,
-// returning an array of any invalid ones
-Comment.prototype.validate = function (properties) {
-  const invalids = [];
-
-  // ensure id exists and is of correct length
-  if (properties.includes('id')) {
-    if (!validate.commentid(this.data.id)) {
-      invalids.push('id');
-    }
-  }
-
-  // ensure postid exists and is of correct length
-  if (properties.includes('postid')) {
-    if (!validate.postid(this.data.postid)) {
-      invalids.push('postid');
-    }
-  }
-
-  // ensure parentid exists and is of correct length
-  if (properties.includes('parentid')) {
-    if (!validate.commentid(this.data.parentid)) {
-      invalids.push('parentid');
-    }
-  }
-
-  // ensure stats are valid numbers
-  if (properties.includes('individual')) {
-    if (isNaN(this.data.individual)) {
-      invalids.push('individual');
-    }
-  }
-
-  if (properties.includes('up')) {
-    if (isNaN(this.data.up)) {
-      invalids.push('up');
-    }
-  }
-
-  if (properties.includes('down')) {
-    if (isNaN(this.data.down)) {
-      invalids.push('down');
-    }
-  }
-
-  if (properties.includes('rank')) {
-    if (isNaN(this.data.rank)) {
-      invalids.push('rank');
-    }
-  }
-
-  if (properties.includes('replies')) {
-    if (isNaN(this.data.replies)) {
-      invalids.push('replies');
-    }
-  }
-
-  // ensure creation date is valid
-  if (properties.includes('date')) {
-    if (!validate.date(this.data.date)) {
-      invalids.push('date');
-    }
-  }
-
-  return invalids;
-};
-
 // Get a comment by its id from the db, and
 // instantiate the object with this data.
 // Rejects promise with true if database error, with false if no user found.
@@ -189,6 +122,73 @@ Comment.prototype.findByParent = function (postid, parentid, sortBy, last) {
       return resolve(comments);
     });
   });
+};
+
+// Validate the properties specified in 'properties' on the Comment object,
+// returning an array of any invalid ones
+Comment.prototype.validate = function (properties) {
+  const invalids = [];
+
+  // ensure id exists and is of correct length
+  if (properties.includes('id')) {
+    if (!validate.commentid(this.data.id)) {
+      invalids.push('id');
+    }
+  }
+
+  // ensure postid exists and is of correct length
+  if (properties.includes('postid')) {
+    if (!validate.postid(this.data.postid)) {
+      invalids.push('postid');
+    }
+  }
+
+  // ensure parentid exists and is of correct length
+  if (properties.includes('parentid')) {
+    if (!validate.commentid(this.data.parentid)) {
+      invalids.push('parentid');
+    }
+  }
+
+  // ensure stats are valid numbers
+  if (properties.includes('individual')) {
+    if (isNaN(this.data.individual)) {
+      invalids.push('individual');
+    }
+  }
+
+  if (properties.includes('up')) {
+    if (isNaN(this.data.up)) {
+      invalids.push('up');
+    }
+  }
+
+  if (properties.includes('down')) {
+    if (isNaN(this.data.down)) {
+      invalids.push('down');
+    }
+  }
+
+  if (properties.includes('rank')) {
+    if (isNaN(this.data.rank)) {
+      invalids.push('rank');
+    }
+  }
+
+  if (properties.includes('replies')) {
+    if (isNaN(this.data.replies)) {
+      invalids.push('replies');
+    }
+  }
+
+  // ensure creation date is valid
+  if (properties.includes('date')) {
+    if (!validate.date(this.data.date)) {
+      invalids.push('date');
+    }
+  }
+
+  return invalids;
 };
 
 module.exports = Comment;

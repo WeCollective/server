@@ -250,22 +250,28 @@ module.exports = {
 
           // Find the post on the specified branchid.
           if (posts[i].branchid === req.params.branchid) {
+            let delta = 0;
+
             if (userAlreadyVoted) {
               // Undo the last vote and add the new vote.
               if (newVoteOppositeDirection) {
                 post.set(newVoteOppositeDirection, posts[i][newVoteOppositeDirection] - 1);
                 post.set(newVoteDirection, posts[i][newVoteDirection] + 1);
+                delta = (newVoteOppositeDirection === 'up') ? 2 : -2;
               }
               // Undo the last vote.
               else {
                 post.set(newVoteDirection, posts[i][newVoteDirection] - 1);
+                delta = (newVoteDirection === 'up') ? -1 : 1;
               }
             }
             else {
               post.set(newVoteDirection, posts[i][newVoteDirection] + 1);
+              delta = (newVoteDirection === 'up') ? 1 : -1;
             }
 
             promise = post.update();
+            resData.delta = delta;
           }
         }
 
@@ -280,23 +286,7 @@ module.exports = {
       })
       // Update the post points count on each branch object the post appears in.
       .then(() => {
-        const promises = [];
-
-        let delta = 0;
-
-        if (userAlreadyVoted) {
-          if (newVoteOppositeDirection) {
-            delta = (newVoteOppositeDirection === 'up') ? 2 : -2;
-          }
-          else {
-            delta = (newVoteDirection === 'up') ? -1 : 1;
-          }
-        }
-        else {
-          delta = (newVoteDirection === 'up') ? 1 : -1;
-        }
-
-        resData.delta = delta;
+        const promises = [];        
 
         for (let i = 0; i < branchIds.length; i += 1) {
           promises.push(new Promise((resolve, reject) => {
@@ -328,14 +318,12 @@ module.exports = {
           return vote.delete();
         } 
         
-        // new vote: store this vote in the table
         const newVote = new Vote({
           direction: newVoteDirection,
           itemid: `post-${req.params.postid}`,
           username: req.user.username,
         });
 
-        // validate vote properties
         const propertiesToCheck = [
           'itemid',
           'username',
@@ -344,7 +332,7 @@ module.exports = {
         const invalids = newVote.validate(propertiesToCheck);
 
         if (invalids.length > 0) {
-          console.error('Error creating Vote: invalid ', invalids[0]);
+          console.error(`Error creating Vote: invalid ${invalids[0]}`);
           return Promise.reject({ code: 500 });
         }
 

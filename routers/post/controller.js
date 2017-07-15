@@ -181,104 +181,113 @@ const self = module.exports = {
   },
 
   voteComment(req, res) {
-    const branchIds = [];
-    const vote = new Vote(); // +
+    const vote = new Vote();
 
+    let comment;
     let newVoteDirection;
     let newVoteOppositeDirection;
-    let post;
     let resData = { delta: 0 };
     let userAlreadyVoted = false;
-    // ....
-
-    const comment = new Comment();
-    const updatedComment = new Comment({
-      id: req.params.commentid,
-      postid: req.params.postid,
-    });
-
-    let voteChanged = false;
-
-    const propertiesToCheck = [
-      'id',
-      'postid',
-    ];
-
-    const invalids = updatedComment.validate(propertiesToCheck);
-    if (invalids.length > 0) {
-      return error.BadRequest(res, `Invalid ${invalids[0]}`);
-    }
 
     voteComment.verifyParams(req)
-
-    vote
-      .findByUsernameAndItemId(req.user.username, `comment-${req.params.commentid}`)
       .then(() => {
-        // user has voted on this post before
-
-        // see if vote is the other direction, in which can change their vote
-        if (vote.data.direction !== req.body.vote) {
-          // get post on all branches
-          voteChanged = true;
-          // get comment
-          return comment.findById(req.params.commentid);
-        }
-
-        return Promise.reject({
-          code: 400,
-          message: 'User has already voted on this comment',
+        comment = new Comment({
+          id: req.params.commentid,
+          postid: req.params.postid,
         });
-      })
-      .then(() => {
-        if (!comment.data || comment.data.length === 0) {
-          return Promise.reject({ code: 404 });
+
+        const propertiesToCheck = [
+          'id',
+          'postid',
+        ];
+
+        const invalids = comment.validate(propertiesToCheck);
+        if (invalids.length > 0) {
+          return Promise.reject({
+            code: 400,
+            message: `Invalid ${invalids[0]}`,
+          });
         }
 
-        // check the specfied comment actually belongs to this post
+        newVoteDirection = req.body.vote;
+
+        return vote.findByUsernameAndItemId(req.user.username, `comment-${req.params.commentid}`);
+      })
+      .then(existingVoteData => {
+        if (existingVoteData) {
+          userAlreadyVoted = true;
+
+          if (existingVoteData.direction !== newVoteDirection) {
+            newVoteOppositeDirection = newVoteDirection === 'up' ? 'down' : 'up';
+          }
+        }
+
+        return Promise.resolve();
+      })
+      .then(() => comment.findById(req.params.commentid))
+      // Update the comment "up" and "down" attributes.
+      .then(() => {
+        // Check the specfied comment actually belongs to this post.
         if (comment.data.postid !== req.params.postid) {
           return Promise.reject({ code: 404 });
         }
 
-        // increment either the up or down vote for the comment if specified
-        updatedComment.set(req.body.vote, comment.data[req.body.vote] + 1);
+        let delta = 0;
 
-        // if user is changing their vote, undo the previous vote by decreasing it
-        if (voteChanged) {
-          const opposite = req.body.vote === 'up' ? 'down' : 'up';
-          updatedComment.set(opposite, comment.data[opposite] - 1);
-        }
-
-        return updatedComment.update();
-      })
-      .then(() => {
-        if (voteChanged) {
-          // update the vote direction
-          vote.set('direction', req.body.vote);
-          return vote.update();
+        if (userAlreadyVoted) {
+          // Undo the last vote and add the new vote.
+          if (newVoteOppositeDirection) {
+            comment.set(newVoteOppositeDirection, comment.data[newVoteOppositeDirection] - 1);
+            comment.set(newVoteDirection, comment.data[newVoteDirection] + 1);
+            delta = (newVoteOppositeDirection === 'up') ? 2 : -2;
+          }
+          // Undo the last vote.
+          else {
+            comment.set(newVoteDirection, comment.data[newVoteDirection] - 1);
+            delta = (newVoteDirection === 'up') ? -1 : 1;
+          }
         }
         else {
-          // new vote: store this vote in the table
-          const newVote = new Vote({
-            direction: req.body.vote,
-            itemid: `comment-${req.params.commentid}`,
-            username: req.user.username,
-          });
+          comment.set(newVoteDirection, comment.data[newVoteDirection] + 1);
+          delta = (newVoteDirection === 'up') ? 1 : -1;
+        }
 
-          const propertiesToCheck = [
-            'itemid',
-            'username',
-          ];
+        resData.delta = delta;
 
-          const invalids = newVote.validate(propertiesToCheck);
-          if (invalids.length > 0) {
-            console.error(`Error creating Vote: invalid ${invalids[0]}`);
-            return Promise.reject({ code: 500 });
+        return comment.update();
+      })
+      // Create, update, or delete the vote record in the database.
+      .then(() => {
+        if (userAlreadyVoted) {
+          if (newVoteOppositeDirection) {
+            vote.set('direction', newVoteDirection);
+            return vote.update();
           }
 
-          return newVote.save();
+          return vote.delete();
+        } 
+
+        const newVote = new Vote({
+          direction: newVoteDirection,
+          itemid: `comment-${req.params.commentid}`,
+          username: req.user.username,
+        });
+
+        const propertiesToCheck = [
+          'itemid',
+          'username',
+        ];
+
+        const invalids = newVote.validate(propertiesToCheck);
+
+        if (invalids.length > 0) {
+          console.error(`Error creating Vote: invalid ${invalids[0]}`);
+          return Promise.reject({ code: 500 });
         }
+
+        return newVote.save();
       })
-      .then(() => success.OK(res))
+      .then(() => success.OK(res, resData))
       .catch(err => {
         if (err) {
           console.error('Error updating comment:', err);

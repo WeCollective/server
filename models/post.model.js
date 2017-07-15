@@ -10,7 +10,7 @@ const Post = function(data) {
   this.config = {
     keys: db.Keys.Posts,
     schema: db.Schema.Post,
-    table: db.Table.Posts
+    table: db.Table.Posts,
   };
   this.data = this.sanitize(data);
 };
@@ -180,10 +180,10 @@ Post.prototype.findByPostAndBranchIds = function (postid, branchid) {
     aws.dbClient.query({
       ExpressionAttributeValues: {
         ':branchid': branchid,
-        ':postid': postid
+        ':postid': postid,
       },
       KeyConditionExpression: 'id = :postid AND branchid = :branchid',
-      TableName: self.config.table
+      TableName: self.config.table,
     }, (err, data) => {
       if (err) {
         return reject(err);

@@ -20,6 +20,38 @@ const Tag = require('../../models/tag.model');
 const User = require('../../models/user.model');
 const Vote = require('../../models/user-vote.model');
 
+const voteComment = {
+  verifyParams(req) {
+    if (!req.params.postid) {
+      return Promise.reject({
+        code: 400,
+        message: 'Missing postid',
+      });
+    }
+
+    if (!req.params.commentid) {
+      return Promise.reject({
+        code: 400,
+        message: 'Missing commentid',
+      });
+    }
+
+    if (!req.user.username) {
+      console.error('No username found in session.');
+      return Promise.reject({ code: 500 });
+    }
+
+    if (!req.body.vote || (req.body.vote !== 'up' && req.body.vote !== 'down')) {
+      return Promise.reject({
+        code: 400,
+        message: 'Missing or malformed vote parameter.',
+      });
+    }
+
+    return Promise.resolve();
+  },
+};
+
 const self = module.exports = {
   get(req, res) {
     const postid = req.params.postid;
@@ -147,6 +179,122 @@ const self = module.exports = {
         });
     });
   },
+
+  voteComment(req, res) {
+    const branchIds = [];
+    const vote = new Vote(); // +
+
+    let newVoteDirection;
+    let newVoteOppositeDirection;
+    let post;
+    let resData = { delta: 0 };
+    let userAlreadyVoted = false;
+    // ....
+
+    const comment = new Comment();
+    const updatedComment = new Comment({
+      id: req.params.commentid,
+      postid: req.params.postid,
+    });
+
+    let voteChanged = false;
+
+    const propertiesToCheck = [
+      'id',
+      'postid',
+    ];
+
+    const invalids = updatedComment.validate(propertiesToCheck);
+    if (invalids.length > 0) {
+      return error.BadRequest(res, `Invalid ${invalids[0]}`);
+    }
+
+    voteComment.verifyParams(req)
+
+    vote
+      .findByUsernameAndItemId(req.user.username, `comment-${req.params.commentid}`)
+      .then(() => {
+        // user has voted on this post before
+
+        // see if vote is the other direction, in which can change their vote
+        if (vote.data.direction !== req.body.vote) {
+          // get post on all branches
+          voteChanged = true;
+          // get comment
+          return comment.findById(req.params.commentid);
+        }
+
+        return Promise.reject({
+          code: 400,
+          message: 'User has already voted on this comment',
+        });
+      })
+      .then(() => {
+        if (!comment.data || comment.data.length === 0) {
+          return Promise.reject({ code: 404 });
+        }
+
+        // check the specfied comment actually belongs to this post
+        if (comment.data.postid !== req.params.postid) {
+          return Promise.reject({ code: 404 });
+        }
+
+        // increment either the up or down vote for the comment if specified
+        updatedComment.set(req.body.vote, comment.data[req.body.vote] + 1);
+
+        // if user is changing their vote, undo the previous vote by decreasing it
+        if (voteChanged) {
+          const opposite = req.body.vote === 'up' ? 'down' : 'up';
+          updatedComment.set(opposite, comment.data[opposite] - 1);
+        }
+
+        return updatedComment.update();
+      })
+      .then(() => {
+        if (voteChanged) {
+          // update the vote direction
+          vote.set('direction', req.body.vote);
+          return vote.update();
+        }
+        else {
+          // new vote: store this vote in the table
+          const newVote = new Vote({
+            direction: req.body.vote,
+            itemid: `comment-${req.params.commentid}`,
+            username: req.user.username,
+          });
+
+          const propertiesToCheck = [
+            'itemid',
+            'username',
+          ];
+
+          const invalids = newVote.validate(propertiesToCheck);
+          if (invalids.length > 0) {
+            console.error(`Error creating Vote: invalid ${invalids[0]}`);
+            return Promise.reject({ code: 500 });
+          }
+
+          return newVote.save();
+        }
+      })
+      .then(() => success.OK(res))
+      .catch(err => {
+        if (err) {
+          console.error('Error updating comment:', err);
+
+          if (typeof err === 'object' && err.code) {
+            return error.code(res, err.code, err.message);
+          }
+
+          return error.InternalServerError(res);
+        }
+
+        return error.NotFound(res);
+      });
+  },
+
+
 
   post(req, res) {
     if(!req.user.username) {
@@ -783,108 +931,6 @@ const self = module.exports = {
     }, function(err) {
       if(err) {
         console.error("Error fetching comment data:", err);
-        return error.InternalServerError(res);
-      }
-      return error.NotFound(res);
-    });
-  },
-
-  voteComment(req, res) {
-    if(!req.params.postid) {
-      return error.BadRequest(res, 'Missing postid');
-    }
-    if(!req.params.commentid) {
-      return error.BadRequest(res, 'Missing commentid');
-    }
-    if(!req.user.username) {
-      console.error("No username found in session.");
-      return error.InternalServerError(res);
-    }
-
-    // if this action is voting on the comment, ensure its valid
-    if(!req.body.vote || (req.body.vote != 'up' && req.body.vote != 'down')) {
-      return error.BadRequest(res, 'Missing or malformed vote parameter');
-    }
-    var updatedComment = new Comment({
-      id: req.params.commentid,
-      postid: req.params.postid
-    });
-    var propertiesToCheck = ['id', 'postid'];
-    var invalids = updatedComment.validate(propertiesToCheck);
-    if(invalids.length > 0) {
-      return error.BadRequest(res, 'Invalid ' + invalids[0]);
-    }
-
-    var comment = new Comment();
-    // check user hasn't already voted on this comment
-    var uservote = new Vote();
-    var voteChanged = false;
-    uservote.findByUsernameAndItemId(req.user.username, 'comment-' + req.params.commentid).then(function () {
-      // user has voted on this post before
-
-      // see if vote is the other direction, in which can change their vote
-      if(uservote.data.direction !== req.body.vote) {
-        // get post on all branches
-        voteChanged = true;
-        // get comment
-        return comment.findById(req.params.commentid);
-      } else {
-        return error.BadRequest(res, 'User has already voted on this comment');
-      }
-    }, function(err) {
-      if(err) {
-        console.error("Error fetching user vote:", err);
-        return error.InternalServerError(res);
-      }
-      // get comment
-      return comment.findById(req.params.commentid);
-    }).then(function() {
-      if(!comment.data || comment.data.length == 0) {
-        return error.NotFound(res);
-      }
-
-      // check the specfied comment actually belongs to this post
-      if(comment.data.postid != req.params.postid) {
-        return error.NotFound(res);
-      }
-
-      // increment either the up or down vote for the comment if specified
-      updatedComment.set(req.body.vote, comment.data[req.body.vote] + 1);
-
-      // if user is changing their vote, undo the previous vote by decreasing it
-      if(voteChanged) {
-        var opposite = req.body.vote == 'up' ? 'down' : 'up';
-        updatedComment.set(opposite, comment.data[opposite] - 1);
-      }
-
-      return updatedComment.update();
-    }).then(function() {
-      if(voteChanged) {
-        // update the vote direction
-        uservote.set('direction', req.body.vote);
-        return uservote.update();
-      } else {
-        // new vote: store this vote in the table
-        var vote = new Vote({
-          username: req.user.username,
-          itemid: 'comment-' + req.params.commentid,
-          direction: req.body.vote
-        });
-
-        // validate vote properties
-        var propertiesToCheck = ['username', 'itemid'];
-        var invalids = vote.validate(propertiesToCheck);
-        if(invalids.length > 0) {
-          console.error("Error creating UserVote: invalid ", invalids[0]);
-          return error.InternalServerError(res);
-        }
-        return vote.save();
-      }
-    }).then(function() {
-      return success.OK(res);
-    }).catch(function(err) {
-      if(err) {
-        console.error('Error updating comment:', err);
         return error.InternalServerError(res);
       }
       return error.NotFound(res);

@@ -294,7 +294,7 @@ module.exports = {
 
             branch.findById(branchIds[i])
               .then(() => {
-                branch.set('post_points', branch.data.post_points + delta);
+                branch.set('post_points', branch.data.post_points + resData.delta);
 
                 branch
                   .update()

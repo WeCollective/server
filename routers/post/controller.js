@@ -88,7 +88,7 @@ const self = module.exports = {
     }
 
     self.getOneComment(commentId, req)
-      .then(data => success.OK(res, data))
+      .then(comment => success.OK(res, comment.data))
       .catch(err => {
         if (err) {
           if (typeof err === 'object' && err.code) {
@@ -102,20 +102,136 @@ const self = module.exports = {
       });
   },
 
-  // todo Check the specfied comment actually belongs to this post.
-  getOneComment(id, req) {
-    return new Promise((resolve, reject) => {
-      new Promise((resolve, reject) => {
-        return resolve(new CommentData.findById(id));
+  getComments(req, res) {
+    const postId = req.params.postid;
+    let parentId = req.query.parentid;
+    let sortBy = req.query.sort;
+
+    if (!postId) {
+      return error.BadRequest(res, 'Missing postid');
+    }
+
+    // Get root comments by default.
+    if (!parentId) {
+      parentId = 'none';
+    }
+
+    // Order comments by points by default.
+    if (!sortBy) {
+      sortBy = 'points';
+    }
+
+    let comments = [];
+    let lastComment = null;
+
+    new Promise((resolve, reject) => {
+      // Client wants only results that appear after this comment (pagination).
+      if (req.query.lastCommentId) {
+        const comment = new Comment();
+
+        comment
+          .findById(req.query.lastCommentId)
+          .then(() => {
+            // create lastComment object
+            lastComment = comment.data;
+            return resolve();
+          })
+          .catch(err => {
+            if (err) {
+              return reject();
+            }
+
+            // Invalid lastCommentId.
+            return Promise.reject({ code: 404 });
+          });
+      }
+      else {
+        // No last comment specified, continue...
+        return resolve();
+      }
+    })
+      .then(() => new Comment().findByParent(postId, parentId, sortBy, lastComment))
+      .then(results => {
+        comments = results;
+
+        const promises = [];
+
+        comments.forEach((comment, index) => {
+          promises.push(new Promise((resolve, reject) => {
+            self
+              .getOneComment(comment.id, req)
+              .then(comment => {
+                comments[index] = comment;
+                return resolve();
+              })
+              .catch(reject);
+          }));
+        });
+
+        return Promise.all(promises);
       })
-      .then(data => resolve(data))
+      .then(() => success.OK(res, comments))
       .catch(err => {
         if (err) {
-          console.error('Error fetching comment data:', err);
+          console.error('Error fetching comments:', err);
+
+          if (typeof err === 'object' && err.code) {
+            return error.code(res, err.code, err.message);
+          }
+
+          return error.InternalServerError(res);
         }
 
-        return reject(err);
+        return error.NotFound(res);
       });
+  },
+
+  // todo Check the specfied comment actually belongs to this post.
+  getOneComment(id, req) {
+    let comment;
+
+    return new Promise((resolve, reject) => {
+      new Promise((resolve, reject) => {
+        return resolve(new Comment().findById(id));
+      })
+        .then(newComment => {
+          comment = newComment;
+
+          return new CommentData()
+            .findById(id)
+            .then(data => {
+              comment.data = data;
+              return Promise.resolve();
+            })
+            .catch(reject);
+        })
+        // Extend the comment with information about user vote.
+        .then(() => {
+          if (req && req.user && req.user.username) {
+            return new Promise((resolve, reject) => {
+              new Vote()
+                .findByUsernameAndItemId(req.user.username, `comment-${id}`)
+                .then(existingVoteData => {
+                  if (existingVoteData) {
+                    comment.votes.userVoted = existingVoteData.direction;
+                  }
+
+                  return resolve();
+                })
+                .catch(reject);
+            });
+          }
+
+          return Promise.resolve();
+        })
+        .then(() => resolve(comment))
+        .catch(err => {
+          if (err) {
+            console.error('Error fetching comment data:', err);
+          }
+
+          return reject(err);
+        });
     });
   },
 
@@ -126,77 +242,77 @@ const self = module.exports = {
       new Promise((resolve, reject) => {
         return resolve(new Post().findById(id));
       })
-      .then(posts => {
-        if (!posts || posts.length === 0) {
-          return Promise.reject({ code: 404 });
-        }
-
-        let idx = 0;
-
-        for (let i = 0; i < posts.length; i++) {
-          if (posts[i].branchid === 'root') {
-            idx = i;
-            break;
+        .then(posts => {
+          if (!posts || posts.length === 0) {
+            return Promise.reject({ code: 404 });
           }
-        }
 
-        post = posts[idx];
+          let idx = 0;
 
-        new PostData()
-          .findById(id)
-          .then(data => {
-            post.data = data;
-            return Promise.resolve();
-          })
-          .catch(reject);
-      })
-      // attach post image url to each post
-      .then(() => {
-        return Promise.resolve(new Promise((resolve, reject) => {
-          this.getPostPicture(id, false)
-            .then(url => {
-              post.profileUrl = url;
-              return resolve();
+          for (let i = 0; i < posts.length; i++) {
+            if (posts[i].branchid === 'root') {
+              idx = i;
+              break;
+            }
+          }
+
+          post = posts[idx];
+
+          return new PostData()
+            .findById(id)
+            .then(data => {
+              post.data = data;
+              return Promise.resolve();
             })
-        }));
-      })
-      // Attach post image thumbnail url to each post.
-      .then(() => {
-        return Promise.resolve(new Promise((resolve, reject) => {
-          this.getPostPicture(id, true)
-            .then(url => {
-              post.profileUrlThumb = url;
-              return resolve();
-            })
-        }));
-      })
-      // Extend the posts with information about user vote.
-      .then(() => {
-        if (req && req.user && req.user.username) {
-          return new Promise((resolve, reject) => {
-            new Vote()
-              .findByUsernameAndItemId(req.user.username, `post-${post.id}`)
-              .then(existingVoteData => {
-                if (existingVoteData) {
-                  post.votes.userVoted = existingVoteData.direction;
-                }
-
+            .catch(reject);
+        })
+        // attach post image url to each post
+        .then(() => {
+          return Promise.resolve(new Promise((resolve, reject) => {
+            this.getPostPicture(id, false)
+              .then(url => {
+                post.profileUrl = url;
                 return resolve();
               })
-              .catch(reject);
-          });
-        }
+          }));
+        })
+        // Attach post image thumbnail url to each post.
+        .then(() => {
+          return Promise.resolve(new Promise((resolve, reject) => {
+            this.getPostPicture(id, true)
+              .then(url => {
+                post.profileUrlThumb = url;
+                return resolve();
+              })
+          }));
+        })
+        // Extend the posts with information about user vote.
+        .then(() => {
+          if (req && req.user && req.user.username) {
+            return new Promise((resolve, reject) => {
+              new Vote()
+                .findByUsernameAndItemId(req.user.username, `post-${post.id}`)
+                .then(existingVoteData => {
+                  if (existingVoteData) {
+                    post.votes.userVoted = existingVoteData.direction;
+                  }
 
-        return Promise.resolve();
-      })
-      .then(() => resolve(post))
-      .catch(err => {
-        if (err) {
-          console.error(`Error fetching post data: `, err);
-        }
+                  return resolve();
+                })
+                .catch(reject);
+            });
+          }
 
-        return reject(err);
-      });
+          return Promise.resolve();
+        })
+        .then(() => resolve(post))
+        .catch(err => {
+          if (err) {
+            console.error(`Error fetching post data: `, err);
+          }
+
+          return reject(err);
+        });
     });
   },
 
@@ -895,69 +1011,6 @@ const self = module.exports = {
     }).catch(function(err) {
       if(err) {
         console.error("Error posting comment: ", err);
-        return error.InternalServerError(res);
-      }
-      return error.NotFound(res);
-    });
-  },
-
-  getComments(req, res) {
-    if(!req.params.postid) {
-      return error.BadRequest(res, 'Missing postid');
-    }
-
-    // if parentid not specified, get root comments
-    if(!req.query.parentid) {
-      req.query.parentid = 'none';
-    }
-
-    // ascertain how to sort the comments (points, replies, date). Default points
-    var sort = req.query.sort;
-    if(!req.query.sort) {
-      sort = 'points';
-    }
-
-    var lastComment = null;
-    var comments = [];
-    var commentDatas = [];
-    // if lastCommentId is specified, client wants results which appear _after_ this comment (pagination)
-    new Promise(function(resolve, reject) {
-      if(req.query.lastCommentId) {
-        var comment = new Comment();
-        // get the comment
-        comment.findById(req.query.lastCommentId).then(function () {
-          // create lastComment object
-          lastComment = comment.data;
-          resolve();
-        }).catch(function(err) {
-          if(err) reject();
-          return error.NotFound(res); // lastCommentId is invalid
-        });
-      } else {
-        // no last comment specified, continue
-        resolve();
-      }
-    }).then(function () {
-      return new Comment().findByParent(req.params.postid, req.query.parentid, sort, lastComment);
-    }).then(function(results) {
-      comments = results;
-      var promises = [];
-      // fetch post data for each post
-      for(var i = 0; i < comments.length; i++) {
-        var commentdata = new CommentData();
-        promises.push(commentdata.findById(comments[i].id));
-        commentDatas.push(commentdata);
-      }
-      return Promise.all(promises);
-    }).then(function() {
-      // attach comment data to each comment
-      for(var i = 0; i < comments.length; i++) {
-        comments[i].data = commentDatas[i].data;
-      }
-      return success.OK(res, comments);
-    }).catch(function(err) {
-      if(err) {
-        console.error("Error fetching comments", err);
         return error.InternalServerError(res);
       }
       return error.NotFound(res);

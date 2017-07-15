@@ -18,26 +18,6 @@ const Vote = function (data) {
 Vote.prototype = Object.create(Model.prototype);
 Vote.prototype.constructor = Vote;
 
-// Validate the properties specified in 'properties' on the Vote object,
-// returning an array of any invalid ones
-Vote.prototype.validate = function (properties) {
-  const invalids = [];
-
-  if (properties.includes('username')) {
-    if (!validate.username(this.data.username)) {
-      invalids.push('username');
-    }
-  }
-
-  if (properties.includes('direction')) {
-    if (this.data.direction !== 'up' && this.data.direction !== 'down') {
-      invalids.push('direction');
-    }
-  }
-
-  return invalids;
-};
-
 Vote.prototype.findByUsernameAndItemId = function (username, itemid) {
   const self = this;
 
@@ -62,6 +42,26 @@ Vote.prototype.findByUsernameAndItemId = function (username, itemid) {
       return resolve(self.data);
     });
   });
+};
+
+// Validate the properties specified in 'properties' on the Vote object,
+// returning an array of any invalid ones
+Vote.prototype.validate = function (props) {
+  const invalids = [];
+
+  if (props.includes('direction')) {
+    if (this.data.direction !== 'up' && this.data.direction !== 'down') {
+      invalids.push('direction');
+    }
+  }
+
+  if (props.includes('username')) {
+    if (!validate.username(this.data.username)) {
+      invalids.push('username');
+    }
+  }
+
+  return invalids;
 };
 
 module.exports = Vote;

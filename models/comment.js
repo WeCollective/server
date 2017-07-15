@@ -126,65 +126,60 @@ Comment.prototype.findByParent = function (postid, parentid, sortBy, last) {
 
 // Validate the properties specified in 'properties' on the Comment object,
 // returning an array of any invalid ones
-Comment.prototype.validate = function (properties) {
+Comment.prototype.validate = function (props) {
   const invalids = [];
 
-  // ensure id exists and is of correct length
-  if (properties.includes('id')) {
-    if (!validate.commentid(this.data.id)) {
-      invalids.push('id');
+  if (props.includes('date')) {
+    if (!validate.date(this.data.date)) {
+      invalids.push('date');
     }
   }
 
-  // ensure postid exists and is of correct length
-  if (properties.includes('postid')) {
-    if (!validate.postid(this.data.postid)) {
-      invalids.push('postid');
-    }
-  }
-
-  // ensure parentid exists and is of correct length
-  if (properties.includes('parentid')) {
-    if (!validate.commentid(this.data.parentid)) {
-      invalids.push('parentid');
-    }
-  }
-
-  // ensure stats are valid numbers
-  if (properties.includes('individual')) {
-    if (isNaN(this.data.individual)) {
-      invalids.push('individual');
-    }
-  }
-
-  if (properties.includes('up')) {
-    if (isNaN(this.data.up)) {
-      invalids.push('up');
-    }
-  }
-
-  if (properties.includes('down')) {
+  if (props.includes('down')) {
     if (isNaN(this.data.down)) {
       invalids.push('down');
     }
   }
 
-  if (properties.includes('rank')) {
+  if (props.includes('id')) {
+    if (!validate.commentid(this.data.id)) {
+      invalids.push('id');
+    }
+  }
+
+  if (props.includes('individual')) {
+    if (isNaN(this.data.individual)) {
+      invalids.push('individual');
+    }
+  }
+
+  if (props.includes('parentid')) {
+    if (!validate.commentid(this.data.parentid)) {
+      invalids.push('parentid');
+    }
+  }
+
+  if (props.includes('postid')) {
+    if (!validate.postid(this.data.postid)) {
+      invalids.push('postid');
+    }
+  }
+
+  if (props.includes('rank')) {
     if (isNaN(this.data.rank)) {
       invalids.push('rank');
     }
   }
 
-  if (properties.includes('replies')) {
+  if (props.includes('replies')) {
     if (isNaN(this.data.replies)) {
       invalids.push('replies');
     }
   }
 
-  // ensure creation date is valid
-  if (properties.includes('date')) {
-    if (!validate.date(this.data.date)) {
-      invalids.push('date');
+  if (props.includes('up')) {
+    if (isNaN(this.data.up)) {
+      invalids.push('up');
     }
   }
 

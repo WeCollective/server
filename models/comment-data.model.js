@@ -1,15 +1,15 @@
 'use strict';
 
-var Model = require('./model.js');
-var db = require('../config/database.js');
-var aws = require('../config/aws.js');
-var validate = require('./validate.js');
+const aws = require('../config/aws');
+const db = require('../config/database');
+const Model = require('./model');
+const validate = require('./validate');
 
-var CommentData = function(data) {
+const CommentData = function (data) {
   this.config = {
+    keys: db.Keys.CommentData,
     schema: db.Schema.CommentData,
     table: db.Table.CommentData,
-    keys: db.Keys.CommentData
   };
   this.data = this.sanitize(data);
 };
@@ -18,69 +18,67 @@ var CommentData = function(data) {
 CommentData.prototype = Object.create(Model.prototype);
 CommentData.prototype.constructor = CommentData;
 
+// Get a comment's data by its id from the db, and
+// instantiate the object with this data.
+// Rejects promise with true if database error, with false if no post found.
+CommentData.prototype.findById = function (id) {
+  const self = this;
+
+  return new Promise((resolve, reject) => {
+    aws.dbClient.get({
+      Key: { id },
+      TableName: self.config.table,
+    }, (err, data) => {
+      if (err) {
+        return reject(err);
+      }
+
+      if (!data || !data.Item) {
+        return reject();
+      }
+
+      self.data = data.Item;
+      return resolve(self.data);
+    });
+  });
+};
+
 // Validate the properties specified in 'properties' on the CommentData object,
 // returning an array of any invalid ones
-CommentData.prototype.validate = function(properties) {
-  var invalids = [];
+CommentData.prototype.validate = function (props) {
+  const invalids = [];
 
-  // ensure id exists and is of correct length
-  if(properties.indexOf('id') > -1) {
-    if(!validate.commentid(this.data.id)) {
-      invalids.push('id');
-    }
-  }
-
-  // ensure creator is valid username
-  if(properties.indexOf('creator') > -1) {
-    if(!validate.username(this.data.creator)) {
+  if (props.includes('creator')) {
+    if (!validate.username(this.data.creator)) {
       invalids.push('creator');
     }
   }
 
-  // ensure text is valid
-  if(properties.indexOf('text') > -1) {
-    if(!this.data.text || this.data.text.length < 1 || this.data.text.length > 20000) {
-      invalids.push('text');
-    }
-  }
-
-  // ensure creation date is valid
-  if(properties.indexOf('date') > -1) {
-    if(!validate.date(this.data.date)) {
+  if (props.includes('date')) {
+    if (!validate.date(this.data.date)) {
       invalids.push('date');
     }
   }
 
-  // ensure edited flag is valid
-  if(properties.indexOf('edited') > -1) {
-    if(this.data.edited !== undefined && this.data.edited !== true && this.data.edited !== false) {
+  if (props.includes('edited')) {
+    if (this.data.edited !== undefined && this.data.edited !== true && this.data.edited !== false) {
       invalids.push('edited');
     }
   }
 
-  return invalids;
-};
+  if (props.includes('id')) {
+    if (!validate.commentid(this.data.id)) {
+      invalids.push('id');
+    }
+  }
 
-// Get a comment's data by its id from the db, and
-// instantiate the object with this data.
-// Rejects promise with true if database error, with false if no post found.
-CommentData.prototype.findById = function(id) {
-  var self = this;
-  return new Promise(function(resolve, reject) {
-    aws.dbClient.get({
-      TableName: self.config.table,
-      Key: {
-        'id': id
-      }
-    }, function(err, data) {
-      if(err) return reject(err);
-      if(!data || !data.Item) {
-        return reject();
-      }
-      self.data = data.Item;
-      return resolve();
-    });
-  });
+  if (props.includes('text')) {
+    if (!this.data.text || this.data.text.length < 1 || this.data.text.length > 20000) {
+      invalids.push('text');
+    }
+  }
+
+  return invalids;
 };
 
 module.exports = CommentData;

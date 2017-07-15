@@ -75,6 +75,50 @@ const self = module.exports = {
       });
   },
 
+  getComment(req, res) {
+    const commentId = req.params.commentid;
+    const postId = req.params.postid;
+
+    if (!postId) {
+      return error.BadRequest(res, 'Missing postid');
+    }
+
+    if (!commentId) {
+      return error.BadRequest(res, 'Missing commentid');
+    }
+
+    self.getOneComment(commentId, req)
+      .then(data => success.OK(res, data))
+      .catch(err => {
+        if (err) {
+          if (typeof err === 'object' && err.code) {
+            return error.code(res, err.code, err.message);
+          }
+
+          return error.InternalServerError(res);
+        }
+
+        return error.NotFound(res);
+      });
+  },
+
+  // todo Check the specfied comment actually belongs to this post.
+  getOneComment(id, req) {
+    return new Promise((resolve, reject) => {
+      new Promise((resolve, reject) => {
+        return resolve(new CommentData.findById(id));
+      })
+      .then(data => resolve(data))
+      .catch(err => {
+        if (err) {
+          console.error('Error fetching comment data:', err);
+        }
+
+        return reject(err);
+      });
+    });
+  },
+
   getOnePost(id, req) {
     let post;
 
@@ -914,32 +958,6 @@ const self = module.exports = {
     }).catch(function(err) {
       if(err) {
         console.error("Error fetching comments", err);
-        return error.InternalServerError(res);
-      }
-      return error.NotFound(res);
-    });
-  },
-
-  getComment(req, res) {
-    if(!req.params.postid) {
-      return error.BadRequest(res, 'Missing postid');
-    }
-    if(!req.params.commentid) {
-      return error.BadRequest(res, 'Missing commentid');
-    }
-
-    // TODO check the specfied comment actually belongs to this post
-
-    var comment = new Comment();
-    var commentdata = new CommentData();
-    comment.findById(req.params.commentid).then(function() {
-      return commentdata.findById(req.params.commentid);
-    }).then(function() {
-      comment.data.data = commentdata.data;
-      return success.OK(res, comment.data);
-    }, function(err) {
-      if(err) {
-        console.error("Error fetching comment data:", err);
         return error.InternalServerError(res);
       }
       return error.NotFound(res);

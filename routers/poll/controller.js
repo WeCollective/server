@@ -156,7 +156,7 @@ module.exports = {
         if (existingVoteData) {
           return Promise.reject({
             code: 400,
-            message: 'User has already voted on this poll',
+            message: 'You have already voted on this poll!',
           });
         }
 

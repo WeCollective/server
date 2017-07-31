@@ -1,6 +1,5 @@
 'use strict';
 
-const _ = require('lodash');
 const aws = require('../../config/aws');
 const Branch = require('../../models/branch.model');
 const Comment = require('../../models/comment');

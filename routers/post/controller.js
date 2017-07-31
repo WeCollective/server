@@ -32,6 +32,12 @@ const post = {
         message: 'Invalid title.',
       });
     }
+    else if (req.body.title.length > 200) {
+      return Promise.reject({
+        code: 400,
+        message: 'Title cannot be more than 200 characters long.',
+      });
+    }
 
     try {
       req.body.branchids = JSON.parse(req.body.branchids);
@@ -43,10 +49,16 @@ const post = {
       });
     }
 
-    if (!req.body.branchids || req.body.branchids.length === 0 || req.body.branchids.length > 5) {
+    if (!req.body.branchids || req.body.branchids.length === 0) {
       return Promise.reject({
         code: 400,
         message: 'Invalid branchids.',
+      });
+    }
+    else if (req.body.branchids.length > 5) {
+      return Promise.reject({
+        code: 400,
+        message: 'Max 5 tags allowed.',
       });
     }
 

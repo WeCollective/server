@@ -123,7 +123,7 @@ module.exports = {
         const postdata = new PostData();
 
         // get the post
-        post
+        return post
           .findByPostAndBranchIds(req.query.lastPostId, req.params.branchid)
           // fetch post data
           .then(() => postdata.findById(req.query.lastPostId) )
@@ -135,27 +135,25 @@ module.exports = {
           })
           .catch(err => {
             if (err) {
-              return reject();
+              return reject(err);
             }
 
             // Invalid lastPostId.
-            return Promise.reject({ code: 404 });
+            return reject({ code: 404 });
           });
       }
-      else {
-        // No last post specified, continue...
-        return resolve();
-      }
+      
+      // No last post specified, continue...
+      return resolve();
     })
       // Authenticated users can set to display nsfw posts.
-      .then(() => new Promise((resolve, reject) => {
-          userCanDisplayNSFWPosts(req)
-            .then(displayNSFWPosts => {
-              opts.nsfw = displayNSFWPosts;
-              return resolve();
-            })
-            .catch(reject);
-      }))
+      .then(() => new Promise((resolve, reject) => userCanDisplayNSFWPosts(req)
+        .then(displayNSFWPosts => {
+          opts.nsfw = displayNSFWPosts;
+          return resolve();
+        })
+        .catch(reject)
+      ))
       // Check if the user has permissions to fetch the requested posts.
       .then(() => new Promise((resolve, reject) => {
         if (opts.fetchOnlyflaggedPosts) {

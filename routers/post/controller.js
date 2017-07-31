@@ -20,6 +20,41 @@ const Tag = require('../../models/tag.model');
 const User = require('../../models/user.model');
 const Vote = require('../../models/user-vote.model');
 
+const post = {
+  verifyParams(req) {
+    if (!req.user.username) {
+      console.error('No username found in session.');
+      return Promise.reject({ code: 500 });
+    }
+
+    if (!req.body.title || req.body.title.length === 0) {
+      return Promise.reject({
+        code: 400,
+        message: 'Invalid title.',
+      });
+    }
+
+    try {
+      req.body.branchids = JSON.parse(req.body.branchids);
+    }
+    catch (err) {
+      return Promise.reject({
+        code: 400,
+        message: 'Malformed branchids.',
+      });
+    }
+
+    if (!req.body.branchids || req.body.branchids.length === 0 || req.body.branchids.length > 5) {
+      return Promise.reject({
+        code: 400,
+        message: 'Invalid branchids.',
+      });
+    }
+
+    return Promise.resolve(req);
+  },
+};
+
 const voteComment = {
   verifyParams(req) {
     if (!req.params.postid) {
@@ -48,7 +83,7 @@ const voteComment = {
       });
     }
 
-    return Promise.resolve();
+    return Promise.resolve(req);
   },
 };
 
@@ -340,6 +375,139 @@ const self = module.exports = {
     });
   },
 
+  post(req, res) {
+    // fetch the tags of each specfied branch. The union of these is the list of
+    // the branches the post should be tagged to.
+    const branchidsArr = [];
+    const user = new User();
+
+    let id;
+
+    return post.verifyParams(req)
+      .then(req => {
+        const tagPromises = [];
+
+        for (let i = 0; i < req.body.branchids.length; i += 1) {
+          const branchid = req.body.branchids[i];
+          tagPromises.push(new Promise((resolve, reject) => new Tag()
+            .findByBranch(branchid)
+            .then(tags => {
+              // All tags are collected, these are the branchids to tag the post to.
+              for (let j = 0; j < tags.length; j += 1) {
+                if (!branchidsArr.includes(tags[j].tag)) {
+                  branchidsArr.push(tags[j].tag);
+                }
+              }
+
+              return resolve();
+            })
+            .catch(err => reject(err))
+          ));
+        }
+
+        return Promise.all(tagPromises);
+      })
+      .then(() => {
+        const date = new Date().getTime();
+        const promises = [];
+
+        id = `${req.user.username}-${date}`;
+
+        for (let i = 0; i < branchidsArr.length; i += 1) {
+          const branchid = branchidsArr[i];
+
+          const newPost = new Post({
+            branchid,
+            comment_count: 0,
+            date,
+            down: 0,
+            global: 0,
+            id,
+            individual: 0,
+            local: 0,
+            locked: !!req.body.locked,
+            nsfw: !!req.body.nsfw,
+            type: req.body.type,
+            up: 0,
+          });
+
+          const invalids = newPost.validate();
+          if (invalids.length > 0) {
+            return Promise.reject({
+              code: 400,
+              message: `Invalid ${invalids[0]}.`,
+            });
+          }
+
+          promises.push(newPost.save());
+        }
+
+        return Promise.all(promises);
+      })
+      .then(() => {
+        const newPostData = new PostData({
+          creator: req.user.username,
+          id,
+          original_branches: JSON.stringify(req.body.branchids),
+          text: req.body.text,
+          title: req.body.title,
+        });
+
+        const invalids = newPostData.validate();
+        if (invalids.length > 0) {
+          return Promise.reject({
+            code: 400,
+            message: `Invalid ${invalids[0]}.`,
+          });
+        }
+
+        return newPostData.save();
+      })
+      // Increment the post counters on the branch objects
+      .then(() => {
+        const promises = [];
+
+        for (let i = 0; i < branchidsArr.length; i += 1) {
+          promises.push(new Promise((resolve, reject) => {
+            const branch = new Branch();
+
+            branch
+              .findById(branchidsArr[i])
+              .then(() => {
+                branch.set('post_count', branch.data.post_count + 1);
+                return branch.update();
+              })
+              .then(resolve)
+              .catch(reject);
+          }));
+        }
+
+        return Promise.all(promises);
+      })
+      .then(() => user.findByUsername(req.user.username))
+      .then(() => {
+        // increment user's post count
+        user.set('num_posts', user.data.num_posts + 1);
+        return user.update();
+      })
+      // update the SendGrid contact list with the new user data
+      .then(() => mailer.addContact(user.data, true))
+      .then(() => success.OK(res, id))
+      .catch(err => {
+        if (err) {
+          console.error('Error creating post:', err);
+
+          if (typeof err === 'object' && err.code) {
+            return error.code(res, err.code, err.message);
+          }
+
+          return error.InternalServerError(res);
+        }
+
+        return error.BadRequest(res, 'Invalid branchid.');
+      });
+  },
+
   voteComment(req, res) {
     const vote = new Vote();
 
@@ -465,161 +633,7 @@ const self = module.exports = {
 
 
 
-  post(req, res) {
-    if(!req.user.username) {
-      console.error("No username found in session.");
-      return error.InternalServerError(res);
-    }
 
-    if(!req.body.title || req.body.title.length == 0) {
-      return error.BadRequest(res, 'Invalid title');
-    }
-
-    try {
-      req.body.branchids = JSON.parse(req.body.branchids);
-    } catch(err) {
-      return error.BadRequest(res, 'Malformed branchids.');
-    }
-    if(!req.body.branchids || req.body.branchids.length == 0 || req.body.branchids.length > 5) {
-      return error.BadRequest(res, 'Invalid branchids');
-    }
-
-    // fetch the tags of each specfied branch. The union of these is the list of
-    // the branches the post should be tagged to.
-    var allTags = [];
-    var tagCollectionPromises = [];
-    var branchCollectionPromises = [];
-    for(var i = 0; i < req.body.branchids.length; i++) {
-      branchCollectionPromises.push(new Branch().findById(req.body.branchids[i]));
-      tagCollectionPromises.push(new Promise(function(resolve, reject) {
-        new Tag().findByBranch(req.body.branchids[i]).then(function(tags) {
-          for(var j = 0; j < tags.length; j++) {
-            allTags.push(tags[j].tag);
-          }
-          resolve();
-        }, function(err) {
-          if(err) {
-            reject();
-          }
-          resolve();
-        });
-      }));
-    }
-    Promise.all(branchCollectionPromises).then(function() {
-      return Promise.all(tagCollectionPromises);
-    }, function(err) {
-      if(err) {
-        return error.InternalServerError(res);
-      }
-      // one of the specified branches doesnt exist
-      return error.BadRequest(res, 'Invalid branchid');
-    }).then(function() {
-      // all tags are collected, these are the branchids to tag the post to
-      var original_branches = req.body.branchids;
-      req.body.branchids = _.union(allTags);
-
-      var date = new Date().getTime();
-      var id = req.user.username + '-' + date;
-
-      var propertiesToCheck, invalids;
-      var posts = [];
-      for(var i = 0; i < req.body.branchids.length; i++) {
-        var post = new Post({
-          id: id,
-          branchid: req.body.branchids[i],
-          date: date,
-          type: req.body.type,
-          local: 0,
-          individual: 0,
-          global: 0,
-          up: 0,
-          down: 0,
-          comment_count: 0,
-          nsfw: !!req.body.nsfw,
-          locked: !!req.body.locked
-        });
-
-        // validate post properties
-        propertiesToCheck = ['id', 'branchid', 'date', 'type', 'local', 'individual', 'global', 'up', 'down', 'comment_count', 'nsfw', 'locked'];
-        invalids = post.validate(propertiesToCheck);
-        if(invalids.length > 0) {
-          return error.BadRequest(res, 'Invalid ' + invalids[0]);
-        }
-        posts.push(post);
-      }
-
-      var postdata = new PostData({
-        id: id,
-        creator: req.user.username,
-        title: req.body.title,
-        text: req.body.text,
-        original_branches: JSON.stringify(original_branches)
-      });
-
-      // validate postdata properties
-      propertiesToCheck = ['id', 'creator', 'title', 'text', 'original_branches'];
-      invalids = postdata.validate(propertiesToCheck);
-      if(invalids.length > 0) {
-        return error.BadRequest(res, 'Invalid ' + invalids[0]);
-      }
-
-      // Check all the specified branches exist
-      var promises = [];
-      for(var i = 0; i < posts.length; i++) {
-        promises.push(new Branch().findById(posts[i].data.branchid));
-      }
-
-      Promise.all(promises).then(function () {
-        // save a post entry for each specified branch
-        promises = [];
-        for(var i = 0; i < posts.length; i++) {
-          promises.push(posts[i].save());
-        }
-
-        var user = new User();
-        Promise.all(promises).then(function() {
-          return postdata.save();
-        }).then(function() {
-          // increment the post counters on the branch objects
-          var promises = [];
-          for(var i = 0; i < req.body.branchids.length; i++) {
-            var promise = new Promise(function(resolve, reject) {
-              var branch = new Branch();
-              branch.findById(req.body.branchids[i]).then(function() {
-                branch.set('post_count', branch.data.post_count + 1);
-                branch.update().then(resolve, reject);
-              }, reject);
-            });
-            promises.push(promise);
-          }
-          return Promise.all(promises);
-        }).then(function() {
-          // get user
-          return user.findByUsername(req.user.username);
-        }).then(function() {
-          // increment user's post count
-          user.set('num_posts', user.data.num_posts + 1);
-          return user.update();
-        }).then(function () {
-          // update the SendGrid contact list with the new user data
-          return mailer.addContact(user.data, true);
-        }).then(function() {
-          // successfully create post, send back its id
-          return success.OK(res, id);
-        }).catch(function() {
-          return error.InternalServerError(res);
-        });
-      }, function(err) {
-        if(err) {
-          return error.InternalServerError(res);
-        }
-        return error.NotFound(res, 'One of the specified branches doesn\'t exist.');
-      });
-    }, function() {
-      console.error("Error fetching branch tags.");
-      return error.InternalServerError(res);
-    });
-  },
 
   delete(req, res) {
     if(!req.user || !req.user.username) {

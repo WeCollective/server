@@ -204,6 +204,23 @@ Post.prototype.findByPostAndBranchIds = function (postid, branchid) {
 // Validate the properties specified in 'properties' on the Post object,
 // returning an array of any invalid ones
 Post.prototype.validate = function (properties) {
+  if (!properties || properties.length === 0) {
+    properties = [
+      'id',
+      'branchid',
+      'date',
+      'type',
+      'individual',
+      'local',
+      'global',
+      'up',
+      'down',
+      'comment_count',
+      'nsfw',
+      'locked',
+    ];
+  }
+
   const invalids = [];
 
   // ensure id exists and is of correct length

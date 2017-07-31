@@ -43,41 +43,47 @@ PostData.prototype.findById = function (id) {
   });
 };
 
-// Validate the properties specified in 'props' on the PostData object,
+// Validate the properties specified in 'properties' on the PostData object,
 // returning an array of any invalid ones
-PostData.prototype.validate = function (props) {
-  let invalids = [];
+PostData.prototype.validate = function (properties) {
+  if (!properties || properties.length === 0) {
+    properties = [
+      'id',
+      'creator',
+      'title',
+      'text',
+      'original_branches',
+    ];
+  }
 
-  // ensure id exists and is of correct length
-  if (props.includes('id')) {
+  const invalids = [];
+
+  if (properties.includes('id')) {
     if (!validate.postid(this.data.id)) {
       invalids.push('id');
     }
   }
 
-  // ensure creator is valid username
-  if (props.includes('creator')) {
+  if (properties.includes('creator')) {
     if (!validate.username(this.data.creator)) {
       invalids.push('creator');
     }
   }
 
-  // ensure title is valid
-  if (props.includes('title')) {
+  if (properties.includes('title')) {
     if (!this.data.title || this.data.title.length < 1 || this.data.title.length > 300) {
       invalids.push('title');
     }
   }
 
-  // ensure text is valid
-  if (props.includes('text')) {
+  if (properties.includes('text')) {
     if (!this.data.text || this.data.text.length < 1 || this.data.text.length > 20000) {
       invalids.push('text');
     }
   }
 
-  // ensure original_branches is a valid JSON array
-  if (props.includes('original_branches')) {
+  // Must be valid JSON array.
+  if (properties.includes('original_branches')) {
     if (!this.data.original_branches || !this.data.original_branches.length) {
       invalids.push('original_branches');
     }

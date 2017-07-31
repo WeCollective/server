@@ -1,15 +1,15 @@
 'use strict';
 
-var Model = require('./model.js');
-var db = require('../config/database.js');
-var aws = require('../config/aws.js');
-var validate = require('./validate.js');
+const aws = require('../config/aws');
+const db = require('../config/database');
+const Model = require('./model');
+const validate = require('./validate');
 
-var Tag = function(data) {
+const Tag = function (data) {
   this.config = {
+    keys: db.Keys.Tags,
     schema: db.Schema.Tag,
     table: db.Table.Tags,
-    keys: db.Keys.Tags
   };
   this.data = this.sanitize(data);
 };
@@ -18,44 +18,34 @@ var Tag = function(data) {
 Tag.prototype = Object.create(Model.prototype);
 Tag.prototype.constructor = Tag;
 
-// Validate the properties specified in 'properties' on the Tag object,
-// returning an array of any invalid ones
-Tag.prototype.validate = function(properties) {
-  var invalids = [];
-
-  // ensure branchid exists and is of correct length
-  if(properties.indexOf('branchid') > -1) {
-    if(!validate.branchid(this.data.branchid)) {
-      invalids.push('branchid');
-    }
-  }
-
-  // ensure tag exists and is of correct length
-  if(properties.indexOf('tag') > -1) {
-    if(!validate.branchid(this.data.tag)) {
-      invalids.push('tag');
-    }
-  }
-
-  return invalids;
-};
-
 // Get the tags of a specific branch, passing in results to promise resolve.
 // Rejects promise with true if database error, with false if no data found.
-Tag.prototype.findByBranch = function(branchid) {
-  var self = this;
-  return new Promise(function(resolve, reject) {
+Tag.prototype.findByBranch = function (branchid) {
+  const self = this;
+
+  return new Promise((resolve, reject) => {
     aws.dbClient.query({
-      TableName: self.config.table,
-      KeyConditionExpression: "branchid = :id",
       ExpressionAttributeValues: {
-        ":id": branchid
+        ':id': branchid,
+      },
+      KeyConditionExpression: 'branchid = :id',
+      TableName: self.config.table,
+    }, (err, data) => {
+      if (err) {
+        return reject(err);
       }
-    }, function(err, data) {
-      if(err) return reject(err);
-      if(!data || !data.Items) {
+
+      if (!data || !data.Items) {
         return reject();
       }
+
+      if (data.Items.length === 0) {
+        return reject({
+          code: 400,
+          message: `Invalid branch tag "${branchid}"`,
+        });
+      }
+
       return resolve(data.Items);
     });
   });
@@ -63,24 +53,49 @@ Tag.prototype.findByBranch = function(branchid) {
 
 // Get the all the branches with a specific tag, passing in results to promise resolve.
 // Rejects promise with true if database error, with false if no data found.
-Tag.prototype.findByTag = function(tag) {
-  var self = this;
-  return new Promise(function(resolve, reject) {
+Tag.prototype.findByTag = function (tag) {
+  const self = this;
+
+  return new Promise((resolve, reject) => {
     aws.dbClient.query({
-      TableName: self.config.table,
-      IndexName: self.config.keys.globalIndexes[0],
-      KeyConditionExpression: "tag = :tag",
       ExpressionAttributeValues: {
-        ":tag": tag
+        ':tag': tag,
+      },
+      IndexName: self.config.keys.globalIndexes[0],
+      KeyConditionExpression: 'tag = :tag',
+      TableName: self.config.table,
+    }, (err, data) => {
+      if (err) {
+        return reject(err);
       }
-    }, function(err, data) {
-      if(err) return reject(err);
-      if(!data || !data.Items) {
+
+      if (!data || !data.Items) {
         return reject();
       }
+
       return resolve(data.Items);
     });
   });
+};
+
+// Validate the properties specified in 'properties' on the Tag object,
+// returning an array of any invalid ones
+Tag.prototype.validate = function (properties) {
+  const invalids = [];
+
+  if (properties.includes('branchid')) {
+    if (!validate.branchid(this.data.branchid)) {
+      invalids.push('branchid');
+    }
+  }
+
+  if (properties.includes('tag')) {
+    if (!validate.branchid(this.data.tag)) {
+      invalids.push('tag');
+    }
+  }
+
+  return invalids;
 };
 
 module.exports = Tag;

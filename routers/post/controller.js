@@ -636,23 +636,19 @@ const self = module.exports = {
         return parent.findById(req.body.parentid);
       })
       .then(() => {
-        // ensure the parent comment belongs to this post
+        // Parent comment must belong to this post.
         if (req.body.parentid !== 'none' && parent.data.postid !== req.params.postid) {
           return error.BadRequest(res, 'Parent comment does not belong to the same post');
         }
 
-        // all is well - save the new comment
         return comment.save();
       })
-      // save the comment data
       .then(() => commentdata.save())
       .then(() => {
-        // if this is a root comment, continue
         if (req.body.parentid === 'none') {
           return Promise.resolve();
         }
 
-        // otherwise, increment the number of replies on the parent
         parent.set('replies', parent.data.replies + 1);
         return parent.update();
       })
@@ -705,18 +701,17 @@ const self = module.exports = {
           // comment reply, get parent comment author
           const model = req.body.parentid === 'none' ? new PostData() : new CommentData();
           return model
-            .findById(req.body.parentid)
+            .findById(req.body.parentid === 'none' ? req.params.postid : req.body.parentid)
             .then(() => Promise.resolve({
               author: model.data.creator,
               branchid,
             }));
         })
-        .catch(reject)
+        .catch(err => Promise.reject(err))
       )
+      // Notify the author that their content has been interacted with.
       .then(data => {
-        // notify the author that their content has been commented on/replied to
-
-        // don't notify the author if they are commenting/posting on their own content
+        // Skip if interacting with our own content.
         if (req.user.username === data.author) {
           return Promise.resolve();
         }
@@ -746,7 +741,6 @@ const self = module.exports = {
         return notification.save(req.sessionID);
       })
       .then(() => user.findByUsername(req.user.username))
-      // increment the user comment count
       .then(() => {
         user.set('num_comments', user.data.num_comments + 1);
         return user.update();

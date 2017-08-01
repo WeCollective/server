@@ -102,6 +102,48 @@ const voteComment = {
 };
 
 const self = module.exports = {
+  deleteComment(req, res) {
+    const commentid = req.params.commentid;
+    const postid = req.params.postid;
+
+    if (!commentid) {
+      return error.BadRequest(res, 'Missing commentid');
+    }
+
+    if (!postid) {
+      return error.BadRequest(res, 'Missing postid');
+    }
+
+    new Comment()
+      .findById(commentid)
+      .then(comment => {
+        const commentdata = new CommentData({ id: comment.id });
+
+        if (comment.replies === 0) {
+          return commentdata
+            .delete()
+            .then(() => new Comment().delete({ id: comment.id }));
+        }
+
+        // Removing the comment would cut off the replies, we don't want that.
+        commentdata.set('creator', 'N/A');
+        commentdata.set('text', '[Comment removed by user]');
+        return commentdata.update();
+      })
+      .then(() => success.OK(res))
+      .catch(err => {
+        if (err) {
+          if (typeof err === 'object' && err.code) {
+            return error.code(res, err.code, err.message);
+          }
+
+          return error.InternalServerError(res);
+        }
+
+        return error.NotFound(res);
+      });
+  },
+
   get(req, res) {
     const postid = req.params.postid;
 
@@ -677,7 +719,7 @@ const self = module.exports = {
       for(var i = 0; i < posts.length; i++) {
         promises.push(new FlaggedPost().delete({
           id: posts[i].id,
-          branchid: posts[i].branchid
+          branchid: posts[i].branchid,
         }));
       }
       return Promise.all(promises);

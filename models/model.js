@@ -102,7 +102,7 @@ Model.prototype.update = function (Key) {
     }
 
     // Update the entry with values which have changed in the model
-    let AttributeUpdates = {};
+    const AttributeUpdates = {};
 
     for (let i = 0; i < self.dirtys.length; i += 1) {
       const name = self.dirtys[i];

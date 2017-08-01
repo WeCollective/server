@@ -268,6 +268,23 @@ module.exports = (app, passport) => {
 
   router.route('/:postid/comments/:commentid')
     /**
+     * @api {get} /post/:postid/comments/:commentid Delete Comment
+     * @apiName Delete Comment
+     * @apiGroup Posts
+     * @apiPermission auth
+     * @apiVersion 1.0.0
+     *
+     * @apiParam (URL Parameters) {String} postid Post unique id.
+     * @apiParam (URL Parameters) {String} commentid Comment unique id
+     *
+     * @apiUse OK
+     * @apiUse BadRequest
+     * @apiUse NotFound
+     * @apiUse InternalServerError
+     */
+    .delete(ACL.validateRole(ACL.Roles.AuthenticatedUser), controller.deleteComment)
+
+    /**
      * @api {get} /post/:postid/comments/:commentid Get Comment
      * @apiName Get Comment
      * @apiGroup Posts

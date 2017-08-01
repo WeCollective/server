@@ -114,12 +114,19 @@ const self = module.exports = {
       return error.BadRequest(res, 'Missing postid');
     }
 
-    new Comment()
-      .findById(commentid)
+    self.getOneComment(commentid, req)
       .then(comment => {
+        if (comment.data.creator !== req.user.username) {
+          return Promise.reject({
+            code: 403,
+            message: `You cannot delete other user's comments!`,
+          });
+        }
+
         const commentdata = new CommentData({ id: comment.id });
 
         if (comment.replies === 0) {
+          // todo Decrease comment count on post...
           return commentdata
             .delete()
             .then(() => new Comment().delete({ id: comment.id }));

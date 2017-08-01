@@ -49,11 +49,14 @@ const post = {
       });
     }
 
-    if (!req.body.branchids || req.body.branchids.length === 0) {
+    if (!req.body.branchids) {
       return Promise.reject({
         code: 400,
         message: 'Invalid branchids.',
       });
+    }
+    else if (req.body.branchids.length === 0) {
+      req.body.branchids.push('root');
     }
     else if (req.body.branchids.length > 5) {
       return Promise.reject({

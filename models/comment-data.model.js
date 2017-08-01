@@ -45,34 +45,44 @@ CommentData.prototype.findById = function (id) {
 
 // Validate the properties specified in 'properties' on the CommentData object,
 // returning an array of any invalid ones
-CommentData.prototype.validate = function (props) {
+CommentData.prototype.validate = function (properties) {
+  if (!properties || properties.length === 0) {
+    properties = [
+      'creator',
+      'date',
+      'edited',
+      'id',
+      'text',
+    ];
+  }
+
   const invalids = [];
 
-  if (props.includes('creator')) {
+  if (properties.includes('creator')) {
     if (!validate.username(this.data.creator)) {
       invalids.push('creator');
     }
   }
 
-  if (props.includes('date')) {
+  if (properties.includes('date')) {
     if (!validate.date(this.data.date)) {
       invalids.push('date');
     }
   }
 
-  if (props.includes('edited')) {
+  if (properties.includes('edited')) {
     if (this.data.edited !== undefined && this.data.edited !== true && this.data.edited !== false) {
       invalids.push('edited');
     }
   }
 
-  if (props.includes('id')) {
+  if (properties.includes('id')) {
     if (!validate.commentid(this.data.id)) {
       invalids.push('id');
     }
   }
 
-  if (props.includes('text')) {
+  if (properties.includes('text')) {
     if (!this.data.text || this.data.text.length < 1 || this.data.text.length > 20000) {
       invalids.push('text');
     }

@@ -22,44 +22,53 @@ Notification.prototype.constructor = Notification;
 // Validate the properties specified in 'properties' on the Notification object,
 // returning an array of any invalid ones
 Notification.prototype.validate = function (properties) {
-  var invalids = [];
-
-  // ensure id exists and is of correct length
-  if(properties.indexOf('id') > -1) {
-    if(!validate.notificationid(this.data.id)) {
-      invalids.push('id');
-    }
+  if (!properties || properties.length === 0) {
+    properties = [
+      'data',
+      'date',
+      'id',
+      'type',
+      'unread',
+      'user',
+    ];
   }
 
-  // ensure user is valid username
-  if(properties.indexOf('user') > -1) {
-    if(!validate.username(this.data.user)) {
-      invalids.push('user');
-    }
+  const invalids = [];
+
+  // TODO check data is a valid JSON for the given type
+  if (properties.includes('data')) {
+    // 
   }
 
-  // ensure creation date is valid
-  if(properties.indexOf('date') > -1) {
-    if(!validate.date(this.data.date)) {
+  if (properties.includes('date')) {
+    if (!validate.date(this.data.date)) {
       invalids.push('date');
     }
   }
 
-  // ensure unread is valid boolean
-  if(properties.indexOf('unread') > -1) {
-    if(!validate.boolean(this.data.unread)) {
-      invalids.push('unread');
+  if (properties.includes('id')) {
+    if (!validate.notificationid(this.data.id)) {
+      invalids.push('id');
     }
   }
 
-  // ensure type is valid notification type
-  if(properties.indexOf('type') > -1) {
-    if(!validate.notificationType(this.data.type)) {
+  if (properties.includes('type')) {
+    if (!validate.notificationType(this.data.type)) {
       invalids.push('type');
     }
   }
 
-  // TODO check data is a valid JSON for the given type
+  if (properties.includes('unread')) {
+    if (!validate.boolean(this.data.unread)) {
+      invalids.push('unread');
+    }
+  }
+
+  if (properties.includes('user')) {
+    if (!validate.username(this.data.user)) {
+      invalids.push('user');
+    }
+  }
 
   return invalids;
 };

@@ -571,6 +571,199 @@ const self = module.exports = {
       });
   },
 
+  postComment(req, res) {
+    if (!req.user || !req.user.username) {
+      return error.Forbidden(res);
+    }
+
+    if (!req.params.postid) {
+      return error.BadRequest(res, 'Missing postid');
+    }
+
+    const date = new Date().getTime();
+    const id = `${req.user.username}-${date}`;
+    const comment = new Comment({
+      date,
+      down: 0,
+      id,
+      individual: 0,
+      parentid: req.body.parentid,
+      postid: req.params.postid,
+      rank: 0,
+      replies: 0,
+      up: 0,
+    });
+
+    const commentdata = new CommentData({
+      creator: req.user.username,
+      date,
+      edited: false,
+      id,
+      text: req.body.text,
+    });
+
+    let invalids = comment.validate();
+    if (invalids.length > 0) {
+      return error.BadRequest(res, `Invalid ${invalids[0]}`);
+    }
+
+    invalids = commentdata.validate();
+    if (invalids.length > 0) {
+      return error.BadRequest(res, `Invalid ${invalids[0]}`);
+    }
+
+    // ensure the specified post exists
+    const parent = new Comment();
+    const user = new User();
+    // the post entries (one for each branch) this comment belongs to
+    let commentPosts;
+
+    new Post()
+      .findById(req.params.postid, 0)
+      .then(posts => {
+        if (!posts || posts.length === 0) {
+          return error.NotFound(res);
+        }
+
+        commentPosts = posts;
+
+        // if this is a root comment, continue
+        if (req.body.parentid === 'none') {
+          return Promise.resolve();
+        }
+
+        // otherwise, ensure the specified parent comment exists
+        return parent.findById(req.body.parentid);
+      })
+      .then(() => {
+        // ensure the parent comment belongs to this post
+        if (req.body.parentid !== 'none' && parent.data.postid !== req.params.postid) {
+          return error.BadRequest(res, 'Parent comment does not belong to the same post');
+        }
+
+        // all is well - save the new comment
+        return comment.save();
+      })
+      // save the comment data
+      .then(() => commentdata.save())
+      .then(() => {
+        // if this is a root comment, continue
+        if (req.body.parentid === 'none') {
+          return Promise.resolve();
+        }
+
+        // otherwise, increment the number of replies on the parent
+        parent.set('replies', parent.data.replies + 1);
+        return parent.update();
+      })
+      .then(() => {
+        // increment the number of comments on the post
+        const promises = [];
+
+        for (let i = 0; i < commentPosts.length; i += 1) {
+          const post = new Post(commentPosts[i]);
+          post.set('comment_count', commentPosts[i].comment_count + 1);
+          promises.push(post.update());
+        }
+
+        return Promise.all(promises);
+      })
+      // find all post entries to get the list of branches it is tagged to
+      .then(() => new Post().findById(req.params.postid))
+      .then(posts => {
+        // increment the post comments count on each branch object
+        // the post appears in
+        const promises = [];
+
+        for (let i = 0; i < posts.length; i += 1) {
+          promises.push(new Promise(function(resolve, reject) {
+            const branch = new Branch();
+            return branch
+              .findById(posts[i].branchid)
+              .then(() => {
+                branch.set('post_comments', branch.data.post_comments + 1);
+                return branch.update();
+              })
+              .then(resolve)
+              .catch(reject);
+          }));
+        }
+
+        return Promise.all(promises);
+      })
+      // notify the post or comment author that a comment has been
+      // posted on their content
+      // get the username of the post or comment author
+      // fetch the id of a valid branch which the post appears in
+      .then(() => new Post()
+        .findById(req.params.postid)
+        .then(posts => {
+          // take the first branch this post appears in (there are many)
+          // for the purposes of viewing the notification
+          const branchid = posts[0].branchid;
+          // root comment, get post author
+          // comment reply, get parent comment author
+          const model = req.body.parentid === 'none' ? new PostData() : new CommentData();
+          return model
+            .findById(req.body.parentid)
+            .then(() => Promise.resolve({
+              author: model.data.creator,
+              branchid,
+            }));
+        })
+        .catch(reject)
+      )
+      .then(data => {
+        // notify the author that their content has been commented on/replied to
+
+        // don't notify the author if they are commenting/posting on their own content
+        if (req.user.username === data.author) {
+          return Promise.resolve();
+        }
+
+        const time = new Date().getTime();
+        const notification = new Notification({
+          data: {
+            branchid: data.branchid,
+            commentid: id,
+            parentid: req.body.parentid,
+            postid: req.params.postid,
+            username: req.user.username,
+          },
+          date: time,
+          id: `${data.author}-${time}`,
+          type: NotificationTypes.COMMENT,
+          unread: true,
+          user: data.author,
+        });
+
+        const invalids = notification.validate();
+        if (invalids.length > 0) {
+          console.error('Error creating notification. Invalids: ', invalids);
+          return error.InternalServerError(res);
+        }
+
+        return notification.save(req.sessionID);
+      })
+      .then(() => user.findByUsername(req.user.username))
+      // increment the user comment count
+      .then(() => {
+        user.set('num_comments', user.data.num_comments + 1);
+        return user.update();
+      })
+      // update the SendGrid contact list with the new user data
+      .then(() => mailer.addContact(user.data, true))
+      .then(() => success.OK(res, id))
+      .catch(err => {
+        if (err) {
+          console.error('Error posting comment:', err);
+          return error.InternalServerError(res);
+        }
+
+        return error.NotFound(res);
+      });
+  },
+
   voteComment(req, res) {
     const vote = new Vote();
 
@@ -889,205 +1082,6 @@ const self = module.exports = {
     }).catch(function(err) {
       if(err) {
         console.error("Error flagging post: ", err);
-        return error.InternalServerError(res);
-      }
-      return error.NotFound(res);
-    });
-  },
-
-  postComment(req, res) {
-    if(!req.user || !req.user.username) {
-      return error.Forbidden(res);
-    }
-
-    if(!req.params.postid) {
-      return error.BadRequest(res, 'Missing postid');
-    }
-
-    var date = new Date().getTime();
-    var id = req.user.username + '-' + date;
-    var comment = new Comment({
-      id: id,
-      postid: req.params.postid,    // ensure exists
-      parentid: req.body.parentid,  // ensure exists and in this post
-      individual: 0,
-      replies: 0,
-      up: 0,
-      down: 0,
-      date: date,
-      rank: 0
-    });
-
-    // validate comment properties
-    var propertiesToCheck = ['id', 'postid', 'parentid', 'individual', 'replies', 'up', 'down', 'date', 'rank'];
-    var invalids = comment.validate(propertiesToCheck);
-    if(invalids.length > 0) {
-      return error.BadRequest(res, 'Invalid ' + invalids[0]);
-    }
-
-    var commentdata = new CommentData({
-      id: id,
-      creator: req.user.username,
-      date: date,
-      text: req.body.text,
-      edited: false
-    });
-
-    // validate comment data properties
-    propertiesToCheck = ['id', 'creator', 'date', 'text', 'edited'];
-    invalids = commentdata.validate(propertiesToCheck);
-    if(invalids.length > 0) {
-      return error.BadRequest(res, 'Invalid ' + invalids[0]);
-    }
-
-    // ensure the specified post exists
-    var parent = new Comment();
-    var user = new User();
-    var commentPosts; // the post entries (one for each branch) this comment belongs to
-    new Post().findById(req.params.postid, 0).then(function(posts) {
-      if(!posts || posts.length == 0) {
-        return error.NotFound(res);
-      }
-      commentPosts = posts;
-      // if this is a root comment, continue
-      if(req.body.parentid == 'none') {
-        return new Promise(function(resolve, reject) {
-          resolve();
-        });
-      } else {
-        // otherwise, ensure the specified parent comment exists
-        return parent.findById(req.body.parentid);
-      }
-    }).then(function() {
-      // ensure the parent comment belongs to this post
-      if(req.body.parentid != 'none' && parent.data.postid != req.params.postid) {
-        return error.BadRequest(res, 'Parent comment does not belong to the same post');
-      }
-
-      // all is well - save the new comment
-      return comment.save();
-    }).then(function() {
-      // save the comment data
-      return commentdata.save();
-    }).then(function() {
-      // if this is a root comment, continue
-      if(req.body.parentid == 'none') {
-        return new Promise(function(resolve, reject) {
-          resolve();
-        });
-      } else {
-        // otherwise, increment the number of replies on the parent
-        parent.set('replies', parent.data.replies + 1);
-        return parent.update();
-      }
-    }).then(function() {
-      // increment the number of comments on the post
-      var promises = [];
-      for(var i = 0; i < commentPosts.length; i++) {
-        var post = new Post(commentPosts[i]);
-        post.set('comment_count', commentPosts[i].comment_count + 1);
-        promises.push(post.update());
-      }
-      return Promise.all(promises);
-    }).then(function () {
-      // find all post entries to get the list of branches it is tagged to
-      return new Post().findById(req.params.postid);
-    }).then(function(posts) {
-      // increment the post comments count on each branch object
-      // the post appears in
-      var promises = [];
-      for(var i = 0; i < posts.length; i++) {
-        promises.push(new Promise(function(resolve, reject) {
-          var branch = new Branch();
-          branch.findById(posts[i].branchid).then(function() {
-            branch.set('post_comments', branch.data.post_comments + 1);
-            branch.update().then(resolve, reject);
-          }, reject);
-        }));
-      }
-      return Promise.all(promises);
-    }).then(function() {
-      // notify the post or comment author that a comment has been
-      // posted on their content
-
-      // get the username of the post or comment author
-      return new Promise(function(resolve, reject) {
-        // fetch the id of a valid branch which the post appears in
-        new Post().findById(req.params.postid).then(function(posts) {
-          // take the first branch this post appears in (there are many)
-          // for the purposes of viewing the notification
-          var branchid = posts[0].branchid;
-          if(req.body.parentid == 'none') {
-            // root comment, get post author
-            var postdata = new PostData();
-            postdata.findById(req.params.postid).then(function() {
-              resolve({
-                author: postdata.data.creator,
-                branchid: branchid
-              });
-            }, reject);
-          } else {
-            // comment reply, get parent comment author
-            var commentdata = new CommentData();
-            commentdata.findById(req.body.parentid).then(function() {
-              resolve({
-                author: commentdata.data.creator,
-                branchid: branchid
-              });
-            }, reject);
-          }
-        }, reject);
-      });
-    }).then(function(data) {
-      // notify the author that their content has been commented on/replied to
-
-      // don't notify the author if they are commenting/posting on their own content
-      if(req.user.username == data.author) {
-        return new Promise(function(resolve, reject) {
-          resolve();
-        });
-      }
-
-      var time = new Date().getTime();
-      var notification = new Notification({
-        id: data.author + '-' + time,
-        user: data.author,
-        date: time,
-        unread: true,
-        type: NotificationTypes.COMMENT,
-        data: {
-          postid: req.params.postid,
-          parentid: req.body.parentid,
-          commentid: id,
-          username: req.user.username,
-          branchid: data.branchid
-        }
-      });
-
-      var propertiesToCheck = ['id', 'user', 'date', 'unread', 'type', 'data'];
-      var invalids = notification.validate(propertiesToCheck);
-      if(invalids.length > 0) {
-        console.error('Error creating notification. Invalids: ', invalids);
-        return error.InternalServerError(res);
-      }
-
-      return notification.save(req.sessionID);
-    }).then(function () {
-      // get the user
-      return user.findByUsername(req.user.username);
-    }).then(function () {
-      // increment the user comment count
-      user.set('num_comments', user.data.num_comments + 1);
-      return user.update();
-    }).then(function () {
-      // update the SendGrid contact list with the new user data
-      return mailer.addContact(user.data, true);
-    }).then(function() {
-      // return the comment id to the client
-      return success.OK(res, id);
-    }).catch(function(err) {
-      if(err) {
-        console.error("Error posting comment: ", err);
         return error.InternalServerError(res);
       }
       return error.NotFound(res);

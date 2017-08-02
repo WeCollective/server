@@ -1,10 +1,11 @@
 'use strict';
 
-const express = require('express');
-const router = express.Router({ mergeParams: true });
 const ACL = require('../../config/acl');
+const express = require('express');
 
-module.exports = function(app, passport) {
+const router = express.Router({ mergeParams: true });
+
+module.exports = (app, passport) => {
   const controller = require('./controller');
 
   // get subbranch requests
@@ -36,7 +37,7 @@ module.exports = function(app, passport) {
      * @apiUse NotFound
      * @apiUse InternalServerError
      */
-    .get(function(req, res, next) {
+    .get((req, res, next) => {
       ACL.validateRole(ACL.Roles.Moderator, req.params.branchid)(req, res, next);
     }, controller.get);
 
@@ -56,7 +57,7 @@ module.exports = function(app, passport) {
      * @apiUse NotFound
      * @apiUse InternalServerError
      */
-    .post(function(req, res, next) {
+    .post((req, res, next) => {
       ACL.validateRole(ACL.Roles.Moderator, req.params.childid)(req, res, next);
     }, controller.post)
     /**
@@ -75,7 +76,7 @@ module.exports = function(app, passport) {
      * @apiUse NotFound
      * @apiUse InternalServerError
      */
-    .put(function(req, res, next) {
+    .put((req, res, next) => {
       ACL.validateRole(ACL.Roles.Moderator, req.params.branchid)(req, res, next);
     }, controller.put);
 

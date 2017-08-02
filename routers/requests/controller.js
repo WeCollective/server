@@ -102,6 +102,8 @@ module.exports = {
     let modLogEntryChildBranch;
     let modLogEntryParentBranch;
     let subbranchRequestData;
+    let tagsChildBranch;
+    let tagsParentBranch;
 
     const createModBranchMovedNotifications = mods => {
       const data = {
@@ -186,91 +188,125 @@ module.exports = {
           return Promise.resolve();
         }
 
-        if (action === 'accept') {
-          // ensure the requested parent is not a child branch
+        return tag
+          .findByBranch(parentBranchId)
+          // Check if the child branch we are asking to move is not a parent branch
+          // of the requested parent branch.
+          //
+          // Example: root - a - b - child - c - parent
+          //
+          // In this case, moving the child branch would discontinue the chain, hence
+          // it is forbidden.
+          .then(tags => {
+            tagsParentBranch = tags.map(obj => obj.tag);
 
-          tag.findByBranch(parentBranchId).then(function(parentTags) {
-            for (let i = 0; i < parentTags.length; i += 1) {
-              if (parentTags[i].tag == childBranchId) {
-                return error.BadRequest(res, 'The requested parent is a subbranch.');
-              }
+            if (tagsParentBranch.includes(childBranchId)) {
+              return Promise.reject({
+                code: 400,
+                message: 'The requested parent is a subbranch.',
+              });
             }
-            // requested parent is not child; continue
 
-            // get the child branch's tags
-            tag.findByBranch(childBranchId).then(function(childTags) {
-              var B = childTags.map(function(x) {
-                return x.tag;
-              });
-              var P = parentTags.map(function(x) {
-                return x.tag;
-              });
-              var _O = _.difference(B, _.intersection(B, P));
-              if(_O.indexOf(childBranchId) > -1) _O.splice(_O.indexOf(childBranchId), 1);  // remove self from O
-              var _N = _.difference(P, B);
+            return tag.findByBranch(childBranchId);
+          })
+          // Get the child branch's tags.
+          .then(tags => {
+            tagsChildBranch = tags.map(obj => obj.tag);
 
-              // get the branch whose parent is changing AND all its children
-              tag.findByTag(childBranchId).then(function(allChildren) {
-                var updateTagsPromises = [];
+            // This will always have at least root.
+            const mutualTagsToExclude = _.intersection(tagsChildBranch, tagsParentBranch);
+
+            var _O = _.difference(tagsChildBranch, mutualTagsToExclude);
+
+            console.log(_O, childBranchId);
+
+            return Promise.reject({
+              code: 400,
+              message: 'Just messing around',
+            });
+
+            // remove self from O
+            if (_O.includes(childBranchId)) {
+              _O.splice(_O.indexOf(childBranchId), 1);
+            }
+
+            var _N = _.difference(tagsParentBranch, tagsChildBranch);
+
+            // get the branch whose parent is changing AND all its children
+            return tag
+              .findByTag(childBranchId)
+              .then(allChildren => {
+                const updateTagsPromises = [];
+
                 // update each child's tags (allChildren includes self)
-                for(var i = 0; i < allChildren.length; i++) {
-                  updateTagsPromises.push(new Promise(function(resolve, reject) {
+                for (let i = 0; i < allChildren.length; i += 1) {
+                  updateTagsPromises.push(() => {
                     // perform tag update operations for this branch, resolving promise when complete
-
                     // get all the tags of this child
-                    tag.findByBranch(allChildren[i].branchid).then(function(tags) {
-                      var bid;
-                      if(tags.length > 0) bid = tags[0].branchid;
-                      var promises = [];  // to hold all tag operation promises
-                      // make copies
-                      var O = _O.slice(0);
-                      var N = _N.slice(0);
+                    return tag
+                      .findByBranch(allChildren[i].branchid)
+                      .then(tags => {
+                        let bid;
 
-                      // for each tag in the child's tag set...
-                      var n = 0;
-                      for(var t = 0; t < tags.length; t++) {
-                        // if the tag set contains a tag from O
-                        if(O.indexOf(tags[t].tag) > -1) {
-                          // remove tag from list
-                          promises.push(tag.delete(tags[t]));
-                          tags.splice(t, 1);
-                          // replace it with one from N if possible
-                          if(n < N.length) {
-                            tags.push({
-                              branchid: bid,
-                              tag: N[n]
-                            });
-                            promises.push(new Tag({
-                              branchid: bid,
-                              tag: N[n]
-                            }).save());
-                            n++;
+                        if (tags.length > 0) {
+                          bid = tags[0].branchid;
+                        }
+
+                        // make copies
+                        var O = _O.slice(0);
+                        var N = _N.slice(0);
+
+                        // for each tag in the child's tag set...
+                        var n = 0;
+
+                        // Holds all tag operations.
+                        const promises = [];
+
+                        for (let t = 0; t < tags.length; t += 1) {
+                          if (O.includes(tags[t].tag)) {
+                            // remove tag from list
+                            promises.push(tag.delete(tags[t]));
+                            tags.splice(t, 1);
+
+                            // replace it with one from N if possible
+                            if (n < N.length) {
+                              tags.push({
+                                branchid: bid,
+                                tag: N[n],
+                              });
+
+                              promises.push(new Tag({
+                                branchid: bid,
+                                tag: N[n],
+                              })
+                                .save()
+                              );
+
+                              n++;
+                            }
                           }
                         }
-                      }
 
-                      // add any remaining tags in N
-                      while(n < N.length) {
-                        tags.push({
-                          branchid: bid,
-                          tag: N[n]
-                        });
-                        promises.push(new Tag({
-                          branchid: bid,
-                          tag: N[n]
-                        }).save());
-                        n++;
-                      }
+                        // add any remaining tags in N
+                        while (n < N.length) {
+                          tags.push({
+                            branchid: bid,
+                            tag: N[n],
+                          });
 
-                      // wait for all tag operations on this branch to complete
-                      Promise.all(promises)
-                        // Success updating tags!
-                        .then(() => resolve(), err => reject(err));
-                    }, function(err) {
-                      console.error("Error fetching tags by branch:", err);
-                      return error.InternalServerError(res);
-                    });
-                  }));
+                          promises.push(new Tag({
+                            branchid: bid,
+                            tag: N[n],
+                          })
+                            .save()
+                          );
+
+                          n++;
+                        }
+
+                        return Promise.all(promises);
+                      });
+                  });
                 }
 
                 let parentBranchMods;
@@ -296,22 +332,8 @@ module.exports = {
                     return createModBranchMovedNotifications(uniqueBranchMods);
                   });
               });
-            }, function() {
-              console.error("Error fetching branch tags");
-              return error.InternalServerError(res);
-            });
           });
-        }
       })
-      /*
-      .then(() => {
-        console.log('.');
-        return Promise.reject({
-          code: 400,
-          message: 'Just messing around',
-        });
-      })
-      */
       .then(() => subbranchRequest.delete({
         childid: childBranchId,
         parentid: parentBranchId,

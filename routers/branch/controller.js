@@ -15,7 +15,7 @@ const Tag = require('../../models/tag.model');
 const User = require('../../models/user.model');
 
 module.exports = {
-  get (req, res) {
+  get(req, res) {
     const branchid = req.params.branchid;
 
     if (!branchid) {
@@ -64,7 +64,7 @@ module.exports = {
     });
   },
 
-  getBranchPicture (branchid, type, thumbnail = false) {
+  getBranchPicture(branchid, type, thumbnail = false) {
     return new Promise((resolve, reject) => {
       if (!branchid || ('picture' !== type && 'cover' !== type)) return resolve('');
 
@@ -103,9 +103,9 @@ module.exports = {
     });
   },
 
-  post (req, res) {
-    if(!req.user.username) {
-      console.error("No username found in session.");
+  post(req, res) {
+    if (!req.user.username) {
+      console.error('No username found in session.');
       return error.InternalServerError(res);
     }
 
@@ -125,8 +125,8 @@ module.exports = {
     // validate branch properties
     var propertiesToCheck = ['id', 'name', 'creator', 'date', 'parentid'];
     var invalids = branch.validate(propertiesToCheck);
-    if(invalids.length > 0) {
-      return error.BadRequest(res, 'Invalid ' + invalids[0]);
+    if (invalids.length > 0) {
+      return error.BadRequest(res, invalids[0]);
     }
 
     // check whether the specified branch id is unique
@@ -233,7 +233,7 @@ module.exports = {
     });
   },
   
-  put (req, res) {
+  put(req, res) {
     if(!req.params.branchid) {
       return error.BadRequest(res, 'Missing branchid');
     }
@@ -271,7 +271,7 @@ module.exports = {
     });
   },
 
-  delete (req, res) {
+  delete(req, res) {
     if(!req.params.branchid) {
       return error.BadRequest(res, 'Missing branchid');
     }
@@ -498,7 +498,7 @@ module.exports = {
     });
   },
 
-  getPictureUploadUrl (req, res, type) {
+  getPictureUploadUrl(req, res, type) {
     if (!req.user || !req.user.username) {
       return error.Forbidden(res);
     }
@@ -520,7 +520,7 @@ module.exports = {
     });
   },
 
-  getPicture (req, res, type, thumbnail) {
+  getPicture(req, res, type, thumbnail) {
     if (!req.params.branchid) {
       return error.BadRequest(res, 'Missing branchid');
     }
@@ -562,7 +562,7 @@ module.exports = {
       });
   },
 
-  getSubbranches (req, res) {
+  getSubbranches(req, res) {
     if (!req.params.branchid) {
       return error.BadRequest(res, 'Missing branchid');
     }
@@ -668,7 +668,7 @@ module.exports = {
     });
   },
 
-  getModLog (req, res) {
+  getModLog(req, res) {
     if(!req.params.branchid) {
       return error.BadRequest(res, 'Missing branchid');
     }

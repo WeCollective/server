@@ -17,6 +17,26 @@ const success = require('../../responses/successes');
 const _ = require('lodash');
 
 const put = {
+  createNotification(type, creator, data, date, sessionId) {
+    const notification = new Notification({
+      data,
+      date,
+      id: `${creator}-${date}`,
+      type,
+      unread: true,
+      user: creator,
+    });
+
+    const invalids = notification.validate();
+
+    if (invalids.length > 0) {
+      console.error('Error creating notification.');
+      return Promise.reject({ code: 500 });
+    }
+
+    return notification.save(sessionId);
+  },
+
   verifyParams(req) {
     const allowedActions = [
       'accept',
@@ -70,88 +90,115 @@ module.exports = {
   },
 
   put(req, res) {
+    const date = new Date().getTime();
     const subbranchRequest = new SubBranchRequest();
+    const tag = new Tag();
 
+    const action = req.body.action;
+    const childBranchId = req.params.childid;
+    const parentBranchId = req.params.branchid;
+    const username = req.user.username;
+
+    let modLogEntryChildBranch;
+    let modLogEntryParentBranch;
     let subbranchRequestData;
+
+    const createModBranchMovedNotifications = mods => {
+      const data = {
+        childid: childBranchId,
+        parentid: parentBranchId,
+      };
+      const type = NotificationTypes.BRANCH_MOVED;
+
+      const promises = [];
+
+      for (let i = 0; i < mods.length; i += 1) {
+        const creator = mods[i].username;
+        promises.push(put.createNotification(type, creator, data, date, req.sessionID));
+      }
+
+      return Promise.all(promises);
+    };
+
+    const createSubbranchRequestCreatorNotification = () => {
+      const creator = subbranchRequestData.creator;
+      const data = {
+        action,
+        childid: childBranchId,
+        parentid: parentBranchId,
+        username,
+      };
+      const type = NotificationTypes.CHILD_BRANCH_REQUEST_ANSWERED;
+
+      return put.createNotification(type, creator, data, date, req.sessionID);
+    };
 
     return put.verifyParams(req)
       // The request must exist.
-      .then(() => subbranchRequest.find(req.params.branchid, req.params.childid))
+      .then(() => subbranchRequest.find(parentBranchId, childBranchId))
       .then(data => {
-        subbranchRequestData = data;
-
-        if (!subbranchRequestData || subbranchRequestData.length === 0) {
+        if (!data || data.length === 0) {
           return Promise.reject({
             code: 404,
             message: 'The subbranch request does not exist.',
           });
         }
 
+        subbranchRequestData = data[0];
+
         return Promise.resolve();
       })
+      // Create mod log entries.
       .then(() => {
-        return Promise.reject({
-          code: 400,
-          message: 'Just messing around',
-        });
+        const createModLogEntry = branchid => {
+          const modLogEntry = new ModLogEntry({
+            action: 'answer-subbranch-request',
+            branchid,
+            data: JSON.stringify({
+              childid: childBranchId,
+              childmod: subbranchRequestData.creator,
+              parentid: parentBranchId,
+              response: action,
+            }),
+            date,
+            username,
+          });
 
-        // create promise to delete the subbranch request
-        var deletePromise = subbranchRequest.delete({
-          parentid: req.params.branchid,
-          childid: req.params.childid
-        });
+          const invalids = modLogEntry.validate();
+          return invalids.length === 0 ? modLogEntry : false;
+        };
 
-        // create an mod log entry for the parent branch describing the
-        // action taken on the subbranch request
-        var entryParent = new ModLogEntry({
-          branchid: req.params.branchid,     // parent branch
-          username: req.user.username,       // parent mod
-          date: new Date().getTime(),
-          action: 'answer-subbranch-request',
-          data: JSON.stringify({
-            response: req.body.action,       // 'accept' or 'reject'
-            childid: req.params.childid,     // child branch id
-            parentid: req.params.branchid,   // parent branch id
-            childmod: subbranchRequestData[0].creator        // child mod username
-          })
-        });
-        // create an mod log entry for the child branch describing the
-        // action taken on the subbranch request
-        var entryChild = new ModLogEntry({
-          branchid: req.params.childid,      // parent branch
-          username: req.user.username,       // parent mod
-          date: new Date().getTime(),
-          action: 'answer-subbranch-request',
-          data: JSON.stringify({
-            response: req.body.action,       // 'accept' or 'reject'
-            childid: req.params.childid,     // child branch id
-            parentid: req.params.branchid,   // parent branch id
-            childmod: subbranchRequestData[0].creator        // child mod username
-          })
-        });
-        var propertiesToCheck = ['branchid', 'username', 'date', 'action', 'data'];
-        var invalidsParent = entryParent.validate(propertiesToCheck);
-        var invalidsChild = entryChild.validate(propertiesToCheck);
-        if(invalidsParent.length > 0 || invalidsChild.length > 0) {
-          console.error('Error saving mod log entry.');
-          return error.InternalServerError(res);
+        modLogEntryParentBranch = createModLogEntry(parentBranchId);
+        modLogEntryChildBranch = createModLogEntry(childBranchId);
+
+        if (!modLogEntryParentBranch || !modLogEntryChildBranch) {
+          return Promise.reject({
+            code: 500,
+            message: 'Error creating mod log entry.',
+          });
         }
 
+        return Promise.resolve();
+      })
+      // Accept the request.
+      .then(() => {
+        if (action !== 'accept') {
+          return Promise.resolve();
+        }
 
-        // Accept the request:
-        if(req.body.action == 'accept') {
+        if (action === 'accept') {
           // ensure the requested parent is not a child branch
-          var tag = new Tag();
-          tag.findByBranch(req.params.branchid).then(function(parentTags) {
-            for(var i = 0; i < parentTags.length; i++) {
-              if(parentTags[i].tag == req.params.childid) {
+
+          tag.findByBranch(parentBranchId).then(function(parentTags) {
+            for (let i = 0; i < parentTags.length; i += 1) {
+              if (parentTags[i].tag == childBranchId) {
                 return error.BadRequest(res, 'The requested parent is a subbranch.');
               }
             }
             // requested parent is not child; continue
 
             // get the child branch's tags
-            tag.findByBranch(req.params.childid).then(function(childTags) {
+            tag.findByBranch(childBranchId).then(function(childTags) {
               var B = childTags.map(function(x) {
                 return x.tag;
               });
@@ -159,11 +206,11 @@ module.exports = {
                 return x.tag;
               });
               var _O = _.difference(B, _.intersection(B, P));
-              if(_O.indexOf(req.params.childid) > -1) _O.splice(_O.indexOf(req.params.childid), 1);  // remove self from O
+              if(_O.indexOf(childBranchId) > -1) _O.splice(_O.indexOf(childBranchId), 1);  // remove self from O
               var _N = _.difference(P, B);
 
               // get the branch whose parent is changing AND all its children
-              tag.findByTag(req.params.childid).then(function(allChildren) {
+              tag.findByTag(childBranchId).then(function(allChildren) {
                 var updateTagsPromises = [];
                 // update each child's tags (allChildren includes self)
                 for(var i = 0; i < allChildren.length; i++) {
@@ -216,12 +263,9 @@ module.exports = {
                       }
 
                       // wait for all tag operations on this branch to complete
-                      Promise.all(promises).then(function() {
+                      Promise.all(promises)
                         // Success updating tags!
-                        return resolve();
-                      }, function(err) {
-                        return reject(err);
-                      });
+                        .then(() => resolve(), err => reject(err));
                     }, function(err) {
                       console.error("Error fetching tags by branch:", err);
                       return error.InternalServerError(res);
@@ -229,150 +273,53 @@ module.exports = {
                   }));
                 }
 
-                var parentMods, childMods;
+                let parentBranchMods;
+
                 // when all tags are updated, update the actual branch parent
-                Promise.all(updateTagsPromises).then(function () {
+                return Promise.all(updateTagsPromises)
                   // update the child branch's parentid
-                  var updatedBranch = new Branch({
-                    id: req.params.childid
-                  });
-                  updatedBranch.set('parentid', req.params.branchid);
-                  updatedBranch.update().then(function () {
-                    // delete the request from the table
-                    return deletePromise;
-                  }).then(function() {
-                    // save the child mod log entry
-                    return entryChild.save();
-                  }).then(function() {
-                    // save the parent mod log entry
-                    return entryParent.save();
-                  }).then(function() {
-                    // create a notification for the creator of the subbranch request
-                    // indicating that it was accepted
-                    var time = new Date().getTime();
-                    var notification = new Notification({
-                      id: subbranchRequestData[0].creator + '-' + time,
-                      user: subbranchRequestData[0].creator,
-                      date: time,
-                      unread: true,
-                      type: NotificationTypes.CHILD_BRANCH_REQUEST_ANSWERED,
-                      data: {
-                        action: 'accept',
-                        username: req.user.username,
-                        parentid: req.params.branchid,
-                        childid: req.params.childid
-                      }
-                    });
+                  .then(function () {  
+                    const updatedBranch = new Branch({ id: childBranchId });
 
-                    var propertiesToCheck = ['id', 'user', 'date', 'unread', 'type', 'data'];
-                    var invalids = notification.validate(propertiesToCheck);
-                    if(invalids.length > 0) {
-                      console.error('Error creating notification.');
-                      return error.InternalServerError(res);
-                    }
-
-                    return notification.save(req.sessionID);
-                  }).then(function() {
-                    // create notifications for all branch mods (child and parent)
-                    // that the branch has been moved
-
-                    // first fetch the parent branch mods
-                    return new Mod().findByBranch(req.params.branchid);
-                  }).then(function(mods) {
-                    parentMods = mods;
-                    // fetch the child branch mods
-                    return new Mod().findByBranch(req.params.childid);
-                  }).then(function(mods) {
-                    childMods = mods;
+                    updatedBranch.set('parentid', parentBranchId);
+                    return updatedBranch.update();
+                  })
+                  // Send notifications to both branch mods that the child branch has moved.
+                  .then(() => new Mod().findByBranch(parentBranchId))
+                  .then(mods => {
+                    parentBranchMods = mods;
+                    return new Mod().findByBranch(childBranchId);
+                  })
+                  .then(childBranchMods => {
                     // remove any duplicates e.g. for user who is a mod of both branches
-                    var allMods = _.uniqBy(parentMods.concat(childMods), 'username');
-                    var promises = [];
-                    for(var i = 0; i < allMods.length; i++) {
-                      // create a notification for mod that the branch was moved
-                      // to a new parent
-                      var time = new Date().getTime();
-                      var notification = new Notification({
-                        id: allMods[i].username + '-' + time,
-                        user: allMods[i].username,
-                        date: time,
-                        unread: true,
-                        type: NotificationTypes.BRANCH_MOVED,
-                        data: {
-                          childid: req.params.childid,
-                          parentid: req.params.branchid
-                        }
-                      });
-
-                      var propertiesToCheck = ['id', 'user', 'date', 'unread', 'type', 'data'];
-                      var invalids = notification.validate(propertiesToCheck);
-                      if(invalids.length > 0) {
-                        console.error('Error creating notification.');
-                        return error.InternalServerError(res);
-                      }
-
-                      promises.push(notification.save(req.sessionID));
-                    }
-
-                    return Promise.all(promises);
-                  }).then(function () {
-                    // All done!
-                    return success.OK(res);
-                  }).catch(function(err) {
-                    console.error("Error accepting request: ", err);
-                    return error.InternalServerError(res);
+                    const uniqueBranchMods = _.uniqBy(parentBranchMods.concat(childBranchMods), 'username');
+                    return createModBranchMovedNotifications(uniqueBranchMods);
                   });
-                }, function(err) {
-                  console.error("Error updating tags: ", err);
-                  return error.InternalServerError(res);
-                });
               });
             }, function() {
               console.error("Error fetching branch tags");
               return error.InternalServerError(res);
             });
           });
-        // Reject the request:
-        } else {
-          // delete the request from the table
-          deletePromise.then(function() {
-            // save the child mod log entry
-            return entryChild.save();
-          }).then(function() {
-            // save the parent mod log entry
-            return entryParent.save();
-          }).then(function() {
-            // create a notification for the creator of the subbranch request
-            // indicating that it was rejected
-            var time = new Date().getTime();
-            var notification = new Notification({
-              id: subbranchRequestData[0].creator + '-' + time,
-              user: subbranchRequestData[0].creator,
-              date: time,
-              unread: true,
-              type: NotificationTypes.CHILD_BRANCH_REQUEST_ANSWERED,
-              data: {
-                action: 'reject',
-                username: req.user.username,
-                parentid: req.params.branchid,
-                childid: req.params.childid
-              }
-            });
-
-            var propertiesToCheck = ['id', 'user', 'date', 'unread', 'type', 'data'];
-            var invalids = notification.validate(propertiesToCheck);
-            if(invalids.length > 0) {
-              console.error('Error creating notification.');
-              return error.InternalServerError(res);
-            }
-
-            return notification.save(req.sessionID);
-          }).then(function() {
-            return success.OK(res);
-          }).catch(function() {
-            return error.InternalServerError(res);
-          });
         }
       })
+      /*
+      .then(() => {
+        console.log('.');
+        return Promise.reject({
+          code: 400,
+          message: 'Just messing around',
+        });
+      })
+      */
+      .then(() => subbranchRequest.delete({
+        childid: childBranchId,
+        parentid: parentBranchId,
+      }))
+      .then(() => modLogEntryChildBranch.save())
+      .then(() => modLogEntryParentBranch.save())
+      .then(() => createSubbranchRequestCreatorNotification())
+      .then(() => success.OK(res))
       .catch(err => {
         if (err) {
           if (typeof err === 'object' && err.code) {

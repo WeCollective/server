@@ -1,16 +1,16 @@
 'use strict';
 
-var Model = require('./model.js');
-var db = require('../config/database.js');
-var aws = require('../config/aws.js');
-var validate = require('./validate.js');
-var io = require('../config/io.js')();
+const aws = require('../config/aws');
+const db = require('../config/database');
+const io = require('../config/io')();
+const Model = require('./model');
+const validate = require('./validate');
 
-var Notification = function(data) {
+const Notification = function (data) {
   this.config = {
+    keys: db.Keys.Notifications,
     schema: db.Schema.Notification,
     table: db.Table.Notifications,
-    keys: db.Keys.Notifications
   };
   this.data = this.sanitize(data);
 };
@@ -18,6 +18,133 @@ var Notification = function(data) {
 // Notification model inherits from Model
 Notification.prototype = Object.create(Model.prototype);
 Notification.prototype.constructor = Notification;
+
+// Get a Notification by its id from the db, and
+// instantiate the object with this data.
+// Rejects promise with true if database error, with false if no user found.
+Notification.prototype.findById = function (id) {
+  const self = this;
+
+  return new Promise((resolve, reject) => {
+    aws.dbClient.get({
+      Key: { id },
+      TableName: self.config.table,
+    }, (err, data) => {
+      if (err) {
+        return reject(err);
+      }
+
+      if (!data || !data.Item) {
+        return reject();
+      }
+
+      self.data = data.Item;
+      return resolve(self.data);
+    });
+  });
+};
+
+Notification.prototype.findByUsername = function (username, unreadCount, last) {
+  const self = this;
+  const limit = 20;
+  
+  if (last) {
+    const tmp = {
+      id: last.id,
+      date: last.date,
+      user: last.user
+    };
+
+    last = tmp;
+  }
+
+  return new Promise((resolve, reject) => {
+    const options = {
+      // fetch results which come _after_ this
+      ExclusiveStartKey: last || null,
+      // date is a reserved dynamodb keyword so must use this alias:
+      ExpressionAttributeNames: {
+        '#user': 'user',
+      },
+      ExpressionAttributeValues: {
+        ':username': String(username),
+      },
+      IndexName: self.config.keys.globalIndexes[0],
+      KeyConditionExpression: '#user = :username',
+      // return results highest first
+      ScanIndexForward: false,
+      Select: unreadCount ? 'COUNT' : 'ALL_PROJECTED_ATTRIBUTES',
+      TableName: self.config.table,
+    };
+
+    if (unreadCount) {
+      options.FilterExpression = 'unread = :unread';
+      options.ExpressionAttributeValues[':unread'] = true;
+    }
+
+    aws.dbClient.query(options, (err, data) => {
+      if (err) {
+        return reject(err);
+      }
+
+      if (unreadCount) {
+        if (!data || !data.Count) {
+          return resolve(0);
+        }
+      }
+      else {
+        if (!data || !data.Items) {
+          return reject();
+        }
+      }
+
+      const result = data.Items ? data.Items.slice(0, limit) : data.Count;
+      return resolve(result);
+    });
+  });
+};
+
+// Override Model.save() in order to emit notification event to client
+// Save a new database entry according to the model data
+Notification.prototype.save = function (sessionId) {
+  const self = this;
+
+  return new Promise((resolve, reject) => {
+    // Fetch the session for the user given by the sessionId.
+    if (sessionId) {
+      aws.dbClient.get({
+        Key: {
+          id: `sess:${sessionId}`,
+        },
+        TableName: db.Table.Sessions,
+      }, (err, data) => {
+        if (err) {
+          return reject(err);
+        }
+
+        if (!data || !data.Item) {
+          return reject();
+        }
+
+        // TODO return # of notifications
+        io.notifications.to(data.Item.socketID).emit('notification', null);
+      });
+    }
+
+    aws.dbClient.put({
+      Item: self.data,
+      TableName: self.config.table,
+    }, (err, data) => {
+      if (err) {
+        return reject(err);
+      }
+
+      // Clear dirtys array.
+      self.dirtys.splice(0, self.dirtys.length);
+      return resolve();
+    });
+  });
+};
 
 // Validate the properties specified in 'properties' on the Notification object,
 // returning an array of any invalid ones
@@ -71,122 +198,6 @@ Notification.prototype.validate = function (properties) {
   }
 
   return invalids;
-};
-
-// Get a Notification by its id from the db, and
-// instantiate the object with this data.
-// Rejects promise with true if database error, with false if no user found.
-Notification.prototype.findById = function(id) {
-  var self = this;
-  return new Promise(function(resolve, reject) {
-    aws.dbClient.get({
-      TableName: self.config.table,
-      Key: {
-        'id': id
-      }
-    }, function(err, data) {
-      if(err) return reject(err);
-      if(!data || !data.Item) {
-        return reject();
-      }
-      self.data = data.Item;
-      return resolve();
-    });
-  });
-};
-
-
-Notification.prototype.findByUsername = function (username, unreadCount, last) {
-  const self = this;
-  const limit = 20;
-  
-  if (last) {
-    const tmp = {
-      id: last.id,
-      date: last.date,
-      user: last.user
-    };
-
-    last = tmp;
-  }
-
-  return new Promise( (resolve, reject) => {
-    let options = {
-      // fetch results which come _after_ this
-      ExclusiveStartKey: last || null,
-      // date is a reserved dynamodb keyword so must use this alias:
-      ExpressionAttributeNames: {
-        '#user': 'user'
-      },
-      ExpressionAttributeValues: {
-        ':username': String(username)
-      },
-      IndexName: self.config.keys.globalIndexes[0],
-      KeyConditionExpression: '#user = :username',
-      // return results highest first
-      ScanIndexForward: false,
-      Select: unreadCount ? 'COUNT' : 'ALL_PROJECTED_ATTRIBUTES',
-      TableName: self.config.table
-    };
-
-    if (unreadCount) {
-      options.FilterExpression = 'unread = :unread';
-      options.ExpressionAttributeValues[':unread'] = true;
-    }
-
-    aws.dbClient.query(options, (err, data) => {
-      if (err) {
-        return reject(err);
-      }
-
-      if (unreadCount) {
-        if (!data || !data.Count) {
-          return resolve(0);
-        }
-      }
-      else {
-        if (!data || !data.Items) {
-          return reject();
-        }
-      }
-
-      const result = data.Items ? data.Items.slice(0, limit) : data.Count;
-      return resolve(result);
-    });
-  });
-}
-
-// Override Model.save() in order to emit notification event to client
-// Save a new database entry according to the model data
-Notification.prototype.save = function(sessionID) {
-  var self = this;
-  return new Promise(function(resolve, reject) {
-    // fetch the session for the user given by the sessionID
-    if(sessionID) {
-      aws.dbClient.get({
-        TableName: db.Table.Sessions,
-        Key: {
-          'id': 'sess:' + sessionID
-        }
-      }, function(err, data) {
-        if(err) return reject(err);
-        if(!data || !data.Item) {
-          return reject();
-        }
-        // TODO return # of notifications
-        io.notifications.to(data.Item.socketID).emit('notification', null);
-      });
-    }
-
-    aws.dbClient.put({
-      TableName: self.config.table,
-      Item: self.data
-    }, function(err, data) {
-      if(err) return reject(err);
-      self.dirtys.splice(0, self.dirtys.length); // clear dirtys array
-      return resolve();
-    });
-  });
 };
 
 module.exports = Notification;

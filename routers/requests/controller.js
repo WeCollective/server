@@ -218,7 +218,7 @@ module.exports = {
 
             var _O = _.difference(tagsChildBranch, mutualTagsToExclude);
 
-            console.log(_O, childBranchId);
+            console.log(_O, childBranchId, tagsChildBranch, mutualTagsToExclude);
 
             return Promise.reject({
               code: 400,

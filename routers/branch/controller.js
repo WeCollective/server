@@ -103,6 +103,7 @@ module.exports = {
     });
   },
 
+  // Refactor and make sure child branches work...
   post(req, res) {
     if (!req.user.username) {
       console.error('No username found in session.');

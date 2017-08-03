@@ -83,80 +83,83 @@ User.prototype.validate = function (properties) {
 
   if (properties.includes('datejoined')) {
     if (!validate.date(this.data.datejoined)) {
-      invalids.push('datejoined');
+      invalids.push('Invalid datejoined');
     }
   }
 
   if (properties.includes('dob')) {
     if (!validate.date(this.data.dob)) {
-      invalids.push('dob');
+      invalids.push('Invalid dob');
     }
   }
 
   if (properties.includes('email')) {
     // check for a valid email address
     if (!this.data.email || !isEmail(this.data.email)) {
-      invalids.push('email');
+      invalids.push('Invalid email');
     }
   }
 
   if (properties.includes('name')) {
-    // check for a valid name length
-    if (!this.data.name || this.data.name.length < 2 || this.data.name.length > 30) {
-      invalids.push('name');
+    if (!this.data.name || this.data.name.length < 2) {
+      invalids.push('Name has to be at least 2 characters long.');
+    }
+    else if (this.data.name.length > 30) {
+      invalids.push('Name cannot be more than 30 characters long.');
     }
   }
 
   if (properties.includes('num_branches')) {
     if (isNaN(this.data.num_branches)) {
-      invalids.push('num_branches');
+      invalids.push('Invalid num_branches');
     }
   }
 
   if (properties.includes('num_comments')) {
     if (isNaN(this.data.num_comments)) {
-      invalids.push('num_comments');
+      invalids.push('Invalid num_comments');
     }
   }
 
   if (properties.includes('num_mod_positions')) {
     if (isNaN(this.data.num_mod_positions)) {
-      invalids.push('num_mod_positions');
+      invalids.push('Invalid num_mod_positions');
     }
   }
 
   if (properties.includes('num_posts')) {
     if (isNaN(this.data.num_posts)) {
-      invalids.push('num_posts');
+      invalids.push('Invalid num_posts');
     }
   }
 
   if (properties.includes('password')) {
-    // ensure password length is at least 6 characters and at most 30
-    if (!this.data.password || this.data.password.length < 6 || this.data.password.length > 30) {
-      invalids.push('password');
+    if (!this.data.password || this.data.password.length < 6) {
+      invalids.push('Password has to be at least 6 characters long.');
     }
-    // ensure password contains no whitespace
-    if (/\s/g.test(this.data.password)) {
-      invalids.push('password');
+    else if (this.data.password.length > 30) {
+      invalids.push('Password cannot be more than 30 characters long.');
+    }
+    else if (/\s/g.test(this.data.password)) {
+      invalids.push('Password cannot contain spaces.');
     }
   }
 
   if (properties.includes('show_nsfw')) {
     if (!validate.boolean(this.data.show_nsfw)) {
-      invalids.push('show_nsfw');
+      invalids.push('Invalid show_nsfw');
     }
   }
 
   if (properties.includes('username')) {
     if (!validate.username(this.data.username)) {
-      invalids.push('username');
+      invalids.push('Invalid username');
     }
   }
 
   if (properties.includes('verified')) {
     if (!validate.boolean(this.data.verified)) {
-      invalids.push('verified');
+      invalids.push('Invalid verified');
     }
   }
 

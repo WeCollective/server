@@ -26,7 +26,6 @@ module.exports = passport => {
   }, (req, username, password, done) => process.nextTick(() => {
     const user = new User();
 
-    // check whether a user with this username exists in the database
     return user.findByUsername(username)
       .then(() => {
         if (!user.data.verified) {
@@ -55,14 +54,11 @@ module.exports = passport => {
     const user = new User();
     username = username.toLowerCase();
 
-    // check whether a user with this username already exists in the database
-    user.findByUsername(username)
-      .then(() => {
-        return done(null, false, {
-          status: 400,
-          message: 'Username already exists',
-        });
-      }, err => {
+    return user.findByUsername(username)
+      .then(() => done(null, false, {
+        message: 'Username already exists',
+        status: 400,
+      }), err => {
         if (err) {
           console.error('Error signing up:', err);
           
@@ -72,24 +68,21 @@ module.exports = passport => {
           });
         }
 
-        new User().findByEmail(req.body.email)
-          .then(() => {
-            return done(null, false, {
-              status: 400,
-              message: 'Email already exists',
-            });
-          }, err => {
+        return new User().findByEmail(req.body.email)
+          .then(() => done(null, false, {
+            message: 'Email already exists',
+            status: 400,
+          }), err => {
             if (err) {
               console.error('Error signing up:', err);
               return done(err, false, {
-                status: 500,
                 message: 'Something went wrong',
+                status: 500,
               });
             }
 
             const token = auth.generateToken();
 
-            // Create a new user object
             const newUser = new User({
               datejoined: new Date().getTime(),
               email: req.body.email,
@@ -105,7 +98,6 @@ module.exports = passport => {
               verified: false,
             });
 
-            // validate user properties
             const propertiesToCheck = [
               'datejoined',
               'email',
@@ -122,38 +114,23 @@ module.exports = passport => {
             
             if (invalids.length) {
               return done(null, false, {
+                message: invalids[0],
                 status: 400,
-                message: `Invalid ${invalids[0]}`,
               });
             }
 
-            mailer.sendVerification(newUser.data, token)
-              .then(() => {
-                return auth.generateSalt(10);
-              })
-              .then(salt => {
-                return auth.hash(password, salt);
-              })
+            return mailer.sendVerification(newUser.data, token)
+              .then(() => auth.generateSalt(10))
+              .then(salt => auth.hash(password, salt))
+              // Save new user to database using hashed password
               .then(hash => {
-                // Save new user to database using hashed password
                 newUser.set('password', hash);
-                newUser.save()
-                  .then(() => {
-                    return done(null, { username });
-                  }, err => {
-                    console.error('Error signing up:', err);
-                    return done(err, false, {
-                      status: 500,
-                      message: 'Something went wrong',
-                    });
-                  });
+                return newUser.save();
               })
+              .then(() => done(null, { username }))
               .catch(err => {
                 console.error('Error signing up:', err);
-                return done(err, false, {
-                  status: 500,
-                  message: 'Something went wrong',
-                });
+                return done(null, false, err);
               });
           });
       });

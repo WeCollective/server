@@ -1,32 +1,25 @@
 const NotificationTypes = require('../config/notification-types');
 
-let validate = {};
+const policy = /^[a-z_-]+$/;
+const validate = {};
 
 validate.boolean = value => {
   return 'boolean' === typeof value;
 };
 
-validate.branchid = id => {
-  if (!id || id.length < 1 || id.length > 30) {
+validate.branchid = string => {
+  // Branch id cannot be one of these words.
+  // They are used in urls and routes.
+  const bannedIds = [
+    'p',
+    'none',
+  ];
+
+  if (!string || string.length < 1 || string.length > 30) {
     return false;
   }
-  
-  // ensure id contains no whitespace
-  if (/\s/g.test(id)) {
-    return false;
-  }
-  
-  // ensure id is a lowercase string
-  if (!('string' === typeof id || id instanceof String) ||
-    id !== id.toLowerCase()) {
-    return false;
-  }
-  
-  // ensure id is not one of the banned words
-  // (these words are used in urls and routes)
-  const bannedIds = ['p', 'none'];
-  
-  if (bannedIds.indexOf(id) !== -1) {
+
+  if (!policy.test(string) || bannedIds.includes(string)) {
     return false;
   }
 
@@ -45,7 +38,7 @@ validate.commentid = id => {
   
   // ensure id is a lowercase string
   if (!('string' === typeof id || id instanceof String) ||
-    id != id.toLowerCase()) {
+    id !== id.toLowerCase()) {
     return false;
   }
 
@@ -61,8 +54,14 @@ validate.date = date => {
 };
 
 validate.extension = ext => {
-  const allowedExt = ['jpg', 'JPG', 'jpe', 'JPE', 'jpeg', 'JPEG', 'png', 'PNG', 'bmp', 'BMP'];
-  return allowedExt.includes(ext);
+  const allowedExt = [
+    'jpg',
+    'jpe',
+    'jpeg',
+    'png',
+    'bmp',
+  ];
+  return allowedExt.includes(ext.toLowerCase());
 };
 
 validate.notificationid = id => {
@@ -132,32 +131,26 @@ validate.postid = id => {
   return true;
 };
 
-validate.username = username => {
-  // ensure username length is over 1 char and less than 20
-  if (!username || username.length < 1 || username.length > 20) {
+validate.username = string => {
+  // Username cannot be one of these words.
+  // They are used in user image urls and routes.
+  const bannedUsernames = [
+    'me',
+    'orig',
+    'picture',
+    'cover',
+  ];
+
+  if (!string || string.length < 1 || string.length > 20) {
+    return false;
+  }
+
+  if (!policy.test(string) || bannedUsernames.includes(string)) {
     return false;
   }
   
-  // ensure username contains no whitespace
-  if (/\s/g.test(username)) {
-    return false;
-  }
-  
-  // ensure username is a lowercase string
-  if (!('string' === typeof username || username instanceof String) ||
-    username != username.toLowerCase()) {
-    return false;
-  }
-  
-  // ensure username is not one of the banned words
-  // (these words are used in user image urls and routes)
-  const bannedUsernames = ['me', 'orig', 'picture', 'cover'];
-  if (bannedUsernames.includes(username)) {
-    return false;
-  }
-  
-  // ensure username is not only numeric
-  if (Number(username)) {
+  // Username cannot be only numeric.
+  if (Number(string)) {
     return false;
   }
 

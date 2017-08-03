@@ -54,11 +54,15 @@ module.exports = passport => {
     const user = new User();
     username = username.toLowerCase();
 
+    let newUser;
+    let token;
+
     return user.findByUsername(username)
       .then(() => done(null, false, {
         message: 'Username already exists',
         status: 400,
-      }), err => {
+      }))
+      .catch(err => {
         if (err) {
           console.error('Error signing up:', err);
           
@@ -68,71 +72,78 @@ module.exports = passport => {
           });
         }
 
-        return new User().findByEmail(req.body.email)
-          .then(() => done(null, false, {
-            message: 'Email already exists',
-            status: 400,
-          }), err => {
-            if (err) {
-              console.error('Error signing up:', err);
-              return done(err, false, {
-                message: 'Something went wrong',
-                status: 500,
-              });
-            }
-
-            const token = auth.generateToken();
-
-            const newUser = new User({
-              datejoined: new Date().getTime(),
-              email: req.body.email,
-              name: req.body.name,
-              num_branches: 0,
-              num_comments: 0,
-              num_mod_positions: 0,
-              num_posts: 0,
-              password,
-              show_nsfw: false,
-              token,
-              username,
-              verified: false,
-            });
-
-            const propertiesToCheck = [
-              'datejoined',
-              'email',
-              'name',
-              'num_branches',
-              'num_comments',
-              'num_mod_positions',
-              'num_posts',
-              'password',
-              'username',
-              'verified',
-            ];
-            const invalids = newUser.validate(propertiesToCheck);
-            
-            if (invalids.length) {
-              return done(null, false, {
-                message: invalids[0],
-                status: 400,
-              });
-            }
-
-            return mailer.sendVerification(newUser.data, token)
-              .then(() => auth.generateSalt(10))
-              .then(salt => auth.hash(password, salt))
-              // Save new user to database using hashed password
-              .then(hash => {
-                newUser.set('password', hash);
-                return newUser.save();
-              })
-              .then(() => done(null, { username }))
-              .catch(err => {
-                console.error('Error signing up:', err);
-                return done(null, false, err);
-              });
+        return Promise.resolve();
+      })
+      .then(() => new User().findByEmail(req.body.email))
+      .then(() => done(null, false, {
+        message: 'Email already exists',
+        status: 400,
+      }))
+      .catch(err => {
+        if (err) {
+          console.error('Error signing up:', err);
+          return done(err, false, {
+            message: 'Something went wrong',
+            status: 500,
           });
+        }
+
+        return Promise.resolve();
+      })
+      .then(() => {
+        token = auth.generateToken();
+
+        newUser = new User({
+          datejoined: new Date().getTime(),
+          email: req.body.email,
+          name: req.body.name,
+          num_branches: 0,
+          num_comments: 0,
+          num_mod_positions: 0,
+          num_posts: 0,
+          password,
+          show_nsfw: false,
+          token,
+          username,
+          verified: false,
+        });
+
+        const propertiesToCheck = [
+          'datejoined',
+          'email',
+          'name',
+          'num_branches',
+          'num_comments',
+          'num_mod_positions',
+          'num_posts',
+          'password',
+          'username',
+          'verified',
+        ];
+
+        const invalids = newUser.validate(propertiesToCheck);
+        
+        if (invalids.length) {
+          return done(null, false, {
+            message: invalids[0],
+            status: 400,
+          });
+        }
+
+        return Promise.resolve();
+      })
+      .then(() => mailer.sendVerification(newUser.data, token))
+      .then(() => auth.generateSalt(10))
+      .then(salt => auth.hash(password, salt))
+      // Save new user to database using hashed password
+      .then(hash => {
+        newUser.set('password', hash);
+        return newUser.save();
+      })
+      .then(() => done(null, { username }))
+      .catch(err => {
+        console.error('Error signing up:', err);
+        return done(null, false, err);
       });
   })));
 

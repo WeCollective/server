@@ -31,7 +31,7 @@ module.exports = {
       const branch = new Branch();
 
       branch.findById(branchid)
-        .then( _ => {
+        .then(() => {
           // Attach parent branch
           /*
           if ('root' === branch.parentid || 'none' === branch.parentid) {
@@ -80,7 +80,7 @@ module.exports = {
       const image = new BranchImage();
 
       image.findById(branchid, type)
-        .then( _ => {
+        .then(() => {
           let params = '';
 
           // Append timestamp for correct caching on the client.
@@ -103,135 +103,167 @@ module.exports = {
     });
   },
 
-  // Refactor and make sure child branches work...
+  getModLog(req, res) {
+    if (!req.params.branchid) {
+      return error.BadRequest(res, 'Missing branchid');
+    }
+
+    const log = new ModLogEntry();
+
+    return log
+      .findByBranch(req.params.branchid)
+      .then(data => success.OK(res, data))
+      .catch(err => {
+        if (err) {
+          console.error('Error fetching mod log:', err);
+          return error.InternalServerError(res);
+        }
+
+        return error.NotFound(res);
+      });
+  },
+
   post(req, res) {
-    if (!req.user.username) {
+    const creator = req.user.username;
+
+    if (!creator) {
       console.error('No username found in session.');
       return error.InternalServerError(res);
     }
 
-    // create branch object
-    var time = new Date().getTime();
-    var branch = new Branch({
-      id: req.body.id,
-      name: req.body.name,
-      creator: req.user.username,
-      date: time,
-      parentid: req.body.parentid,
+    const branchCount = new Constant();
+    const user = new User();
+
+    const branchid = req.body.id;
+    const branchName = req.body.name;
+    const parentid = req.body.parentid;
+
+    const date = new Date().getTime();
+    const branch = new Branch({
+      creator,
+      date,
+      id: branchid,
+      name: branchName,
+      parentid,
+      post_comments: 0,
       post_count: 0,
       post_points: 0,
-      post_comments: 0
     });
 
-    // validate branch properties
-    var propertiesToCheck = ['id', 'name', 'creator', 'date', 'parentid'];
-    var invalids = branch.validate(propertiesToCheck);
+    const propertiesToCheck = ['id', 'name', 'creator', 'date', 'parentid'];
+    const invalids = branch.validate(propertiesToCheck);
     if (invalids.length > 0) {
       return error.BadRequest(res, invalids[0]);
     }
 
-    // check whether the specified branch id is unique
-    new Branch().findById(req.body.id).then(function() {
-      return error.BadRequest(res, 'That Unique Name is already taken');
-    }, function(err) {
-      if(err) {
-        return error.InternalServerError(res);
-      }
+    return new Branch()
+      .findById(branchid)
+      .then(() => error.BadRequest(res, 'That Unique Name is already taken'))
+      .catch(err => err ? Promise.reject() : Promise.resolve())
+      .then(() => new Branch().findById(parentid))
+      // save a subbranch request iff. the parentid is not the root branch
+      .then(() => {
+        if (parentid !== 'root') {
+          const subbranchRequest = new SubBranchRequest({
+            childid: branchid,
+            creator,
+            date,
+            parentid,
+          });
 
-      var user = new User();
-      var branchCount = new Constant();
-      // ensure the specified parent branch exists
-      return new Branch().findById(req.body.parentid).then(function() {
-        // save a subbranch request iff. the parentid is not the root branch
-        if(req.body.parentid != 'root') {
-          // create new subbranch request for the given parentid
-          var subbranchRequest = new SubBranchRequest({
-            parentid: req.body.parentid,
-            childid: req.body.id,
-            date: time,
-            creator: req.user.username
-          });
-          // validate request properties
-          var propertiesToCheck = ['parentid', 'childid', 'date', 'creator'];
-          invalids = subbranchRequest.validate(propertiesToCheck);
-          if(invalids.length > 0) {
-            return error.BadRequest(res, 'Invalid ' + invalids[0]);
+          const invalids = subbranchRequest.validate();
+          if (invalids.length > 0) {
+            return Promise.reject({
+              code: 400,
+              message: invalids[0],
+            });
           }
-          // save the request
+
           return subbranchRequest.save(req.sessionID);
-        } else {
-          return new Promise(function(resolve, reject) {
-            resolve();
-          });
         }
-      }).then(function() {
-        // create mod object
-        var mod = new Mod({
-          branchid: req.body.id,
-          date: time,
-          username: req.user.username
+
+        return Promise.resolve();
+      })
+      .then(() => {
+        const mod = new Mod({
+          branchid,
+          date,
+          username: creator,
         });
 
-        // validate mod properties
-        propertiesToCheck = ['branchid', 'date', 'username'];
-        invalids = mod.validate(propertiesToCheck);
-        if(invalids.length > 0) {
-          return error.BadRequest(res, 'Invalid ' + invalids[0]);
+        const invalids = mod.validate();
+        if (invalids.length > 0) {
+          return Promise.reject({
+            code: 400,
+            message: invalids[0],
+          });
         }
 
-        // save the mod of new branch
         return mod.save();
-      }).then(function() {
-        // save the new branch
+      })
+      .then(() => {
         branch.set('parentid', 'root');
         return branch.save();
-      }).then(function () {
-        // add the branchid to the tags table with the tags of itself and
-        // those of its parent (just 'root')
-        var branchTag = new Tag({
+      })
+      // add the branchid to the tags table with the tags of itself and
+      // those of its parent (just 'root')
+      .then(() => {
+        const branchTag = new Tag({
           branchid: branch.data.id,
-          tag: branch.data.id
+          tag: branch.data.id,
         });
-        propertiesToCheck = ['branchid', 'tag'];
-        invalids = branchTag.validate(propertiesToCheck);
-        if(invalids.length > 0) {
-          return error.BadRequest(res, 'Invalid ' + invalids[0]);
+        
+        const invalids = branchTag.validate();
+        if (invalids.length > 0) {
+          return Promise.reject({
+            code: 400,
+            message: invalids[0],
+          });
         }
+
         return branchTag.save();
-      }).then(function () {
-        var rootTag = new Tag({
+      })
+      .then(() => {
+        const rootTag = new Tag({
           branchid: branch.data.id,
-          tag: 'root'
+          tag: 'root',
         });
-        propertiesToCheck = ['branchid', 'tag'];
-        invalids = rootTag.validate(propertiesToCheck);
-        if(invalids.length > 0) {
-          return error.BadRequest(res, 'Invalid ' + invalids[0]);
+
+        const invalids = rootTag.validate();
+        if (invalids.length > 0) {
+          return Promise.reject({
+            code: 400,
+            message: invalids[0],
+          });
         }
+
         return rootTag.save();
-      }).then(function () {
-        // get the user
-        return user.findByUsername(req.user.username);
-      }).then(function () {
-        // increment the user's branch and mod count
+      })
+      // increment the user's branch and mod count.
+      .then(() => user.findByUsername(creator))
+      .then(() => {
         user.set('num_branches', user.data.num_branches + 1);
         user.set('num_mod_positions', user.data.num_mod_positions + 1);
         return user.update();
-      }).then(function () {
-        // update the SendGrid contact list with the new user data
-        return mailer.addContact(user.data, true);
-      }).then(function() {
-        // update the branch_count constant
-        return branchCount.findById('branch_count');
-      }).then(function() {
+      })
+      // update the SendGrid contact list with the new user data.
+      .then(() => mailer.addContact(user.data, true))
+      // Update branch_count.
+      .then(() => branchCount.findById('branch_count'))
+      .then(() => {
         branchCount.set('data', branchCount.data.data + 1);
         return branchCount.update();
-      }).then(function() {
-        return success.OK(res);
-      }).catch(function(err) {
+      })
+      .then(() => success.OK(res))
+      .catch(err => {
+        if (err) {
+          if (typeof err === 'object' && err.code) {
+            return error.code(res, err.code, err.message);
+          }
+        }
+
         return error.InternalServerError(res);
       });
-    });
   },
   
   put(req, res) {
@@ -542,7 +574,7 @@ module.exports = {
     const image = new BranchImage();
 
     image.findById(req.params.branchid, type)
-      .then(_ => {
+      .then(() => {
         aws.s3Client.getSignedUrl('getObject', {
           Bucket: fs.Bucket.BranchImagesResized,
           Key: `${image.data.id}-${size}.${image.data.extension}`
@@ -585,17 +617,16 @@ module.exports = {
 
         // get the branch
         last.findById(req.query.lastBranchId)
-          .then( _ => {
-            // create lastBranch object
+          .then(() => {
             lastBranch = last.data;
             return resolve();
           })
-          .catch( err => {
+          .catch(err => {
             if (err) {
               return reject();
             }
 
-            return error.NotFound(res); // lastBranchId is invalid
+            return error.NotFound(res);
           });
       }
       else {
@@ -603,21 +634,22 @@ module.exports = {
         return resolve();
       }
     })
-    .then( _ => branch.findSubbranches(req.params.branchid, req.query.timeafter, sortBy, lastBranch) )
-    .then( results => {
+    .then(() => branch.findSubbranches(req.params.branchid, req.query.timeafter, sortBy, lastBranch) )
+    .then(results => {
       branches = results;
 
       let promises = [];
 
-      for (let i = 0; i < branches.length; i++) {
-        promises.push( new Promise( (resolve, reject) => {
-          new BranchImage().findById(branches[i].id, 'picture')
-            .then( branchimage => {
+      for (let i = 0; i < branches.length; i += 1) {
+        promises.push(new Promise((resolve, reject) => {
+          new BranchImage()
+            .findById(branches[i].id, 'picture')
+            .then(branchimage => {
               const Bucket = fs.Bucket.BranchImagesResized;
               const Key = `${branchimage.id}-640.${branchimage.extension}`;
               return resolve(`https://${Bucket}.s3-eu-west-1.amazonaws.com/${Key}`);
             })
-            .catch( err => {
+            .catch(err => {
               if (err) {
                 return reject();
               }
@@ -629,21 +661,21 @@ module.exports = {
 
       return Promise.all(promises);
     })
-    .then( urls => {
+    .then(urls => {
       let promises = [];
       
-      for (let i = 0; i < branches.length; i++) {
+      for (let i = 0; i < branches.length; i += 1) {
         // attach branch image url to each branch
         branches[i].profileUrl = urls[i];
         
         promises.push(new Promise(function(resolve, reject) {
           new BranchImage().findById(branches[i].id, 'picture')
-            .then( branchimage => {
+            .then(branchimage => {
               const Bucket = fs.Bucket.BranchImagesResized;
               const Key = `${branchimage.id}-200.${branchimage.extension}`;
               return resolve(`https://${Bucket}.s3-eu-west-1.amazonaws.com/${Key}`);
             })
-            .catch( err => {
+            .catch(err => {
               if (err) {
                 return reject();
               }
@@ -655,34 +687,17 @@ module.exports = {
 
       return Promise.all(promises);
     })
-    .then( urls => {
+    .then(urls => {
       // attach branch image thumbnail url to each branch
-      for (let i = 0; i < branches.length; i++) {
+      for (let i = 0; i < branches.length; i += 1) {
         branches[i].profileUrlThumb = urls[i];
       }
 
       return success.OK(res, branches);
     })
-    .catch( err => {
+    .catch(err => {
       console.error(`Error fetching subbranches:`, err);
       return error.InternalServerError(res);
     });
   },
-
-  getModLog(req, res) {
-    if(!req.params.branchid) {
-      return error.BadRequest(res, 'Missing branchid');
-    }
-
-    var log = new ModLogEntry();
-    log.findByBranch(req.params.branchid).then(function(data) {
-      return success.OK(res, data);
-    }, function(err) {
-      if(err) {
-        console.error("Error fetching mod log:", err);
-        return error.InternalServerError(res);
-      }
-      return error.NotFound(res);
-    });
-  }
 };

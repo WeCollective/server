@@ -81,17 +81,24 @@ Tag.prototype.findByTag = function (tag) {
 // Validate the properties specified in 'properties' on the Tag object,
 // returning an array of any invalid ones
 Tag.prototype.validate = function (properties) {
+  if (!properties || properties.length === 0) {
+    properties = [
+      'branchid',
+      'tag',
+    ];
+  }
+
   const invalids = [];
 
   if (properties.includes('branchid')) {
     if (!validate.branchid(this.data.branchid)) {
-      invalids.push('branchid');
+      invalids.push('Invalid branchid.');
     }
   }
 
   if (properties.includes('tag')) {
     if (!validate.branchid(this.data.tag)) {
-      invalids.push('tag');
+      invalids.push('Invalid tag.');
     }
   }
 

@@ -1,21 +1,21 @@
 'use strict';
 
-var Model = require('./model.js');
-var Mod = require('./mod.model.js');
-var Notification = require('./notification.model.js');
+const Model = require('./model.js');
+const Mod = require('./mod.model.js');
+const Notification = require('./notification.model.js');
 
-var NotificationTypes = require('../config/notification-types.js');
-var db = require('../config/database.js');
-var aws = require('../config/aws.js');
-var validate = require('./validate.js');
+const NotificationTypes = require('../config/notification-types.js');
+const db = require('../config/database.js');
+const aws = require('../config/aws.js');
+const validate = require('./validate.js');
 
-var _ = require('lodash');
+const _ = require('lodash');
 
-var SubBranchRequest = function(data) {
+const SubBranchRequest = function (data) {
   this.config = {
+    keys: db.Keys.SubBranchRequests,
     schema: db.Schema.SubBranchRequest,
     table: db.Table.SubBranchRequests,
-    keys: db.Keys.SubBranchRequests
   };
   this.data = this.sanitize(data);
 };
@@ -24,63 +24,28 @@ var SubBranchRequest = function(data) {
 SubBranchRequest.prototype = Object.create(Model.prototype);
 SubBranchRequest.prototype.constructor = SubBranchRequest;
 
-// Validate the properties specified in 'properties' on the branch object,
-// returning an array of any invalid ones
-SubBranchRequest.prototype.validate = function(properties) {
-  var invalids = [];
-
-  // ensure parentid exists and is of correct length
-  if(properties.indexOf('parentid') > -1) {
-    if(!validate.branchid(this.data.parentid)) {
-      invalids.push('parentid');
-    }
-    // ensure parentid is not root
-    if(this.data.parentid == 'root') {
-      invalids.push('parentid');
-    }
-  }
-
-  // ensure childid exists and is of correct length
-  if(properties.indexOf('childid') > -1) {
-    if(!validate.branchid(this.data.childid)) {
-      invalids.push('childid');
-    }
-  }
-
-  // ensure creation date is valid
-  if(properties.indexOf('date') > -1) {
-    if(!validate.date(this.data.date)) {
-      invalids.push('date');
-    }
-  }
-
-  if(properties.indexOf('creator') > -1) {
-    if(!validate.username(this.data.creator)) {
-      invalids.push('creator');
-    }
-  }
-
-  return invalids;
-};
-
-
 // Get a subbranch request by the parent and childs ids, passing data to resolve
 // Rejects promise with true if database error, with false if no data found.
-SubBranchRequest.prototype.find = function(parentid, childid) {
-  var self = this;
-  return new Promise(function(resolve, reject) {
+SubBranchRequest.prototype.find = function (parentid, childid) {
+  const self = this;
+
+  return new Promise((resolve, reject) => {
     aws.dbClient.query({
-      TableName: self.config.table,
-      KeyConditionExpression: "parentid = :parentid and childid = :childid",
       ExpressionAttributeValues: {
-        ":parentid": parentid,
-        ":childid": childid
+        ':childid': childid,
+        ':parentid': parentid,
+      },
+      KeyConditionExpression: 'parentid = :parentid and childid = :childid',
+      TableName: self.config.table,
+    }, (err, data) => {
+      if (err) {
+        return reject(err);
       }
-    }, function(err, data) {
-      if(err) return reject(err);
-      if(!data || !data.Items) {
+
+      if (!data || !data.Items) {
         return reject();
       }
+
       return resolve(data.Items);
     });
   });
@@ -88,22 +53,28 @@ SubBranchRequest.prototype.find = function(parentid, childid) {
 
 // Get the subbranch requests of a specific branch, passing in results to promise resolve.
 // Rejects promise with true if database error, with false if no data found.
-SubBranchRequest.prototype.findByBranch = function(branchid) {
-  var self = this;
-  return new Promise(function(resolve, reject) {
+SubBranchRequest.prototype.findByBranch = function (branchid) {
+  const self = this;
+
+  return new Promise((resolve, reject) => {
     aws.dbClient.query({
-      TableName: self.config.table,
-      IndexName: self.config.keys.globalIndexes[0],
-      KeyConditionExpression: "parentid = :id",
       ExpressionAttributeValues: {
-        ":id": branchid
+        ':id': branchid,
       },
-      ScanIndexForward: false   // return results newest first
-    }, function(err, data) {
-      if(err) return reject(err);
-      if(!data || !data.Items) {
+      IndexName: self.config.keys.globalIndexes[0],
+      KeyConditionExpression: 'parentid = :id',
+      // return results newest first
+      ScanIndexForward: false,
+      TableName: self.config.table,
+    }, (err, data) => {
+      if (err) {
+        return reject(err);
+      }
+
+      if (!data || !data.Items) {
         return reject();
       }
+
       return resolve(data.Items);
     });
   });
@@ -111,59 +82,113 @@ SubBranchRequest.prototype.findByBranch = function(branchid) {
 
 // Override Model.save() in order to create a notification for the branch
 // mods whenever a new SubBranchRequest is created
-SubBranchRequest.prototype.save = function(sessionID) {
-  var self = this;
-  return new Promise(function(resolve, reject) {
+SubBranchRequest.prototype.save = function (sessionID) {
+  const self = this;
+
+  return new Promise((resolve, reject) => {
     // fetch the mods of the parent (recipient) branch
-    var parentMods, childMods;
-    new Mod().findByBranch(self.data.parentid).then(function(mods) {
-      parentMods = mods;
-      return new Mod().findByBranch(self.data.childid);
-    }).then(function(mods) {
-      childMods = mods;
-      // remove any duplicates e.g. for user who is a mod of both branches
-      var allMods = _.uniqBy(parentMods.concat(childMods), 'username');
+    let parentMods;
+    let childMods;
 
-      // send notification of the new child branch request to these mods
-      var promises = [];
-      var time = new Date().getTime();
-      for(var i = 0; i < allMods.length; i++) {
-        var notification = new Notification({
-          id: allMods[i].username + '-' + time,
-          user: allMods[i].username,
-          date: time,
-          unread: true,
-          type: NotificationTypes.NEW_CHILD_BRANCH_REQUEST,
-          data: {
-            childid: self.data.childid,
-            parentid: self.data.parentid,
-            username: self.data.creator
+    new Mod()
+      .findByBranch(self.data.parentid)
+      .then(mods => {
+        parentMods = mods;
+        return new Mod().findByBranch(self.data.childid);
+      })
+      .then(mods => {
+        childMods = mods;
+        // remove any duplicates e.g. for user who is a mod of both branches
+        const allMods = _.uniqBy(parentMods.concat(childMods), 'username');
+
+        // send notification of the new child branch request to these mods
+        const promises = [];
+        const date = new Date().getTime();
+        for (let i = 0; i < allMods.length; i += 1) {
+          const notification = new Notification({
+            data: {
+              childid: self.data.childid,
+              parentid: self.data.parentid,
+              username: self.data.creator,
+            },
+            date,
+            id: `${allMods[i].username}-${date}`,
+            unread: true,
+            user: allMods[i].username,
+            type: NotificationTypes.NEW_CHILD_BRANCH_REQUEST,
+          });
+
+          const invalids = notification.validate();
+          if (invalids.length > 0) {
+            console.error('Error creating notification.');
+            return error.InternalServerError(res);
           }
-        });
 
-        var propertiesToCheck = ['id', 'user', 'date', 'unread', 'type', 'data'];
-        var invalids = notification.validate(propertiesToCheck);
-        if(invalids.length > 0) {
-          console.error('Error creating notification.');
-          return error.InternalServerError(res);
+          promises.push(notification.save(sessionID));
         }
 
-        promises.push(notification.save(sessionID));
-      }
+        return Promise.all(promises);
+      })
+      .then(() => {
+        // save the subbranchRequest
+        aws.dbClient.put({
+          Item: self.data,
+          TableName: self.config.table,
+        }, (err, data) => {
+          if (err) {
+            return reject(err);
+          }
 
-      return Promise.all(promises);
-    }).then(function () {
-      // save the subbranchRequest
-      aws.dbClient.put({
-        TableName: self.config.table,
-        Item: self.data
-      }, function(err, data) {
-        if(err) return reject(err);
-        self.dirtys.splice(0, self.dirtys.length); // clear dirtys array
-        return resolve();
+          // clear dirtys array
+          self.dirtys.splice(0, self.dirtys.length);
+          return resolve();
+        });
       });
-    });
   });
+};
+
+// Validate the properties specified in 'properties' on the branch object,
+// returning an array of any invalid ones
+SubBranchRequest.prototype.validate = function (properties) {
+  if (!properties || properties.length === 0) {
+    properties = [
+      'childid',
+      'creator',
+      'date',
+      'parentid',
+    ];
+  }
+
+  const invalids = [];
+
+  if (properties.includes('childid')) {
+    if (!validate.branchid(this.data.childid)) {
+      invalids.push('Invalid childid.');
+    }
+  }
+
+  if (properties.includes('creator')) {
+    if (!validate.username(this.data.creator)) {
+      invalids.push('Invalid creator.');
+    }
+  }
+
+  if (properties.includes('date')) {
+    if (!validate.date(this.data.date)) {
+      invalids.push('Invalid date.');
+    }
+  }
+
+  if (properties.includes('parentid')) {
+    if (!validate.branchid(this.data.parentid)) {
+      invalids.push('Invalid parentid.');
+    }
+    else if (this.data.parentid == 'root') {
+      invalids.push('Invalid parentid.');
+    }
+  }
+
+  return invalids;
 };
 
 module.exports = SubBranchRequest;

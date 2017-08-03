@@ -1,15 +1,15 @@
 'use strict';
 
-var Model = require('./model.js');
-var db = require('../config/database.js');
-var aws = require('../config/aws.js');
-var validate = require('./validate.js');
+const aws = require('../config/aws');
+const db = require('../config/database');
+const Model = require('./model');
+const validate = require('./validate');
 
-var Mod = function(data) {
+const Mod = function (data) {
   this.config = {
+    keys: db.Keys.Mods,
     schema: db.Schema.Mod,
     table: db.Table.Mods,
-    keys: db.Keys.Mods
   };
   this.data = this.sanitize(data);
 };
@@ -18,54 +18,64 @@ var Mod = function(data) {
 Mod.prototype = Object.create(Model.prototype);
 Mod.prototype.constructor = Mod;
 
+// Get the mods of a specific branch, passing results into resolve
+// Rejects promise with true if database error, with false if no mods found.
+Mod.prototype.findByBranch = function (branchid) {
+  const self = this;
+
+  return new Promise((resolve, reject) => {
+    aws.dbClient.query({
+      ExpressionAttributeValues: {
+        ':id': branchid,
+      },
+      KeyConditionExpression: 'branchid = :id',
+      TableName: self.config.table,
+    }, (err, data) => {
+      if (err) {
+        return reject(err);
+      }
+
+      if (!data || !data.Items) {
+        return reject();
+      }
+
+      return resolve(data.Items);
+    });
+  });
+};
+
 // Validate the properties specified in 'properties' on the mod object,
 // returning an array of any invalid ones
-Mod.prototype.validate = function(properties) {
-  var invalids = [];
+Mod.prototype.validate = function (properties) {
+  if (!properties || properties.length === 0) {
+    properties = [
+      'branchid',
+      'date',
+      'username',
+    ];
+  }
 
-  // ensure id exists and is of correct length
-  if(properties.indexOf('branchid') > -1) {
-    if(!validate.branchid(this.data.branchid)) {
-      invalids.push('branchid');
+  const invalids = [];
+
+  if (properties.includes('branchid')) {
+    if (!validate.branchid(this.data.branchid)) {
+      invalids.push('Invalid branchid.');
     }
   }
 
-  // ensure creation date is valid
-  if(properties.indexOf('date') > -1) {
-    if(!validate.date(this.data.date)) {
-      invalids.push('date');
+  if (properties.includes('date')) {
+    if (!validate.date(this.data.date)) {
+      invalids.push('Invalid date.');
     }
   }
 
-  if(properties.indexOf('username') > -1) {
-    if(!validate.username(this.data.username)) {
-      invalids.push('username');
+  if (properties.includes('username')) {
+    if (!validate.username(this.data.username)) {
+      invalids.push('Invalid username.');
     }
   }
 
   return invalids;
-};
-
-// Get the mods of a specific branch, passing results into resolve
-// Rejects promise with true if database error, with false if no mods found.
-Mod.prototype.findByBranch = function(branchid) {
-  var self = this;
-  return new Promise(function(resolve, reject) {
-    var params = {
-      TableName: self.config.table,
-      KeyConditionExpression: "branchid = :id",
-      ExpressionAttributeValues: {
-        ":id": branchid
-      }
-    };
-    aws.dbClient.query(params, function(err, data) {
-      if(err) return reject(err);
-      if(!data || !data.Items) {
-        return reject();
-      }
-      return resolve(data.Items);
-    });
-  });
 };
 
 module.exports = Mod;

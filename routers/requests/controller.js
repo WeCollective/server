@@ -366,14 +366,12 @@ module.exports = {
       parentid: req.params.branchid,
       childid: req.params.childid,
       date: new Date().getTime(),
-      creator: req.user.username
+      creator: req.user.username,
     });
 
-    // validate request properties
-    var propertiesToCheck = ['parentid', 'childid', 'date', 'creator'];
-    var invalids = subbranchRequest.validate(propertiesToCheck);
-    if(invalids.length > 0) {
-      return error.BadRequest(res, 'Invalid ' + invalids[0]);
+    const invalids = subbranchRequest.validate();
+    if (invalids.length > 0) {
+      return error.BadRequest(res, invalids[0]);
     }
 
     // ensure the specified branches exist

@@ -2,13 +2,13 @@ var bcrypt = require('bcryptjs');
 
 module.exports = {
   // Compare password with stored hash from database using bcrypt.
-  compare: (password, hash) => {
-    return new Promise( (resolve, reject) => {
+  compare(password, hash) {
+    return new Promise((resolve, reject) => {
       bcrypt.compare(password, hash, (err, res) => {
         if (err) {
           return reject({
             message: 'Something went wrong',
-            status: 500
+            status: 500,
           });
         }
 
@@ -17,14 +17,14 @@ module.exports = {
         }
 
         return reject({
-          message: 'Password mismatch',
-          status: 400
+          message: 'Incorrect password',
+          status: 400,
         });
       });
     });
   },
 
-  generateSalt: iterations => {
+  generateSalt(iterations) {
     return new Promise( (resolve, reject) => {
       bcrypt.genSalt(10, (err, salt) => {
         if (err) {
@@ -37,25 +37,24 @@ module.exports = {
     });
   },
 
-  generateToken: (length = 16) => {
+  generateToken(length = 16) {
     const chars = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
     let token = '';
-    for (let i = 0; i < length; i++) {
+    for (let i = 0; i < length; i += 1) {
       token += chars[Math.round(Math.random() * (chars.length - 1))];
     }
     return token;
   },
 
-  hash: (password, salt) => {
-    return new Promise( (resolve, reject) => {
+  hash(password, salt) {
+    return new Promise((resolve, reject) => {
       bcrypt.hash(password, salt, (err, hash) => {
         if (err) {
           return reject();
         }
-        else {
-          return resolve(hash);
-        }
+
+        return resolve(hash);
       });
     });
-  }
+  },
 };

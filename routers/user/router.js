@@ -43,13 +43,13 @@ module.exports = (app, passport) => {
 
         const userCount = new Constant();
         
-        userCount.findById('user_count')
-          .then( _ => {
+        return userCount.findById('user_count')
+          .then(() => {
             userCount.set('data', userCount.data.data + 1);
             return userCount.update();
           })
-          .then( _ => success.OK(res) )
-          .catch( err => {
+          .then(() => success.OK(res))
+          .catch(err => {
             console.error('Error updating user count:', err);
             return success.OK(res);
           });
@@ -206,7 +206,7 @@ module.exports = (app, passport) => {
      * @apiUse InternalServerError
      * @apiUse NotFound
      */
-    .get( (req, res) => {
+    .get((req, res) => {
       if (req.isAuthenticated() && req.user) {
         if (req.user.username === req.params.username) {
           ACL.attachRole(ACL.Roles.Self)(req, res);
@@ -390,7 +390,7 @@ module.exports = (app, passport) => {
      * @apiUse Forbidden
      * @apiUse InternalServerError
      */
-    .get( (req, res) => {
+    .get((req, res) => {
       if (req.isAuthenticated() && req.user) {
         if (req.user.username === req.params.username) {
           ACL.attachRole(ACL.Roles.Self)(req, res);
@@ -430,7 +430,7 @@ module.exports = (app, passport) => {
      * @apiUse Forbidden
      * @apiUse InternalServerError
      */
-    .get( (req, res) => {
+    .get((req, res) => {
       if (req.isAuthenticated() && req.user) {
         if (req.user.username === req.params.username) {
           ACL.attachRole(ACL.Roles.Self)(req, res);
@@ -470,7 +470,7 @@ module.exports = (app, passport) => {
      * @apiUse Forbidden
      * @apiUse InternalServerError
      */
-    .get( (req, res) => {
+    .get((req, res) => {
       if (req.isAuthenticated() && req.user) {
         if (req.user.username === req.params.username) {
           ACL.attachRole(ACL.Roles.Self)(req, res);
@@ -510,7 +510,7 @@ module.exports = (app, passport) => {
      * @apiUse Forbidden
      * @apiUse InternalServerError
      */
-    .get( (req, res) => {
+    .get((req, res) => {
       if (req.isAuthenticated() && req.user) {
         if (req.user.username === req.params.username) {
           ACL.attachRole(ACL.Roles.Self)(req, res);
@@ -705,9 +705,9 @@ module.exports = (app, passport) => {
      * @apiUse InternalServerError
      * @apiUse NotFound
      */
-    .get( (req, res) => {
+    .get((req, res) => {
       if (req.isAuthenticated() && req.user) {
-        if (req.user.username === req.params.username || 'me' === req.params.username) {
+        if (req.user.username === req.params.username || req.params.username === 'me') {
           ACL.attachRole(ACL.Roles.Self)(req, res);
         }
         else {

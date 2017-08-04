@@ -220,10 +220,12 @@ module.exports = {
 
             console.log(_O, childBranchId, tagsChildBranch, mutualTagsToExclude);
 
+            /*
             return Promise.reject({
               code: 400,
               message: 'Just messing around',
             });
+            */
 
             // remove self from O
             if (_O.includes(childBranchId)) {

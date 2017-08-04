@@ -1,6 +1,6 @@
 const NotificationTypes = require('../config/notification-types');
 
-const policy = /^[a-z_-]+$/;
+const policy = /^[a-z0-9_-]+$/;
 const validate = {};
 
 validate.boolean = value => {

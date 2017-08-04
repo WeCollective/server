@@ -761,6 +761,10 @@ const self = module.exports = {
   voteComment(req, res) {
     const vote = new Vote();
 
+    const commentId = req.params.commentid;
+    const postId = req.params.postid;
+    const username = req.user.username;
+
     let comment;
     let newVoteDirection;
     let newVoteOppositeDirection;
@@ -770,8 +774,8 @@ const self = module.exports = {
     voteComment.verifyParams(req)
       .then(() => {
         comment = new Comment({
-          id: req.params.commentid,
-          postid: req.params.postid,
+          id: commentId,
+          postid: postId,
         });
 
         const propertiesToCheck = [
@@ -789,7 +793,18 @@ const self = module.exports = {
 
         newVoteDirection = req.body.vote;
 
-        return vote.findByUsernameAndItemId(req.user.username, `comment-${req.params.commentid}`);
+        return comment.findById(commentId);
+      })
+      .then(() => new CommentData().findById(commentId))
+      .then(commentData => {
+        if (commentData.creator === 'N/A') {
+          return Promise.reject({
+            code: 403,
+            message: 'You cannot vote on deleted comments!',
+          });
+        }
+
+        return vote.findByUsernameAndItemId(username, `comment-${commentId}`);
       })
       .then(existingVoteData => {
         if (existingVoteData) {
@@ -802,11 +817,10 @@ const self = module.exports = {
 
         return Promise.resolve();
       })
-      .then(() => comment.findById(req.params.commentid))
-      // Update the comment "up" and "down" attributes.
+      // Update the comment 'up' and 'down' attributes.
       .then(() => {
         // Check the specfied comment actually belongs to this post.
-        if (comment.data.postid !== req.params.postid) {
+        if (comment.data.postid !== postId) {
           return Promise.reject({ code: 404 });
         }
 
@@ -847,8 +861,8 @@ const self = module.exports = {
 
         const newVote = new Vote({
           direction: newVoteDirection,
-          itemid: `comment-${req.params.commentid}`,
-          username: req.user.username,
+          itemid: `comment-${commentId}`,
+          username,
         });
 
         const propertiesToCheck = [

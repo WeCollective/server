@@ -8,6 +8,7 @@ const Mod = require('../../models/mod.model');
 const ModLogEntry = require('../../models/mod-log-entry.model');
 const Notification = require('../../models/notification.model');
 const NotificationTypes = require('../../config/notification-types');
+const Post = require('../../models/post.model');
 const SubBranchRequest = require('../../models/subbranch-request.model');
 const Tag = require('../../models/tag.model');
 
@@ -92,6 +93,7 @@ module.exports = {
   put(req, res) {
     const date = new Date().getTime();
     const subbranchRequest = new SubBranchRequest();
+    const post = new Post();
     const tag = new Tag();
 
     const action = req.body.action;
@@ -101,9 +103,12 @@ module.exports = {
 
     let modLogEntryChildBranch;
     let modLogEntryParentBranch;
+    let modsParentBranch;
     let subbranchRequestData;
     let tagsChildBranch;
     let tagsParentBranch;
+    let treeBranchIds;
+    let treePostsIds;
 
     const createModBranchMovedNotifications = mods => {
       const data = {
@@ -189,6 +194,11 @@ module.exports = {
         }
 
         return tag
+          // Get all parent branch tags.
+          // 
+          // Example: root - a - b - parent
+          // 
+          // This will return [root, a, b, parent]
           .findByBranch(parentBranchId)
           // Check if the child branch we are asking to move is not a parent branch
           // of the requested parent branch.
@@ -207,141 +217,148 @@ module.exports = {
               });
             }
 
-            return tag.findByBranch(childBranchId);
+            return Promise.resolve();
           })
-          // Get the child branch's tags.
-          .then(tags => {
-            tagsChildBranch = tags.map(obj => obj.tag);
-
+          // Get all child branch tags.
+          // 
+          // Example: root - a - b - child
+          // 
+          // This will return [root, a, b, child]
+          .then(() => tag.findByBranch(childBranchId)
+            .then(tags => {
+              tagsChildBranch = tags.map(obj => obj.tag);
+              return Promise.resolve();
+            })
+          )
+          // Sanitise both tag arrays before we perform the move.
+          .then(() => {
             // This will always have at least root.
             const mutualTagsToExclude = _.intersection(tagsChildBranch, tagsParentBranch);
 
-            var _O = _.difference(tagsChildBranch, mutualTagsToExclude);
+            // Strip the tags that do not change = mutual tags.
+            tagsChildBranch = _.difference(tagsChildBranch, mutualTagsToExclude);
+            tagsParentBranch = _.difference(tagsParentBranch, mutualTagsToExclude);
 
-            console.log(_O, childBranchId, tagsChildBranch, mutualTagsToExclude);
+            // Remove child branch id from the child tags as we will not mutate it.
+            // Child branch id stays the same, so it is not needed here.
+            tagsChildBranch.splice(tagsChildBranch.indexOf(childBranchId, 1));
+          })
+          // Get the tree that will be relocated to the new parent branch.
+          //
+          // Example: root - a - b - child - c - d
+          //                               - e - f
+          //               - parent
+          //
+          // We will be moving [child, c, d, e, f] under parent. That's our tree.
+          .then(() => tag.findByTag(childBranchId)
+            .then(tags => {
+              treeBranchIds = tags.map(obj => obj.branchid);
+              return Promise.resolve();
+            })
+          )
+          /*
+          .then(() => post.findByBranch(childBranchId)
+            .then(posts => {
+              treePostsIds = posts;
+              return Promise.resolve();
+            })
+          )
+          */
+          // Figure out how many operations we will have to carry out.
+          // If we are about to delete 4 tags and add 2 tags, we will
+          // be performing only 4 operations to be efficient - we will
+          // update 2 rows and delete the other 2.
+          .then(() => {
+            const TCBLength = tagsChildBranch.length;
+            const TPBLength = tagsParentBranch.length;
+            const branchOperationsLength = TCBLength > TPBLength ? TCBLength : TPBLength;
+            const branchOperationsArr = [];
 
+            for (let i = 0; i < branchOperationsLength; i += 1) {
+              treeBranchIds.forEach(branchId => {
+                const operationTag = new Tag();
+
+                if (i < TCBLength) {
+                  // Update row.
+                  if (i < TPBLength) {
+                    branchOperationsArr.push(operationTag.findByBranchAndTag({
+                      branchid: branchId,
+                      tag: tagsChildBranch[i],
+                    })
+                      .then(() => {
+                        operationTag.set('tag', tagsParentBranch[i]);
+                        return operationTag.update();
+                      })
+                    );
+                  }
+                  // Delete row.
+                  else {
+                    branchOperationsArr.push(operationTag.findByBranchAndTag({
+                      branchid: branchId,
+                      tag: tagsChildBranch[i],
+                    })
+                      .then(() => operationTag.delete())
+                    );
+                  }
+                }
+                // Insert row.
+                else {
+                  branchOperationsArr.push(new Tag({
+                    branchid: branchId,
+                    tag: tagsParentBranch[i],
+                  })
+                    .save()
+                  );
+                }
+              });
+            }
+
+            return Promise.all(branchOperationsArr);
+          })
+          // Update child branch parentid.
+          .then(() => {
+            const updatedBranch = new Branch({ id: childBranchId });
+            updatedBranch.set('parentid', parentBranchId);
+            return updatedBranch.update();
+          })
+          // Send notifications to both branch mods that the child branch has moved.
+          .then(() => new Mod().findByBranch(parentBranchId))
+          .then(mods => {
+            modsParentBranch = mods;
+            return new Mod().findByBranch(childBranchId);
+          })
+          // Remove all duplicates i.e. users who are mods of both branches.
+          // Send notifications.
+          .then(modsChildBranch => {
+            const modsChildAndParentBranch = _.uniqBy(modsParentBranch.concat(modsChildBranch), 'username');
+            return createModBranchMovedNotifications(modsChildAndParentBranch);
+          });
             /*
+            console.log('++++++++++++++++++++++++++++++++++++++++++');
+            console.log('Child branch id:', childBranchId);
+            console.log('Parent branch id:', parentBranchId);
+            console.log('Child branch tags:', tagsChildBranch);
+            console.log('Parent branch tags:', tagsParentBranch);
+            console.log(treeBranchIds);
+            console.log(branchOperations);
+            // console.log(treePostsIds);
+            console.log('++++++++++++++++++++++++++++++++++++++++++');
+
             return Promise.reject({
               code: 400,
               message: 'Just messing around',
             });
             */
-
-            // remove self from O
-            if (_O.includes(childBranchId)) {
-              _O.splice(_O.indexOf(childBranchId), 1);
-            }
-
-            var _N = _.difference(tagsParentBranch, tagsChildBranch);
-
-            // get the branch whose parent is changing AND all its children
-            return tag
-              .findByTag(childBranchId)
-              .then(allChildren => {
-                const updateTagsPromises = [];
-
-                // update each child's tags (allChildren includes self)
-                for (let i = 0; i < allChildren.length; i += 1) {
-                  updateTagsPromises.push(() => {
-                    // perform tag update operations for this branch, resolving promise when complete
-                    // get all the tags of this child
-                    return tag
-                      .findByBranch(allChildren[i].branchid)
-                      .then(tags => {
-                        let bid;
-
-                        if (tags.length > 0) {
-                          bid = tags[0].branchid;
-                        }
-
-                        // make copies
-                        var O = _O.slice(0);
-                        var N = _N.slice(0);
-
-                        // for each tag in the child's tag set...
-                        var n = 0;
-
-                        // Holds all tag operations.
-                        const promises = [];
-
-                        for (let t = 0; t < tags.length; t += 1) {
-                          if (O.includes(tags[t].tag)) {
-                            // remove tag from list
-                            promises.push(tag.delete(tags[t]));
-                            tags.splice(t, 1);
-
-                            // replace it with one from N if possible
-                            if (n < N.length) {
-                              tags.push({
-                                branchid: bid,
-                                tag: N[n],
-                              });
-
-                              promises.push(new Tag({
-                                branchid: bid,
-                                tag: N[n],
-                              })
-                                .save()
-                              );
-
-                              n++;
-                            }
-                          }
-                        }
-
-                        // add any remaining tags in N
-                        while (n < N.length) {
-                          tags.push({
-                            branchid: bid,
-                            tag: N[n],
-                          });
-
-                          promises.push(new Tag({
-                            branchid: bid,
-                            tag: N[n],
-                          })
-                            .save()
-                          );
-
-                          n++;
-                        }
-
-                        return Promise.all(promises);
-                      });
-                  });
-                }
-
-                let parentBranchMods;
-
-                // when all tags are updated, update the actual branch parent
-                return Promise.all(updateTagsPromises)
-                  // update the child branch's parentid
-                  .then(function () {  
-                    const updatedBranch = new Branch({ id: childBranchId });
-
-                    updatedBranch.set('parentid', parentBranchId);
-                    return updatedBranch.update();
-                  })
-                  // Send notifications to both branch mods that the child branch has moved.
-                  .then(() => new Mod().findByBranch(parentBranchId))
-                  .then(mods => {
-                    parentBranchMods = mods;
-                    return new Mod().findByBranch(childBranchId);
-                  })
-                  .then(childBranchMods => {
-                    // remove any duplicates e.g. for user who is a mod of both branches
-                    const uniqueBranchMods = _.uniqBy(parentBranchMods.concat(childBranchMods), 'username');
-                    return createModBranchMovedNotifications(uniqueBranchMods);
-                  });
-              });
-          });
       })
+      // Remove the subbranch request.
       .then(() => subbranchRequest.delete({
         childid: childBranchId,
         parentid: parentBranchId,
       }))
+      // Add records to both branches about the decision.
       .then(() => modLogEntryChildBranch.save())
       .then(() => modLogEntryParentBranch.save())
+      // Inform the request creator about the decision.
       .then(() => createSubbranchRequestCreatorNotification())
       .then(() => success.OK(res))
       .catch(err => {

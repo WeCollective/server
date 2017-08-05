@@ -78,6 +78,8 @@ Tag.prototype.findByTag = function (tag) {
   });
 };
 
+// todo add function for findbytag and branch
+
 // Validate the properties specified in 'properties' on the Tag object,
 // returning an array of any invalid ones
 Tag.prototype.validate = function (properties) {

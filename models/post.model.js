@@ -37,6 +37,26 @@ Post.prototype.constructor = Post;
 
 // Fetch the posts on a specific branch, using a specific stat, and filtered by time
 Post.prototype.findByBranch = function (branchid, timeafter, nsfw, sortBy, stat, postType, last) {
+  if (timeafter === undefined) {
+    timeafter = 0;
+  }
+
+  if (nsfw === undefined) {
+    nsfw = true;
+  }
+
+  if (sortBy === undefined) {
+    sortBy = 'date';
+  }
+
+  if (stat === undefined) {
+    stat = 'global';
+  }
+
+  if (postType === undefined) {
+    postType = 'all';
+  }
+
   return new Promise((resolve, reject) => {
     const self = this;
     const limit = 30;

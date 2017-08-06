@@ -490,6 +490,10 @@ module.exports = {
       .then(() => success.OK(res))
       .catch(err => {
         if (err) {
+          console.log('++++++++++++++++++++++++++++++++++++++++++');
+          console.log(err);
+          console.log('++++++++++++++++++++++++++++++++++++++++++');
+
           if (typeof err === 'object' && err.code) {
             return error.code(res, err.code, err.message);
           }

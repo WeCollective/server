@@ -216,7 +216,7 @@ Post.prototype.findByPostAndBranchIds = function (postid, branchid) {
       const posts = formatPostsToNewAPI(data.Items);
 
       self.data = posts[0];
-      return resolve();
+      return resolve(self.data);
     });
   });
 };

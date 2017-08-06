@@ -78,7 +78,31 @@ Tag.prototype.findByTag = function (tag) {
   });
 };
 
-// todo add function for findbytag and branch
+Tag.prototype.findByBranchAndTag = function (branchid, tag) {
+  const self = this;
+
+  return new Promise((resolve, reject) => {
+    aws.dbClient.query({
+      ExpressionAttributeValues: {
+        ':branchid': branchid,
+        ':tag': tag,
+      },
+      KeyConditionExpression: 'branchid = :branchid AND tag = :tag',
+      TableName: self.config.table,
+    }, (err, data) => {
+      if (err) {
+        return reject(err);
+      }
+
+      if (!data || !data.Items || !data.Items.length) {
+        return reject();
+      }
+
+      self.data = data.Items[0];
+      return resolve(self.data);
+    });
+  });
+};
 
 // Validate the properties specified in 'properties' on the Tag object,
 // returning an array of any invalid ones

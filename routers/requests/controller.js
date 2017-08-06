@@ -115,18 +115,6 @@ module.exports = {
       return error.BadRequest(res, invalids[0]);
     }
 
-    if (parentBranchId === 'root') {
-      // todo Accept without creating a request.
-      /*
-      return Promise.reject({
-        code: 400,
-        message: 'Just messing around',
-      });
-      */
-      return error.code(res, 400, 'Just messing around');
-    }
-
-    // ensure the specified branches exist
     return parentBranch
       // Grab data for both branches. If it fails, we return not found error.
       .findById(parentBranchId)
@@ -194,7 +182,18 @@ module.exports = {
 
         return modLogEntry.save();
       })
-      .then(() => success.OK(res))
+      // If we are moving to root, we don't need anyone to approve
+      // our request - move the branch immediately.
+      .then(() => {
+        if (parentBranchId === 'root') {
+          // Inject the action parameter to the request so it doesn't
+          // fail while accepting the request.
+          req.body.action = 'accept';
+          return module.exports.put(req, res);
+        }
+
+        return success.OK(res);
+      })
       .catch(err => {
         if (err) {
           console.error('Error creating subbranch request:', err);
@@ -360,7 +359,7 @@ module.exports = {
 
             // Remove child branch id from the child tags as we will not mutate it.
             // Child branch id stays the same, so it is not needed here.
-            tagsChildBranch.splice(tagsChildBranch.indexOf(childBranchId, 1));
+            tagsChildBranch.splice(tagsChildBranch.indexOf(childBranchId), 1);
           })
           // Get the tree that will be relocated to the new parent branch.
           //
@@ -400,10 +399,7 @@ module.exports = {
                 if (i < TCBLength) {
                   // Update row.
                   if (i < TPBLength) {
-                    branchOperationsArr.push(operationTag.findByBranchAndTag({
-                      branchid: branchId,
-                      tag: tagsChildBranch[i],
-                    })
+                    branchOperationsArr.push(operationTag.findByBranchAndTag(branchId, tagsChildBranch[i])
                       .then(() => {
                         operationTag.set('tag', tagsParentBranch[i]);
                         return operationTag.update();
@@ -412,10 +408,7 @@ module.exports = {
                   }
                   // Delete row.
                   else {
-                    branchOperationsArr.push(operationTag.findByBranchAndTag({
-                      branchid: branchId,
-                      tag: tagsChildBranch[i],
-                    })
+                    branchOperationsArr.push(operationTag.findByBranchAndTag(branchId, tagsChildBranch[i])
                       .then(() => operationTag.delete())
                     );
                   }

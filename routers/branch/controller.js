@@ -9,6 +9,7 @@ const fs = require('../../config/filestorage');
 const mailer = require('../../config/mailer');
 const Mod = require('../../models/mod.model');
 const ModLogEntry = require('../../models/mod-log-entry.model');
+const RequestsController = require('../requests/controller');
 const SubBranchRequest = require('../../models/subbranch-request.model');
 const success = require('../../responses/successes');
 const Tag = require('../../models/tag.model');
@@ -134,17 +135,20 @@ module.exports = {
     const branchCount = new Constant();
     const user = new User();
 
-    const branchid = req.body.id;
-    const branchName = req.body.name;
-    const parentid = req.body.parentid;
+    const childBranchId = req.body.id;
+    const name = req.body.name;
+    const parentBranchId = req.body.parentid;
 
     const date = new Date().getTime();
     const branch = new Branch({
       creator,
       date,
-      id: branchid,
-      name: branchName,
-      parentid,
+      id: childBranchId,
+      name,
+      // By default, every branch is a child of root.
+      // We will add request to the parentBranchId below
+      // if it's different from root.
+      parentid: 'root',
       post_comments: 0,
       post_count: 0,
       post_points: 0,
@@ -157,36 +161,44 @@ module.exports = {
     }
 
     return new Branch()
-      .findById(branchid)
-      .then(() => error.BadRequest(res, 'That Unique Name is already taken'))
+      .findById(childBranchId)
+      .then(() => Promise.reject({
+          code: 400,
+          message: `${childBranchId} already exists`,
+      }))
+      // If there was a genuine error, abort the operation.
+      // Otherwise it only means the branch with this name doesn't exist yet.
       .catch(err => err ? Promise.reject() : Promise.resolve())
-      .then(() => new Branch().findById(parentid))
-      // save a subbranch request iff. the parentid is not the root branch
+      // The parent branch must exist.
+      .then(() => new Branch().findById(parentBranchId))
+      // If we are attaching branch to anything other than root, we will
+      // need a permission to do so before moving it there.
       .then(() => {
-        if (parentid !== 'root') {
-          const subbranchRequest = new SubBranchRequest({
-            childid: branchid,
-            creator,
-            date,
-            parentid,
-          });
-
-          const invalids = subbranchRequest.validate();
-          if (invalids.length > 0) {
-            return Promise.reject({
-              code: 400,
-              message: invalids[0],
-            });
-          }
-
-          return subbranchRequest.save(req.sessionID);
+        if (parentBranchId === 'root') {
+          return Promise.resolve();
         }
 
-        return Promise.resolve();
+        const request = new SubBranchRequest({
+          childid: childBranchId,
+          creator,
+          date,
+          parentid: parentBranchId,
+        });
+
+        const invalids = request.validate();
+        if (invalids.length > 0) {
+          return Promise.reject({
+            code: 400,
+            message: invalids[0],
+          });
+        }
+
+        return request.save(req.sessionID);
       })
+      // Make the user automatically the only moderator of this new branch.
       .then(() => {
         const mod = new Mod({
-          branchid,
+          branchid: childBranchId,
           date,
           username: creator,
         });
@@ -201,52 +213,32 @@ module.exports = {
 
         return mod.save();
       })
-      .then(() => {
-        branch.set('parentid', 'root');
-        return branch.save();
-      })
-      // add the branchid to the tags table with the tags of itself and
-      // those of its parent (just 'root')
-      .then(() => {
-        const branchTag = new Tag({
-          branchid: branch.data.id,
-          tag: branch.data.id,
-        });
-        
-        const invalids = branchTag.validate();
-        if (invalids.length > 0) {
-          return Promise.reject({
-            code: 400,
-            message: invalids[0],
-          });
-        }
-
-        return branchTag.save();
-      })
-      .then(() => {
-        const rootTag = new Tag({
-          branchid: branch.data.id,
+      // Create the new branch.
+      .then(() => branch.save())
+      // Create tags for the new branch - since it's only a child of root for now,
+      // these will always be equal to 'root' and childBranchId.
+      // Skip validation as we have already established above that childBranchId
+      // is valid. We have created a branch with its name, after all.
+      .then(() => new Tag({
+          branchid: childBranchId,
+          tag: childBranchId,
+        })
+          .save()
+      )
+      .then(() => new Tag({
+          branchid: childBranchId,
           tag: 'root',
-        });
-
-        const invalids = rootTag.validate();
-        if (invalids.length > 0) {
-          return Promise.reject({
-            code: 400,
-            message: invalids[0],
-          });
-        }
-
-        return rootTag.save();
-      })
-      // increment the user's branch and mod count.
+        })
+          .save()
+      )
+      // Increase user's branch and mod count.
       .then(() => user.findByUsername(creator))
       .then(() => {
         user.set('num_branches', user.data.num_branches + 1);
         user.set('num_mod_positions', user.data.num_mod_positions + 1);
         return user.update();
       })
-      // update the SendGrid contact list with the new user data.
+      // Update the SendGrid contact list with the new user data.
       .then(() => mailer.addContact(user.data, true))
       // Update branch_count.
       .then(() => branchCount.findById('branch_count'))
@@ -254,7 +246,39 @@ module.exports = {
         branchCount.set('data', branchCount.data.data + 1);
         return branchCount.update();
       })
-      .then(() => success.OK(res))
+      // Remember how we put this branch under root because we might need a permission
+      // in case we want to attach it to any branch other than root? Well, here we will
+      // find out if we really need a permission to move this newly created branch.
+      .then(() => {
+        if (parentBranchId === 'root') {
+          return Promise.resolve();
+        }
+
+        return new Mod().findByBranch(parentBranchId);
+      })
+      .then(mods => {
+        // We don't need a permission but there is also
+        // nothing to move as we are already under root,
+        // so we can end it here.
+        if (parentBranchId === 'root') {
+          return success.OK(res);
+        }
+
+        mods = mods.map(obj => obj.username);
+
+        // We don't need a permission.
+        if (mods.includes(creator)) {
+          // Inject the action parameter to the request so it doesn't
+          // fail while accepting the branch request.
+          req.body.action = 'accept';
+          req.params.childid = childBranchId;
+          req.params.branchid = parentBranchId;
+          return RequestsController.put(req, res);
+        }
+
+        // We need a permission, end it here.
+        return success.OK(res);
+      })
       .catch(err => {
         if (err) {
           if (typeof err === 'object' && err.code) {

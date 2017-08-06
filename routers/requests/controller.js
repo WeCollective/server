@@ -187,7 +187,7 @@ module.exports = {
       .then(() => {
         if (parentBranchId === 'root') {
           // Inject the action parameter to the request so it doesn't
-          // fail while accepting the request.
+          // fail while accepting the branch request.
           req.body.action = 'accept';
           return module.exports.put(req, res);
         }

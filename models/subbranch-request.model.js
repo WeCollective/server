@@ -183,9 +183,6 @@ SubBranchRequest.prototype.validate = function (properties) {
     if (!validate.branchid(this.data.parentid)) {
       invalids.push('Invalid parentid.');
     }
-    else if (this.data.parentid == 'root') {
-      invalids.push('Invalid parentid.');
-    }
   }
 
   return invalids;

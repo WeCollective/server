@@ -90,10 +90,129 @@ module.exports = {
       });
   },
 
+  post(req, res) {
+    const childBranch = new Branch();
+    const childBranchId = req.params.childid;
+    const date = new Date().getTime();
+    const parentBranch = new Branch();
+    const parentBranchId = req.params.branchid;
+    const username = req.user.username;
+
+    if (!username) {
+      console.error('No username found in session.');
+      return error.InternalServerError(res);
+    }
+
+    const request = new SubBranchRequest({
+      childid: childBranchId,
+      creator: username,
+      date,
+      parentid: parentBranchId,
+    });
+
+    const invalids = request.validate();
+    if (invalids.length > 0) {
+      return error.BadRequest(res, invalids[0]);
+    }
+
+    if (parentBranchId === 'root') {
+      // todo Accept without creating a request.
+      /*
+      return Promise.reject({
+        code: 400,
+        message: 'Just messing around',
+      });
+      */
+      return error.code(res, 400, 'Just messing around');
+    }
+
+    // ensure the specified branches exist
+    return parentBranch
+      // Grab data for both branches. If it fails, we return not found error.
+      .findById(parentBranchId)
+      .then(() => childBranch.findById(childBranchId))
+      // Exit if there already exists parent - child relationship between branches.
+      .then(() => {
+        if (parentBranch.data.id === childBranch.data.parentid) {
+          return Promise.reject({
+            code: 400,
+            message: `${parentBranch.data.id} is already a parent of ${childBranch.data.id}`,
+          });
+        }
+
+        return new Tag().findByBranch(parentBranchId);
+      })
+      // Check if the child branch we are asking to move is not a parent branch
+      // of the requested parent branch.
+      //
+      // Example: root - a - b - child - c - parent
+      //
+      // In this case, moving the child branch would discontinue the chain, hence
+      // it is forbidden.
+      .then(tagsParentBranch => {
+        tagsParentBranch = tagsParentBranch.map(obj => obj.tag);
+
+        if (tagsParentBranch.includes(childBranchId)) {
+          return Promise.reject({
+            code: 400,
+            message: `Cannot submit request: ${parentBranchId} is a child branch of ${childBranchId}`,
+          });
+        }
+
+        return Promise.resolve();
+      })
+      // Don't create a duplicate request.
+      .then(() => new SubBranchRequest().find(parentBranchId, childBranchId))
+      .then(existingRequests => {
+        if (existingRequests.length > 0) {
+          return Promise.reject({
+            code: 400,
+            message: 'This request already exists',
+          });
+        }
+
+        return request.save(req.sessionID);;
+      })
+      // Create a mod log entry about the event.
+      .then(() => {
+        const modLogEntry = new ModLogEntry({
+          action: 'make-subbranch-request',
+          branchid: childBranchId,
+          data: parentBranchId,
+          date,
+          username,
+        });
+
+        const invalids = modLogEntry.validate();
+        if (invalids.length > 0) {
+          console.error('Error saving mod log entry.');
+          return Promise.reject({
+            code: 500,
+            message: invalids[0],
+          });
+        }
+
+        return modLogEntry.save();
+      })
+      .then(() => success.OK(res))
+      .catch(err => {
+        if (err) {
+          console.error('Error creating subbranch request:', err);
+          if (typeof err === 'object' && err.code) {
+            return error.code(res, err.code, err.message);
+          }
+
+          return error.InternalServerError(res);
+        }
+
+        return error.NotFound(res);
+      });
+  },
+
   put(req, res) {
     const date = new Date().getTime();
-    const subbranchRequest = new SubBranchRequest();
     const post = new Post();
+    const request = new SubBranchRequest();
     const tag = new Tag();
 
     const action = req.body.action;
@@ -104,7 +223,7 @@ module.exports = {
     let modLogEntryChildBranch;
     let modLogEntryParentBranch;
     let modsParentBranch;
-    let subbranchRequestData;
+    let requestData;
     let tagsChildBranch;
     let tagsParentBranch;
     let treeBranchIds;
@@ -128,7 +247,7 @@ module.exports = {
     };
 
     const createSubbranchRequestCreatorNotification = () => {
-      const creator = subbranchRequestData.creator;
+      const creator = requestData.creator;
       const data = {
         action,
         childid: childBranchId,
@@ -142,7 +261,7 @@ module.exports = {
 
     return put.verifyParams(req)
       // The request must exist.
-      .then(() => subbranchRequest.find(parentBranchId, childBranchId))
+      .then(() => request.find(parentBranchId, childBranchId))
       .then(data => {
         if (!data || data.length === 0) {
           return Promise.reject({
@@ -151,7 +270,7 @@ module.exports = {
           });
         }
 
-        subbranchRequestData = data[0];
+        requestData = data[0];
 
         return Promise.resolve();
       })
@@ -163,7 +282,7 @@ module.exports = {
             branchid,
             data: JSON.stringify({
               childid: childBranchId,
-              childmod: subbranchRequestData.creator,
+              childmod: requestData.creator,
               parentid: parentBranchId,
               response: action,
             }),
@@ -213,7 +332,7 @@ module.exports = {
             if (tagsParentBranch.includes(childBranchId)) {
               return Promise.reject({
                 code: 400,
-                message: 'The requested parent is a subbranch.',
+                message: `Cannot accept request: ${parentBranchId} is a child branch of ${childBranchId}`,
               });
             }
 
@@ -351,7 +470,7 @@ module.exports = {
             */
       })
       // Remove the subbranch request.
-      .then(() => subbranchRequest.delete({
+      .then(() => request.delete({
         childid: childBranchId,
         parentid: parentBranchId,
       }))
@@ -372,85 +491,5 @@ module.exports = {
 
         return error.NotFound(res);
       });
-  },
-
-  post: function(req, res) {
-    if(!req.user.username) {
-      console.error("No username found in session.");
-      return error.InternalServerError(res);
-    }
-
-    // create new subbranch request
-    var subbranchRequest = new SubBranchRequest({
-      parentid: req.params.branchid,
-      childid: req.params.childid,
-      date: new Date().getTime(),
-      creator: req.user.username,
-    });
-
-    const invalids = subbranchRequest.validate();
-    if (invalids.length > 0) {
-      return error.BadRequest(res, invalids[0]);
-    }
-
-    // ensure the specified branches exist
-    var parent = new Branch();
-    var child = new Branch();
-    parent.findById(req.params.branchid).then(function() {
-      return child.findById(req.params.childid);
-    }).catch(function() {
-      // one of the specified branches doesnt exist
-      return error.NotFound(res);
-    }).then(function() {
-      // ensure the requested parent isn't already a parent
-      if(parent.data.id == child.data.parentid) {
-        return error.BadRequest(res, 'The requested branch is already a parent.');
-      }
-      // ensure the requested parent is not a child branch
-      var tag = new Tag();
-      return tag.findByBranch(req.params.branchid);
-    }).then(function(parentTags) {
-      for(var i = 0; i < parentTags.length; i++) {
-        if(parentTags[i].tag == req.params.childid) {
-          return error.BadRequest(res, 'The requested parent is a subbranch.');
-        }
-      }
-      // requested parent is not child; continue
-
-      // check this request does not already exist
-      return subbranchRequest.find(subbranchRequest.data.parentid, subbranchRequest.data.childid);
-    }).then(function(response) {
-      if(!response || response.length == 0) {
-        // save the request to the database
-        return subbranchRequest.save(req.sessionID);
-      } else {
-        return error.BadRequest(res, 'Request already exists');
-      }
-    }).then(function () {
-      // save a mod log entry describing the filing of the request
-      var entry = new ModLogEntry({
-        branchid: req.params.childid,     // child branch
-        username: req.user.username,      // child mod
-        date: new Date().getTime(),
-        action: 'make-subbranch-request',
-        data: req.params.branchid         // parent branch
-      });
-
-      var propertiesToCheck = ['branchid', 'username', 'date', 'action', 'data'];
-      var invalids = entry.validate(propertiesToCheck);
-      if(invalids.length > 0) {
-        console.error('Error saving mod log entry.');
-        return error.InternalServerError(res);
-      }
-      return entry.save();
-    }).then(function() {
-      return success.OK(res);
-    }).catch(function(err) {
-      if(err) {
-        console.error("Error creating subbranch request: ", err);
-        return error.InternalServerError(res);
-      }
-      return error.NotFound(res);
-    });
   },
 };

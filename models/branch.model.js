@@ -28,7 +28,7 @@ Branch.prototype.findById = function (id) {
   return new Promise((resolve, reject) => {
     aws.dbClient.get({
       Key: { id },
-      TableName: self.config.table
+      TableName: self.config.table,
     }, (err, data) => {
       if (err) {
         return reject(err);
@@ -39,8 +39,7 @@ Branch.prototype.findById = function (id) {
       }
 
       self.data = data.Item;
-      
-      return resolve();
+      return resolve(self.data);
     });
   });
 };
@@ -81,7 +80,7 @@ Branch.prototype.findSubbranches = function(parentid, timeafter, sortBy, last) {
     const tmp = {
       id: last.id,
       parentid: last.parentid,
-      [sortBy]: last[sortBy]
+      [sortBy]: last[sortBy],
     };
 
     last = tmp;
@@ -96,7 +95,8 @@ Branch.prototype.findSubbranches = function(parentid, timeafter, sortBy, last) {
       ':timeafter': Number(timeafter),
     },
     IndexName,
-    ScanIndexForward: false,   // return results highest first
+    // return results highest first
+    ScanIndexForward: false,
     Select: 'ALL_PROJECTED_ATTRIBUTES',
     TableName: self.config.table,
   };

@@ -374,14 +374,29 @@ module.exports = {
               return Promise.resolve();
             })
           )
-          /*
           .then(() => post.findByBranch(childBranchId)
             .then(posts => {
               treePostsIds = posts;
               return Promise.resolve();
             })
           )
-          */
+          .then(() => {
+            console.log('++++++++++++++++++++++++++++++++++++++++++');
+            console.log('Child branch id:', childBranchId);
+            console.log('Parent branch id:', parentBranchId);
+            console.log('Child branch tags:', tagsChildBranch);
+            console.log('Parent branch tags:', tagsParentBranch);
+            console.log('Branch tree:', treeBranchIds);
+            console.log('Posts:', treePostsIds);
+            console.log('++++++++++++++++++++++++++++++++++++++++++');
+
+            /*
+            return Promise.reject({
+              code: 400,
+              message: 'Just messing around',
+            });
+            */
+          })
           // Figure out how many operations we will have to carry out.
           // If we are about to delete 4 tags and add 2 tags, we will
           // be performing only 4 operations to be efficient - we will

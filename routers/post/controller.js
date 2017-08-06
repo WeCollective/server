@@ -452,7 +452,7 @@ const self = module.exports = {
 
         for (let i = 0; i < req.body.branchids.length; i += 1) {
           const branchid = req.body.branchids[i];
-          tagPromises.push(new Promise((resolve, reject) => new Tag()
+          tagPromises.push(new Tag()
             .findByBranch(branchid)
             .then(tags => {
               // All tags are collected, these are the branchids to tag the post to.
@@ -462,10 +462,10 @@ const self = module.exports = {
                 }
               }
 
-              return resolve();
+              return Promise.resolve();
             })
-            .catch(err => reject(err))
-          ));
+            .catch(err => Promise.reject(err))
+          );
         }
 
         return Promise.all(tagPromises);

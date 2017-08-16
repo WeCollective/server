@@ -118,8 +118,15 @@ Comment.prototype.findByParent = function (postid, parentid, sortBy, last) {
         return reject();
       }
 
+      console.log('++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++');
+      console.log(data.Items.length);
+      console.log('++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++');
+
       const comments = formatCommentsToNewAPI(data.Items.slice(0, limit));
-      return resolve(comments);
+      return resolve({
+        comments,
+        hasMoreComments: data.Items.length !== comments.length,
+      });
     });
   });
 };

@@ -220,6 +220,7 @@ const self = module.exports = {
     }
 
     let comments = [];
+    let hasMoreComments = false;
     let lastComment = null;
 
     new Promise((resolve, reject) => {
@@ -227,7 +228,7 @@ const self = module.exports = {
       if (req.query.lastCommentId) {
         const comment = new Comment();
 
-        comment
+        return comment
           .findById(req.query.lastCommentId)
           .then(() => {
             // create lastComment object
@@ -249,8 +250,13 @@ const self = module.exports = {
       }
     })
       .then(() => new Comment().findByParent(postId, parentId, sortBy, lastComment))
-      .then(results => {
-        comments = results;
+      .then(foundComments => {
+        console.log('++++++++++++++++++++++++++++++++++++++++++++++++++++++++');
+        console.log(lastComment);
+        console.log(foundComments);
+        console.log('++++++++++++++++++++++++++++++++++++++++++++++++++++++++');
+        comments = foundComments.comments;
+        hasMoreComments = foundComments.hasMoreComments;
 
         const promises = [];
 
@@ -268,7 +274,7 @@ const self = module.exports = {
 
         return Promise.all(promises);
       })
-      .then(() => success.OK(res, comments))
+      .then(() => success.OK(res, { comments, hasMoreComments }))
       .catch(err => {
         if (err) {
           console.error('Error fetching comments:', err);

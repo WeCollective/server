@@ -251,10 +251,6 @@ const self = module.exports = {
     })
       .then(() => new Comment().findByParent(postId, parentId, sortBy, lastComment))
       .then(foundComments => {
-        console.log('++++++++++++++++++++++++++++++++++++++++++++++++++++++++');
-        console.log(lastComment);
-        console.log(foundComments);
-        console.log('++++++++++++++++++++++++++++++++++++++++++++++++++++++++');
         comments = foundComments.comments;
         hasMoreComments = foundComments.hasMoreComments;
 

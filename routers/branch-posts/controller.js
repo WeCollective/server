@@ -183,7 +183,8 @@ module.exports = {
             PostCtrl
               .getOnePost(post.id, req)
               .then(post => {
-                posts[index] = post;
+                // Extend object so we don't delete the flag properties.
+                Object.assign(posts[index], post);
                 return resolve();
               })
               .catch(reject);

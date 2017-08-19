@@ -104,7 +104,10 @@ const voteComment = {
 const self = module.exports = {
   deleteComment(req, res) {
     const commentid = req.params.commentid;
+    const parentComment = new Comment();
     const postid = req.params.postid;
+    const user = new User();
+    let comment;
 
     if (!commentid) {
       return error.BadRequest(res, 'Missing commentid');
@@ -115,7 +118,9 @@ const self = module.exports = {
     }
 
     self.getOneComment(commentid, req)
-      .then(comment => {
+      .then(foundComment => {
+        comment = foundComment;
+
         if (comment.data.creator !== req.user.username) {
           return Promise.reject({
             code: 403,
@@ -126,7 +131,6 @@ const self = module.exports = {
         const commentdata = new CommentData({ id: comment.id });
 
         if (comment.replies === 0) {
-          // todo Decrease comment count on post...
           return commentdata
             .delete()
             .then(() => new Comment().delete({ id: comment.id }));
@@ -136,6 +140,37 @@ const self = module.exports = {
         commentdata.set('creator', 'N/A');
         commentdata.set('text', '[Comment removed by user]');
         return commentdata.update();
+      })
+      // Update counters. Decrease total user comments, post comments, and replies
+      // if the comment had a parent id.
+      .then(() => user.findByUsername(req.user.username))
+      .then(() => {
+        user.set('num_comments', user.data.num_comments - 1);
+        return user.update();
+      })
+      // Find all post entries where the comment appears.
+      .then(() => new Post().findById(postid))
+      .then(posts => {
+        const promises = [];
+
+        for (let i = 0; i < posts.length; i += 1) {
+          const post = new Post(posts[i]);
+          post.set('comment_count', posts[i].comment_count - 1);
+          promises.push(post.update());
+        }
+
+        return Promise.all(promises);
+      })
+      .then(() => {
+        if (comment.parentid === 'none') {
+          return Promise.resolve();
+        }
+
+        return parentComment.findById(comment.parentid);
+      })
+      .then(() => {
+        parentComment.set('replies', parentComment.data.replies - 1);
+        return parentComment.update();
       })
       .then(() => success.OK(res))
       .catch(err => {

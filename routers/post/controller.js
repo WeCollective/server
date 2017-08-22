@@ -117,7 +117,7 @@ const self = module.exports = {
       return error.BadRequest(res, 'Missing postid');
     }
 
-    self.getOneComment(commentid, req)
+    return self.getOneComment(commentid, req)
       .then(foundComment => {
         comment = foundComment;
 

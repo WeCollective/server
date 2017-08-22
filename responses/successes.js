@@ -12,7 +12,9 @@
 module.exports.OK = (res, data) => {
   res.statusCode = 200;
   
-  let success = { message: 'Success' };
+  const success = {
+    message: 'Success',
+  };
   
   if (data !== undefined) {
     success.data = data;
@@ -32,6 +34,8 @@ module.exports.OK = (res, data) => {
  */
 module.exports.Created = res => {
   res.statusCode = 201;
-  const success = { message: `The request has been fulfilled and resulted in a new resource being created` };
+  const success = {
+    message: `The request has been fulfilled and resulted in a new resource being created`,
+  };
   res.send(success);
 };

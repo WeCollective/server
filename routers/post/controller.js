@@ -133,7 +133,8 @@ const self = module.exports = {
         if (comment.replies === 0) {
           return commentdata
             .delete()
-            .then(() => new Comment().delete({ id: comment.id }));
+            .then(() => new Comment().delete({ id: comment.id }))
+            .catch(err => Promise.reject(err));
         }
 
         // Removing the comment would cut off the replies, we don't want that.
@@ -169,6 +170,10 @@ const self = module.exports = {
         return parentComment.findById(comment.parentid);
       })
       .then(() => {
+        if (comment.parentid === 'none') {
+          return Promise.resolve();
+        }
+
         parentComment.set('replies', parentComment.data.replies - 1);
         return parentComment.update();
       })

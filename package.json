@@ -8,7 +8,8 @@
     "deploy:production": "eb deploy api-prod --profile weco-iam",
     "deploy:test": "eb deploy api-prod-test --profile weco-iam",
     "test": "mocha tests/test.js",
-    "start": "node server.js"
+    "start-node": "node server.js",
+    "start": "grunt --force"
   },
   "repository": {
     "type": "git",

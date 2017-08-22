@@ -774,7 +774,7 @@ const self = module.exports = {
             username,
           },
           date,
-          id: `${data.author}-${time}`,
+          id: `${data.author}-${date}`,
           type: NotificationTypes.COMMENT,
           unread: true,
           user: data.author,

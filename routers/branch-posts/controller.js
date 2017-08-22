@@ -178,18 +178,14 @@ module.exports = {
 
         const promises = [];
 
-        posts.forEach((post, index) => {
-          promises.push(new Promise((resolve, reject) => {
-            PostCtrl
-              .getOnePost(post.id, req)
-              .then(post => {
-                // Extend object so we don't delete the flag properties.
-                Object.assign(posts[index], post);
-                return resolve();
-              })
-              .catch(reject);
-          }));
-        });
+        posts.forEach((post, index) => promises.push(new Promise((resolve, reject) => PostCtrl
+          .getOnePost(post.id, req)
+          .then(post => {
+            // Extend object so we don't delete the flag properties.
+            Object.assign(posts[index], post);
+            return resolve();
+          })
+          .catch(err => reject()))));
 
         return Promise.all(promises);
       })

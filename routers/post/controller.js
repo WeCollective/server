@@ -142,14 +142,14 @@ const self = module.exports = {
         commentdata.set('text', '[Comment removed by user]');
         return commentdata.update();
       })
-      // Update counters. Decrease total user comments, post comments, and replies
-      // if the comment had a parent id.
+      // Update counters.
+      // Decrease total user comments.
       .then(() => user.findByUsername(req.user.username))
       .then(() => {
         user.set('num_comments', user.data.num_comments - 1);
         return user.update();
       })
-      // Find all post entries where the comment appears.
+      // Find all post entries where the comment appears and decrease their comment count.
       .then(() => new Post().findById(postid))
       .then(posts => {
         const promises = [];
@@ -169,6 +169,7 @@ const self = module.exports = {
 
         return parentComment.findById(comment.parentid);
       })
+      // Decrease the parent comment replies counter if a parent comment exists.
       .then(() => {
         if (comment.parentid === 'none') {
           return Promise.resolve();
@@ -176,6 +177,28 @@ const self = module.exports = {
 
         parentComment.set('replies', parentComment.data.replies - 1);
         return parentComment.update();
+      })
+      // Find all post entries to get the list of branches it is tagged to.
+      .then(() => new Post().findById(postid))
+      // Decrease post comments totals for each branch.
+      .then(posts => {
+        const promises = [];
+
+        for (let i = 0; i < posts.length; i += 1) {
+          promises.push(new Promise((resolve, reject) => {
+            const branch = new Branch();
+            return branch
+              .findById(posts[i].branchid)
+              .then(() => {
+                branch.set('post_comments', branch.data.post_comments - 1);
+                return branch.update();
+              })
+              .then(resolve)
+              .catch(reject);
+          }));
+        }
+
+        return Promise.all(promises);
       })
       .then(() => success.OK(res))
       .catch(err => {
@@ -198,7 +221,7 @@ const self = module.exports = {
       return error.BadRequest(res, 'Missing postid');
     }
 
-    self.getOnePost(postid, req)
+    return self.getOnePost(postid, req)
       .then(post => success.OK(res, post))
       .catch(err => {
         if (err) {
@@ -379,9 +402,7 @@ const self = module.exports = {
     let post;
 
     return new Promise((resolve, reject) => {
-      new Promise((resolve, reject) => {
-        return resolve(new Post().findById(id));
-      })
+      return new Post().findById(id)
         .then(posts => {
           if (!posts || posts.length === 0) {
             return Promise.reject({ code: 404 });
@@ -558,7 +579,7 @@ const self = module.exports = {
           title: req.body.title,
         });
 
-        const invalids = newPostData.validate();
+        const invalids = newPostData.validate(undefined, req.body.type);
         if (invalids.length > 0) {
           return Promise.reject({
             code: 400,

@@ -45,7 +45,7 @@ PostData.prototype.findById = function (id) {
 
 // Validate the properties specified in 'properties' on the PostData object,
 // returning an array of any invalid ones
-PostData.prototype.validate = function (properties) {
+PostData.prototype.validate = function (properties, postType) {
   if (!properties || properties.length === 0) {
     properties = [
       'id',
@@ -77,7 +77,8 @@ PostData.prototype.validate = function (properties) {
   }
 
   if (properties.includes('text')) {
-    if (!this.data.text || this.data.text.length < 1 || this.data.text.length > 20000) {
+    if ((postType !== 'poll' && (!this.data.text || this.data.text.length < 1)) ||
+      (this.data.text && this.data.text.length > 20000)) {
       invalids.push('text');
     }
   }

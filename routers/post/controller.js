@@ -614,30 +614,34 @@ const self = module.exports = {
   },
 
   postComment(req, res) {
-    if (!req.user || !req.user.username) {
+    const parentid = req.body.parentid;
+    const postid = req.params.postid;
+    const username = req.user ? req.user.username : false;
+
+    if (!username) {
       return error.Forbidden(res);
     }
 
-    if (!req.params.postid) {
+    if (!postid) {
       return error.BadRequest(res, 'Missing postid');
     }
 
     const date = new Date().getTime();
-    const id = `${req.user.username}-${date}`;
+    const id = `${username}-${date}`;
     const comment = new Comment({
       date,
       down: 0,
       id,
       individual: 0,
-      parentid: req.body.parentid,
-      postid: req.params.postid,
+      parentid,
+      postid,
       rank: 0,
       replies: 0,
       up: 0,
     });
 
     const commentdata = new CommentData({
-      creator: req.user.username,
+      creator: username,
       date,
       edited: false,
       id,
@@ -660,34 +664,37 @@ const self = module.exports = {
     // the post entries (one for each branch) this comment belongs to
     let commentPosts;
 
-    new Post()
-      .findById(req.params.postid, 0)
+    return new Post()
+      .findById(postid, 0)
       .then(posts => {
         if (!posts || posts.length === 0) {
-          return error.NotFound(res);
+          return Promise.reject();
         }
 
         commentPosts = posts;
 
         // if this is a root comment, continue
-        if (req.body.parentid === 'none') {
+        if (parentid === 'none') {
           return Promise.resolve();
         }
 
         // otherwise, ensure the specified parent comment exists
-        return parent.findById(req.body.parentid);
+        return parent.findById(parentid);
       })
       .then(() => {
         // Parent comment must belong to this post.
-        if (req.body.parentid !== 'none' && parent.data.postid !== req.params.postid) {
-          return error.BadRequest(res, 'Parent comment does not belong to the same post');
+        if (parentid !== 'none' && parent.data.postid !== postid) {
+          return Promise.reject({
+            code: 400,
+            message: 'Parent comment does not belong to the same post',
+          });
         }
 
         return comment.save();
       })
       .then(() => commentdata.save())
       .then(() => {
-        if (req.body.parentid === 'none') {
+        if (parentid === 'none') {
           return Promise.resolve();
         }
 
@@ -707,7 +714,7 @@ const self = module.exports = {
         return Promise.all(promises);
       })
       // find all post entries to get the list of branches it is tagged to
-      .then(() => new Post().findById(req.params.postid))
+      .then(() => new Post().findById(postid))
       .then(posts => {
         // increment the post comments count on each branch object
         // the post appears in
@@ -729,21 +736,20 @@ const self = module.exports = {
 
         return Promise.all(promises);
       })
-      // notify the post or comment author that a comment has been
-      // posted on their content
-      // get the username of the post or comment author
-      // fetch the id of a valid branch which the post appears in
+      // Notify the post or comment author that a comment has been posted
+      // on their content. If the comment is a reply to someone, we will
+      // notify the comment author. Otherwise, the comment is a root comment
+      // and we will notify the post author.
       .then(() => new Post()
-        .findById(req.params.postid)
+        .findById(postid)
+        // Get the id of a branch where the post appears. Take the first branch
+        // this post appears in (there are many) for the purposes of viewing the
+        // notification. (todo WHY?)
         .then(posts => {
-          // take the first branch this post appears in (there are many)
-          // for the purposes of viewing the notification
           const branchid = posts[0].branchid;
-          // root comment, get post author
-          // comment reply, get parent comment author
-          const model = req.body.parentid === 'none' ? new PostData() : new CommentData();
+          const model = parentid === 'none' ? new PostData() : new CommentData();
           return model
-            .findById(req.body.parentid === 'none' ? req.params.postid : req.body.parentid)
+            .findById(parentid === 'none' ? postid : parentid)
             .then(() => Promise.resolve({
               author: model.data.creator,
               branchid,
@@ -753,21 +759,21 @@ const self = module.exports = {
       )
       // Notify the author that their content has been interacted with.
       .then(data => {
-        // Skip if interacting with our own content.
-        if (req.user.username === data.author) {
+        // Skip if interacting with our own content or if we are replying
+        // to a deleted comment.
+        if (username === data.author || (parentid !== 'none' && data.author === 'N/A')) {
           return Promise.resolve();
         }
 
-        const time = new Date().getTime();
         const notification = new Notification({
           data: {
             branchid: data.branchid,
             commentid: id,
-            parentid: req.body.parentid,
-            postid: req.params.postid,
-            username: req.user.username,
+            parentid,
+            postid,
+            username,
           },
-          date: time,
+          date,
           id: `${data.author}-${time}`,
           type: NotificationTypes.COMMENT,
           unread: true,
@@ -777,12 +783,15 @@ const self = module.exports = {
         const invalids = notification.validate();
         if (invalids.length > 0) {
           console.error('Error creating notification. Invalids: ', invalids);
-          return error.InternalServerError(res);
+          return Promise.reject({
+            code: 500,
+            message: `Invalid ${invalids[0]}`,
+          });
         }
 
         return notification.save(req.sessionID);
       })
-      .then(() => user.findByUsername(req.user.username))
+      .then(() => user.findByUsername(username))
       .then(() => {
         user.set('num_comments', user.data.num_comments + 1);
         return user.update();

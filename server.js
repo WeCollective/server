@@ -17,16 +17,13 @@ require('dotenv').config();                        // load any environment varia
 const express = require('express');                // call express
 const app = express();                             // define our app using express
 const helmet = require('helmet');                  // protect against common web vulnerabilities
+const bearerToken = require('express-bearer-token');
 const bodyParser = require('body-parser');         // reading request bodies
 const cookieParser = require('cookie-parser');     // reading cookies
-let passport = require('passport');                // authentication
-const session = require('express-session');        // session middleware
-const DynamoDBStore = require('connect-dynamodb')({ session }); // dynamodb session store
-const db = require('./config/database');           // database config vars
 
 // DISABLE LOGGING IF IN TEST MODE
 if (process.env.NODE_ENV === 'test') {
-  console.error = function () {};
+  console.error = () => {};
 }
 
 const port = process.env.PORT || 8080;
@@ -76,30 +73,11 @@ app.use((req, res, next) => {
   next();
 });
 
-// AUTHENTICATION AND SESSION MANAGEMENT
-const options = {
-  table: db.Table.Sessions,
-  AWSConfigJSON: {
-    credentials: {
-      accessKeyId: process.env.AWS_ACCESS_KEY_ID_WECO_API,
-      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY_WECO_API
-    },
-    logger: process.env.NODE_ENV === 'development' ? process.stdout : undefined,
-    region: 'eu-west-1',
-    sslEnabled: true,
-  },
-  reapInterval: 600000  // clean up expired sessions every 10 mins
-};
+// AUTHENTICATION AND JWT MANAGEMENT
+app.use(bearerToken());
 
-app.use(session({
-  resave: true,
-  saveUninitialized: false,
-  secret: process.env.SESSION_SECRET,
-  store: new DynamoDBStore(options),
-}));
-passport = require('./config/passport')(passport);
-app.use(passport.initialize());
-app.use(passport.session());
+const auth = require('./config/passport')();
+app.use(auth.initialize());
 
 // INITIALISE SOCKET.IO FOR EACH NAMESPACE
 const server = require('http').Server(app);
@@ -116,7 +94,7 @@ io.notifications.on('connection', socket => {
 });
 
 // THE API ROUTES
-const apiRouter = require('./routers/router')(app, passport);
+const apiRouter = require('./routers/router')(app);
 app.use('/', apiRouter);
 
 // SERVE THE DOCS ON THE BASE ROUTE
@@ -124,7 +102,7 @@ app.use('/docs', express.static(`${__dirname}/docs`));
 
 // START THE SERVER
 server.listen(port);
-console.log(`Magic happens on port  ${port}`);
+console.log(`Magic happens on port ${port}`);
 
 // export app for testing
 module.exports = server;

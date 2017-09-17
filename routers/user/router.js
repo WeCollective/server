@@ -5,9 +5,10 @@ const router = express.Router();
 
 const ACL = require('../../config/acl');
 const Constant = require('../../models/constant');
+const passport = require('../../config/passport')();
 const success = require('../../responses/successes');
 
-module.exports = (app, passport) => {
+module.exports = app => {
   const controller = require('./controller');
 
   /**
@@ -29,7 +30,7 @@ module.exports = (app, passport) => {
   router.route('/')
     .post((req, res, next) => {
       // local-signup with override of done() method to access info object from passport strategy
-      passport.authenticate('local-signup', (err, user, info) => {
+      passport.authenticate(passport.authenticate('jwt'), 'local-signup', (err, user, info) => {
         if (err) {
           return next(err);
         }
@@ -83,6 +84,11 @@ module.exports = (app, passport) => {
           return res.status(info.status).json({ message: info.message });
         }
 
+        return success.OK(res, user.jwt);
+        /*
+
+        console.log(req.logIn);
+
         // manually log in user to establish session
         req.logIn(user, err => {
           if (err) {
@@ -91,6 +97,7 @@ module.exports = (app, passport) => {
 
           return success.OK(res);
         });
+        */
       })(req, res, next);
     });
 
@@ -105,7 +112,7 @@ module.exports = (app, passport) => {
    * @apiUse InternalServerError
    */
   router.route('/logout')
-    .get((req, res, next) => {
+    .get(passport.authenticate('jwt'), (req, res, next) => {
       req.logout();
       return success.OK(res);
     });
@@ -140,7 +147,8 @@ module.exports = (app, passport) => {
      * @apiUse InternalServerError
      * @apiUse NotFound
      */
-    .get(ACL.validateRole(ACL.Roles.AuthenticatedUser), ACL.attachRole(ACL.Roles.Self), controller.get)
+    .get(passport.authenticate('jwt'), ACL.validateRole(ACL.Roles.AuthenticatedUser),
+      ACL.attachRole(ACL.Roles.Self), controller.get)
     /**
      * @api {delete} /user/me Delete Self
      * @apiName Delete Self
@@ -154,7 +162,8 @@ module.exports = (app, passport) => {
      * @apiUse InternalServerError
      * @apiUse NotFound
      */
-    .delete(ACL.validateRole(ACL.Roles.AuthenticatedUser), ACL.attachRole(ACL.Roles.Self), controller.delete)
+    .delete(passport.authenticate('jwt'), ACL.validateRole(ACL.Roles.AuthenticatedUser),
+      ACL.attachRole(ACL.Roles.Self), controller.delete)
     /**
      * @api {put} /user/me Update Self
      * @apiName Update Self
@@ -171,7 +180,8 @@ module.exports = (app, passport) => {
      * @apiUse BadRequest
      * @apiUse InternalServerError
      */
-    .put(ACL.validateRole(ACL.Roles.AuthenticatedUser), ACL.attachRole(ACL.Roles.Self), controller.put);
+    .put(passport.authenticate('jwt'), ACL.validateRole(ACL.Roles.AuthenticatedUser),
+      ACL.attachRole(ACL.Roles.Self), controller.put);
 
   router.route('/:username')
     /**
@@ -206,7 +216,7 @@ module.exports = (app, passport) => {
      * @apiUse InternalServerError
      * @apiUse NotFound
      */
-    .get((req, res) => {
+    .get(passport.authenticate('jwt'), (req, res) => {
       if (req.isAuthenticated() && req.user) {
         if (req.user.username === req.params.username) {
           ACL.attachRole(ACL.Roles.Self)(req, res);
@@ -243,9 +253,8 @@ module.exports = (app, passport) => {
      * @apiUse Forbidden
      * @apiUse InternalServerError
      */
-    .get(ACL.validateRole(ACL.Roles.AuthenticatedUser), ACL.attachRole(ACL.Roles.Self), (req, res) => {
-      controller.getPictureUploadUrl(req, res, 'picture');
-    });
+    .get(passport.authenticate('jwt'), ACL.validateRole(ACL.Roles.AuthenticatedUser),
+      ACL.attachRole(ACL.Roles.Self), (req, res) => controller.getPictureUploadUrl(req, res, 'picture'));
 
   router.route('/me/cover-upload-url')
     /**
@@ -267,9 +276,8 @@ module.exports = (app, passport) => {
      * @apiUse Forbidden
      * @apiUse InternalServerError
      */
-    .get(ACL.validateRole(ACL.Roles.AuthenticatedUser), ACL.attachRole(ACL.Roles.Self), (req, res) => {
-      controller.getPictureUploadUrl(req, res, 'cover');
-    });
+    .get(passport.authenticate('jwt'), ACL.validateRole(ACL.Roles.AuthenticatedUser),
+      ACL.attachRole(ACL.Roles.Self), (req, res) => controller.getPictureUploadUrl(req, res, 'cover'));
 
   router.route('/me/picture')
     /**
@@ -291,9 +299,8 @@ module.exports = (app, passport) => {
      * @apiUse Forbidden
      * @apiUse InternalServerError
      */
-    .get(ACL.validateRole(ACL.Roles.AuthenticatedUser), ACL.attachRole(ACL.Roles.Self), (req, res) => {
-      controller.getPicture(req, res, 'picture', false);
-    });
+    .get(passport.authenticate('jwt'), ACL.validateRole(ACL.Roles.AuthenticatedUser),
+      ACL.attachRole(ACL.Roles.Self), (req, res) => controller.getPicture(req, res, 'picture', false));
 
   router.route('/me/picture-thumb')
     /**
@@ -315,9 +322,8 @@ module.exports = (app, passport) => {
      * @apiUse Forbidden
      * @apiUse InternalServerError
      */
-    .get(ACL.validateRole(ACL.Roles.AuthenticatedUser), ACL.attachRole(ACL.Roles.Self), (req, res) => {
-      controller.getPicture(req, res, 'picture', true);
-    });
+    .get(passport.authenticate('jwt'), ACL.validateRole(ACL.Roles.AuthenticatedUser),
+      ACL.attachRole(ACL.Roles.Self), (req, res) => controller.getPicture(req, res, 'picture', true));
 
   router.route('/me/cover')
     /**
@@ -339,9 +345,8 @@ module.exports = (app, passport) => {
      * @apiUse Forbidden
      * @apiUse InternalServerError
      */
-    .get(ACL.validateRole(ACL.Roles.AuthenticatedUser), ACL.attachRole(ACL.Roles.Self), (req, res) => {
-      controller.getPicture(req, res, 'cover', false);
-    });
+    .get(passport.authenticate('jwt'), ACL.validateRole(ACL.Roles.AuthenticatedUser),
+      ACL.attachRole(ACL.Roles.Self), (req, res) => controller.getPicture(req, res, 'cover', false));
 
   router.route('/me/cover-thumb')
     /**
@@ -363,9 +368,8 @@ module.exports = (app, passport) => {
      * @apiUse Forbidden
      * @apiUse InternalServerError
      */
-    .get(ACL.validateRole(ACL.Roles.AuthenticatedUser), ACL.attachRole(ACL.Roles.Self), (req, res) => {
-      controller.getPicture(req, res, 'cover', true);
-    });
+    .get(passport.authenticate('jwt'), ACL.validateRole(ACL.Roles.AuthenticatedUser),
+      ACL.attachRole(ACL.Roles.Self), (req, res) => controller.getPicture(req, res, 'cover', true));
 
   router.route('/:username/picture')
     /**
@@ -390,7 +394,7 @@ module.exports = (app, passport) => {
      * @apiUse Forbidden
      * @apiUse InternalServerError
      */
-    .get((req, res) => {
+    .get(passport.authenticate('jwt'), (req, res) => {
       if (req.isAuthenticated() && req.user) {
         if (req.user.username === req.params.username) {
           ACL.attachRole(ACL.Roles.Self)(req, res);
@@ -430,7 +434,7 @@ module.exports = (app, passport) => {
      * @apiUse Forbidden
      * @apiUse InternalServerError
      */
-    .get((req, res) => {
+    .get(passport.authenticate('jwt'), (req, res) => {
       if (req.isAuthenticated() && req.user) {
         if (req.user.username === req.params.username) {
           ACL.attachRole(ACL.Roles.Self)(req, res);
@@ -470,7 +474,7 @@ module.exports = (app, passport) => {
      * @apiUse Forbidden
      * @apiUse InternalServerError
      */
-    .get((req, res) => {
+    .get(passport.authenticate('jwt'), (req, res) => {
       if (req.isAuthenticated() && req.user) {
         if (req.user.username === req.params.username) {
           ACL.attachRole(ACL.Roles.Self)(req, res);
@@ -510,7 +514,7 @@ module.exports = (app, passport) => {
      * @apiUse Forbidden
      * @apiUse InternalServerError
      */
-    .get((req, res) => {
+    .get(passport.authenticate('jwt'), (req, res) => {
       if (req.isAuthenticated() && req.user) {
         if (req.user.username === req.params.username) {
           ACL.attachRole(ACL.Roles.Self)(req, res);
@@ -552,9 +556,9 @@ module.exports = (app, passport) => {
      * @apiUse InternalServerError
      * @apiUse NotFound
      */
-    .get(ACL.validateRole(ACL.Roles.AuthenticatedUser), (req, res, next) => {
-      ACL.validateRole(ACL.Roles.Self, req.params.username)(req, res, next);
-    }, controller.getNotifications)
+    .get(passport.authenticate('jwt'), ACL.validateRole(ACL.Roles.AuthenticatedUser),
+      (req, res, next) => ACL.validateRole(ACL.Roles.Self, req.params.username)(req, res, next),
+      controller.getNotifications)
 
     /**
      * @api {put} /:username/notifications Subscribe to Notifications
@@ -572,9 +576,9 @@ module.exports = (app, passport) => {
      * @apiUse InternalServerError
      * @apiUse NotFound
      */
-    .put(ACL.validateRole(ACL.Roles.AuthenticatedUser), (req, res, next) => {
-      ACL.validateRole(ACL.Roles.Self, req.params.username)(req, res, next);
-    }, controller.subscribeToNotifications)
+    .put(passport.authenticate('jwt'), ACL.validateRole(ACL.Roles.AuthenticatedUser),
+      (req, res, next) => ACL.validateRole(ACL.Roles.Self, req.params.username)(req, res, next),
+      controller.subscribeToNotifications)
 
     /**
      * @api {delete} /:username/notifications Unsubscribe from Notifications
@@ -591,7 +595,8 @@ module.exports = (app, passport) => {
      * @apiUse InternalServerError
      * @apiUse NotFound
      */
-    .delete(ACL.validateRole(ACL.Roles.AuthenticatedUser), ACL.attachRole(ACL.Roles.Self), controller.unsubscribeFromNotifications);
+    .delete(passport.authenticate('jwt'), ACL.validateRole(ACL.Roles.AuthenticatedUser),
+      ACL.attachRole(ACL.Roles.Self), controller.unsubscribeFromNotifications);
 
   router.route('/:username/notifications/:notificationid')
     /**
@@ -612,9 +617,9 @@ module.exports = (app, passport) => {
      * @apiUse InternalServerError
      * @apiUse NotFound
      */
-    .put(ACL.validateRole(ACL.Roles.AuthenticatedUser), (req, res, next) => {
-      ACL.validateRole(ACL.Roles.Self, req.params.username)(req, res, next);
-    }, controller.putNotification);
+    .put(passport.authenticate('jwt'), ACL.validateRole(ACL.Roles.AuthenticatedUser),
+      (req, res, next) => ACL.validateRole(ACL.Roles.Self, req.params.username)(req, res, next),
+      controller.putNotification);
 
   router.route('/:username/reset-password')
     /**
@@ -631,7 +636,7 @@ module.exports = (app, passport) => {
      * @apiUse InternalServerError
      * @apiUse NotFound
      */
-    .get(ACL.attachRole(ACL.Roles.Guest), controller.sendResetPasswordLink);
+    .get(passport.authenticate('jwt'), ACL.attachRole(ACL.Roles.Guest), controller.sendResetPasswordLink);
 
   router.route('/:username/reset-password/:token')
     /**
@@ -652,7 +657,7 @@ module.exports = (app, passport) => {
      * @apiUse InternalServerError
      * @apiUse NotFound
      */
-    .post(ACL.attachRole(ACL.Roles.Guest), controller.resetPassword);
+    .post(passport.authenticate('jwt'), ACL.attachRole(ACL.Roles.Guest), controller.resetPassword);
 
   router.route('/:username/reverify')
     /**
@@ -670,7 +675,7 @@ module.exports = (app, passport) => {
      * @apiUse InternalServerError
      * @apiUse NotFound
      */
-    .get(ACL.attachRole(ACL.Roles.Guest), controller.resendVerification);
+    .get(passport.authenticate('jwt'), ACL.attachRole(ACL.Roles.Guest), controller.resendVerification);
   router.route('/:username/verify/:token')
     /**
      * @api {get} /:username/verify/:token Verify a user
@@ -687,7 +692,7 @@ module.exports = (app, passport) => {
      * @apiUse InternalServerError
      * @apiUse NotFound
      */
-    .get(ACL.attachRole(ACL.Roles.Guest), controller.verify);
+    .get(passport.authenticate('jwt'), ACL.attachRole(ACL.Roles.Guest), controller.verify);
 
   router.route('/:username/branches/followed')
     /**
@@ -705,7 +710,7 @@ module.exports = (app, passport) => {
      * @apiUse InternalServerError
      * @apiUse NotFound
      */
-    .get((req, res) => {
+    .get(passport.authenticate('jwt'), (req, res) => {
       if (req.isAuthenticated() && req.user) {
         if (req.user.username === req.params.username || req.params.username === 'me') {
           ACL.attachRole(ACL.Roles.Self)(req, res);
@@ -738,9 +743,9 @@ module.exports = (app, passport) => {
      * @apiUse InternalServerError
      * @apiUse NotFound
      */
-    .post(ACL.validateRole(ACL.Roles.AuthenticatedUser), (req, res, next) => {
-      ACL.validateRole(ACL.Roles.Self, req.params.username)(req, res, next);
-    }, controller.followBranch)
+    .post(passport.authenticate('jwt'), ACL.validateRole(ACL.Roles.AuthenticatedUser),
+      (req, res, next) => ACL.validateRole(ACL.Roles.Self, req.params.username)(req, res, next),
+      controller.followBranch)
     /**
      * @api {delete} /:username/branches/followed Unfollow a branch
      * @apiName Unfollow a branch
@@ -758,9 +763,9 @@ module.exports = (app, passport) => {
      * @apiUse InternalServerError
      * @apiUse NotFound
      */
-    .delete(ACL.validateRole(ACL.Roles.AuthenticatedUser), (req, res, next) => {
-      ACL.validateRole(ACL.Roles.Self, req.params.username)(req, res, next);
-    }, controller.unfollowBranch);
+    .delete(passport.authenticate('jwt'), ACL.validateRole(ACL.Roles.AuthenticatedUser),
+      (req, res, next) => ACL.validateRole(ACL.Roles.Self, req.params.username)(req, res, next),
+      controller.unfollowBranch);
 
   return router;
 };

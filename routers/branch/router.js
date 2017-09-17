@@ -4,7 +4,7 @@ const express = require('express');
 const router = express.Router();
 const ACL = require('../../config/acl');
 
-module.exports = (app, passport) => {
+module.exports = app => {
   const controller = require('./controller');
 
   router.route('/')

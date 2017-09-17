@@ -11,7 +11,7 @@ const http = require('http');
 const https = require('https');
 const url = require('url');
 
-module.exports = (app, passport) => {
+module.exports = app => {
   const version = '/v1';
 
   // Route used to proxy resources on insecure endpoints through
@@ -59,14 +59,14 @@ module.exports = (app, passport) => {
     });
   });
 
-  const branchModsRouter = require('./mods/router')(app, passport);
-  const branchPostsRouter = require('./branch-posts/router')(app, passport);
-  const branchRouter = require('./branch/router')(app, passport);
-  const branchSubbranchesRouter = require('./requests/router')(app, passport);
-  const constantRouter = require('./constant/router')(app, passport);
-  const pollRouter = require('./poll/router')(app, passport);
-  const postRouter = require('./post/router')(app, passport);
-  const userRouter = require('./user/router')(app, passport);
+  const branchModsRouter = require('./mods/router')(app);
+  const branchPostsRouter = require('./branch-posts/router')(app);
+  const branchRouter = require('./branch/router')(app);
+  const branchSubbranchesRouter = require('./requests/router')(app);
+  const constantRouter = require('./constant/router')(app);
+  const pollRouter = require('./poll/router')(app);
+  const postRouter = require('./post/router')(app);
+  const userRouter = require('./user/router')(app);
 
   app.use(`${version}/branch`, branchRouter);
   app.use(`${version}/branch/:branchid/mods`, branchModsRouter);

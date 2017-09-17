@@ -111,6 +111,8 @@ Notification.prototype.save = function (sessionId) {
 
   return new Promise((resolve, reject) => {
     // Fetch the session for the user given by the sessionId.
+    // todo
+    /*
     if (sessionId) {
       aws.dbClient.get({
         Key: {
@@ -130,6 +132,7 @@ Notification.prototype.save = function (sessionId) {
         io.notifications.to(data.Item.socketID).emit('notification', null);
       });
     }
+    */
 
     aws.dbClient.put({
       Item: self.data,

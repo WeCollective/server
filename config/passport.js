@@ -6,11 +6,17 @@
  * Visit http://passportjs.org/docs to learn how the Strategies work.
  */
 const auth = require('./auth');
+const ExtractJwt = require('passport-jwt').ExtractJwt;
+const jwt = require('jwt-simple');
+const JwtConfig = require('./jwt');
 const LocalStrategy = require('passport-local').Strategy;
 const mailer = require('./mailer');
+const JwtStrategy = require('passport-jwt').Strategy;
+const passport = require('passport');
 const User = require('../models/user.model');
 
-module.exports = passport => {
+module.exports = () => {
+  /* Potentially legacy */
   passport.serializeUser((user, done) => done(null, user.username));
 
   passport.deserializeUser((username, done) => {
@@ -20,10 +26,47 @@ module.exports = passport => {
       .then(() => done(null, user.data))
       .catch(() => done(true));
   });
+  /* END Potentially legacy */
 
-  passport.use('LocalSignIn', new LocalStrategy({
+  // audience
+  // issuer
+  passport.use(new JwtStrategy({
+    jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
     passReqToCallback: true,
-  }, (req, username, password, done) => process.nextTick(() => {
+    secretOrKey: JwtConfig.jwtSecret,
+  }, (req, payload, done) => {
+    let isAuthenticated = false;
+
+    req.isAuthenticated = () => isAuthenticated;
+
+    if (typeof payload === 'object' && payload.username) {
+      const user = new User();
+
+      return user.findByUsername(payload.username)
+        .then(() => {
+          if (!user.data.verified) {
+            return Promise.reject('User account not verified');
+          }
+
+          isAuthenticated = true;
+          req.user = user.data;
+
+          return done(null, user.data);
+        })
+        .catch(err => {
+          console.log(err);
+          return done(err, false);
+        });
+    }
+
+    if (req.token) {
+      return done('Invalid token', false);
+    }
+
+    return done(null, false);
+  }));
+
+  passport.use('LocalSignIn', new LocalStrategy((username, password, done) => process.nextTick(() => {
     const user = new User();
 
     return user.findByUsername(username)
@@ -34,7 +77,13 @@ module.exports = passport => {
 
         return auth.compare(password, user.data.password);
       })
-      .then(() => done(null, user.data))
+      .then(() => {
+        const payload = {
+          username: user.data.username,
+        };
+        user.data.jwt = jwt.encode(payload, JwtConfig.jwtSecret);
+        return done(null, user.data);
+      })
       .catch((err, message, status) => {
         if (err) {
           console.error('Error logging in:', err);
@@ -48,9 +97,7 @@ module.exports = passport => {
       });
   })));
 
-  passport.use('LocalSignUp', new LocalStrategy({
-    passReqToCallback: true,
-  }, (req, username, password, done) => process.nextTick(() => {
+  passport.use('LocalSignUp', new LocalStrategy((req, username, password, done) => process.nextTick(() => {
     const user = new User();
     username = username.toLowerCase();
 
@@ -151,5 +198,11 @@ module.exports = passport => {
   passport._strategies['local-login']  = passport._strategies.LocalSignIn;
   passport._strategies['local-signup'] = passport._strategies.LocalSignUp;
 
-  return passport;
+  // Used to authenticate routes with JWT.
+  // passport.ACL = () => passport.authenticate('jwt', JwtConfig.jwtSession);
+
+  return {
+    authenticate: (strategy, callback) => passport.authenticate(strategy, callback || JwtConfig.jwtSession),
+    initialize: () => passport.initialize(),
+  };
 };

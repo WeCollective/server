@@ -121,14 +121,6 @@ const Schema = {
     extension: null,
     id: null,
   },
-
-  Session: {
-    expires: null,
-    id: null,
-    sess: null,
-    socketID: null,
-    type: null,
-  },
   
   SubBranchRequest: {
     childid: null,
@@ -273,11 +265,6 @@ const Keys = {
     primary: 'id',
     sort: null,
   },
-
-  Sessions: {
-    primary: 'id',
-    sort: null,
-  },
   
   SubBranchRequests: {
     globalIndexes: ['parentid-date-index'],
@@ -326,7 +313,6 @@ const DynamoDBConfig = {
     Posts: 'Posts',
     PostData: 'PostData',
     PostImages: 'PostImages',
-    Sessions: 'Sessions',
     SubBranchRequests: 'SubBranchRequests',
     Tags: 'Tags',
     Users: 'Users',

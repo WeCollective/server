@@ -13,7 +13,7 @@ const success = require('../../responses/successes');
 const Branch = require('../../models/branch.model');
 const FollowedBranch = require('../../models/followed-branch.model');
 const Notification = require('../../models/notification.model');
-const Session = require('../../models/session.model');
+// const Session = require('../../models/session.model');
 const User = require('../../models/user.model');
 const UserImage = require('../../models/user-image.model');
 
@@ -410,7 +410,7 @@ module.exports = {
 
         req.body.unread = (req.body.unread === 'true');
         notification.set('unread', Boolean(req.body.unread));
-        return notification.save(req.sessionID);
+        return notification.save(); // req.sessionID
       })
       .then( _ => success.OK(res) )
       .catch( err => {
@@ -555,6 +555,8 @@ module.exports = {
     }
 
     // fetch user's session
+    // todo
+    /*
     const session = new Session();
     
     session.findById(`sess:${req.sessionID}`)
@@ -572,6 +574,7 @@ module.exports = {
 
         return error.NotFound(res);
       });
+    */
   },
 
   unfollowBranch (req, res) {
@@ -610,6 +613,7 @@ module.exports = {
     }
 
     // fetch user's session
+    /*
     const session = new Session();
     
     session.findById(`sess:${req.sessionID}`)
@@ -629,6 +633,7 @@ module.exports = {
 
         return error.NotFound(res);
       });
+    */
   },
 
   verify (req, res) {

@@ -5,7 +5,7 @@ const express = require('express');
 
 const router = express.Router({ mergeParams: true });
 
-module.exports = (app, passport) => {
+module.exports = app => {
   const controller = require('./controller');
 
   // get subbranch requests

@@ -424,11 +424,7 @@ const self = module.exports = {
             post.data = data;
             return Promise.resolve();
           })
-          .catch(err => {
-            console.log('IT IS ME! tadadadaaaaa');
-            console.log(post, idx, posts);
-            return reject(err);
-          });
+          .catch(reject);
       })
       // attach post image url to each post
       .then(() => Promise.resolve(new Promise(resolve => {
@@ -529,6 +525,27 @@ const self = module.exports = {
 
         return Promise.all(tagPromises);
       })
+      // Validate the post data first, so this method doesn't fail halfway through.
+      .then(() => {
+        const newPostData = new PostData({
+          creator: req.user.username,
+          id,
+          original_branches: JSON.stringify(req.body.branchids),
+          text: req.body.text,
+          title: req.body.title,
+        });
+
+        const invalids = newPostData.validate(undefined, req.body.type);
+        if (invalids.length > 0) {
+          return Promise.reject({
+            code: 400,
+            message: `Invalid ${invalids[0]}.`,
+          });
+        }
+
+        return newPostData.save();
+      })
+      // Now create the branch ids.
       .then(() => {
         const date = new Date().getTime();
         const promises = [];
@@ -565,25 +582,6 @@ const self = module.exports = {
         }
 
         return Promise.all(promises);
-      })
-      .then(() => {
-        const newPostData = new PostData({
-          creator: req.user.username,
-          id,
-          original_branches: JSON.stringify(req.body.branchids),
-          text: req.body.text,
-          title: req.body.title,
-        });
-
-        const invalids = newPostData.validate(undefined, req.body.type);
-        if (invalids.length > 0) {
-          return Promise.reject({
-            code: 400,
-            message: `Invalid ${invalids[0]}.`,
-          });
-        }
-
-        return newPostData.save();
       })
       // Increment the post counters on the branch objects
       .then(() => {

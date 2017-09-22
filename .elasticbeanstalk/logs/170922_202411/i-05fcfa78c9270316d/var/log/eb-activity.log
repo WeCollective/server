@@ -1,0 +1,1814 @@
+[2017-09-22T17:59:12.232Z] INFO  [2751]  - [Initialization] : Starting activity...
+[2017-09-22T17:59:12.232Z] INFO  [2751]  - [Initialization/AddonsBefore] : Starting activity...
+[2017-09-22T17:59:12.232Z] INFO  [2751]  - [Initialization/AddonsBefore/InstallCWLAgent] : Starting activity...
+[2017-09-22T17:59:12.232Z] INFO  [2751]  - [Initialization/AddonsBefore/InstallCWLAgent/01-install-cwl-agent.sh] : Starting activity...
+[2017-09-22T17:59:14.863Z] INFO  [2751]  - [Initialization/AddonsBefore/InstallCWLAgent/01-install-cwl-agent.sh] : Completed activity. Result:
+  + grep -iq 'Amazon Linux' /etc/issue
+  + yum install -y awslogs
+  Loaded plugins: priorities, update-motd, upgrade-helper
+  Repodata is over 2 weeks old. Install yum-cron? Or run: yum makecache fast
+  Resolving Dependencies
+  --> Running transaction check
+  ---> Package awslogs.noarch 0:1.1.2-1.10.amzn1 will be installed
+  --> Processing Dependency: aws-cli-plugin-cloudwatch-logs(python27) for package: awslogs-1.1.2-1.10.amzn1.noarch
+  --> Running transaction check
+  ---> Package aws-cli-plugin-cloudwatch-logs.noarch 0:1.3.3-1.15.amzn1 will be installed
+  --> Finished Dependency Resolution
+  
+  Dependencies Resolved
+  
+  ================================================================================
+   Package                          Arch     Version            Repository   Size
+  ================================================================================
+  Installing:
+   awslogs                          noarch   1.1.2-1.10.amzn1   amzn-main   8.8 k
+  Installing for dependencies:
+   aws-cli-plugin-cloudwatch-logs   noarch   1.3.3-1.15.amzn1   amzn-main    69 k
+  
+  Transaction Summary
+  ================================================================================
+  Install  1 Package (+1 Dependent package)
+  
+  Total download size: 78 k
+  Installed size: 240 k
+  Downloading packages:
+  --------------------------------------------------------------------------------
+  Total                                              333 kB/s |  78 kB  00:00     
+  Running transaction check
+  Running transaction test
+  Transaction test succeeded
+  Running transaction
+    Installing : aws-cli-plugin-cloudwatch-logs-1.3.3-1.15.amzn1.noarch       1/2 
+    Installing : awslogs-1.1.2-1.10.amzn1.noarch                              2/2 
+    Verifying  : awslogs-1.1.2-1.10.amzn1.noarch                              1/2 
+    Verifying  : aws-cli-plugin-cloudwatch-logs-1.3.3-1.15.amzn1.noarch       2/2 
+  
+  Installed:
+    awslogs.noarch 0:1.1.2-1.10.amzn1                                             
+  
+  Dependency Installed:
+    aws-cli-plugin-cloudwatch-logs.noarch 0:1.3.3-1.15.amzn1                      
+  
+  Complete!
+  + cat
+  ++ sed 's/.$//'
+  ++ curl 169.254.169.254/latest/meta-data/placement/availability-zone
+    % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                   Dload  Upload   Total   Spent    Left  Speed
+    0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0100    10  100    10    0     0   6954      0 --:--:-- --:--:-- --:--:-- 10000
+  + region=eu-west-1
+  + sed -i -e 's/region = us-east-1/region = eu-west-1/g' /etc/awslogs/awscli.conf
+  + /opt/elasticbeanstalk/bin/log-conf -n awslogs -l/var/log/awslogs.log
+[2017-09-22T17:59:14.863Z] INFO  [2751]  - [Initialization/AddonsBefore/InstallCWLAgent] : Completed activity. Result:
+  Successfully execute hooks in directory /opt/elasticbeanstalk/addons/logstreaming/hooks/install.
+[2017-09-22T17:59:14.863Z] INFO  [2751]  - [Initialization/AddonsBefore] : Completed activity.
+[2017-09-22T17:59:14.863Z] INFO  [2751]  - [Initialization/PreInitStage0] : Starting activity...
+[2017-09-22T17:59:14.863Z] INFO  [2751]  - [Initialization/PreInitStage0/DownloadSourceBundle] : Starting activity...
+[2017-09-22T17:59:15.239Z] INFO  [2751]  - [Initialization/PreInitStage0/DownloadSourceBundle] : Completed activity. Result:
+  [2017-09-22T17:59:14.968Z] INFO  [2813]  : Application version will be saved to /opt/elasticbeanstalk/deploy/appsource.
+  [2017-09-22T17:59:14.968Z] INFO  [2813]  : Using manifest cache with deployment ID 151 and serial 155.
+  [2017-09-22T17:59:14.968Z] INFO  [2813]  : Attempting to download application source bundle to: '/opt/elasticbeanstalk/deploy/appsource/source_bundle'.
+  [2017-09-22T17:59:14.968Z] INFO  [2813]  : Using computed s3 key.
+  [2017-09-22T17:59:15.089Z] INFO  [2813]  : Downloading from bucket 'elasticbeanstalk-eu-west-1-470576480462' with key 'resources/environments/e-yxqk2dspb5/_runtime/_versions/WECO/app-68b1-170922_174828' and version '' to '/opt/elasticbeanstalk/deploy/appsource/source_bundle'.
+  [2017-09-22T17:59:15.163Z] INFO  [2813]  : Size: 119391, ETag: "949aa3f76a676c21fa02120a9372233e", Metadata: {"environmentid"=>"e-yxqk2dspb5", "requestid"=>"91c47238-9fbf-11e7-9e65-17f29d65a69c"}.
+  [2017-09-22T17:59:15.225Z] INFO  [2813]  : Downloaded size: 119391.
+  [2017-09-22T17:59:15.225Z] INFO  [2813]  : Successfully downloaded to '/opt/elasticbeanstalk/deploy/appsource/source_bundle'.
+[2017-09-22T17:59:15.239Z] INFO  [2751]  - [Initialization/PreInitStage0/PreInitHook] : Starting activity...
+[2017-09-22T17:59:15.239Z] INFO  [2751]  - [Initialization/PreInitStage0/PreInitHook/01_install_xray_daemon.sh] : Starting activity...
+[2017-09-22T17:59:15.347Z] INFO  [2751]  - [Initialization/PreInitStage0/PreInitHook/01_install_xray_daemon.sh] : Completed activity. Result:
+  Executing: /bin/chown -R xray:xray /var/log/xray
+  
+[2017-09-22T17:59:15.347Z] INFO  [2751]  - [Initialization/PreInitStage0/PreInitHook/10nodejsuser.sh] : Starting activity...
+[2017-09-22T17:59:15.466Z] INFO  [2751]  - [Initialization/PreInitStage0/PreInitHook/10nodejsuser.sh] : Completed activity. Result:
+  ++ /opt/elasticbeanstalk/bin/get-config container -k app_user
+  + EB_APP_USER=nodejs
+  + id -u nodejs
+  id: nodejs: no such user
+  + useradd --system --user-group --home-dir /tmp nodejs -s /sbin/nologin
+[2017-09-22T17:59:15.466Z] INFO  [2751]  - [Initialization/PreInitStage0/PreInitHook/20packages.sh] : Starting activity...
+[2017-09-22T17:59:15.468Z] INFO  [2751]  - [Initialization/PreInitStage0/PreInitHook/20packages.sh] : Completed activity. Result:
+  + is_baked nodejs_packages
+  + [[ -f /etc/elasticbeanstalk/baking_manifest/nodejs_packages ]]
+  + true
+  + echo nodejs related packages have already been installed. Skipping installation.
+  nodejs related packages have already been installed. Skipping installation.
+[2017-09-22T17:59:15.468Z] INFO  [2751]  - [Initialization/PreInitStage0/PreInitHook/30directories.sh] : Starting activity...
+[2017-09-22T17:59:15.736Z] INFO  [2751]  - [Initialization/PreInitStage0/PreInitHook/30directories.sh] : Completed activity. Result:
+  ++ /opt/elasticbeanstalk/bin/get-config container -k nodejs_log_dir
+  + EB_NODE_LOG_DIR=/var/log/nodejs
+  ++ /opt/elasticbeanstalk/bin/get-config container -k app_user
+  + EB_APP_USER=nodejs
+  ++ /opt/elasticbeanstalk/bin/get-config container -k nodejs_install_dir
+  + EB_NODE_INSTALL_DIR=/opt/elasticbeanstalk/node-install
+  + mkdir -p /var/log/nodejs
+  + chown nodejs /var/log/nodejs
+  + mkdir -p /opt/elasticbeanstalk/node-install
+[2017-09-22T17:59:15.736Z] INFO  [2751]  - [Initialization/PreInitStage0/PreInitHook/40iptables.sh] : Starting activity...
+[2017-09-22T17:59:17.370Z] INFO  [2751]  - [Initialization/PreInitStage0/PreInitHook/40iptables.sh] : Completed activity. Result:
+  + /opt/elasticbeanstalk/containerfiles/ebnode.py --action iptables-install
+[2017-09-22T17:59:17.370Z] INFO  [2751]  - [Initialization/PreInitStage0/PreInitHook/50logs.sh] : Starting activity...
+[2017-09-22T17:59:17.583Z] INFO  [2751]  - [Initialization/PreInitStage0/PreInitHook/50logs.sh] : Completed activity. Result:
+  + /opt/elasticbeanstalk/bin/log-conf -n nodejs -l/var/log/nodejs/nodejs.log -f /opt/elasticbeanstalk/containerfiles/nodejs.logrotate.conf
+  + /opt/elasticbeanstalk/bin/log-conf -n npm -l/var/log/nodejs/npm-debug.log -t taillogs,systemtaillogs,bundlelogs
+  + /opt/elasticbeanstalk/bin/log-conf -nnginx '-l/var/log/nginx/*' -f /opt/elasticbeanstalk/containerfiles/nginx.logrotate.conf
+  + /opt/elasticbeanstalk/bin/log-conf -nhttpd '-l/var/log/httpd/*' -f /opt/elasticbeanstalk/containerfiles/httpd.logrotate.conf
+[2017-09-22T17:59:17.583Z] INFO  [2751]  - [Initialization/PreInitStage0/PreInitHook/60nginx.sh] : Starting activity...
+[2017-09-22T17:59:17.675Z] INFO  [2751]  - [Initialization/PreInitStage0/PreInitHook/60nginx.sh] : Completed activity. Result:
+  ++ /opt/elasticbeanstalk/bin/get-config container -k app_user
+  + EB_APP_USER=nodejs
+  + grep 'Elastic Beanstalk managed configuration file' /etc/nginx/nginx.conf
+  + cp /opt/elasticbeanstalk/containerfiles/nginx.conf /etc/nginx/nginx.conf
+  + rm -f /etc/logrotate.d/nginx
+[2017-09-22T17:59:17.675Z] INFO  [2751]  - [Initialization/PreInitStage0/PreInitHook/70apache_mod_reqtimeout.sh] : Starting activity...
+[2017-09-22T17:59:17.678Z] INFO  [2751]  - [Initialization/PreInitStage0/PreInitHook/70apache_mod_reqtimeout.sh] : Completed activity. Result:
+  + MOD_REQTIMEOUT_CONFIG=/etc/httpd/conf.d/mod_reqtimeout.conf
+  + '[' '!' -f /etc/httpd/conf.d/mod_reqtimeout.conf ']'
+  + cp /opt/elasticbeanstalk/containerfiles/mod_reqtimeout.conf /etc/httpd/conf.d/mod_reqtimeout.conf
+[2017-09-22T17:59:17.679Z] INFO  [2751]  - [Initialization/PreInitStage0/PreInitHook/70proxy_logging_dirs.sh] : Starting activity...
+[2017-09-22T17:59:17.683Z] INFO  [2751]  - [Initialization/PreInitStage0/PreInitHook/70proxy_logging_dirs.sh] : Completed activity. Result:
+  + mkdir -p /var/log/httpd
+  + chmod -R 755 /var/log/httpd
+  + '[' -d /etc/healthd ']'
+  + mkdir -p /var/log/nginx/healthd
+  + chown -R nginx:nginx /var/log/nginx/healthd
+  + mkdir -p /var/log/httpd/healthd
+[2017-09-22T17:59:17.683Z] INFO  [2751]  - [Initialization/PreInitStage0/PreInitHook/80httpd.sh] : Starting activity...
+[2017-09-22T17:59:17.685Z] INFO  [2751]  - [Initialization/PreInitStage0/PreInitHook/80httpd.sh] : Completed activity. Result:
+  + rm -f /etc/logrotate.d/httpd
+[2017-09-22T17:59:17.685Z] INFO  [2751]  - [Initialization/PreInitStage0/PreInitHook] : Completed activity. Result:
+  Successfully execute hooks in directory /opt/elasticbeanstalk/hooks/preinit.
+[2017-09-22T17:59:17.685Z] INFO  [2751]  - [Initialization/PreInitStage0] : Completed activity. Result:
+  Initialization - Command CMD-PreInit stage 0 completed
+[2017-09-22T17:59:17.685Z] INFO  [2751]  - [Initialization/AddonsAfter] : Starting activity...
+[2017-09-22T17:59:17.685Z] INFO  [2751]  - [Initialization/AddonsAfter] : Completed activity.
+[2017-09-22T17:59:17.685Z] INFO  [2751]  - [Initialization] : Completed activity. Result:
+  Initialization - Command CMD-PreInit succeeded
+[2017-09-22T17:59:17.864Z] INFO  [2983]  - [Application deployment app-68b1-170922_174828@151] : Starting activity...
+[2017-09-22T17:59:17.864Z] INFO  [2983]  - [Application deployment app-68b1-170922_174828@151/AddonsBefore] : Starting activity...
+[2017-09-22T17:59:17.864Z] INFO  [2983]  - [Application deployment app-68b1-170922_174828@151/AddonsBefore/ConfigCWLAgent] : Starting activity...
+[2017-09-22T17:59:17.864Z] INFO  [2983]  - [Application deployment app-68b1-170922_174828@151/AddonsBefore/ConfigCWLAgent/10-config.sh] : Starting activity...
+[2017-09-22T17:59:17.979Z] INFO  [2983]  - [Application deployment app-68b1-170922_174828@151/AddonsBefore/ConfigCWLAgent/10-config.sh] : Completed activity. Result:
+  Log streaming option setting is not specified, ignore cloudwatch logs setup.
+  
+  Disabled log streaming.
+[2017-09-22T17:59:17.980Z] INFO  [2983]  - [Application deployment app-68b1-170922_174828@151/AddonsBefore/ConfigCWLAgent] : Completed activity. Result:
+  Successfully execute hooks in directory /opt/elasticbeanstalk/addons/logstreaming/hooks/config.
+[2017-09-22T17:59:17.980Z] INFO  [2983]  - [Application deployment app-68b1-170922_174828@151/AddonsBefore] : Completed activity.
+[2017-09-22T17:59:17.980Z] INFO  [2983]  - [Application deployment app-68b1-170922_174828@151/StartupStage0] : Starting activity...
+[2017-09-22T17:59:17.980Z] INFO  [2983]  - [Application deployment app-68b1-170922_174828@151/StartupStage0/HealthdLogRotation] : Starting activity...
+[2017-09-22T17:59:17.984Z] INFO  [2983]  - [Application deployment app-68b1-170922_174828@151/StartupStage0/HealthdLogRotation] : Completed activity. Result:
+  ["/etc/cron.hourly/cron.logrotate.elasticbeanstalk.healthd.conf"]
+[2017-09-22T17:59:17.984Z] INFO  [2983]  - [Application deployment app-68b1-170922_174828@151/StartupStage0/HealthdHTTPDLogging] : Starting activity...
+[2017-09-22T17:59:17.984Z] INFO  [2983]  - [Application deployment app-68b1-170922_174828@151/StartupStage0/HealthdHTTPDLogging] : Completed activity.
+[2017-09-22T17:59:17.985Z] INFO  [2983]  - [Application deployment app-68b1-170922_174828@151/StartupStage0/HealthdNginxLogging] : Starting activity...
+[2017-09-22T17:59:17.985Z] INFO  [2983]  - [Application deployment app-68b1-170922_174828@151/StartupStage0/HealthdNginxLogging] : Completed activity.
+[2017-09-22T17:59:17.985Z] INFO  [2983]  - [Application deployment app-68b1-170922_174828@151/StartupStage0/EbExtensionPreBuild] : Starting activity...
+[2017-09-22T17:59:18.239Z] INFO  [2983]  - [Application deployment app-68b1-170922_174828@151/StartupStage0/EbExtensionPreBuild/Infra-EmbeddedPreBuild] : Starting activity...
+[2017-09-22T17:59:18.239Z] INFO  [2983]  - [Application deployment app-68b1-170922_174828@151/StartupStage0/EbExtensionPreBuild/Infra-EmbeddedPreBuild] : Completed activity.
+[2017-09-22T17:59:18.251Z] INFO  [2983]  - [Application deployment app-68b1-170922_174828@151/StartupStage0/EbExtensionPreBuild] : Completed activity.
+[2017-09-22T17:59:18.251Z] INFO  [2983]  - [Application deployment app-68b1-170922_174828@151/StartupStage0/AppDeployPreHook] : Starting activity...
+[2017-09-22T17:59:18.251Z] INFO  [2983]  - [Application deployment app-68b1-170922_174828@151/StartupStage0/AppDeployPreHook/01_configure_xray.sh] : Starting activity...
+[2017-09-22T17:59:18.354Z] INFO  [2983]  - [Application deployment app-68b1-170922_174828@151/StartupStage0/AppDeployPreHook/01_configure_xray.sh] : Completed activity.
+[2017-09-22T17:59:18.354Z] INFO  [2983]  - [Application deployment app-68b1-170922_174828@151/StartupStage0/AppDeployPreHook/10clean.sh] : Starting activity...
+[2017-09-22T17:59:18.444Z] INFO  [2983]  - [Application deployment app-68b1-170922_174828@151/StartupStage0/AppDeployPreHook/10clean.sh] : Completed activity. Result:
+  ++ /opt/elasticbeanstalk/bin/get-config container -k app_staging_dir
+  + EB_APP_STAGING_DIR=/tmp/deployment/application
+  + rm -rf /tmp/deployment/application
+  + mkdir -p /tmp/deployment/application
+[2017-09-22T17:59:18.444Z] INFO  [2983]  - [Application deployment app-68b1-170922_174828@151/StartupStage0/AppDeployPreHook/20unzip.sh] : Starting activity...
+[2017-09-22T17:59:18.644Z] INFO  [2983]  - [Application deployment app-68b1-170922_174828@151/StartupStage0/AppDeployPreHook/20unzip.sh] : Completed activity. Result:
+  ++ /opt/elasticbeanstalk/bin/get-config container -k app_staging_dir
+  + EB_APP_STAGING_DIR=/tmp/deployment/application
+  ++ /opt/elasticbeanstalk/bin/get-config container -k source_bundle
+  + EB_APP_SOURCE_BUNDLE=/opt/elasticbeanstalk/deploy/appsource/source_bundle
+  + /usr/bin/unzip -o -d /tmp/deployment/application /opt/elasticbeanstalk/deploy/appsource/source_bundle
+  Archive:  /opt/elasticbeanstalk/deploy/appsource/source_bundle
+  68b1d47722352b429661e234dfdfd9c5bdc0d8bf
+     creating: /tmp/deployment/application/.elasticbeanstalk/
+    inflating: /tmp/deployment/application/.elasticbeanstalk/config.yml  
+   extracting: /tmp/deployment/application/.gitignore  
+    inflating: /tmp/deployment/application/Gruntfile.js  
+    inflating: /tmp/deployment/application/README.md  
+    inflating: /tmp/deployment/application/apidoc.json  
+     creating: /tmp/deployment/application/config/
+    inflating: /tmp/deployment/application/config/acl.js  
+    inflating: /tmp/deployment/application/config/auth.js  
+    inflating: /tmp/deployment/application/config/aws.js  
+    inflating: /tmp/deployment/application/config/database.js  
+    inflating: /tmp/deployment/application/config/filestorage.js  
+    inflating: /tmp/deployment/application/config/io.js  
+    inflating: /tmp/deployment/application/config/jwt.js  
+    inflating: /tmp/deployment/application/config/mailer.js  
+    inflating: /tmp/deployment/application/config/notification-types.js  
+    inflating: /tmp/deployment/application/config/passport.js  
+     creating: /tmp/deployment/application/models/
+    inflating: /tmp/deployment/application/models/branch-image.model.js  
+    inflating: /tmp/deployment/application/models/branch.model.js  
+    inflating: /tmp/deployment/application/models/comment-data.model.js  
+    inflating: /tmp/deployment/application/models/comment.js  
+    inflating: /tmp/deployment/application/models/constant.js  
+    inflating: /tmp/deployment/application/models/flagged-post.model.js  
+    inflating: /tmp/deployment/application/models/followed-branch.model.js  
+    inflating: /tmp/deployment/application/models/mod-log-entry.model.js  
+    inflating: /tmp/deployment/application/models/mod.model.js  
+    inflating: /tmp/deployment/application/models/model.js  
+    inflating: /tmp/deployment/application/models/notification.model.js  
+    inflating: /tmp/deployment/application/models/poll-answer.model.js  
+    inflating: /tmp/deployment/application/models/post-data.model.js  
+    inflating: /tmp/deployment/application/models/post-image.model.js  
+    inflating: /tmp/deployment/application/models/post.model.js  
+    inflating: /tmp/deployment/application/models/session.model.js  
+    inflating: /tmp/deployment/application/models/subbranch-request.model.js  
+    inflating: /tmp/deployment/application/models/tag.model.js  
+    inflating: /tmp/deployment/application/models/user-image.model.js  
+    inflating: /tmp/deployment/application/models/user-vote.model.js  
+    inflating: /tmp/deployment/application/models/user.model.js  
+    inflating: /tmp/deployment/application/models/validate.js  
+    inflating: /tmp/deployment/application/package.json  
+     creating: /tmp/deployment/application/responses/
+    inflating: /tmp/deployment/application/responses/errors.js  
+    inflating: /tmp/deployment/application/responses/successes.js  
+     creating: /tmp/deployment/application/routers/
+     creating: /tmp/deployment/application/routers/branch-posts/
+    inflating: /tmp/deployment/application/routers/branch-posts/controller.js  
+    inflating: /tmp/deployment/application/routers/branch-posts/router.js  
+     creating: /tmp/deployment/application/routers/branch/
+    inflating: /tmp/deployment/application/routers/branch/controller.js  
+    inflating: /tmp/deployment/application/routers/branch/router.js  
+     creating: /tmp/deployment/application/routers/constant/
+    inflating: /tmp/deployment/application/routers/constant/controller.js  
+    inflating: /tmp/deployment/application/routers/constant/router.js  
+     creating: /tmp/deployment/application/routers/mods/
+    inflating: /tmp/deployment/application/routers/mods/controller.js  
+    inflating: /tmp/deployment/application/routers/mods/router.js  
+     creating: /tmp/deployment/application/routers/poll/
+    inflating: /tmp/deployment/application/routers/poll/controller.js  
+    inflating: /tmp/deployment/application/routers/poll/router.js  
+     creating: /tmp/deployment/application/routers/post/
+    inflating: /tmp/deployment/application/routers/post/controller.js  
+    inflating: /tmp/deployment/application/routers/post/router.js  
+     creating: /tmp/deployment/application/routers/requests/
+    inflating: /tmp/deployment/application/routers/requests/controller.js  
+    inflating: /tmp/deployment/application/routers/requests/router.js  
+    inflating: /tmp/deployment/application/routers/router.js  
+     creating: /tmp/deployment/application/routers/user/
+    inflating: /tmp/deployment/application/routers/user/controller.js  
+    inflating: /tmp/deployment/application/routers/user/router.js  
+    inflating: /tmp/deployment/application/server.js  
+     creating: /tmp/deployment/application/tests/
+    inflating: /tmp/deployment/application/tests/branch.test.js  
+    inflating: /tmp/deployment/application/tests/login.test.js  
+    inflating: /tmp/deployment/application/tests/post.test.js  
+    inflating: /tmp/deployment/application/tests/signup.test.js  
+    inflating: /tmp/deployment/application/tests/subbranch.test.js  
+    inflating: /tmp/deployment/application/tests/test.js  
+    inflating: /tmp/deployment/application/tests/user.test.js  
+    inflating: /tmp/deployment/application/yarn.lock  
+[2017-09-22T17:59:18.644Z] INFO  [2983]  - [Application deployment app-68b1-170922_174828@151/StartupStage0/AppDeployPreHook/30config_clean.sh] : Starting activity...
+[2017-09-22T17:59:18.735Z] INFO  [2983]  - [Application deployment app-68b1-170922_174828@151/StartupStage0/AppDeployPreHook/30config_clean.sh] : Completed activity. Result:
+  ++ /opt/elasticbeanstalk/bin/get-config container -k config_staging_dir
+  + EB_CONFIG_STAGING_DIR=/tmp/deployment/config
+  + rm -rf /tmp/deployment/config
+  + mkdir -p /tmp/deployment/config
+[2017-09-22T17:59:18.735Z] INFO  [2983]  - [Application deployment app-68b1-170922_174828@151/StartupStage0/AppDeployPreHook/40install_node.sh] : Starting activity...
+[2017-09-22T17:59:20.784Z] INFO  [2983]  - [Application deployment app-68b1-170922_174828@151/StartupStage0/AppDeployPreHook/40install_node.sh] : Completed activity. Result:
+  + /opt/elasticbeanstalk/containerfiles/ebnode.py --action node-install
+[2017-09-22T17:59:20.784Z] INFO  [2983]  - [Application deployment app-68b1-170922_174828@151/StartupStage0/AppDeployPreHook/50npm.sh] : Starting activity...
+[2017-09-22T17:59:40.437Z] INFO  [2983]  - [Application deployment app-68b1-170922_174828@151/StartupStage0/AppDeployPreHook/50npm.sh] : Completed activity. Result:
+  + /opt/elasticbeanstalk/containerfiles/ebnode.py --action npm-install
+  npm WARN deprecated sendgrid@4.10.0: Please see v6.X+ at https://www.npmjs.com/org/sendgrid
+  WECOAPI@1.0.0 /tmp/deployment/application
+  ├─┬ aws-sdk@2.121.0 
+  │ ├─┬ buffer@4.9.1 
+  │ │ ├── base64-js@1.2.1 
+  │ │ ├── ieee754@1.1.8 
+  │ │ └── isarray@1.0.0 
+  │ ├── crypto-browserify@1.0.9 
+  │ ├── events@1.1.1 
+  │ ├── jmespath@0.15.0 
+  │ ├── querystring@0.2.0 
+  │ ├── sax@1.2.1 
+  │ ├─┬ url@0.10.3 
+  │ │ └── punycode@1.3.2 
+  │ ├── uuid@3.0.1 
+  │ ├── xml2js@0.4.17 
+  │ └── xmlbuilder@4.2.1 
+  ├── bcrypt-nodejs@0.0.3 
+  ├── bcryptjs@2.4.3 
+  ├─┬ body-parser@1.18.2 
+  │ ├── bytes@3.0.0 
+  │ ├── content-type@1.0.4 
+  │ ├─┬ debug@2.6.9 
+  │ │ └── ms@2.0.0 
+  │ ├── depd@1.1.1 
+  │ ├─┬ http-errors@1.6.2 
+  │ │ └── inherits@2.0.3 
+  │ ├── iconv-lite@0.4.19 
+  │ ├─┬ on-finished@2.3.0 
+  │ │ └── ee-first@1.1.1 
+  │ ├── qs@6.5.1 
+  │ ├─┬ raw-body@2.3.2 
+  │ │ └── unpipe@1.0.0 
+  │ └─┬ type-is@1.6.15 
+  │   ├── media-typer@0.3.0 
+  │   └─┬ mime-types@2.1.17 
+  │     └── mime-db@1.30.0 
+  ├─┬ cookie-parser@1.4.3 
+  │ ├── cookie@0.3.1 
+  │ └── cookie-signature@1.0.6 
+  ├── dotenv@4.0.0 
+  ├─┬ express@4.15.4 
+  │ ├─┬ accepts@1.3.4 
+  │ │ └── negotiator@0.6.1 
+  │ ├── array-flatten@1.1.1 
+  │ ├── content-disposition@0.5.2 
+  │ ├── debug@2.6.8 
+  │ ├── encodeurl@1.0.1 
+  │ ├── escape-html@1.0.3 
+  │ ├── etag@1.8.1 
+  │ ├─┬ finalhandler@1.0.5 
+  │ │ └── debug@2.6.8 
+  │ ├── fresh@0.5.0 
+  │ ├── merge-descriptors@1.0.1 
+  │ ├── methods@1.1.2 
+  │ ├── parseurl@1.3.2 
+  │ ├── path-to-regexp@0.1.7 
+  │ ├─┬ proxy-addr@1.1.5 
+  │ │ ├── forwarded@0.1.2 
+  │ │ └── ipaddr.js@1.4.0 
+  │ ├── qs@6.5.0 
+  │ ├── range-parser@1.2.0 
+  │ ├─┬ send@0.15.4 
+  │ │ ├── debug@2.6.8 
+  │ │ ├── destroy@1.0.4 
+  │ │ └── mime@1.3.4 
+  │ ├── serve-static@1.12.4 
+  │ ├── setprototypeof@1.0.3 
+  │ ├── statuses@1.3.1 
+  │ ├── utils-merge@1.0.0 
+  │ └── vary@1.1.1 
+  ├── express-bearer-token@2.1.0 
+  ├─┬ helmet@2.3.0 
+  │ ├─┬ connect@3.4.1 
+  │ │ ├─┬ debug@2.2.0 
+  │ │ │ └── ms@0.7.1 
+  │ │ └── finalhandler@0.4.1 
+  │ ├── dns-prefetch-control@0.1.0 
+  │ ├── dont-sniff-mimetype@1.0.0 
+  │ ├── frameguard@2.0.0 
+  │ ├─┬ helmet-csp@1.2.2 
+  │ │ ├── camelize@1.0.0 
+  │ │ ├─┬ content-security-policy-builder@1.0.0 
+  │ │ │ └── dashify@0.2.2 
+  │ │ ├── lodash.reduce@4.5.0 
+  │ │ └── platform@1.3.1 
+  │ ├── hide-powered-by@1.0.0 
+  │ ├── hpkp@1.2.0 
+  │ ├─┬ hsts@1.0.0 
+  │ │ └── core-util-is@1.0.2 
+  │ ├── ienoopen@1.0.0 
+  │ ├─┬ nocache@1.0.1 
+  │ │ └── depd@1.1.0 
+  │ ├── referrer-policy@1.0.0 
+  │ └── x-xss-protection@1.0.0 
+  ├── jwt-simple@0.5.1 
+  ├── lodash@4.17.4 
+  ├─┬ node-gyp@3.6.2 
+  │ ├── fstream@1.0.11 
+  │ ├─┬ glob@7.1.2 
+  │ │ ├── fs.realpath@1.0.0 
+  │ │ ├─┬ inflight@1.0.6 
+  │ │ │ └── wrappy@1.0.2 
+  │ │ ├── once@1.4.0 
+  │ │ └── path-is-absolute@1.0.1 
+  │ ├── graceful-fs@4.1.11 
+  │ ├─┬ minimatch@3.0.4 
+  │ │ └─┬ brace-expansion@1.1.8 
+  │ │   ├── balanced-match@1.0.0 
+  │ │   └── concat-map@0.0.1 
+  │ ├─┬ mkdirp@0.5.1 
+  │ │ └── minimist@0.0.8 
+  │ ├─┬ nopt@3.0.6 
+  │ │ └── abbrev@1.1.0 
+  │ ├─┬ npmlog@4.1.2 
+  │ │ ├─┬ are-we-there-yet@1.1.4 
+  │ │ │ ├── delegates@1.0.0 
+  │ │ │ └─┬ readable-stream@2.3.3 
+  │ │ │   ├── process-nextick-args@1.0.7 
+  │ │ │   ├── string_decoder@1.0.3 
+  │ │ │   └── util-deprecate@1.0.2 
+  │ │ ├── console-control-strings@1.1.0 
+  │ │ ├─┬ gauge@2.7.4 
+  │ │ │ ├── aproba@1.2.0 
+  │ │ │ ├── has-unicode@2.0.1 
+  │ │ │ ├── object-assign@4.1.1 
+  │ │ │ ├── signal-exit@3.0.2 
+  │ │ │ ├─┬ string-width@1.0.2 
+  │ │ │ │ ├── code-point-at@1.1.0 
+  │ │ │ │ └─┬ is-fullwidth-code-point@1.0.0 
+  │ │ │ │   └── number-is-nan@1.0.1 
+  │ │ │ ├─┬ strip-ansi@3.0.1 
+  │ │ │ │ └── ansi-regex@2.1.1 
+  │ │ │ └── wide-align@1.1.2 
+  │ │ └── set-blocking@2.0.0 
+  │ ├─┬ osenv@0.1.4 
+  │ │ ├── os-homedir@1.0.2 
+  │ │ └── os-tmpdir@1.0.2 
+  │ ├─┬ request@2.82.0 
+  │ │ ├── aws-sign2@0.7.0 
+  │ │ ├── aws4@1.6.0 
+  │ │ ├── caseless@0.12.0 
+  │ │ ├─┬ combined-stream@1.0.5 
+  │ │ │ └── delayed-stream@1.0.0 
+  │ │ ├── extend@3.0.1 
+  │ │ ├── forever-agent@0.6.1 
+  │ │ ├─┬ form-data@2.3.1 
+  │ │ │ └── asynckit@0.4.0 
+  │ │ ├─┬ har-validator@5.0.3 
+  │ │ │ ├─┬ ajv@5.2.2 
+  │ │ │ │ ├── co@4.6.0 
+  │ │ │ │ ├── fast-deep-equal@1.0.0 
+  │ │ │ │ ├── json-schema-traverse@0.3.1 
+  │ │ │ │ └─┬ json-stable-stringify@1.0.1 
+  │ │ │ │   └── jsonify@0.0.0 
+  │ │ │ └── har-schema@2.0.0 
+  │ │ ├─┬ hawk@6.0.2 
+  │ │ │ ├── boom@4.3.1 
+  │ │ │ ├─┬ cryptiles@3.1.2 
+  │ │ │ │ └── boom@5.2.0 
+  │ │ │ ├── hoek@4.2.0 
+  │ │ │ └── sntp@2.0.2 
+  │ │ ├─┬ http-signature@1.2.0 
+  │ │ │ ├── assert-plus@1.0.0 
+  │ │ │ ├─┬ jsprim@1.4.1 
+  │ │ │ │ ├── extsprintf@1.3.0 
+  │ │ │ │ ├── json-schema@0.2.3 
+  │ │ │ │ └── verror@1.10.0 
+  │ │ │ └─┬ sshpk@1.13.1 
+  │ │ │   ├── asn1@0.2.3 
+  │ │ │   ├── bcrypt-pbkdf@1.0.1 
+  │ │ │   ├── dashdash@1.14.1 
+  │ │ │   ├── ecc-jsbn@0.1.1 
+  │ │ │   ├── getpass@0.1.7 
+  │ │ │   ├── jsbn@0.1.1 
+  │ │ │   └── tweetnacl@0.14.5 
+  │ │ ├── is-typedarray@1.0.0 
+  │ │ ├── isstream@0.1.2 
+  │ │ ├── json-stringify-safe@5.0.1 
+  │ │ ├── oauth-sign@0.8.2 
+  │ │ ├── performance-now@2.1.0 
+  │ │ ├── safe-buffer@5.1.1 
+  │ │ ├── stringstream@0.0.5 
+  │ │ ├─┬ tough-cookie@2.3.3 
+  │ │ │ └── punycode@1.4.1 
+  │ │ ├── tunnel-agent@0.6.0 
+  │ │ └── uuid@3.1.0 
+  │ ├── rimraf@2.6.2 
+  │ ├── semver@5.3.0 
+  │ ├─┬ tar@2.2.1 
+  │ │ └── block-stream@0.0.9 
+  │ └─┬ which@1.3.0 
+  │   └── isexe@2.0.0 
+  ├─┬ passport@0.3.2 
+  │ ├── passport-strategy@1.0.0 
+  │ └── pause@0.0.1 
+  ├─┬ passport-jwt@3.0.0 
+  │ └─┬ jsonwebtoken@7.4.3 
+  │   ├─┬ joi@6.10.1 
+  │   │ ├── hoek@2.16.3 
+  │   │ ├── isemail@1.2.0 
+  │   │ ├── moment@2.18.1 
+  │   │ └─┬ topo@1.1.0 
+  │   │   └── hoek@2.16.3 
+  │   ├─┬ jws@3.1.4 
+  │   │ ├── base64url@2.0.0 
+  │   │ └─┬ jwa@1.1.5 
+  │   │   ├── buffer-equal-constant-time@1.0.1 
+  │   │   └── ecdsa-sig-formatter@1.0.9 
+  │   ├── lodash.once@4.1.1 
+  │   └── xtend@4.0.1 
+  ├── passport-local@1.0.0 
+  ├─┬ sendgrid@4.10.0 
+  │ ├─┬ async.ensureasync@0.5.2 
+  │ │ └─┬ async.util.ensureasync@0.5.2 
+  │ │   ├── async.util.restparam@0.5.2 
+  │ │   └── async.util.setimmediate@0.5.2 
+  │ ├─┬ async.queue@0.5.2 
+  │ │ └─┬ async.util.queue@0.5.2 
+  │ │   ├── async.util.arrayeach@0.5.2 
+  │ │   ├── async.util.isarray@0.5.2 
+  │ │   ├── async.util.map@0.5.2 
+  │ │   ├── async.util.noop@0.5.2 
+  │ │   └── async.util.onlyonce@0.5.2 
+  │ ├── bottleneck@1.16.0 
+  │ ├── lodash.chunk@4.2.0 
+  │ ├─┬ mailparser@0.6.2 
+  │ │ ├── encoding@0.1.12 
+  │ │ ├─┬ mimelib@0.3.1 
+  │ │ │ └── addressparser@1.0.1 
+  │ │ └── uue@3.1.0 
+  │ └── sendgrid-rest@2.4.0 
+  └─┬ socket.io@1.7.4 
+    ├─┬ debug@2.3.3 
+    │ └── ms@0.7.2 
+    ├─┬ engine.io@1.8.4 
+    │ ├── accepts@1.3.3 
+    │ ├── base64id@1.0.0 
+    │ ├─┬ debug@2.3.3 
+    │ │ └── ms@0.7.2 
+    │ ├─┬ engine.io-parser@1.3.2 
+    │ │ ├── after@0.8.2 
+    │ │ ├── arraybuffer.slice@0.0.6 
+    │ │ ├── base64-arraybuffer@0.1.5 
+    │ │ ├── blob@0.0.4 
+    │ │ └── wtf-8@1.0.0 
+    │ └─┬ ws@1.1.4 
+    │   ├── options@0.0.6 
+    │   └── ultron@1.0.2 
+    ├─┬ has-binary@0.1.7 
+    │ └── isarray@0.0.1 
+    ├── object-assign@4.1.0 
+    ├─┬ socket.io-adapter@0.5.0 
+    │ └─┬ debug@2.3.3 
+    │   └── ms@0.7.2 
+    ├─┬ socket.io-client@1.7.4 
+    │ ├── backo2@1.0.2 
+    │ ├── component-bind@1.0.0 
+    │ ├── component-emitter@1.2.1 
+    │ ├─┬ debug@2.3.3 
+    │ │ └── ms@0.7.2 
+    │ ├─┬ engine.io-client@1.8.4 
+    │ │ ├── component-emitter@1.2.1 
+    │ │ ├── component-inherit@0.0.3 
+    │ │ ├─┬ debug@2.3.3 
+    │ │ │ └── ms@0.7.2 
+    │ │ ├── has-cors@1.1.0 
+    │ │ ├── parsejson@0.0.3 
+    │ │ ├── parseqs@0.0.5 
+    │ │ ├── ws@1.1.2 
+    │ │ ├── xmlhttprequest-ssl@1.5.3 
+    │ │ └── yeast@0.1.2 
+    │ ├── indexof@0.0.1 
+    │ ├── object-component@0.0.3 
+    │ ├─┬ parseuri@0.0.5 
+    │ │ └─┬ better-assert@1.0.2 
+    │ │   └── callsite@1.0.0 
+    │ └── to-array@0.1.4 
+    └─┬ socket.io-parser@2.3.1 
+      ├── component-emitter@1.1.2 
+      ├─┬ debug@2.2.0 
+      │ └── ms@0.7.1 
+      ├── isarray@0.0.1 
+      └── json3@3.3.2 
+  
+  aws-sdk@2.121.0 /tmp/deployment/application/node_modules/aws-sdk
+  buffer@4.9.1 /tmp/deployment/application/node_modules/buffer
+  base64-js@1.2.1 /tmp/deployment/application/node_modules/base64-js
+  ieee754@1.1.8 /tmp/deployment/application/node_modules/ieee754
+  isarray@1.0.0 /tmp/deployment/application/node_modules/isarray
+  crypto-browserify@1.0.9 /tmp/deployment/application/node_modules/crypto-browserify
+  events@1.1.1 /tmp/deployment/application/node_modules/events
+  jmespath@0.15.0 /tmp/deployment/application/node_modules/jmespath
+  querystring@0.2.0 /tmp/deployment/application/node_modules/querystring
+  sax@1.2.1 /tmp/deployment/application/node_modules/sax
+  url@0.10.3 /tmp/deployment/application/node_modules/url
+  punycode@1.3.2 /tmp/deployment/application/node_modules/punycode
+  uuid@3.0.1 /tmp/deployment/application/node_modules/uuid
+  xml2js@0.4.17 /tmp/deployment/application/node_modules/xml2js
+  xmlbuilder@4.2.1 /tmp/deployment/application/node_modules/xmlbuilder
+  lodash@4.17.4 /tmp/deployment/application/node_modules/lodash
+  bcrypt-nodejs@0.0.3 /tmp/deployment/application/node_modules/bcrypt-nodejs
+  bcryptjs@2.4.3 /tmp/deployment/application/node_modules/bcryptjs
+  body-parser@1.18.2 /tmp/deployment/application/node_modules/body-parser
+  bytes@3.0.0 /tmp/deployment/application/node_modules/bytes
+  content-type@1.0.4 /tmp/deployment/application/node_modules/content-type
+  debug@2.6.9 /tmp/deployment/application/node_modules/debug
+  ms@2.0.0 /tmp/deployment/application/node_modules/ms
+  depd@1.1.1 /tmp/deployment/application/node_modules/depd
+  http-errors@1.6.2 /tmp/deployment/application/node_modules/http-errors
+  inherits@2.0.3 /tmp/deployment/application/node_modules/inherits
+  setprototypeof@1.0.3 /tmp/deployment/application/node_modules/setprototypeof
+  statuses@1.3.1 /tmp/deployment/application/node_modules/statuses
+  iconv-lite@0.4.19 /tmp/deployment/application/node_modules/iconv-lite
+  on-finished@2.3.0 /tmp/deployment/application/node_modules/on-finished
+  ee-first@1.1.1 /tmp/deployment/application/node_modules/ee-first
+  qs@6.5.1 /tmp/deployment/application/node_modules/qs
+  raw-body@2.3.2 /tmp/deployment/application/node_modules/raw-body
+  unpipe@1.0.0 /tmp/deployment/application/node_modules/unpipe
+  type-is@1.6.15 /tmp/deployment/application/node_modules/type-is
+  media-typer@0.3.0 /tmp/deployment/application/node_modules/media-typer
+  mime-types@2.1.17 /tmp/deployment/application/node_modules/mime-types
+  mime-db@1.30.0 /tmp/deployment/application/node_modules/mime-db
+  cookie-parser@1.4.3 /tmp/deployment/application/node_modules/cookie-parser
+  cookie@0.3.1 /tmp/deployment/application/node_modules/cookie
+  cookie-signature@1.0.6 /tmp/deployment/application/node_modules/cookie-signature
+  dotenv@4.0.0 /tmp/deployment/application/node_modules/dotenv
+  express@4.15.4 /tmp/deployment/application/node_modules/express
+  accepts@1.3.4 /tmp/deployment/application/node_modules/accepts
+  negotiator@0.6.1 /tmp/deployment/application/node_modules/negotiator
+  array-flatten@1.1.1 /tmp/deployment/application/node_modules/array-flatten
+  content-disposition@0.5.2 /tmp/deployment/application/node_modules/content-disposition
+  debug@2.6.8 /tmp/deployment/application/node_modules/express/node_modules/debug
+  encodeurl@1.0.1 /tmp/deployment/application/node_modules/encodeurl
+  escape-html@1.0.3 /tmp/deployment/application/node_modules/escape-html
+  etag@1.8.1 /tmp/deployment/application/node_modules/etag
+  finalhandler@1.0.5 /tmp/deployment/application/node_modules/finalhandler
+  debug@2.6.8 /tmp/deployment/application/node_modules/finalhandler/node_modules/debug
+  parseurl@1.3.2 /tmp/deployment/application/node_modules/parseurl
+  fresh@0.5.0 /tmp/deployment/application/node_modules/fresh
+  merge-descriptors@1.0.1 /tmp/deployment/application/node_modules/merge-descriptors
+  methods@1.1.2 /tmp/deployment/application/node_modules/methods
+  path-to-regexp@0.1.7 /tmp/deployment/application/node_modules/path-to-regexp
+  proxy-addr@1.1.5 /tmp/deployment/application/node_modules/proxy-addr
+  forwarded@0.1.2 /tmp/deployment/application/node_modules/forwarded
+  ipaddr.js@1.4.0 /tmp/deployment/application/node_modules/ipaddr.js
+  qs@6.5.0 /tmp/deployment/application/node_modules/express/node_modules/qs
+  range-parser@1.2.0 /tmp/deployment/application/node_modules/range-parser
+  send@0.15.4 /tmp/deployment/application/node_modules/send
+  debug@2.6.8 /tmp/deployment/application/node_modules/send/node_modules/debug
+  destroy@1.0.4 /tmp/deployment/application/node_modules/destroy
+  mime@1.3.4 /tmp/deployment/application/node_modules/mime
+  serve-static@1.12.4 /tmp/deployment/application/node_modules/serve-static
+  utils-merge@1.0.0 /tmp/deployment/application/node_modules/utils-merge
+  vary@1.1.1 /tmp/deployment/application/node_modules/vary
+  express-bearer-token@2.1.0 /tmp/deployment/application/node_modules/express-bearer-token
+  helmet@2.3.0 /tmp/deployment/application/node_modules/helmet
+  connect@3.4.1 /tmp/deployment/application/node_modules/connect
+  debug@2.2.0 /tmp/deployment/application/node_modules/connect/node_modules/debug
+  ms@0.7.1 /tmp/deployment/application/node_modules/connect/node_modules/ms
+  finalhandler@0.4.1 /tmp/deployment/application/node_modules/connect/node_modules/finalhandler
+  dns-prefetch-control@0.1.0 /tmp/deployment/application/node_modules/dns-prefetch-control
+  dont-sniff-mimetype@1.0.0 /tmp/deployment/application/node_modules/dont-sniff-mimetype
+  frameguard@2.0.0 /tmp/deployment/application/node_modules/frameguard
+  helmet-csp@1.2.2 /tmp/deployment/application/node_modules/helmet-csp
+  camelize@1.0.0 /tmp/deployment/application/node_modules/camelize
+  content-security-policy-builder@1.0.0 /tmp/deployment/application/node_modules/content-security-policy-builder
+  dashify@0.2.2 /tmp/deployment/application/node_modules/dashify
+  lodash.reduce@4.5.0 /tmp/deployment/application/node_modules/lodash.reduce
+  platform@1.3.1 /tmp/deployment/application/node_modules/platform
+  hide-powered-by@1.0.0 /tmp/deployment/application/node_modules/hide-powered-by
+  hpkp@1.2.0 /tmp/deployment/application/node_modules/hpkp
+  hsts@1.0.0 /tmp/deployment/application/node_modules/hsts
+  core-util-is@1.0.2 /tmp/deployment/application/node_modules/core-util-is
+  ienoopen@1.0.0 /tmp/deployment/application/node_modules/ienoopen
+  nocache@1.0.1 /tmp/deployment/application/node_modules/nocache
+  depd@1.1.0 /tmp/deployment/application/node_modules/nocache/node_modules/depd
+  referrer-policy@1.0.0 /tmp/deployment/application/node_modules/referrer-policy
+  x-xss-protection@1.0.0 /tmp/deployment/application/node_modules/x-xss-protection
+  jwt-simple@0.5.1 /tmp/deployment/application/node_modules/jwt-simple
+  node-gyp@3.6.2 /tmp/deployment/application/node_modules/node-gyp
+  fstream@1.0.11 /tmp/deployment/application/node_modules/fstream
+  graceful-fs@4.1.11 /tmp/deployment/application/node_modules/graceful-fs
+  mkdirp@0.5.1 /tmp/deployment/application/node_modules/mkdirp
+  minimist@0.0.8 /tmp/deployment/application/node_modules/minimist
+  rimraf@2.6.2 /tmp/deployment/application/node_modules/rimraf
+  glob@7.1.2 /tmp/deployment/application/node_modules/glob
+  fs.realpath@1.0.0 /tmp/deployment/application/node_modules/fs.realpath
+  inflight@1.0.6 /tmp/deployment/application/node_modules/inflight
+  once@1.4.0 /tmp/deployment/application/node_modules/once
+  wrappy@1.0.2 /tmp/deployment/application/node_modules/wrappy
+  minimatch@3.0.4 /tmp/deployment/application/node_modules/minimatch
+  brace-expansion@1.1.8 /tmp/deployment/application/node_modules/brace-expansion
+  balanced-match@1.0.0 /tmp/deployment/application/node_modules/balanced-match
+  concat-map@0.0.1 /tmp/deployment/application/node_modules/concat-map
+  path-is-absolute@1.0.1 /tmp/deployment/application/node_modules/path-is-absolute
+  nopt@3.0.6 /tmp/deployment/application/node_modules/nopt
+  abbrev@1.1.0 /tmp/deployment/application/node_modules/abbrev
+  npmlog@4.1.2 /tmp/deployment/application/node_modules/npmlog
+  are-we-there-yet@1.1.4 /tmp/deployment/application/node_modules/are-we-there-yet
+  delegates@1.0.0 /tmp/deployment/application/node_modules/delegates
+  readable-stream@2.3.3 /tmp/deployment/application/node_modules/readable-stream
+  process-nextick-args@1.0.7 /tmp/deployment/application/node_modules/process-nextick-args
+  safe-buffer@5.1.1 /tmp/deployment/application/node_modules/safe-buffer
+  string_decoder@1.0.3 /tmp/deployment/application/node_modules/string_decoder
+  util-deprecate@1.0.2 /tmp/deployment/application/node_modules/util-deprecate
+  console-control-strings@1.1.0 /tmp/deployment/application/node_modules/console-control-strings
+  gauge@2.7.4 /tmp/deployment/application/node_modules/gauge
+  aproba@1.2.0 /tmp/deployment/application/node_modules/aproba
+  has-unicode@2.0.1 /tmp/deployment/application/node_modules/has-unicode
+  object-assign@4.1.1 /tmp/deployment/application/node_modules/object-assign
+  signal-exit@3.0.2 /tmp/deployment/application/node_modules/signal-exit
+  string-width@1.0.2 /tmp/deployment/application/node_modules/string-width
+  code-point-at@1.1.0 /tmp/deployment/application/node_modules/code-point-at
+  is-fullwidth-code-point@1.0.0 /tmp/deployment/application/node_modules/is-fullwidth-code-point
+  number-is-nan@1.0.1 /tmp/deployment/application/node_modules/number-is-nan
+  strip-ansi@3.0.1 /tmp/deployment/application/node_modules/strip-ansi
+  ansi-regex@2.1.1 /tmp/deployment/application/node_modules/ansi-regex
+  wide-align@1.1.2 /tmp/deployment/application/node_modules/wide-align
+  set-blocking@2.0.0 /tmp/deployment/application/node_modules/set-blocking
+  osenv@0.1.4 /tmp/deployment/application/node_modules/osenv
+  os-homedir@1.0.2 /tmp/deployment/application/node_modules/os-homedir
+  os-tmpdir@1.0.2 /tmp/deployment/application/node_modules/os-tmpdir
+  request@2.82.0 /tmp/deployment/application/node_modules/request
+  aws-sign2@0.7.0 /tmp/deployment/application/node_modules/aws-sign2
+  aws4@1.6.0 /tmp/deployment/application/node_modules/aws4
+  caseless@0.12.0 /tmp/deployment/application/node_modules/caseless
+  combined-stream@1.0.5 /tmp/deployment/application/node_modules/combined-stream
+  delayed-stream@1.0.0 /tmp/deployment/application/node_modules/delayed-stream
+  extend@3.0.1 /tmp/deployment/application/node_modules/extend
+  forever-agent@0.6.1 /tmp/deployment/application/node_modules/forever-agent
+  form-data@2.3.1 /tmp/deployment/application/node_modules/form-data
+  asynckit@0.4.0 /tmp/deployment/application/node_modules/asynckit
+  har-validator@5.0.3 /tmp/deployment/application/node_modules/har-validator
+  ajv@5.2.2 /tmp/deployment/application/node_modules/ajv
+  co@4.6.0 /tmp/deployment/application/node_modules/co
+  fast-deep-equal@1.0.0 /tmp/deployment/application/node_modules/fast-deep-equal
+  json-schema-traverse@0.3.1 /tmp/deployment/application/node_modules/json-schema-traverse
+  json-stable-stringify@1.0.1 /tmp/deployment/application/node_modules/json-stable-stringify
+  jsonify@0.0.0 /tmp/deployment/application/node_modules/jsonify
+  har-schema@2.0.0 /tmp/deployment/application/node_modules/har-schema
+  hawk@6.0.2 /tmp/deployment/application/node_modules/hawk
+  boom@4.3.1 /tmp/deployment/application/node_modules/boom
+  hoek@4.2.0 /tmp/deployment/application/node_modules/hoek
+  cryptiles@3.1.2 /tmp/deployment/application/node_modules/cryptiles
+  boom@5.2.0 /tmp/deployment/application/node_modules/cryptiles/node_modules/boom
+  sntp@2.0.2 /tmp/deployment/application/node_modules/sntp
+  http-signature@1.2.0 /tmp/deployment/application/node_modules/http-signature
+  assert-plus@1.0.0 /tmp/deployment/application/node_modules/assert-plus
+  jsprim@1.4.1 /tmp/deployment/application/node_modules/jsprim
+  extsprintf@1.3.0 /tmp/deployment/application/node_modules/extsprintf
+  json-schema@0.2.3 /tmp/deployment/application/node_modules/json-schema
+  verror@1.10.0 /tmp/deployment/application/node_modules/verror
+  sshpk@1.13.1 /tmp/deployment/application/node_modules/sshpk
+  asn1@0.2.3 /tmp/deployment/application/node_modules/asn1
+  dashdash@1.14.1 /tmp/deployment/application/node_modules/dashdash
+  getpass@0.1.7 /tmp/deployment/application/node_modules/getpass
+  is-typedarray@1.0.0 /tmp/deployment/application/node_modules/is-typedarray
+  isstream@0.1.2 /tmp/deployment/application/node_modules/isstream
+  json-stringify-safe@5.0.1 /tmp/deployment/application/node_modules/json-stringify-safe
+  oauth-sign@0.8.2 /tmp/deployment/application/node_modules/oauth-sign
+  performance-now@2.1.0 /tmp/deployment/application/node_modules/performance-now
+  stringstream@0.0.5 /tmp/deployment/application/node_modules/stringstream
+  tough-cookie@2.3.3 /tmp/deployment/application/node_modules/tough-cookie
+  punycode@1.4.1 /tmp/deployment/application/node_modules/tough-cookie/node_modules/punycode
+  tunnel-agent@0.6.0 /tmp/deployment/application/node_modules/tunnel-agent
+  uuid@3.1.0 /tmp/deployment/application/node_modules/request/node_modules/uuid
+  semver@5.3.0 /tmp/deployment/application/node_modules/semver
+  tar@2.2.1 /tmp/deployment/application/node_modules/tar
+  block-stream@0.0.9 /tmp/deployment/application/node_modules/block-stream
+  which@1.3.0 /tmp/deployment/application/node_modules/which
+  isexe@2.0.0 /tmp/deployment/application/node_modules/isexe
+  passport@0.3.2 /tmp/deployment/application/node_modules/passport
+  passport-strategy@1.0.0 /tmp/deployment/application/node_modules/passport-strategy
+  pause@0.0.1 /tmp/deployment/application/node_modules/pause
+  passport-jwt@3.0.0 /tmp/deployment/application/node_modules/passport-jwt
+  jsonwebtoken@7.4.3 /tmp/deployment/application/node_modules/jsonwebtoken
+  joi@6.10.1 /tmp/deployment/application/node_modules/joi
+  hoek@2.16.3 /tmp/deployment/application/node_modules/joi/node_modules/hoek
+  isemail@1.2.0 /tmp/deployment/application/node_modules/isemail
+  moment@2.18.1 /tmp/deployment/application/node_modules/moment
+  topo@1.1.0 /tmp/deployment/application/node_modules/topo
+  hoek@2.16.3 /tmp/deployment/application/node_modules/topo/node_modules/hoek
+  jws@3.1.4 /tmp/deployment/application/node_modules/jws
+  base64url@2.0.0 /tmp/deployment/application/node_modules/base64url
+  jwa@1.1.5 /tmp/deployment/application/node_modules/jwa
+  buffer-equal-constant-time@1.0.1 /tmp/deployment/application/node_modules/buffer-equal-constant-time
+  ecdsa-sig-formatter@1.0.9 /tmp/deployment/application/node_modules/ecdsa-sig-formatter
+  lodash.once@4.1.1 /tmp/deployment/application/node_modules/lodash.once
+  xtend@4.0.1 /tmp/deployment/application/node_modules/xtend
+  passport-local@1.0.0 /tmp/deployment/application/node_modules/passport-local
+  sendgrid@4.10.0 /tmp/deployment/application/node_modules/sendgrid
+  async.ensureasync@0.5.2 /tmp/deployment/application/node_modules/async.ensureasync
+  async.util.ensureasync@0.5.2 /tmp/deployment/application/node_modules/async.util.ensureasync
+  async.util.restparam@0.5.2 /tmp/deployment/application/node_modules/async.util.restparam
+  async.util.setimmediate@0.5.2 /tmp/deployment/application/node_modules/async.util.setimmediate
+  async.queue@0.5.2 /tmp/deployment/application/node_modules/async.queue
+  async.util.queue@0.5.2 /tmp/deployment/application/node_modules/async.util.queue
+  async.util.arrayeach@0.5.2 /tmp/deployment/application/node_modules/async.util.arrayeach
+  async.util.isarray@0.5.2 /tmp/deployment/application/node_modules/async.util.isarray
+  async.util.map@0.5.2 /tmp/deployment/application/node_modules/async.util.map
+  async.util.noop@0.5.2 /tmp/deployment/application/node_modules/async.util.noop
+  async.util.onlyonce@0.5.2 /tmp/deployment/application/node_modules/async.util.onlyonce
+  bottleneck@1.16.0 /tmp/deployment/application/node_modules/bottleneck
+  lodash.chunk@4.2.0 /tmp/deployment/application/node_modules/lodash.chunk
+  mailparser@0.6.2 /tmp/deployment/application/node_modules/mailparser
+  encoding@0.1.12 /tmp/deployment/application/node_modules/encoding
+  mimelib@0.3.1 /tmp/deployment/application/node_modules/mimelib
+  addressparser@1.0.1 /tmp/deployment/application/node_modules/addressparser
+  uue@3.1.0 /tmp/deployment/application/node_modules/uue
+  sendgrid-rest@2.4.0 /tmp/deployment/application/node_modules/sendgrid-rest
+  socket.io@1.7.4 /tmp/deployment/application/node_modules/socket.io
+  debug@2.3.3 /tmp/deployment/application/node_modules/socket.io/node_modules/debug
+  ms@0.7.2 /tmp/deployment/application/node_modules/socket.io/node_modules/ms
+  engine.io@1.8.4 /tmp/deployment/application/node_modules/engine.io
+  accepts@1.3.3 /tmp/deployment/application/node_modules/engine.io/node_modules/accepts
+  base64id@1.0.0 /tmp/deployment/application/node_modules/base64id
+  debug@2.3.3 /tmp/deployment/application/node_modules/engine.io/node_modules/debug
+  ms@0.7.2 /tmp/deployment/application/node_modules/engine.io/node_modules/ms
+  engine.io-parser@1.3.2 /tmp/deployment/application/node_modules/engine.io-parser
+  after@0.8.2 /tmp/deployment/application/node_modules/after
+  arraybuffer.slice@0.0.6 /tmp/deployment/application/node_modules/arraybuffer.slice
+  base64-arraybuffer@0.1.5 /tmp/deployment/application/node_modules/base64-arraybuffer
+  blob@0.0.4 /tmp/deployment/application/node_modules/blob
+  has-binary@0.1.7 /tmp/deployment/application/node_modules/has-binary
+  isarray@0.0.1 /tmp/deployment/application/node_modules/has-binary/node_modules/isarray
+  wtf-8@1.0.0 /tmp/deployment/application/node_modules/wtf-8
+  ws@1.1.4 /tmp/deployment/application/node_modules/ws
+  options@0.0.6 /tmp/deployment/application/node_modules/options
+  ultron@1.0.2 /tmp/deployment/application/node_modules/ultron
+  object-assign@4.1.0 /tmp/deployment/application/node_modules/socket.io/node_modules/object-assign
+  socket.io-adapter@0.5.0 /tmp/deployment/application/node_modules/socket.io-adapter
+  debug@2.3.3 /tmp/deployment/application/node_modules/socket.io-adapter/node_modules/debug
+  ms@0.7.2 /tmp/deployment/application/node_modules/socket.io-adapter/node_modules/ms
+  socket.io-parser@2.3.1 /tmp/deployment/application/node_modules/socket.io-parser
+  component-emitter@1.1.2 /tmp/deployment/application/node_modules/component-emitter
+  debug@2.2.0 /tmp/deployment/application/node_modules/socket.io-parser/node_modules/debug
+  ms@0.7.1 /tmp/deployment/application/node_modules/socket.io-parser/node_modules/ms
+  isarray@0.0.1 /tmp/deployment/application/node_modules/socket.io-parser/node_modules/isarray
+  json3@3.3.2 /tmp/deployment/application/node_modules/json3
+  socket.io-client@1.7.4 /tmp/deployment/application/node_modules/socket.io-client
+  backo2@1.0.2 /tmp/deployment/application/node_modules/backo2
+  component-bind@1.0.0 /tmp/deployment/application/node_modules/component-bind
+  component-emitter@1.2.1 /tmp/deployment/application/node_modules/socket.io-client/node_modules/component-emitter
+  debug@2.3.3 /tmp/deployment/application/node_modules/socket.io-client/node_modules/debug
+  ms@0.7.2 /tmp/deployment/application/node_modules/socket.io-client/node_modules/ms
+  engine.io-client@1.8.4 /tmp/deployment/application/node_modules/engine.io-client
+  component-emitter@1.2.1 /tmp/deployment/application/node_modules/engine.io-client/node_modules/component-emitter
+  component-inherit@0.0.3 /tmp/deployment/application/node_modules/component-inherit
+  debug@2.3.3 /tmp/deployment/application/node_modules/engine.io-client/node_modules/debug
+  ms@0.7.2 /tmp/deployment/application/node_modules/engine.io-client/node_modules/ms
+  has-cors@1.1.0 /tmp/deployment/application/node_modules/has-cors
+  indexof@0.0.1 /tmp/deployment/application/node_modules/indexof
+  parsejson@0.0.3 /tmp/deployment/application/node_modules/parsejson
+  better-assert@1.0.2 /tmp/deployment/application/node_modules/better-assert
+  callsite@1.0.0 /tmp/deployment/application/node_modules/callsite
+  parseqs@0.0.5 /tmp/deployment/application/node_modules/parseqs
+  parseuri@0.0.5 /tmp/deployment/application/node_modules/parseuri
+  ws@1.1.2 /tmp/deployment/application/node_modules/engine.io-client/node_modules/ws
+  xmlhttprequest-ssl@1.5.3 /tmp/deployment/application/node_modules/xmlhttprequest-ssl
+  yeast@0.1.2 /tmp/deployment/application/node_modules/yeast
+  object-component@0.0.3 /tmp/deployment/application/node_modules/object-component
+  to-array@0.1.4 /tmp/deployment/application/node_modules/to-array
+  bcrypt-pbkdf@1.0.1 /tmp/deployment/application/node_modules/bcrypt-pbkdf
+  tweetnacl@0.14.5 /tmp/deployment/application/node_modules/tweetnacl
+  ecc-jsbn@0.1.1 /tmp/deployment/application/node_modules/ecc-jsbn
+  jsbn@0.1.1 /tmp/deployment/application/node_modules/jsbn
+  Running npm install:  /opt/elasticbeanstalk/node-install/node-v6.11.1-linux-x64/bin/npm
+  Setting npm config jobs to 1
+  npm config jobs set to 1
+  Running npm with --production flag
+[2017-09-22T17:59:40.437Z] INFO  [2983]  - [Application deployment app-68b1-170922_174828@151/StartupStage0/AppDeployPreHook/60config_generate.sh] : Starting activity...
+[2017-09-22T17:59:42.247Z] INFO  [2983]  - [Application deployment app-68b1-170922_174828@151/StartupStage0/AppDeployPreHook/60config_generate.sh] : Completed activity. Result:
+  + /opt/elasticbeanstalk/containerfiles/ebnode.py --action generate-config
+  Generating modifications to /etc/nginx/nginx.conf
+  Generating reverse proxy settings
+[2017-09-22T17:59:42.248Z] INFO  [2983]  - [Application deployment app-68b1-170922_174828@151/StartupStage0/AppDeployPreHook] : Completed activity. Result:
+  Successfully execute hooks in directory /opt/elasticbeanstalk/hooks/appdeploy/pre.
+[2017-09-22T17:59:42.248Z] INFO  [2983]  - [Application deployment app-68b1-170922_174828@151/StartupStage0/EbExtensionPostBuild] : Starting activity...
+[2017-09-22T17:59:42.451Z] INFO  [2983]  - [Application deployment app-68b1-170922_174828@151/StartupStage0/EbExtensionPostBuild/Infra-EmbeddedPostBuild] : Starting activity...
+[2017-09-22T17:59:42.451Z] INFO  [2983]  - [Application deployment app-68b1-170922_174828@151/StartupStage0/EbExtensionPostBuild/Infra-EmbeddedPostBuild] : Completed activity.
+[2017-09-22T17:59:42.462Z] INFO  [2983]  - [Application deployment app-68b1-170922_174828@151/StartupStage0/EbExtensionPostBuild] : Completed activity.
+[2017-09-22T17:59:42.462Z] INFO  [2983]  - [Application deployment app-68b1-170922_174828@151/StartupStage0/InfraCleanEbextension] : Starting activity...
+[2017-09-22T17:59:42.473Z] INFO  [2983]  - [Application deployment app-68b1-170922_174828@151/StartupStage0/InfraCleanEbextension] : Completed activity. Result:
+  Cleaned ebextensions subdirectories from /tmp/deployment/application.
+[2017-09-22T17:59:42.473Z] INFO  [2983]  - [Application deployment app-68b1-170922_174828@151/StartupStage0] : Completed activity. Result:
+  Application deployment - Command CMD-SelfStartup stage 0 completed
+[2017-09-22T17:59:42.473Z] INFO  [2983]  - [Application deployment app-68b1-170922_174828@151/StartupStage1] : Starting activity...
+[2017-09-22T17:59:42.473Z] INFO  [2983]  - [Application deployment app-68b1-170922_174828@151/StartupStage1/AppDeployEnactHook] : Starting activity...
+[2017-09-22T17:59:42.473Z] INFO  [2983]  - [Application deployment app-68b1-170922_174828@151/StartupStage1/AppDeployEnactHook/01stop_xray.sh] : Starting activity...
+[2017-09-22T17:59:44.584Z] INFO  [2983]  - [Application deployment app-68b1-170922_174828@151/StartupStage1/AppDeployEnactHook/01stop_xray.sh] : Completed activity. Result:
+  Executing: if ( initctl status xray | grep start ); then initctl stop xray; fi
+  xray start/running, process 2204
+  xray stop/waiting
+[2017-09-22T17:59:44.584Z] INFO  [2983]  - [Application deployment app-68b1-170922_174828@151/StartupStage1/AppDeployEnactHook/02start_xray.sh] : Starting activity...
+[2017-09-22T17:59:44.687Z] INFO  [2983]  - [Application deployment app-68b1-170922_174828@151/StartupStage1/AppDeployEnactHook/02start_xray.sh] : Completed activity.
+[2017-09-22T17:59:44.687Z] INFO  [2983]  - [Application deployment app-68b1-170922_174828@151/StartupStage1/AppDeployEnactHook/10stop.sh] : Starting activity...
+[2017-09-22T17:59:46.086Z] INFO  [2983]  - [Application deployment app-68b1-170922_174828@151/StartupStage1/AppDeployEnactHook/10stop.sh] : Completed activity. Result:
+  + /opt/elasticbeanstalk/containerfiles/ebnode.py --action stop-all
+  status: Unknown job: nodejs
+  status: Unknown job: nodejs
+  status: Unknown job: nginx
+  status: Unknown job: nginx
+  status: Unknown job: httpd
+  status: Unknown job: httpd
+  Did not find to find status of init job. Assuming stopped.
+  Did not find to find status of init job. Assuming stopped.
+  Did not find to find status of init job. Assuming stopped.
+  Did not find to find status of init job. Assuming stopped.
+  Did not find to find status of init job. Assuming stopped.
+  Did not find to find status of init job. Assuming stopped.
+[2017-09-22T17:59:46.086Z] INFO  [2983]  - [Application deployment app-68b1-170922_174828@151/StartupStage1/AppDeployEnactHook/20clean.sh] : Starting activity...
+[2017-09-22T17:59:46.177Z] INFO  [2983]  - [Application deployment app-68b1-170922_174828@151/StartupStage1/AppDeployEnactHook/20clean.sh] : Completed activity. Result:
+  ++ /opt/elasticbeanstalk/bin/get-config container -k app_base_dir
+  + EB_APP_BASE_DIR=/var/app
+  + rm -rf /var/app
+[2017-09-22T17:59:46.177Z] INFO  [2983]  - [Application deployment app-68b1-170922_174828@151/StartupStage1/AppDeployEnactHook/30app_deploy.sh] : Starting activity...
+[2017-09-22T17:59:46.558Z] INFO  [2983]  - [Application deployment app-68b1-170922_174828@151/StartupStage1/AppDeployEnactHook/30app_deploy.sh] : Completed activity. Result:
+  ++ /opt/elasticbeanstalk/bin/get-config container -k app_base_dir
+  + EB_APP_BASE_DIR=/var/app
+  ++ /opt/elasticbeanstalk/bin/get-config container -k app_staging_dir
+  + EB_APP_STAGING_DIR=/tmp/deployment/application
+  ++ /opt/elasticbeanstalk/bin/get-config container -k app_deploy_dir
+  + EB_APP_DEPLOY_DIR=/var/app/current
+  ++ /opt/elasticbeanstalk/bin/get-config container -k app_user
+  + EB_APP_USER=nodejs
+  + mkdir /var/app
+  + mv /tmp/deployment/application /var/app/current
+  + chown -R nodejs:nodejs /var/app/current
+[2017-09-22T17:59:46.558Z] INFO  [2983]  - [Application deployment app-68b1-170922_174828@151/StartupStage1/AppDeployEnactHook/40config_deploy.sh] : Starting activity...
+[2017-09-22T17:59:46.658Z] INFO  [2983]  - [Application deployment app-68b1-170922_174828@151/StartupStage1/AppDeployEnactHook/40config_deploy.sh] : Completed activity. Result:
+  ++ /opt/elasticbeanstalk/bin/get-config container -k config_staging_dir
+  + EB_CONFIG_STAGING_DIR=/tmp/deployment/config
+  ++ ls /tmp/deployment/config
+  + for i in '$(ls $EB_CONFIG_STAGING_DIR)'
+  ++ sed -e 's/#/\//g'
+  ++ echo '#etc#init#nginx.conf'
+  + FILE_NAME=/etc/init/nginx.conf
+  + /bin/cp /tmp/deployment/config/#etc#init#nginx.conf /etc/init/nginx.conf
+  + for i in '$(ls $EB_CONFIG_STAGING_DIR)'
+  ++ sed -e 's/#/\//g'
+  ++ echo '#etc#init#nodejs.conf'
+  + FILE_NAME=/etc/init/nodejs.conf
+  + /bin/cp /tmp/deployment/config/#etc#init#nodejs.conf /etc/init/nodejs.conf
+  + for i in '$(ls $EB_CONFIG_STAGING_DIR)'
+  ++ sed -e 's/#/\//g'
+  ++ echo '#etc#nginx#conf.d#00_elastic_beanstalk_proxy.conf'
+  + FILE_NAME=/etc/nginx/conf.d/00_elastic_beanstalk_proxy.conf
+  + /bin/cp /tmp/deployment/config/#etc#nginx#conf.d#00_elastic_beanstalk_proxy.conf /etc/nginx/conf.d/00_elastic_beanstalk_proxy.conf
+  + for i in '$(ls $EB_CONFIG_STAGING_DIR)'
+  ++ sed -e 's/#/\//g'
+  ++ echo '#etc#nginx#nginx.conf'
+  + FILE_NAME=/etc/nginx/nginx.conf
+  + /bin/cp /tmp/deployment/config/#etc#nginx#nginx.conf /etc/nginx/nginx.conf
+[2017-09-22T17:59:46.658Z] INFO  [2983]  - [Application deployment app-68b1-170922_174828@151/StartupStage1/AppDeployEnactHook/50start.sh] : Starting activity...
+[2017-09-22T17:59:48.074Z] INFO  [2983]  - [Application deployment app-68b1-170922_174828@151/StartupStage1/AppDeployEnactHook/50start.sh] : Completed activity. Result:
+  + /opt/elasticbeanstalk/containerfiles/ebnode.py --action start-all
+  nodejs start/running, process 3437
+  nginx start/running, process 3452
+[2017-09-22T17:59:48.074Z] INFO  [2983]  - [Application deployment app-68b1-170922_174828@151/StartupStage1/AppDeployEnactHook/60monitor_pids.sh] : Starting activity...
+[2017-09-22T17:59:48.501Z] INFO  [2983]  - [Application deployment app-68b1-170922_174828@151/StartupStage1/AppDeployEnactHook/60monitor_pids.sh] : Completed activity. Result:
+  + '[' -d /etc/healthd ']'
+  ++ /opt/elasticbeanstalk/bin/get-config optionsettings --namespace aws:elasticbeanstalk:container:nodejs --option-name ProxyServer
+  + PROXY_SERVER=nginx
+  + case "$PROXY_SERVER" in
+  + /opt/elasticbeanstalk/bin/healthd-track-pidfile --proxy nginx
+  + /opt/elasticbeanstalk/bin/healthd-track-pidfile --name application --location /var/run/nodejs.pid
+[2017-09-22T17:59:48.501Z] INFO  [2983]  - [Application deployment app-68b1-170922_174828@151/StartupStage1/AppDeployEnactHook/70restart_healthd.sh] : Starting activity...
+[2017-09-22T17:59:48.697Z] INFO  [2983]  - [Application deployment app-68b1-170922_174828@151/StartupStage1/AppDeployEnactHook/70restart_healthd.sh] : Completed activity. Result:
+  + '[' -d /etc/healthd ']'
+  ++ /opt/elasticbeanstalk/bin/get-config optionsettings --namespace aws:elasticbeanstalk:container:nodejs --option-name ProxyServer
+  + PROXY_SERVER=nginx
+  + '[' -f /var/elasticbeanstalk/healthd/current_proxy_server ']'
+  + CURRENT_PROXY_SERVER=nginx
+  + '[' nginx '!=' nginx ']'
+  + echo nginx
+[2017-09-22T17:59:48.697Z] INFO  [2983]  - [Application deployment app-68b1-170922_174828@151/StartupStage1/AppDeployEnactHook] : Completed activity. Result:
+  Successfully execute hooks in directory /opt/elasticbeanstalk/hooks/appdeploy/enact.
+[2017-09-22T17:59:48.698Z] INFO  [2983]  - [Application deployment app-68b1-170922_174828@151/StartupStage1/AppDeployPostHook] : Starting activity...
+[2017-09-22T17:59:48.698Z] INFO  [2983]  - [Application deployment app-68b1-170922_174828@151/StartupStage1/AppDeployPostHook] : Completed activity. Result:
+  Successfully execute hooks in directory /opt/elasticbeanstalk/hooks/appdeploy/post.
+[2017-09-22T17:59:48.698Z] INFO  [2983]  - [Application deployment app-68b1-170922_174828@151/StartupStage1/PostInitHook] : Starting activity...
+[2017-09-22T17:59:48.698Z] INFO  [2983]  - [Application deployment app-68b1-170922_174828@151/StartupStage1/PostInitHook] : Completed activity. Result:
+  Successfully execute hooks in directory /opt/elasticbeanstalk/hooks/postinit.
+[2017-09-22T17:59:48.698Z] INFO  [2983]  - [Application deployment app-68b1-170922_174828@151/StartupStage1] : Completed activity. Result:
+  Application deployment - Command CMD-SelfStartup stage 1 completed
+[2017-09-22T17:59:48.698Z] INFO  [2983]  - [Application deployment app-68b1-170922_174828@151/AddonsAfter] : Starting activity...
+[2017-09-22T17:59:48.698Z] INFO  [2983]  - [Application deployment app-68b1-170922_174828@151/AddonsAfter/ConfigLogRotation] : Starting activity...
+[2017-09-22T17:59:48.698Z] INFO  [2983]  - [Application deployment app-68b1-170922_174828@151/AddonsAfter/ConfigLogRotation/10-config.sh] : Starting activity...
+[2017-09-22T17:59:48.869Z] INFO  [2983]  - [Application deployment app-68b1-170922_174828@151/AddonsAfter/ConfigLogRotation/10-config.sh] : Completed activity. Result:
+  Disabled forced hourly log rotation.
+[2017-09-22T17:59:48.869Z] INFO  [2983]  - [Application deployment app-68b1-170922_174828@151/AddonsAfter/ConfigLogRotation] : Completed activity. Result:
+  Successfully execute hooks in directory /opt/elasticbeanstalk/addons/logpublish/hooks/config.
+[2017-09-22T17:59:48.869Z] INFO  [2983]  - [Application deployment app-68b1-170922_174828@151/AddonsAfter] : Completed activity.
+[2017-09-22T17:59:48.869Z] INFO  [2983]  - [Application deployment app-68b1-170922_174828@151] : Completed activity. Result:
+  Application deployment - Command CMD-SelfStartup succeeded
+[2017-09-22T18:29:51.774Z] INFO  [25537] - [Application update app-5485-170922_192942@152] : Starting activity...
+[2017-09-22T18:29:51.774Z] INFO  [25537] - [Application update app-5485-170922_192942@152/AddonsBefore] : Starting activity...
+[2017-09-22T18:29:51.774Z] INFO  [25537] - [Application update app-5485-170922_192942@152/AddonsBefore/ConfigCWLAgent] : Starting activity...
+[2017-09-22T18:29:51.774Z] INFO  [25537] - [Application update app-5485-170922_192942@152/AddonsBefore/ConfigCWLAgent/10-config.sh] : Starting activity...
+[2017-09-22T18:29:51.889Z] INFO  [25537] - [Application update app-5485-170922_192942@152/AddonsBefore/ConfigCWLAgent/10-config.sh] : Completed activity. Result:
+  Log streaming option setting is not specified, ignore cloudwatch logs setup.
+  
+  Disabled log streaming.
+[2017-09-22T18:29:51.889Z] INFO  [25537] - [Application update app-5485-170922_192942@152/AddonsBefore/ConfigCWLAgent] : Completed activity. Result:
+  Successfully execute hooks in directory /opt/elasticbeanstalk/addons/logstreaming/hooks/config.
+[2017-09-22T18:29:51.889Z] INFO  [25537] - [Application update app-5485-170922_192942@152/AddonsBefore] : Completed activity.
+[2017-09-22T18:29:52.135Z] INFO  [25537] - [Application update app-5485-170922_192942@152/AppDeployStage0] : Starting activity...
+[2017-09-22T18:29:52.135Z] INFO  [25537] - [Application update app-5485-170922_192942@152/AppDeployStage0/DownloadSourceBundle] : Starting activity...
+[2017-09-22T18:29:52.563Z] INFO  [25537] - [Application update app-5485-170922_192942@152/AppDeployStage0/DownloadSourceBundle] : Completed activity. Result:
+  [2017-09-22T18:29:52.235Z] INFO  [25583] : Application version will be saved to /opt/elasticbeanstalk/deploy/appsource.
+  [2017-09-22T18:29:52.235Z] INFO  [25583] : Using manifest cache with deployment ID 152 and serial 156.
+  [2017-09-22T18:29:52.235Z] INFO  [25583] : Attempting to download application source bundle to: '/opt/elasticbeanstalk/deploy/appsource/source_bundle'.
+  [2017-09-22T18:29:52.235Z] INFO  [25583] : Using computed s3 key.
+  [2017-09-22T18:29:52.351Z] INFO  [25583] : Downloading from bucket 'elasticbeanstalk-eu-west-1-470576480462' with key 'resources/environments/e-yxqk2dspb5/_runtime/_versions/WECO/app-5485-170922_192942' and version '' to '/opt/elasticbeanstalk/deploy/appsource/source_bundle'.
+  [2017-09-22T18:29:52.408Z] INFO  [25583] : Size: 119399, ETag: "90e06f0b264f2e2d5fa8939c76e0194e", Metadata: {"environmentid"=>"e-yxqk2dspb5", "requestid"=>"01438cb7-9fc4-11e7-b3de-6926c5b8e983"}.
+  [2017-09-22T18:29:52.549Z] INFO  [25583] : Downloaded size: 119399.
+  [2017-09-22T18:29:52.549Z] INFO  [25583] : Successfully downloaded to '/opt/elasticbeanstalk/deploy/appsource/source_bundle'.
+[2017-09-22T18:29:52.563Z] INFO  [25537] - [Application update app-5485-170922_192942@152/AppDeployStage0/EbExtensionPreBuild] : Starting activity...
+[2017-09-22T18:29:52.818Z] INFO  [25537] - [Application update app-5485-170922_192942@152/AppDeployStage0/EbExtensionPreBuild/Infra-EmbeddedPreBuild] : Starting activity...
+[2017-09-22T18:29:52.818Z] INFO  [25537] - [Application update app-5485-170922_192942@152/AppDeployStage0/EbExtensionPreBuild/Infra-EmbeddedPreBuild] : Completed activity.
+[2017-09-22T18:29:52.829Z] INFO  [25537] - [Application update app-5485-170922_192942@152/AppDeployStage0/EbExtensionPreBuild] : Completed activity.
+[2017-09-22T18:29:52.830Z] INFO  [25537] - [Application update app-5485-170922_192942@152/AppDeployStage0/AppDeployPreHook] : Starting activity...
+[2017-09-22T18:29:52.830Z] INFO  [25537] - [Application update app-5485-170922_192942@152/AppDeployStage0/AppDeployPreHook/01_configure_xray.sh] : Starting activity...
+[2017-09-22T18:29:52.933Z] INFO  [25537] - [Application update app-5485-170922_192942@152/AppDeployStage0/AppDeployPreHook/01_configure_xray.sh] : Completed activity.
+[2017-09-22T18:29:52.933Z] INFO  [25537] - [Application update app-5485-170922_192942@152/AppDeployStage0/AppDeployPreHook/10clean.sh] : Starting activity...
+[2017-09-22T18:29:53.027Z] INFO  [25537] - [Application update app-5485-170922_192942@152/AppDeployStage0/AppDeployPreHook/10clean.sh] : Completed activity. Result:
+  ++ /opt/elasticbeanstalk/bin/get-config container -k app_staging_dir
+  + EB_APP_STAGING_DIR=/tmp/deployment/application
+  + rm -rf /tmp/deployment/application
+  + mkdir -p /tmp/deployment/application
+[2017-09-22T18:29:53.027Z] INFO  [25537] - [Application update app-5485-170922_192942@152/AppDeployStage0/AppDeployPreHook/20unzip.sh] : Starting activity...
+[2017-09-22T18:29:53.214Z] INFO  [25537] - [Application update app-5485-170922_192942@152/AppDeployStage0/AppDeployPreHook/20unzip.sh] : Completed activity. Result:
+  ++ /opt/elasticbeanstalk/bin/get-config container -k app_staging_dir
+  + EB_APP_STAGING_DIR=/tmp/deployment/application
+  ++ /opt/elasticbeanstalk/bin/get-config container -k source_bundle
+  + EB_APP_SOURCE_BUNDLE=/opt/elasticbeanstalk/deploy/appsource/source_bundle
+  + /usr/bin/unzip -o -d /tmp/deployment/application /opt/elasticbeanstalk/deploy/appsource/source_bundle
+  Archive:  /opt/elasticbeanstalk/deploy/appsource/source_bundle
+  548559e2c8e7049ab83dc674c8aa1af3ed9c4792
+     creating: /tmp/deployment/application/.elasticbeanstalk/
+    inflating: /tmp/deployment/application/.elasticbeanstalk/config.yml  
+   extracting: /tmp/deployment/application/.gitignore  
+    inflating: /tmp/deployment/application/Gruntfile.js  
+    inflating: /tmp/deployment/application/README.md  
+    inflating: /tmp/deployment/application/apidoc.json  
+     creating: /tmp/deployment/application/config/
+    inflating: /tmp/deployment/application/config/acl.js  
+    inflating: /tmp/deployment/application/config/auth.js  
+    inflating: /tmp/deployment/application/config/aws.js  
+    inflating: /tmp/deployment/application/config/database.js  
+    inflating: /tmp/deployment/application/config/filestorage.js  
+    inflating: /tmp/deployment/application/config/io.js  
+    inflating: /tmp/deployment/application/config/jwt.js  
+    inflating: /tmp/deployment/application/config/mailer.js  
+    inflating: /tmp/deployment/application/config/notification-types.js  
+    inflating: /tmp/deployment/application/config/passport.js  
+     creating: /tmp/deployment/application/models/
+    inflating: /tmp/deployment/application/models/branch-image.model.js  
+    inflating: /tmp/deployment/application/models/branch.model.js  
+    inflating: /tmp/deployment/application/models/comment-data.model.js  
+    inflating: /tmp/deployment/application/models/comment.js  
+    inflating: /tmp/deployment/application/models/constant.js  
+    inflating: /tmp/deployment/application/models/flagged-post.model.js  
+    inflating: /tmp/deployment/application/models/followed-branch.model.js  
+    inflating: /tmp/deployment/application/models/mod-log-entry.model.js  
+    inflating: /tmp/deployment/application/models/mod.model.js  
+    inflating: /tmp/deployment/application/models/model.js  
+    inflating: /tmp/deployment/application/models/notification.model.js  
+    inflating: /tmp/deployment/application/models/poll-answer.model.js  
+    inflating: /tmp/deployment/application/models/post-data.model.js  
+    inflating: /tmp/deployment/application/models/post-image.model.js  
+    inflating: /tmp/deployment/application/models/post.model.js  
+    inflating: /tmp/deployment/application/models/session.model.js  
+    inflating: /tmp/deployment/application/models/subbranch-request.model.js  
+    inflating: /tmp/deployment/application/models/tag.model.js  
+    inflating: /tmp/deployment/application/models/user-image.model.js  
+    inflating: /tmp/deployment/application/models/user-vote.model.js  
+    inflating: /tmp/deployment/application/models/user.model.js  
+    inflating: /tmp/deployment/application/models/validate.js  
+    inflating: /tmp/deployment/application/package.json  
+     creating: /tmp/deployment/application/responses/
+    inflating: /tmp/deployment/application/responses/errors.js  
+    inflating: /tmp/deployment/application/responses/successes.js  
+     creating: /tmp/deployment/application/routers/
+     creating: /tmp/deployment/application/routers/branch-posts/
+    inflating: /tmp/deployment/application/routers/branch-posts/controller.js  
+    inflating: /tmp/deployment/application/routers/branch-posts/router.js  
+     creating: /tmp/deployment/application/routers/branch/
+    inflating: /tmp/deployment/application/routers/branch/controller.js  
+    inflating: /tmp/deployment/application/routers/branch/router.js  
+     creating: /tmp/deployment/application/routers/constant/
+    inflating: /tmp/deployment/application/routers/constant/controller.js  
+    inflating: /tmp/deployment/application/routers/constant/router.js  
+     creating: /tmp/deployment/application/routers/mods/
+    inflating: /tmp/deployment/application/routers/mods/controller.js  
+    inflating: /tmp/deployment/application/routers/mods/router.js  
+     creating: /tmp/deployment/application/routers/poll/
+    inflating: /tmp/deployment/application/routers/poll/controller.js  
+    inflating: /tmp/deployment/application/routers/poll/router.js  
+     creating: /tmp/deployment/application/routers/post/
+    inflating: /tmp/deployment/application/routers/post/controller.js  
+    inflating: /tmp/deployment/application/routers/post/router.js  
+     creating: /tmp/deployment/application/routers/requests/
+    inflating: /tmp/deployment/application/routers/requests/controller.js  
+    inflating: /tmp/deployment/application/routers/requests/router.js  
+    inflating: /tmp/deployment/application/routers/router.js  
+     creating: /tmp/deployment/application/routers/user/
+    inflating: /tmp/deployment/application/routers/user/controller.js  
+    inflating: /tmp/deployment/application/routers/user/router.js  
+    inflating: /tmp/deployment/application/server.js  
+     creating: /tmp/deployment/application/tests/
+    inflating: /tmp/deployment/application/tests/branch.test.js  
+    inflating: /tmp/deployment/application/tests/login.test.js  
+    inflating: /tmp/deployment/application/tests/post.test.js  
+    inflating: /tmp/deployment/application/tests/signup.test.js  
+    inflating: /tmp/deployment/application/tests/subbranch.test.js  
+    inflating: /tmp/deployment/application/tests/test.js  
+    inflating: /tmp/deployment/application/tests/user.test.js  
+    inflating: /tmp/deployment/application/yarn.lock  
+[2017-09-22T18:29:53.214Z] INFO  [25537] - [Application update app-5485-170922_192942@152/AppDeployStage0/AppDeployPreHook/30config_clean.sh] : Starting activity...
+[2017-09-22T18:29:53.306Z] INFO  [25537] - [Application update app-5485-170922_192942@152/AppDeployStage0/AppDeployPreHook/30config_clean.sh] : Completed activity. Result:
+  ++ /opt/elasticbeanstalk/bin/get-config container -k config_staging_dir
+  + EB_CONFIG_STAGING_DIR=/tmp/deployment/config
+  + rm -rf /tmp/deployment/config
+  + mkdir -p /tmp/deployment/config
+[2017-09-22T18:29:53.306Z] INFO  [25537] - [Application update app-5485-170922_192942@152/AppDeployStage0/AppDeployPreHook/40install_node.sh] : Starting activity...
+[2017-09-22T18:29:54.762Z] INFO  [25537] - [Application update app-5485-170922_192942@152/AppDeployStage0/AppDeployPreHook/40install_node.sh] : Completed activity. Result:
+  + /opt/elasticbeanstalk/containerfiles/ebnode.py --action node-install
+[2017-09-22T18:29:54.762Z] INFO  [25537] - [Application update app-5485-170922_192942@152/AppDeployStage0/AppDeployPreHook/50npm.sh] : Starting activity...
+[2017-09-22T18:30:12.229Z] INFO  [25537] - [Application update app-5485-170922_192942@152/AppDeployStage0/AppDeployPreHook/50npm.sh] : Completed activity. Result:
+  + /opt/elasticbeanstalk/containerfiles/ebnode.py --action npm-install
+  npm WARN deprecated sendgrid@4.10.0: Please see v6.X+ at https://www.npmjs.com/org/sendgrid
+  WECOAPI@1.0.0 /tmp/deployment/application
+  ├─┬ aws-sdk@2.121.0 
+  │ ├─┬ buffer@4.9.1 
+  │ │ ├── base64-js@1.2.1 
+  │ │ ├── ieee754@1.1.8 
+  │ │ └── isarray@1.0.0 
+  │ ├── crypto-browserify@1.0.9 
+  │ ├── events@1.1.1 
+  │ ├── jmespath@0.15.0 
+  │ ├── querystring@0.2.0 
+  │ ├── sax@1.2.1 
+  │ ├─┬ url@0.10.3 
+  │ │ └── punycode@1.3.2 
+  │ ├── uuid@3.0.1 
+  │ ├── xml2js@0.4.17 
+  │ └── xmlbuilder@4.2.1 
+  ├── bcrypt-nodejs@0.0.3 
+  ├── bcryptjs@2.4.3 
+  ├─┬ body-parser@1.18.2 
+  │ ├── bytes@3.0.0 
+  │ ├── content-type@1.0.4 
+  │ ├─┬ debug@2.6.9 
+  │ │ └── ms@2.0.0 
+  │ ├── depd@1.1.1 
+  │ ├─┬ http-errors@1.6.2 
+  │ │ └── inherits@2.0.3 
+  │ ├── iconv-lite@0.4.19 
+  │ ├─┬ on-finished@2.3.0 
+  │ │ └── ee-first@1.1.1 
+  │ ├── qs@6.5.1 
+  │ ├─┬ raw-body@2.3.2 
+  │ │ └── unpipe@1.0.0 
+  │ └─┬ type-is@1.6.15 
+  │   ├── media-typer@0.3.0 
+  │   └─┬ mime-types@2.1.17 
+  │     └── mime-db@1.30.0 
+  ├─┬ cookie-parser@1.4.3 
+  │ ├── cookie@0.3.1 
+  │ └── cookie-signature@1.0.6 
+  ├── dotenv@4.0.0 
+  ├─┬ express@4.15.4 
+  │ ├─┬ accepts@1.3.4 
+  │ │ └── negotiator@0.6.1 
+  │ ├── array-flatten@1.1.1 
+  │ ├── content-disposition@0.5.2 
+  │ ├── debug@2.6.8 
+  │ ├── encodeurl@1.0.1 
+  │ ├── escape-html@1.0.3 
+  │ ├── etag@1.8.1 
+  │ ├── finalhandler@1.0.6 
+  │ ├── fresh@0.5.0 
+  │ ├── merge-descriptors@1.0.1 
+  │ ├── methods@1.1.2 
+  │ ├── parseurl@1.3.2 
+  │ ├── path-to-regexp@0.1.7 
+  │ ├─┬ proxy-addr@1.1.5 
+  │ │ ├── forwarded@0.1.2 
+  │ │ └── ipaddr.js@1.4.0 
+  │ ├── qs@6.5.0 
+  │ ├── range-parser@1.2.0 
+  │ ├─┬ send@0.15.4 
+  │ │ ├── debug@2.6.8 
+  │ │ ├── destroy@1.0.4 
+  │ │ └── mime@1.3.4 
+  │ ├── serve-static@1.12.4 
+  │ ├── setprototypeof@1.0.3 
+  │ ├── statuses@1.3.1 
+  │ ├── utils-merge@1.0.0 
+  │ └── vary@1.1.1 
+  ├── express-bearer-token@2.1.0 
+  ├─┬ helmet@2.3.0 
+  │ ├─┬ connect@3.4.1 
+  │ │ ├─┬ debug@2.2.0 
+  │ │ │ └── ms@0.7.1 
+  │ │ └── finalhandler@0.4.1 
+  │ ├── dns-prefetch-control@0.1.0 
+  │ ├── dont-sniff-mimetype@1.0.0 
+  │ ├── frameguard@2.0.0 
+  │ ├─┬ helmet-csp@1.2.2 
+  │ │ ├── camelize@1.0.0 
+  │ │ ├─┬ content-security-policy-builder@1.0.0 
+  │ │ │ └── dashify@0.2.2 
+  │ │ ├── lodash.reduce@4.5.0 
+  │ │ └── platform@1.3.1 
+  │ ├── hide-powered-by@1.0.0 
+  │ ├── hpkp@1.2.0 
+  │ ├─┬ hsts@1.0.0 
+  │ │ └── core-util-is@1.0.2 
+  │ ├── ienoopen@1.0.0 
+  │ ├─┬ nocache@1.0.1 
+  │ │ └── depd@1.1.0 
+  │ ├── referrer-policy@1.0.0 
+  │ └── x-xss-protection@1.0.0 
+  ├── jwt-simple@0.5.1 
+  ├── lodash@4.17.4 
+  ├─┬ node-gyp@3.6.2 
+  │ ├── fstream@1.0.11 
+  │ ├─┬ glob@7.1.2 
+  │ │ ├── fs.realpath@1.0.0 
+  │ │ ├─┬ inflight@1.0.6 
+  │ │ │ └── wrappy@1.0.2 
+  │ │ ├── once@1.4.0 
+  │ │ └── path-is-absolute@1.0.1 
+  │ ├── graceful-fs@4.1.11 
+  │ ├─┬ minimatch@3.0.4 
+  │ │ └─┬ brace-expansion@1.1.8 
+  │ │   ├── balanced-match@1.0.0 
+  │ │   └── concat-map@0.0.1 
+  │ ├─┬ mkdirp@0.5.1 
+  │ │ └── minimist@0.0.8 
+  │ ├─┬ nopt@3.0.6 
+  │ │ └── abbrev@1.1.0 
+  │ ├─┬ npmlog@4.1.2 
+  │ │ ├─┬ are-we-there-yet@1.1.4 
+  │ │ │ ├── delegates@1.0.0 
+  │ │ │ └─┬ readable-stream@2.3.3 
+  │ │ │   ├── process-nextick-args@1.0.7 
+  │ │ │   ├── string_decoder@1.0.3 
+  │ │ │   └── util-deprecate@1.0.2 
+  │ │ ├── console-control-strings@1.1.0 
+  │ │ ├─┬ gauge@2.7.4 
+  │ │ │ ├── aproba@1.2.0 
+  │ │ │ ├── has-unicode@2.0.1 
+  │ │ │ ├── object-assign@4.1.1 
+  │ │ │ ├── signal-exit@3.0.2 
+  │ │ │ ├─┬ string-width@1.0.2 
+  │ │ │ │ ├── code-point-at@1.1.0 
+  │ │ │ │ └─┬ is-fullwidth-code-point@1.0.0 
+  │ │ │ │   └── number-is-nan@1.0.1 
+  │ │ │ ├─┬ strip-ansi@3.0.1 
+  │ │ │ │ └── ansi-regex@2.1.1 
+  │ │ │ └── wide-align@1.1.2 
+  │ │ └── set-blocking@2.0.0 
+  │ ├─┬ osenv@0.1.4 
+  │ │ ├── os-homedir@1.0.2 
+  │ │ └── os-tmpdir@1.0.2 
+  │ ├─┬ request@2.82.0 
+  │ │ ├── aws-sign2@0.7.0 
+  │ │ ├── aws4@1.6.0 
+  │ │ ├── caseless@0.12.0 
+  │ │ ├─┬ combined-stream@1.0.5 
+  │ │ │ └── delayed-stream@1.0.0 
+  │ │ ├── extend@3.0.1 
+  │ │ ├── forever-agent@0.6.1 
+  │ │ ├─┬ form-data@2.3.1 
+  │ │ │ └── asynckit@0.4.0 
+  │ │ ├─┬ har-validator@5.0.3 
+  │ │ │ ├─┬ ajv@5.2.2 
+  │ │ │ │ ├── co@4.6.0 
+  │ │ │ │ ├── fast-deep-equal@1.0.0 
+  │ │ │ │ ├── json-schema-traverse@0.3.1 
+  │ │ │ │ └─┬ json-stable-stringify@1.0.1 
+  │ │ │ │   └── jsonify@0.0.0 
+  │ │ │ └── har-schema@2.0.0 
+  │ │ ├─┬ hawk@6.0.2 
+  │ │ │ ├── boom@4.3.1 
+  │ │ │ ├─┬ cryptiles@3.1.2 
+  │ │ │ │ └── boom@5.2.0 
+  │ │ │ ├── hoek@4.2.0 
+  │ │ │ └── sntp@2.0.2 
+  │ │ ├─┬ http-signature@1.2.0 
+  │ │ │ ├── assert-plus@1.0.0 
+  │ │ │ ├─┬ jsprim@1.4.1 
+  │ │ │ │ ├── extsprintf@1.3.0 
+  │ │ │ │ ├── json-schema@0.2.3 
+  │ │ │ │ └── verror@1.10.0 
+  │ │ │ └─┬ sshpk@1.13.1 
+  │ │ │   ├── asn1@0.2.3 
+  │ │ │   ├── bcrypt-pbkdf@1.0.1 
+  │ │ │   ├── dashdash@1.14.1 
+  │ │ │   ├── ecc-jsbn@0.1.1 
+  │ │ │   ├── getpass@0.1.7 
+  │ │ │   ├── jsbn@0.1.1 
+  │ │ │   └── tweetnacl@0.14.5 
+  │ │ ├── is-typedarray@1.0.0 
+  │ │ ├── isstream@0.1.2 
+  │ │ ├── json-stringify-safe@5.0.1 
+  │ │ ├── oauth-sign@0.8.2 
+  │ │ ├── performance-now@2.1.0 
+  │ │ ├── safe-buffer@5.1.1 
+  │ │ ├── stringstream@0.0.5 
+  │ │ ├─┬ tough-cookie@2.3.3 
+  │ │ │ └── punycode@1.4.1 
+  │ │ ├── tunnel-agent@0.6.0 
+  │ │ └── uuid@3.1.0 
+  │ ├── rimraf@2.6.2 
+  │ ├── semver@5.3.0 
+  │ ├─┬ tar@2.2.1 
+  │ │ └── block-stream@0.0.9 
+  │ └─┬ which@1.3.0 
+  │   └── isexe@2.0.0 
+  ├─┬ passport@0.3.2 
+  │ ├── passport-strategy@1.0.0 
+  │ └── pause@0.0.1 
+  ├─┬ passport-jwt@3.0.0 
+  │ └─┬ jsonwebtoken@7.4.3 
+  │   ├─┬ joi@6.10.1 
+  │   │ ├── hoek@2.16.3 
+  │   │ ├── isemail@1.2.0 
+  │   │ ├── moment@2.18.1 
+  │   │ └─┬ topo@1.1.0 
+  │   │   └── hoek@2.16.3 
+  │   ├─┬ jws@3.1.4 
+  │   │ ├── base64url@2.0.0 
+  │   │ └─┬ jwa@1.1.5 
+  │   │   ├── buffer-equal-constant-time@1.0.1 
+  │   │   └── ecdsa-sig-formatter@1.0.9 
+  │   ├── lodash.once@4.1.1 
+  │   └── xtend@4.0.1 
+  ├── passport-local@1.0.0 
+  ├─┬ sendgrid@4.10.0 
+  │ ├─┬ async.ensureasync@0.5.2 
+  │ │ └─┬ async.util.ensureasync@0.5.2 
+  │ │   ├── async.util.restparam@0.5.2 
+  │ │   └── async.util.setimmediate@0.5.2 
+  │ ├─┬ async.queue@0.5.2 
+  │ │ └─┬ async.util.queue@0.5.2 
+  │ │   ├── async.util.arrayeach@0.5.2 
+  │ │   ├── async.util.isarray@0.5.2 
+  │ │   ├── async.util.map@0.5.2 
+  │ │   ├── async.util.noop@0.5.2 
+  │ │   └── async.util.onlyonce@0.5.2 
+  │ ├── bottleneck@1.16.0 
+  │ ├── lodash.chunk@4.2.0 
+  │ ├─┬ mailparser@0.6.2 
+  │ │ ├── encoding@0.1.12 
+  │ │ ├─┬ mimelib@0.3.1 
+  │ │ │ └── addressparser@1.0.1 
+  │ │ └── uue@3.1.0 
+  │ └── sendgrid-rest@2.4.0 
+  └─┬ socket.io@1.7.4 
+    ├─┬ debug@2.3.3 
+    │ └── ms@0.7.2 
+    ├─┬ engine.io@1.8.4 
+    │ ├── accepts@1.3.3 
+    │ ├── base64id@1.0.0 
+    │ ├─┬ debug@2.3.3 
+    │ │ └── ms@0.7.2 
+    │ ├─┬ engine.io-parser@1.3.2 
+    │ │ ├── after@0.8.2 
+    │ │ ├── arraybuffer.slice@0.0.6 
+    │ │ ├── base64-arraybuffer@0.1.5 
+    │ │ ├── blob@0.0.4 
+    │ │ └── wtf-8@1.0.0 
+    │ └─┬ ws@1.1.4 
+    │   ├── options@0.0.6 
+    │   └── ultron@1.0.2 
+    ├─┬ has-binary@0.1.7 
+    │ └── isarray@0.0.1 
+    ├── object-assign@4.1.0 
+    ├─┬ socket.io-adapter@0.5.0 
+    │ └─┬ debug@2.3.3 
+    │   └── ms@0.7.2 
+    ├─┬ socket.io-client@1.7.4 
+    │ ├── backo2@1.0.2 
+    │ ├── component-bind@1.0.0 
+    │ ├── component-emitter@1.2.1 
+    │ ├─┬ debug@2.3.3 
+    │ │ └── ms@0.7.2 
+    │ ├─┬ engine.io-client@1.8.4 
+    │ │ ├── component-emitter@1.2.1 
+    │ │ ├── component-inherit@0.0.3 
+    │ │ ├─┬ debug@2.3.3 
+    │ │ │ └── ms@0.7.2 
+    │ │ ├── has-cors@1.1.0 
+    │ │ ├── parsejson@0.0.3 
+    │ │ ├── parseqs@0.0.5 
+    │ │ ├── ws@1.1.2 
+    │ │ ├── xmlhttprequest-ssl@1.5.3 
+    │ │ └── yeast@0.1.2 
+    │ ├── indexof@0.0.1 
+    │ ├── object-component@0.0.3 
+    │ ├─┬ parseuri@0.0.5 
+    │ │ └─┬ better-assert@1.0.2 
+    │ │   └── callsite@1.0.0 
+    │ └── to-array@0.1.4 
+    └─┬ socket.io-parser@2.3.1 
+      ├── component-emitter@1.1.2 
+      ├─┬ debug@2.2.0 
+      │ └── ms@0.7.1 
+      ├── isarray@0.0.1 
+      └── json3@3.3.2 
+  
+  aws-sdk@2.121.0 /tmp/deployment/application/node_modules/aws-sdk
+  buffer@4.9.1 /tmp/deployment/application/node_modules/buffer
+  base64-js@1.2.1 /tmp/deployment/application/node_modules/base64-js
+  ieee754@1.1.8 /tmp/deployment/application/node_modules/ieee754
+  isarray@1.0.0 /tmp/deployment/application/node_modules/isarray
+  crypto-browserify@1.0.9 /tmp/deployment/application/node_modules/crypto-browserify
+  events@1.1.1 /tmp/deployment/application/node_modules/events
+  jmespath@0.15.0 /tmp/deployment/application/node_modules/jmespath
+  querystring@0.2.0 /tmp/deployment/application/node_modules/querystring
+  sax@1.2.1 /tmp/deployment/application/node_modules/sax
+  url@0.10.3 /tmp/deployment/application/node_modules/url
+  punycode@1.3.2 /tmp/deployment/application/node_modules/punycode
+  uuid@3.0.1 /tmp/deployment/application/node_modules/uuid
+  xml2js@0.4.17 /tmp/deployment/application/node_modules/xml2js
+  xmlbuilder@4.2.1 /tmp/deployment/application/node_modules/xmlbuilder
+  lodash@4.17.4 /tmp/deployment/application/node_modules/lodash
+  bcrypt-nodejs@0.0.3 /tmp/deployment/application/node_modules/bcrypt-nodejs
+  bcryptjs@2.4.3 /tmp/deployment/application/node_modules/bcryptjs
+  body-parser@1.18.2 /tmp/deployment/application/node_modules/body-parser
+  bytes@3.0.0 /tmp/deployment/application/node_modules/bytes
+  content-type@1.0.4 /tmp/deployment/application/node_modules/content-type
+  debug@2.6.9 /tmp/deployment/application/node_modules/debug
+  ms@2.0.0 /tmp/deployment/application/node_modules/ms
+  depd@1.1.1 /tmp/deployment/application/node_modules/depd
+  http-errors@1.6.2 /tmp/deployment/application/node_modules/http-errors
+  inherits@2.0.3 /tmp/deployment/application/node_modules/inherits
+  setprototypeof@1.0.3 /tmp/deployment/application/node_modules/setprototypeof
+  statuses@1.3.1 /tmp/deployment/application/node_modules/statuses
+  iconv-lite@0.4.19 /tmp/deployment/application/node_modules/iconv-lite
+  on-finished@2.3.0 /tmp/deployment/application/node_modules/on-finished
+  ee-first@1.1.1 /tmp/deployment/application/node_modules/ee-first
+  qs@6.5.1 /tmp/deployment/application/node_modules/qs
+  raw-body@2.3.2 /tmp/deployment/application/node_modules/raw-body
+  unpipe@1.0.0 /tmp/deployment/application/node_modules/unpipe
+  type-is@1.6.15 /tmp/deployment/application/node_modules/type-is
+  media-typer@0.3.0 /tmp/deployment/application/node_modules/media-typer
+  mime-types@2.1.17 /tmp/deployment/application/node_modules/mime-types
+  mime-db@1.30.0 /tmp/deployment/application/node_modules/mime-db
+  cookie-parser@1.4.3 /tmp/deployment/application/node_modules/cookie-parser
+  cookie@0.3.1 /tmp/deployment/application/node_modules/cookie
+  cookie-signature@1.0.6 /tmp/deployment/application/node_modules/cookie-signature
+  dotenv@4.0.0 /tmp/deployment/application/node_modules/dotenv
+  express@4.15.4 /tmp/deployment/application/node_modules/express
+  accepts@1.3.4 /tmp/deployment/application/node_modules/accepts
+  negotiator@0.6.1 /tmp/deployment/application/node_modules/negotiator
+  array-flatten@1.1.1 /tmp/deployment/application/node_modules/array-flatten
+  content-disposition@0.5.2 /tmp/deployment/application/node_modules/content-disposition
+  debug@2.6.8 /tmp/deployment/application/node_modules/express/node_modules/debug
+  encodeurl@1.0.1 /tmp/deployment/application/node_modules/encodeurl
+  escape-html@1.0.3 /tmp/deployment/application/node_modules/escape-html
+  etag@1.8.1 /tmp/deployment/application/node_modules/etag
+  finalhandler@1.0.6 /tmp/deployment/application/node_modules/finalhandler
+  parseurl@1.3.2 /tmp/deployment/application/node_modules/parseurl
+  fresh@0.5.0 /tmp/deployment/application/node_modules/fresh
+  merge-descriptors@1.0.1 /tmp/deployment/application/node_modules/merge-descriptors
+  methods@1.1.2 /tmp/deployment/application/node_modules/methods
+  path-to-regexp@0.1.7 /tmp/deployment/application/node_modules/path-to-regexp
+  proxy-addr@1.1.5 /tmp/deployment/application/node_modules/proxy-addr
+  forwarded@0.1.2 /tmp/deployment/application/node_modules/forwarded
+  ipaddr.js@1.4.0 /tmp/deployment/application/node_modules/ipaddr.js
+  qs@6.5.0 /tmp/deployment/application/node_modules/express/node_modules/qs
+  range-parser@1.2.0 /tmp/deployment/application/node_modules/range-parser
+  send@0.15.4 /tmp/deployment/application/node_modules/send
+  debug@2.6.8 /tmp/deployment/application/node_modules/send/node_modules/debug
+  destroy@1.0.4 /tmp/deployment/application/node_modules/destroy
+  mime@1.3.4 /tmp/deployment/application/node_modules/mime
+  serve-static@1.12.4 /tmp/deployment/application/node_modules/serve-static
+  utils-merge@1.0.0 /tmp/deployment/application/node_modules/utils-merge
+  vary@1.1.1 /tmp/deployment/application/node_modules/vary
+  express-bearer-token@2.1.0 /tmp/deployment/application/node_modules/express-bearer-token
+  helmet@2.3.0 /tmp/deployment/application/node_modules/helmet
+  connect@3.4.1 /tmp/deployment/application/node_modules/connect
+  debug@2.2.0 /tmp/deployment/application/node_modules/connect/node_modules/debug
+  ms@0.7.1 /tmp/deployment/application/node_modules/connect/node_modules/ms
+  finalhandler@0.4.1 /tmp/deployment/application/node_modules/connect/node_modules/finalhandler
+  dns-prefetch-control@0.1.0 /tmp/deployment/application/node_modules/dns-prefetch-control
+  dont-sniff-mimetype@1.0.0 /tmp/deployment/application/node_modules/dont-sniff-mimetype
+  frameguard@2.0.0 /tmp/deployment/application/node_modules/frameguard
+  helmet-csp@1.2.2 /tmp/deployment/application/node_modules/helmet-csp
+  camelize@1.0.0 /tmp/deployment/application/node_modules/camelize
+  content-security-policy-builder@1.0.0 /tmp/deployment/application/node_modules/content-security-policy-builder
+  dashify@0.2.2 /tmp/deployment/application/node_modules/dashify
+  lodash.reduce@4.5.0 /tmp/deployment/application/node_modules/lodash.reduce
+  platform@1.3.1 /tmp/deployment/application/node_modules/platform
+  hide-powered-by@1.0.0 /tmp/deployment/application/node_modules/hide-powered-by
+  hpkp@1.2.0 /tmp/deployment/application/node_modules/hpkp
+  hsts@1.0.0 /tmp/deployment/application/node_modules/hsts
+  core-util-is@1.0.2 /tmp/deployment/application/node_modules/core-util-is
+  ienoopen@1.0.0 /tmp/deployment/application/node_modules/ienoopen
+  nocache@1.0.1 /tmp/deployment/application/node_modules/nocache
+  depd@1.1.0 /tmp/deployment/application/node_modules/nocache/node_modules/depd
+  referrer-policy@1.0.0 /tmp/deployment/application/node_modules/referrer-policy
+  x-xss-protection@1.0.0 /tmp/deployment/application/node_modules/x-xss-protection
+  jwt-simple@0.5.1 /tmp/deployment/application/node_modules/jwt-simple
+  node-gyp@3.6.2 /tmp/deployment/application/node_modules/node-gyp
+  fstream@1.0.11 /tmp/deployment/application/node_modules/fstream
+  graceful-fs@4.1.11 /tmp/deployment/application/node_modules/graceful-fs
+  mkdirp@0.5.1 /tmp/deployment/application/node_modules/mkdirp
+  minimist@0.0.8 /tmp/deployment/application/node_modules/minimist
+  rimraf@2.6.2 /tmp/deployment/application/node_modules/rimraf
+  glob@7.1.2 /tmp/deployment/application/node_modules/glob
+  fs.realpath@1.0.0 /tmp/deployment/application/node_modules/fs.realpath
+  inflight@1.0.6 /tmp/deployment/application/node_modules/inflight
+  once@1.4.0 /tmp/deployment/application/node_modules/once
+  wrappy@1.0.2 /tmp/deployment/application/node_modules/wrappy
+  minimatch@3.0.4 /tmp/deployment/application/node_modules/minimatch
+  brace-expansion@1.1.8 /tmp/deployment/application/node_modules/brace-expansion
+  balanced-match@1.0.0 /tmp/deployment/application/node_modules/balanced-match
+  concat-map@0.0.1 /tmp/deployment/application/node_modules/concat-map
+  path-is-absolute@1.0.1 /tmp/deployment/application/node_modules/path-is-absolute
+  nopt@3.0.6 /tmp/deployment/application/node_modules/nopt
+  abbrev@1.1.0 /tmp/deployment/application/node_modules/abbrev
+  npmlog@4.1.2 /tmp/deployment/application/node_modules/npmlog
+  are-we-there-yet@1.1.4 /tmp/deployment/application/node_modules/are-we-there-yet
+  delegates@1.0.0 /tmp/deployment/application/node_modules/delegates
+  readable-stream@2.3.3 /tmp/deployment/application/node_modules/readable-stream
+  process-nextick-args@1.0.7 /tmp/deployment/application/node_modules/process-nextick-args
+  safe-buffer@5.1.1 /tmp/deployment/application/node_modules/safe-buffer
+  string_decoder@1.0.3 /tmp/deployment/application/node_modules/string_decoder
+  util-deprecate@1.0.2 /tmp/deployment/application/node_modules/util-deprecate
+  console-control-strings@1.1.0 /tmp/deployment/application/node_modules/console-control-strings
+  gauge@2.7.4 /tmp/deployment/application/node_modules/gauge
+  aproba@1.2.0 /tmp/deployment/application/node_modules/aproba
+  has-unicode@2.0.1 /tmp/deployment/application/node_modules/has-unicode
+  object-assign@4.1.1 /tmp/deployment/application/node_modules/object-assign
+  signal-exit@3.0.2 /tmp/deployment/application/node_modules/signal-exit
+  string-width@1.0.2 /tmp/deployment/application/node_modules/string-width
+  code-point-at@1.1.0 /tmp/deployment/application/node_modules/code-point-at
+  is-fullwidth-code-point@1.0.0 /tmp/deployment/application/node_modules/is-fullwidth-code-point
+  number-is-nan@1.0.1 /tmp/deployment/application/node_modules/number-is-nan
+  strip-ansi@3.0.1 /tmp/deployment/application/node_modules/strip-ansi
+  ansi-regex@2.1.1 /tmp/deployment/application/node_modules/ansi-regex
+  wide-align@1.1.2 /tmp/deployment/application/node_modules/wide-align
+  set-blocking@2.0.0 /tmp/deployment/application/node_modules/set-blocking
+  osenv@0.1.4 /tmp/deployment/application/node_modules/osenv
+  os-homedir@1.0.2 /tmp/deployment/application/node_modules/os-homedir
+  os-tmpdir@1.0.2 /tmp/deployment/application/node_modules/os-tmpdir
+  request@2.82.0 /tmp/deployment/application/node_modules/request
+  aws-sign2@0.7.0 /tmp/deployment/application/node_modules/aws-sign2
+  aws4@1.6.0 /tmp/deployment/application/node_modules/aws4
+  caseless@0.12.0 /tmp/deployment/application/node_modules/caseless
+  combined-stream@1.0.5 /tmp/deployment/application/node_modules/combined-stream
+  delayed-stream@1.0.0 /tmp/deployment/application/node_modules/delayed-stream
+  extend@3.0.1 /tmp/deployment/application/node_modules/extend
+  forever-agent@0.6.1 /tmp/deployment/application/node_modules/forever-agent
+  form-data@2.3.1 /tmp/deployment/application/node_modules/form-data
+  asynckit@0.4.0 /tmp/deployment/application/node_modules/asynckit
+  har-validator@5.0.3 /tmp/deployment/application/node_modules/har-validator
+  ajv@5.2.2 /tmp/deployment/application/node_modules/ajv
+  co@4.6.0 /tmp/deployment/application/node_modules/co
+  fast-deep-equal@1.0.0 /tmp/deployment/application/node_modules/fast-deep-equal
+  json-schema-traverse@0.3.1 /tmp/deployment/application/node_modules/json-schema-traverse
+  json-stable-stringify@1.0.1 /tmp/deployment/application/node_modules/json-stable-stringify
+  jsonify@0.0.0 /tmp/deployment/application/node_modules/jsonify
+  har-schema@2.0.0 /tmp/deployment/application/node_modules/har-schema
+  hawk@6.0.2 /tmp/deployment/application/node_modules/hawk
+  boom@4.3.1 /tmp/deployment/application/node_modules/boom
+  hoek@4.2.0 /tmp/deployment/application/node_modules/hoek
+  cryptiles@3.1.2 /tmp/deployment/application/node_modules/cryptiles
+  boom@5.2.0 /tmp/deployment/application/node_modules/cryptiles/node_modules/boom
+  sntp@2.0.2 /tmp/deployment/application/node_modules/sntp
+  http-signature@1.2.0 /tmp/deployment/application/node_modules/http-signature
+  assert-plus@1.0.0 /tmp/deployment/application/node_modules/assert-plus
+  jsprim@1.4.1 /tmp/deployment/application/node_modules/jsprim
+  extsprintf@1.3.0 /tmp/deployment/application/node_modules/extsprintf
+  json-schema@0.2.3 /tmp/deployment/application/node_modules/json-schema
+  verror@1.10.0 /tmp/deployment/application/node_modules/verror
+  sshpk@1.13.1 /tmp/deployment/application/node_modules/sshpk
+  asn1@0.2.3 /tmp/deployment/application/node_modules/asn1
+  dashdash@1.14.1 /tmp/deployment/application/node_modules/dashdash
+  getpass@0.1.7 /tmp/deployment/application/node_modules/getpass
+  is-typedarray@1.0.0 /tmp/deployment/application/node_modules/is-typedarray
+  isstream@0.1.2 /tmp/deployment/application/node_modules/isstream
+  json-stringify-safe@5.0.1 /tmp/deployment/application/node_modules/json-stringify-safe
+  oauth-sign@0.8.2 /tmp/deployment/application/node_modules/oauth-sign
+  performance-now@2.1.0 /tmp/deployment/application/node_modules/performance-now
+  stringstream@0.0.5 /tmp/deployment/application/node_modules/stringstream
+  tough-cookie@2.3.3 /tmp/deployment/application/node_modules/tough-cookie
+  punycode@1.4.1 /tmp/deployment/application/node_modules/tough-cookie/node_modules/punycode
+  tunnel-agent@0.6.0 /tmp/deployment/application/node_modules/tunnel-agent
+  uuid@3.1.0 /tmp/deployment/application/node_modules/request/node_modules/uuid
+  semver@5.3.0 /tmp/deployment/application/node_modules/semver
+  tar@2.2.1 /tmp/deployment/application/node_modules/tar
+  block-stream@0.0.9 /tmp/deployment/application/node_modules/block-stream
+  which@1.3.0 /tmp/deployment/application/node_modules/which
+  isexe@2.0.0 /tmp/deployment/application/node_modules/isexe
+  passport@0.3.2 /tmp/deployment/application/node_modules/passport
+  passport-strategy@1.0.0 /tmp/deployment/application/node_modules/passport-strategy
+  pause@0.0.1 /tmp/deployment/application/node_modules/pause
+  passport-jwt@3.0.0 /tmp/deployment/application/node_modules/passport-jwt
+  jsonwebtoken@7.4.3 /tmp/deployment/application/node_modules/jsonwebtoken
+  joi@6.10.1 /tmp/deployment/application/node_modules/joi
+  hoek@2.16.3 /tmp/deployment/application/node_modules/joi/node_modules/hoek
+  isemail@1.2.0 /tmp/deployment/application/node_modules/isemail
+  moment@2.18.1 /tmp/deployment/application/node_modules/moment
+  topo@1.1.0 /tmp/deployment/application/node_modules/topo
+  hoek@2.16.3 /tmp/deployment/application/node_modules/topo/node_modules/hoek
+  jws@3.1.4 /tmp/deployment/application/node_modules/jws
+  base64url@2.0.0 /tmp/deployment/application/node_modules/base64url
+  jwa@1.1.5 /tmp/deployment/application/node_modules/jwa
+  buffer-equal-constant-time@1.0.1 /tmp/deployment/application/node_modules/buffer-equal-constant-time
+  ecdsa-sig-formatter@1.0.9 /tmp/deployment/application/node_modules/ecdsa-sig-formatter
+  lodash.once@4.1.1 /tmp/deployment/application/node_modules/lodash.once
+  xtend@4.0.1 /tmp/deployment/application/node_modules/xtend
+  passport-local@1.0.0 /tmp/deployment/application/node_modules/passport-local
+  sendgrid@4.10.0 /tmp/deployment/application/node_modules/sendgrid
+  async.ensureasync@0.5.2 /tmp/deployment/application/node_modules/async.ensureasync
+  async.util.ensureasync@0.5.2 /tmp/deployment/application/node_modules/async.util.ensureasync
+  async.util.restparam@0.5.2 /tmp/deployment/application/node_modules/async.util.restparam
+  async.util.setimmediate@0.5.2 /tmp/deployment/application/node_modules/async.util.setimmediate
+  async.queue@0.5.2 /tmp/deployment/application/node_modules/async.queue
+  async.util.queue@0.5.2 /tmp/deployment/application/node_modules/async.util.queue
+  async.util.arrayeach@0.5.2 /tmp/deployment/application/node_modules/async.util.arrayeach
+  async.util.isarray@0.5.2 /tmp/deployment/application/node_modules/async.util.isarray
+  async.util.map@0.5.2 /tmp/deployment/application/node_modules/async.util.map
+  async.util.noop@0.5.2 /tmp/deployment/application/node_modules/async.util.noop
+  async.util.onlyonce@0.5.2 /tmp/deployment/application/node_modules/async.util.onlyonce
+  bottleneck@1.16.0 /tmp/deployment/application/node_modules/bottleneck
+  lodash.chunk@4.2.0 /tmp/deployment/application/node_modules/lodash.chunk
+  mailparser@0.6.2 /tmp/deployment/application/node_modules/mailparser
+  encoding@0.1.12 /tmp/deployment/application/node_modules/encoding
+  mimelib@0.3.1 /tmp/deployment/application/node_modules/mimelib
+  addressparser@1.0.1 /tmp/deployment/application/node_modules/addressparser
+  uue@3.1.0 /tmp/deployment/application/node_modules/uue
+  sendgrid-rest@2.4.0 /tmp/deployment/application/node_modules/sendgrid-rest
+  socket.io@1.7.4 /tmp/deployment/application/node_modules/socket.io
+  debug@2.3.3 /tmp/deployment/application/node_modules/socket.io/node_modules/debug
+  ms@0.7.2 /tmp/deployment/application/node_modules/socket.io/node_modules/ms
+  engine.io@1.8.4 /tmp/deployment/application/node_modules/engine.io
+  accepts@1.3.3 /tmp/deployment/application/node_modules/engine.io/node_modules/accepts
+  base64id@1.0.0 /tmp/deployment/application/node_modules/base64id
+  debug@2.3.3 /tmp/deployment/application/node_modules/engine.io/node_modules/debug
+  ms@0.7.2 /tmp/deployment/application/node_modules/engine.io/node_modules/ms
+  engine.io-parser@1.3.2 /tmp/deployment/application/node_modules/engine.io-parser
+  after@0.8.2 /tmp/deployment/application/node_modules/after
+  arraybuffer.slice@0.0.6 /tmp/deployment/application/node_modules/arraybuffer.slice
+  base64-arraybuffer@0.1.5 /tmp/deployment/application/node_modules/base64-arraybuffer
+  blob@0.0.4 /tmp/deployment/application/node_modules/blob
+  has-binary@0.1.7 /tmp/deployment/application/node_modules/has-binary
+  isarray@0.0.1 /tmp/deployment/application/node_modules/has-binary/node_modules/isarray
+  wtf-8@1.0.0 /tmp/deployment/application/node_modules/wtf-8
+  ws@1.1.4 /tmp/deployment/application/node_modules/ws
+  options@0.0.6 /tmp/deployment/application/node_modules/options
+  ultron@1.0.2 /tmp/deployment/application/node_modules/ultron
+  object-assign@4.1.0 /tmp/deployment/application/node_modules/socket.io/node_modules/object-assign
+  socket.io-adapter@0.5.0 /tmp/deployment/application/node_modules/socket.io-adapter
+  debug@2.3.3 /tmp/deployment/application/node_modules/socket.io-adapter/node_modules/debug
+  ms@0.7.2 /tmp/deployment/application/node_modules/socket.io-adapter/node_modules/ms
+  socket.io-parser@2.3.1 /tmp/deployment/application/node_modules/socket.io-parser
+  component-emitter@1.1.2 /tmp/deployment/application/node_modules/component-emitter
+  debug@2.2.0 /tmp/deployment/application/node_modules/socket.io-parser/node_modules/debug
+  ms@0.7.1 /tmp/deployment/application/node_modules/socket.io-parser/node_modules/ms
+  isarray@0.0.1 /tmp/deployment/application/node_modules/socket.io-parser/node_modules/isarray
+  json3@3.3.2 /tmp/deployment/application/node_modules/json3
+  socket.io-client@1.7.4 /tmp/deployment/application/node_modules/socket.io-client
+  backo2@1.0.2 /tmp/deployment/application/node_modules/backo2
+  component-bind@1.0.0 /tmp/deployment/application/node_modules/component-bind
+  component-emitter@1.2.1 /tmp/deployment/application/node_modules/socket.io-client/node_modules/component-emitter
+  debug@2.3.3 /tmp/deployment/application/node_modules/socket.io-client/node_modules/debug
+  ms@0.7.2 /tmp/deployment/application/node_modules/socket.io-client/node_modules/ms
+  engine.io-client@1.8.4 /tmp/deployment/application/node_modules/engine.io-client
+  component-emitter@1.2.1 /tmp/deployment/application/node_modules/engine.io-client/node_modules/component-emitter
+  component-inherit@0.0.3 /tmp/deployment/application/node_modules/component-inherit
+  debug@2.3.3 /tmp/deployment/application/node_modules/engine.io-client/node_modules/debug
+  ms@0.7.2 /tmp/deployment/application/node_modules/engine.io-client/node_modules/ms
+  has-cors@1.1.0 /tmp/deployment/application/node_modules/has-cors
+  indexof@0.0.1 /tmp/deployment/application/node_modules/indexof
+  parsejson@0.0.3 /tmp/deployment/application/node_modules/parsejson
+  better-assert@1.0.2 /tmp/deployment/application/node_modules/better-assert
+  callsite@1.0.0 /tmp/deployment/application/node_modules/callsite
+  parseqs@0.0.5 /tmp/deployment/application/node_modules/parseqs
+  parseuri@0.0.5 /tmp/deployment/application/node_modules/parseuri
+  ws@1.1.2 /tmp/deployment/application/node_modules/engine.io-client/node_modules/ws
+  xmlhttprequest-ssl@1.5.3 /tmp/deployment/application/node_modules/xmlhttprequest-ssl
+  yeast@0.1.2 /tmp/deployment/application/node_modules/yeast
+  object-component@0.0.3 /tmp/deployment/application/node_modules/object-component
+  to-array@0.1.4 /tmp/deployment/application/node_modules/to-array
+  bcrypt-pbkdf@1.0.1 /tmp/deployment/application/node_modules/bcrypt-pbkdf
+  tweetnacl@0.14.5 /tmp/deployment/application/node_modules/tweetnacl
+  ecc-jsbn@0.1.1 /tmp/deployment/application/node_modules/ecc-jsbn
+  jsbn@0.1.1 /tmp/deployment/application/node_modules/jsbn
+  Running npm install:  /opt/elasticbeanstalk/node-install/node-v6.11.1-linux-x64/bin/npm
+  Setting npm config jobs to 1
+  npm config jobs set to 1
+  Running npm with --production flag
+[2017-09-22T18:30:12.229Z] INFO  [25537] - [Application update app-5485-170922_192942@152/AppDeployStage0/AppDeployPreHook/60config_generate.sh] : Starting activity...
+[2017-09-22T18:30:14.046Z] INFO  [25537] - [Application update app-5485-170922_192942@152/AppDeployStage0/AppDeployPreHook/60config_generate.sh] : Completed activity. Result:
+  + /opt/elasticbeanstalk/containerfiles/ebnode.py --action generate-config
+  Generating modifications to /etc/nginx/nginx.conf
+  Generating reverse proxy settings
+[2017-09-22T18:30:14.046Z] INFO  [25537] - [Application update app-5485-170922_192942@152/AppDeployStage0/AppDeployPreHook] : Completed activity. Result:
+  Successfully execute hooks in directory /opt/elasticbeanstalk/hooks/appdeploy/pre.
+[2017-09-22T18:30:14.046Z] INFO  [25537] - [Application update app-5485-170922_192942@152/AppDeployStage0/EbExtensionPostBuild] : Starting activity...
+[2017-09-22T18:30:14.308Z] INFO  [25537] - [Application update app-5485-170922_192942@152/AppDeployStage0/EbExtensionPostBuild/Infra-EmbeddedPostBuild] : Starting activity...
+[2017-09-22T18:30:14.308Z] INFO  [25537] - [Application update app-5485-170922_192942@152/AppDeployStage0/EbExtensionPostBuild/Infra-EmbeddedPostBuild] : Completed activity.
+[2017-09-22T18:30:14.320Z] INFO  [25537] - [Application update app-5485-170922_192942@152/AppDeployStage0/EbExtensionPostBuild] : Completed activity.
+[2017-09-22T18:30:14.320Z] INFO  [25537] - [Application update app-5485-170922_192942@152/AppDeployStage0/InfraCleanEbextension] : Starting activity...
+[2017-09-22T18:30:14.330Z] INFO  [25537] - [Application update app-5485-170922_192942@152/AppDeployStage0/InfraCleanEbextension] : Completed activity. Result:
+  Cleaned ebextensions subdirectories from /tmp/deployment/application.
+[2017-09-22T18:30:14.330Z] INFO  [25537] - [Application update app-5485-170922_192942@152/AppDeployStage0] : Completed activity. Result:
+  Application update - Command CMD-AppDeploy stage 0 completed
+[2017-09-22T18:30:14.330Z] INFO  [25537] - [Application update app-5485-170922_192942@152/AppDeployStage1] : Starting activity...
+[2017-09-22T18:30:14.330Z] INFO  [25537] - [Application update app-5485-170922_192942@152/AppDeployStage1/AppDeployEnactHook] : Starting activity...
+[2017-09-22T18:30:14.330Z] INFO  [25537] - [Application update app-5485-170922_192942@152/AppDeployStage1/AppDeployEnactHook/01stop_xray.sh] : Starting activity...
+[2017-09-22T18:30:14.441Z] INFO  [25537] - [Application update app-5485-170922_192942@152/AppDeployStage1/AppDeployEnactHook/01stop_xray.sh] : Completed activity. Result:
+  Executing: if ( initctl status xray | grep start ); then initctl stop xray; fi
+  
+[2017-09-22T18:30:14.441Z] INFO  [25537] - [Application update app-5485-170922_192942@152/AppDeployStage1/AppDeployEnactHook/02start_xray.sh] : Starting activity...
+[2017-09-22T18:30:14.546Z] INFO  [25537] - [Application update app-5485-170922_192942@152/AppDeployStage1/AppDeployEnactHook/02start_xray.sh] : Completed activity.
+[2017-09-22T18:30:14.546Z] INFO  [25537] - [Application update app-5485-170922_192942@152/AppDeployStage1/AppDeployEnactHook/10stop.sh] : Starting activity...
+[2017-09-22T18:30:17.966Z] INFO  [25537] - [Application update app-5485-170922_192942@152/AppDeployStage1/AppDeployEnactHook/10stop.sh] : Completed activity. Result:
+  + /opt/elasticbeanstalk/containerfiles/ebnode.py --action stop-all
+  nodejs stop/waiting
+  nginx stop/waiting
+  status: Unknown job: httpd
+  status: Unknown job: httpd
+  Job already stopped. Not stopping again.
+  Job already stopped. Not stopping again.
+  Did not find to find status of init job. Assuming stopped.
+  Did not find to find status of init job. Assuming stopped.
+[2017-09-22T18:30:17.966Z] INFO  [25537] - [Application update app-5485-170922_192942@152/AppDeployStage1/AppDeployEnactHook/20clean.sh] : Starting activity...
+[2017-09-22T18:30:18.131Z] INFO  [25537] - [Application update app-5485-170922_192942@152/AppDeployStage1/AppDeployEnactHook/20clean.sh] : Completed activity. Result:
+  ++ /opt/elasticbeanstalk/bin/get-config container -k app_base_dir
+  + EB_APP_BASE_DIR=/var/app
+  + rm -rf /var/app
+[2017-09-22T18:30:18.131Z] INFO  [25537] - [Application update app-5485-170922_192942@152/AppDeployStage1/AppDeployEnactHook/30app_deploy.sh] : Starting activity...
+[2017-09-22T18:30:18.522Z] INFO  [25537] - [Application update app-5485-170922_192942@152/AppDeployStage1/AppDeployEnactHook/30app_deploy.sh] : Completed activity. Result:
+  ++ /opt/elasticbeanstalk/bin/get-config container -k app_base_dir
+  + EB_APP_BASE_DIR=/var/app
+  ++ /opt/elasticbeanstalk/bin/get-config container -k app_staging_dir
+  + EB_APP_STAGING_DIR=/tmp/deployment/application
+  ++ /opt/elasticbeanstalk/bin/get-config container -k app_deploy_dir
+  + EB_APP_DEPLOY_DIR=/var/app/current
+  ++ /opt/elasticbeanstalk/bin/get-config container -k app_user
+  + EB_APP_USER=nodejs
+  + mkdir /var/app
+  + mv /tmp/deployment/application /var/app/current
+  + chown -R nodejs:nodejs /var/app/current
+[2017-09-22T18:30:18.522Z] INFO  [25537] - [Application update app-5485-170922_192942@152/AppDeployStage1/AppDeployEnactHook/40config_deploy.sh] : Starting activity...
+[2017-09-22T18:30:18.624Z] INFO  [25537] - [Application update app-5485-170922_192942@152/AppDeployStage1/AppDeployEnactHook/40config_deploy.sh] : Completed activity. Result:
+  ++ /opt/elasticbeanstalk/bin/get-config container -k config_staging_dir
+  + EB_CONFIG_STAGING_DIR=/tmp/deployment/config
+  ++ ls /tmp/deployment/config
+  + for i in '$(ls $EB_CONFIG_STAGING_DIR)'
+  ++ sed -e 's/#/\//g'
+  ++ echo '#etc#init#nginx.conf'
+  + FILE_NAME=/etc/init/nginx.conf
+  + /bin/cp /tmp/deployment/config/#etc#init#nginx.conf /etc/init/nginx.conf
+  + for i in '$(ls $EB_CONFIG_STAGING_DIR)'
+  ++ sed -e 's/#/\//g'
+  ++ echo '#etc#init#nodejs.conf'
+  + FILE_NAME=/etc/init/nodejs.conf
+  + /bin/cp /tmp/deployment/config/#etc#init#nodejs.conf /etc/init/nodejs.conf
+  + for i in '$(ls $EB_CONFIG_STAGING_DIR)'
+  ++ sed -e 's/#/\//g'
+  ++ echo '#etc#nginx#conf.d#00_elastic_beanstalk_proxy.conf'
+  + FILE_NAME=/etc/nginx/conf.d/00_elastic_beanstalk_proxy.conf
+  + /bin/cp /tmp/deployment/config/#etc#nginx#conf.d#00_elastic_beanstalk_proxy.conf /etc/nginx/conf.d/00_elastic_beanstalk_proxy.conf
+  + for i in '$(ls $EB_CONFIG_STAGING_DIR)'
+  ++ sed -e 's/#/\//g'
+  ++ echo '#etc#nginx#nginx.conf'
+  + FILE_NAME=/etc/nginx/nginx.conf
+  + /bin/cp /tmp/deployment/config/#etc#nginx#nginx.conf /etc/nginx/nginx.conf
+[2017-09-22T18:30:18.624Z] INFO  [25537] - [Application update app-5485-170922_192942@152/AppDeployStage1/AppDeployEnactHook/50start.sh] : Starting activity...
+[2017-09-22T18:30:20.066Z] INFO  [25537] - [Application update app-5485-170922_192942@152/AppDeployStage1/AppDeployEnactHook/50start.sh] : Completed activity. Result:
+  + /opt/elasticbeanstalk/containerfiles/ebnode.py --action start-all
+  nodejs start/running, process 26031
+  nginx start/running, process 26046
+[2017-09-22T18:30:20.066Z] INFO  [25537] - [Application update app-5485-170922_192942@152/AppDeployStage1/AppDeployEnactHook/60monitor_pids.sh] : Starting activity...
+[2017-09-22T18:30:20.483Z] INFO  [25537] - [Application update app-5485-170922_192942@152/AppDeployStage1/AppDeployEnactHook/60monitor_pids.sh] : Completed activity. Result:
+  + '[' -d /etc/healthd ']'
+  ++ /opt/elasticbeanstalk/bin/get-config optionsettings --namespace aws:elasticbeanstalk:container:nodejs --option-name ProxyServer
+  + PROXY_SERVER=nginx
+  + case "$PROXY_SERVER" in
+  + /opt/elasticbeanstalk/bin/healthd-track-pidfile --proxy nginx
+  + /opt/elasticbeanstalk/bin/healthd-track-pidfile --name application --location /var/run/nodejs.pid
+[2017-09-22T18:30:20.483Z] INFO  [25537] - [Application update app-5485-170922_192942@152/AppDeployStage1/AppDeployEnactHook/70restart_healthd.sh] : Starting activity...
+[2017-09-22T18:30:20.694Z] INFO  [25537] - [Application update app-5485-170922_192942@152/AppDeployStage1/AppDeployEnactHook/70restart_healthd.sh] : Completed activity. Result:
+  + '[' -d /etc/healthd ']'
+  ++ /opt/elasticbeanstalk/bin/get-config optionsettings --namespace aws:elasticbeanstalk:container:nodejs --option-name ProxyServer
+  + PROXY_SERVER=nginx
+  + '[' -f /var/elasticbeanstalk/healthd/current_proxy_server ']'
+  ++ cat /var/elasticbeanstalk/healthd/current_proxy_server
+  + CURRENT_PROXY_SERVER=nginx
+  + '[' nginx '!=' nginx ']'
+  + echo nginx
+[2017-09-22T18:30:20.694Z] INFO  [25537] - [Application update app-5485-170922_192942@152/AppDeployStage1/AppDeployEnactHook] : Completed activity. Result:
+  Successfully execute hooks in directory /opt/elasticbeanstalk/hooks/appdeploy/enact.
+[2017-09-22T18:30:20.694Z] INFO  [25537] - [Application update app-5485-170922_192942@152/AppDeployStage1/AppDeployPostHook] : Starting activity...
+[2017-09-22T18:30:20.694Z] INFO  [25537] - [Application update app-5485-170922_192942@152/AppDeployStage1/AppDeployPostHook] : Completed activity. Result:
+  Successfully execute hooks in directory /opt/elasticbeanstalk/hooks/appdeploy/post.
+[2017-09-22T18:30:20.694Z] INFO  [25537] - [Application update app-5485-170922_192942@152/AppDeployStage1] : Completed activity. Result:
+  Application version switch - Command CMD-AppDeploy stage 1 completed
+[2017-09-22T18:30:20.694Z] INFO  [25537] - [Application update app-5485-170922_192942@152/AddonsAfter] : Starting activity...
+[2017-09-22T18:30:20.695Z] INFO  [25537] - [Application update app-5485-170922_192942@152/AddonsAfter/ConfigLogRotation] : Starting activity...
+[2017-09-22T18:30:20.695Z] INFO  [25537] - [Application update app-5485-170922_192942@152/AddonsAfter/ConfigLogRotation/10-config.sh] : Starting activity...
+[2017-09-22T18:30:20.873Z] INFO  [25537] - [Application update app-5485-170922_192942@152/AddonsAfter/ConfigLogRotation/10-config.sh] : Completed activity. Result:
+  Disabled forced hourly log rotation.
+[2017-09-22T18:30:20.873Z] INFO  [25537] - [Application update app-5485-170922_192942@152/AddonsAfter/ConfigLogRotation] : Completed activity. Result:
+  Successfully execute hooks in directory /opt/elasticbeanstalk/addons/logpublish/hooks/config.
+[2017-09-22T18:30:20.873Z] INFO  [25537] - [Application update app-5485-170922_192942@152/AddonsAfter] : Completed activity.
+[2017-09-22T18:30:20.873Z] INFO  [25537] - [Application update app-5485-170922_192942@152] : Completed activity. Result:
+  Application update - Command CMD-AppDeploy succeeded
+[2017-09-22T19:23:06.456Z] INFO  [27752] - [CMD-TailLogs] : Starting activity...
+[2017-09-22T19:23:06.456Z] INFO  [27752] - [CMD-TailLogs/AddonsBefore] : Starting activity...
+[2017-09-22T19:23:06.456Z] INFO  [27752] - [CMD-TailLogs/AddonsBefore] : Completed activity.
+[2017-09-22T19:23:06.456Z] INFO  [27752] - [CMD-TailLogs/TailLogs] : Starting activity...
+[2017-09-22T19:23:06.456Z] INFO  [27752] - [CMD-TailLogs/TailLogs/TailLogs] : Starting activity...
+[2017-09-22T19:23:06.662Z] INFO  [27752] - [CMD-TailLogs/TailLogs/TailLogs] : Completed activity.
+[2017-09-22T19:23:06.662Z] INFO  [27752] - [CMD-TailLogs/TailLogs] : Completed activity. Result:
+  CMD-TailLogs - stage 0 - Command CMD-TailLogs stage 0 completed
+[2017-09-22T19:23:06.662Z] INFO  [27752] - [CMD-TailLogs/AddonsAfter] : Starting activity...
+[2017-09-22T19:23:06.662Z] INFO  [27752] - [CMD-TailLogs/AddonsAfter] : Completed activity.
+[2017-09-22T19:23:06.662Z] INFO  [27752] - [CMD-TailLogs] : Completed activity. Result:
+  CMD-TailLogs - Command CMD-TailLogs succeeded
+[2017-09-22T19:24:07.279Z] INFO  [27796] - [CMD-BundleLogs] : Starting activity...
+[2017-09-22T19:24:07.279Z] INFO  [27796] - [CMD-BundleLogs/AddonsBefore] : Starting activity...
+[2017-09-22T19:24:07.279Z] INFO  [27796] - [CMD-BundleLogs/AddonsBefore] : Completed activity.
+[2017-09-22T19:24:07.280Z] INFO  [27796] - [CMD-BundleLogs/BundleLogs] : Starting activity...
+[2017-09-22T19:24:07.280Z] INFO  [27796] - [CMD-BundleLogs/BundleLogs/BundleLogs] : Starting activity...

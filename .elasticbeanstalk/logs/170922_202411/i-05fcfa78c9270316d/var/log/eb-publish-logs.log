@@ -1,0 +1,17 @@
+2017-09-22 18:05:01,217 [INFO] (3785 MainThread) [clearStaleLogPublishingRecords.py-38] [root clearStaleLogPublishingRecords main] Clearing stale log publish records publish log task with batch id 8d5ae52a-9fc0-11e7-a46b-0af4a15f53d0
+2017-09-22 18:05:01,217 [INFO] (3785 MainThread) [file_tools.py-34] [root file_tools __init__] Created directory /tmp/.log-publish-records for recording published log file entries
+2017-09-22 18:05:01,217 [INFO] (3785 MainThread) [clearStaleLogPublishingRecords.py-48] [root clearStaleLogPublishingRecords main] Successfully cleared stale log publishing records
+2017-09-22 18:10:01,420 [INFO] (3931 MainThread) [publishLogs.py-61] [root publishLogs main] Starting publish log task with batch id 404a3c9e-9fc1-11e7-8513-0af4a15f53d0
+2017-09-22 18:10:01,423 [INFO] (3931 MainThread) [publishLogs.py-86] [root publishLogs main] Log publication is disabled
+2017-09-22 18:25:01,765 [INFO] (25358 MainThread) [clearStaleLogPublishingRecords.py-38] [root clearStaleLogPublishingRecords main] Clearing stale log publish records publish log task with batch id 58eff5a2-9fc3-11e7-b822-0af4a15f53d0
+2017-09-22 18:25:01,765 [INFO] (25358 MainThread) [clearStaleLogPublishingRecords.py-48] [root clearStaleLogPublishingRecords main] Successfully cleared stale log publishing records
+2017-09-22 18:30:01,967 [INFO] (25754 MainThread) [publishLogs.py-61] [root publishLogs main] Starting publish log task with batch id 0bdf37c2-9fc4-11e7-8ab2-0af4a15f53d0
+2017-09-22 18:30:02,077 [INFO] (25754 MainThread) [publishLogs.py-86] [root publishLogs main] Log publication is disabled
+2017-09-22 18:45:01,417 [INFO] (26494 MainThread) [clearStaleLogPublishingRecords.py-38] [root clearStaleLogPublishingRecords main] Clearing stale log publish records publish log task with batch id 23fc629c-9fc6-11e7-8534-0af4a15f53d0
+2017-09-22 18:45:01,417 [INFO] (26494 MainThread) [clearStaleLogPublishingRecords.py-48] [root clearStaleLogPublishingRecords main] Successfully cleared stale log publishing records
+2017-09-22 18:50:01,599 [INFO] (26640 MainThread) [publishLogs.py-61] [root publishLogs main] Starting publish log task with batch id d6e87fee-9fc6-11e7-81db-0af4a15f53d0
+2017-09-22 18:50:01,601 [INFO] (26640 MainThread) [publishLogs.py-86] [root publishLogs main] Log publication is disabled
+2017-09-22 19:05:02,013 [INFO] (27178 MainThread) [clearStaleLogPublishingRecords.py-38] [root clearStaleLogPublishingRecords main] Clearing stale log publish records publish log task with batch id ef98bf3e-9fc8-11e7-b997-0af4a15f53d0
+2017-09-22 19:05:02,013 [INFO] (27178 MainThread) [clearStaleLogPublishingRecords.py-48] [root clearStaleLogPublishingRecords main] Successfully cleared stale log publishing records
+2017-09-22 19:10:01,192 [INFO] (27325 MainThread) [publishLogs.py-61] [root publishLogs main] Starting publish log task with batch id a1ebdd88-9fc9-11e7-8afd-0af4a15f53d0
+2017-09-22 19:10:01,195 [INFO] (27325 MainThread) [publishLogs.py-86] [root publishLogs main] Log publication is disabled

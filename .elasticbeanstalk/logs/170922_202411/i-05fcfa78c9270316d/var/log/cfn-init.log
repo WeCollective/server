@@ -1,0 +1,44 @@
+2017-09-22 17:59:10,978 [INFO] -----------------------Starting build-----------------------
+2017-09-22 17:59:10,985 [INFO] Running configSets: _OnInstanceBoot
+2017-09-22 17:59:10,988 [INFO] Running configSet _OnInstanceBoot
+2017-09-22 17:59:10,992 [INFO] Running config AWSEBBaseConfig
+2017-09-22 17:59:10,997 [INFO] Command clearbackupfiles succeeded
+2017-09-22 17:59:11,003 [INFO] Running config AWSEBMessageOfTheDay
+2017-09-22 17:59:11,007 [INFO] Command 01clearoriginal succeeded
+2017-09-22 17:59:11,010 [INFO] Command 02createbanner succeeded
+2017-09-22 17:59:11,020 [INFO] Command 03updatebanner succeeded
+2017-09-22 17:59:11,025 [INFO] Running config AWSEBULimitConfig
+2017-09-22 17:59:11,029 [INFO] Command 00removebackup succeeded
+2017-09-22 17:59:11,034 [INFO] Running config Infra-InstallContainerHooksPkg
+2017-09-22 17:59:11,037 [INFO] Command 00mkdir succeeded
+2017-09-22 17:59:11,192 [INFO] Command 01download_container_hooks succeeded
+2017-09-22 17:59:11,198 [INFO] Command 02install_container_hooks succeeded
+2017-09-22 17:59:11,201 [INFO] Command 03cleanup succeeded
+2017-09-22 17:59:11,206 [INFO] Running config Infra-WriteLeaderTestScript
+2017-09-22 17:59:11,212 [INFO] Running config Infra-WriteTailLogsConf
+2017-09-22 17:59:11,217 [INFO] Running config Infra-WriteSystemTailLogsConf
+2017-09-22 17:59:11,222 [INFO] Running config Infra-WriteBundleLogsConf
+2017-09-22 17:59:11,227 [INFO] Running config Infra-WritePublishLogsConf
+2017-09-22 17:59:11,231 [INFO] Running config Infra-WritePublishLogsCron
+2017-09-22 17:59:11,233 [INFO] ConfigSets completed
+2017-09-22 17:59:11,233 [INFO] -----------------------Build complete-----------------------
+2017-09-22 17:59:18,228 [INFO] -----------------------Starting build-----------------------
+2017-09-22 17:59:18,236 [INFO] Running configSets: Infra-EmbeddedPreBuild
+2017-09-22 17:59:18,239 [INFO] Running configSet Infra-EmbeddedPreBuild
+2017-09-22 17:59:18,239 [INFO] ConfigSets completed
+2017-09-22 17:59:18,239 [INFO] -----------------------Build complete-----------------------
+2017-09-22 17:59:42,441 [INFO] -----------------------Starting build-----------------------
+2017-09-22 17:59:42,448 [INFO] Running configSets: Infra-EmbeddedPostBuild
+2017-09-22 17:59:42,451 [INFO] Running configSet Infra-EmbeddedPostBuild
+2017-09-22 17:59:42,451 [INFO] ConfigSets completed
+2017-09-22 17:59:42,451 [INFO] -----------------------Build complete-----------------------
+2017-09-22 18:29:52,807 [INFO] -----------------------Starting build-----------------------
+2017-09-22 18:29:52,814 [INFO] Running configSets: Infra-EmbeddedPreBuild
+2017-09-22 18:29:52,818 [INFO] Running configSet Infra-EmbeddedPreBuild
+2017-09-22 18:29:52,818 [INFO] ConfigSets completed
+2017-09-22 18:29:52,818 [INFO] -----------------------Build complete-----------------------
+2017-09-22 18:30:14,291 [INFO] -----------------------Starting build-----------------------
+2017-09-22 18:30:14,305 [INFO] Running configSets: Infra-EmbeddedPostBuild
+2017-09-22 18:30:14,308 [INFO] Running configSet Infra-EmbeddedPostBuild
+2017-09-22 18:30:14,308 [INFO] ConfigSets completed
+2017-09-22 18:30:14,308 [INFO] -----------------------Build complete-----------------------

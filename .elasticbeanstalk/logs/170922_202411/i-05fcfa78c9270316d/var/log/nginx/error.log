@@ -1,0 +1,2 @@
+2017/09/22 17:59:48 [warn] 3452#0: duplicate MIME type "text/html" in /etc/nginx/conf.d/00_elastic_beanstalk_proxy.conf:42
+2017/09/22 18:30:20 [warn] 26046#0: duplicate MIME type "text/html" in /etc/nginx/conf.d/00_elastic_beanstalk_proxy.conf:42

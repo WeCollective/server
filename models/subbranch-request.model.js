@@ -82,7 +82,7 @@ SubBranchRequest.prototype.findByBranch = function (branchid) {
 
 // Override Model.save() in order to create a notification for the branch
 // mods whenever a new SubBranchRequest is created
-SubBranchRequest.prototype.save = function (sessionID) {
+SubBranchRequest.prototype.save = function () {
   const self = this;
 
   return new Promise((resolve, reject) => {
@@ -124,7 +124,7 @@ SubBranchRequest.prototype.save = function (sessionID) {
             return error.InternalServerError(res);
           }
 
-          promises.push(notification.save(sessionID));
+          promises.push(notification.save());
         }
 
         return Promise.all(promises);

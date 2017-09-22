@@ -32,7 +32,7 @@ module.exports = {
       sendgrid.API(req, (err, res) => {
         console.log(res.body)
 
-        if (err || res.body.error_count > 0) {
+        if (err || (res && res.body && res.body.error_count > 0)) {
           return reject();
         }
 

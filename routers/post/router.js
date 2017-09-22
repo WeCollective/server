@@ -1,10 +1,13 @@
 'use strict';
 
 const express = require('express');
-const router = express.Router();
+
 const ACL = require('../../config/acl');
 const error = require('../../responses/errors');
+const passport = require('../../config/passport')();
 const success = require('../../responses/successes');
+
+const router = express.Router();
 
 module.exports = app => {
   const controller = require('./controller');
@@ -34,7 +37,7 @@ module.exports = app => {
      * @apiUse BadRequest
      * @apiUse InternalServerError
      */
-    .post(ACL.validateRole(ACL.Roles.AuthenticatedUser), controller.post);
+    .post(passport.authenticate('jwt'), ACL.validateRole(ACL.Roles.AuthenticatedUser), controller.post);
 
   router.route('/:postid')
     /**
@@ -74,7 +77,7 @@ module.exports = app => {
      * @apiUse BadRequest
      * @apiUse InternalServerError
      */
-    .get(controller.get)
+    .get(passport.authenticate('jwt'), controller.get)
     /**
      * @api {delete} /post/:postid Delete Post
      * @apiName Delete Post
@@ -89,7 +92,7 @@ module.exports = app => {
      * @apiUse BadRequest
      * @apiUse InternalServerError
      */
-    .delete(controller.delete);
+    .delete(passport.authenticate('jwt'), controller.delete);
 
   router.route('/:postid/picture-upload-url')
     /**
@@ -114,7 +117,7 @@ module.exports = app => {
      * @apiUse NotFound
      * @apiUse InternalServerError
      */
-    .get(ACL.validateRole(ACL.Roles.AuthenticatedUser), (req, res) => {
+    .get(passport.authenticate('jwt'), ACL.validateRole(ACL.Roles.AuthenticatedUser), (req, res) => {
       controller.getPictureUploadUrl(req, res);
     });
 
@@ -140,7 +143,7 @@ module.exports = app => {
      * @apiUse NotFound
      * @apiUse InternalServerError
      */
-    .get((req, res) => {
+    .get(passport.authenticate('jwt'), (req, res) => {
       controller.getPicture(req, res, false);
     });
 
@@ -166,7 +169,7 @@ module.exports = app => {
      * @apiUse NotFound
      * @apiUse InternalServerError
      */
-    .get((req, res) => {
+    .get(passport.authenticate('jwt'), (req, res) => {
       controller.getPicture(req, res, true);
     });
 
@@ -188,7 +191,7 @@ module.exports = app => {
      * @apiUse NotFound
      * @apiUse InternalServerError
      */
-    .post(ACL.validateRole(ACL.Roles.AuthenticatedUser), controller.flagPost);
+    .post(passport.authenticate('jwt'), ACL.validateRole(ACL.Roles.AuthenticatedUser), controller.flagPost);
 
 
   router.route('/:postid/comments')
@@ -239,7 +242,7 @@ module.exports = app => {
      * @apiUse NotFound
      * @apiUse InternalServerError
      */
-    .get(controller.getComments)
+    .get(passport.authenticate('jwt'), controller.getComments)
 
     /**
      * @api {post} /post/:postid/comments Create Comment
@@ -264,7 +267,7 @@ module.exports = app => {
      * @apiUse NotFound
      * @apiUse InternalServerError
      */
-    .post(ACL.validateRole(ACL.Roles.AuthenticatedUser), controller.postComment);
+    .post(passport.authenticate('jwt'), ACL.validateRole(ACL.Roles.AuthenticatedUser), controller.postComment);
 
   router.route('/:postid/comments/:commentid')
     /**
@@ -282,7 +285,7 @@ module.exports = app => {
      * @apiUse NotFound
      * @apiUse InternalServerError
      */
-    .delete(ACL.validateRole(ACL.Roles.AuthenticatedUser), controller.deleteComment)
+    .delete(passport.authenticate('jwt'), ACL.validateRole(ACL.Roles.AuthenticatedUser), controller.deleteComment)
 
     /**
      * @api {get} /post/:postid/comments/:commentid Get Comment
@@ -323,7 +326,7 @@ module.exports = app => {
      * @apiUse NotFound
      * @apiUse InternalServerError
      */
-    .get(controller.getComment)
+    .get(passport.authenticate('jwt'), controller.getComment)
 
     /**
      * @api {put} /post/:postid/comments/:commentid Update/Vote Comment
@@ -342,7 +345,7 @@ module.exports = app => {
      * @apiUse NotFound
      * @apiUse InternalServerError
      */
-    .put(ACL.validateRole(ACL.Roles.AuthenticatedUser), (req, res) => {
+    .put(passport.authenticate('jwt'), ACL.validateRole(ACL.Roles.AuthenticatedUser), (req, res) => {
       if (req.body.vote) {
         controller.voteComment(req, res);
       }

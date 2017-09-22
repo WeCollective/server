@@ -2,6 +2,7 @@
 
 const ACL = require('../../config/acl');
 const express = require('express');
+const passport = require('../../config/passport')();
 
 const router = express.Router({ mergeParams: true });
 
@@ -37,7 +38,7 @@ module.exports = app => {
      * @apiUse NotFound
      * @apiUse InternalServerError
      */
-    .get((req, res, next) => {
+    .get(passport.authenticate('jwt'), (req, res, next) => {
       ACL.validateRole(ACL.Roles.Moderator, req.params.branchid)(req, res, next);
     }, controller.get);
 
@@ -57,7 +58,7 @@ module.exports = app => {
      * @apiUse NotFound
      * @apiUse InternalServerError
      */
-    .post((req, res, next) => {
+    .post(passport.authenticate('jwt'), (req, res, next) => {
       ACL.validateRole(ACL.Roles.Moderator, req.params.childid)(req, res, next);
     }, controller.post)
     /**
@@ -76,7 +77,7 @@ module.exports = app => {
      * @apiUse NotFound
      * @apiUse InternalServerError
      */
-    .put((req, res, next) => {
+    .put(passport.authenticate('jwt'), (req, res, next) => {
       ACL.validateRole(ACL.Roles.Moderator, req.params.branchid)(req, res, next);
     }, controller.put);
 

@@ -1,8 +1,11 @@
 'use strict';
 
 const express = require('express');
-const router = express.Router();
+
 const ACL = require('../../config/acl');
+const passport = require('../../config/passport')();
+
+const router = express.Router();
 
 module.exports = app => {
   const controller = require('./controller');
@@ -23,7 +26,7 @@ module.exports = app => {
      * @apiUse BadRequest
      * @apiUse InternalServerError
      */
-    .post(ACL.validateRole(ACL.Roles.AuthenticatedUser), controller.post);
+    .post(passport.authenticate('jwt'), ACL.validateRole(ACL.Roles.AuthenticatedUser), controller.post);
 
   router.route('/:branchid')
     /**
@@ -39,7 +42,7 @@ module.exports = app => {
      * @apiUse NotFound
      * @apiUse InternalServerError
      */
-    .get(controller.get)
+    .get(passport.authenticate('jwt'), controller.get)
     /**
      * @api {put} /:branchid Update Branch
      * @apiName Update Branch
@@ -57,7 +60,7 @@ module.exports = app => {
      * @apiUse BadRequest
      * @apiUse InternalServerError
      */
-    .put((req, res, next) => {
+    .put(passport.authenticate('jwt'), (req, res, next) => {
       ACL.validateRole(ACL.Roles.Moderator, req.params.branchid)(req, res, next);
     }, controller.put)
     /**
@@ -75,7 +78,7 @@ module.exports = app => {
      * @apiUse BadRequest
      * @apiUse InternalServerError
      */
-    .delete((req, res, next) => {
+    .delete(passport.authenticate('jwt'), (req, res, next) => {
       ACL.validateRole(ACL.Roles.Moderator, req.params.branchid)(req, res, next);
     }, controller.delete);
 
@@ -102,7 +105,7 @@ module.exports = app => {
      * @apiUse NotFound
      * @apiUse InternalServerError
      */
-    .get((req, res, next) => {
+    .get(passport.authenticate('jwt'), (req, res, next) => {
       ACL.validateRole(ACL.Roles.Moderator, req.params.branchid)(req, res, next);
     }, (req, res) => {
       controller.getPictureUploadUrl(req, res, 'picture');
@@ -131,7 +134,7 @@ module.exports = app => {
      * @apiUse NotFound
      * @apiUse InternalServerError
      */
-    .get((req, res, next) => {
+    .get(passport.authenticate('jwt'), (req, res, next) => {
       ACL.validateRole(ACL.Roles.Moderator, req.params.branchid)(req, res, next);
     }, (req, res) => {
       controller.getPictureUploadUrl(req, res, 'cover');
@@ -159,7 +162,7 @@ module.exports = app => {
      * @apiUse NotFound
      * @apiUse InternalServerError
      */
-    .get((req, res) => {
+    .get(passport.authenticate('jwt'), (req, res) => {
       controller.getPicture(req, res, 'picture', false);
     });
 
@@ -185,7 +188,7 @@ module.exports = app => {
      * @apiUse NotFound
      * @apiUse InternalServerError
      */
-    .get((req, res) => {
+    .get(passport.authenticate('jwt'), (req, res) => {
       controller.getPicture(req, res, 'picture', true);
     });
 
@@ -211,7 +214,7 @@ module.exports = app => {
      * @apiUse NotFound
      * @apiUse InternalServerError
      */
-    .get((req, res) => {
+    .get(passport.authenticate('jwt'), (req, res) => {
       controller.getPicture(req, res, 'cover', false);
     });
 
@@ -237,7 +240,7 @@ module.exports = app => {
      * @apiUse NotFound
      * @apiUse InternalServerError
      */
-    .get((req, res) => {
+    .get(passport.authenticate('jwt'), (req, res) => {
       controller.getPicture(req, res, 'cover', true);
     });
 
@@ -287,7 +290,7 @@ module.exports = app => {
      * @apiUse NotFound
      * @apiUse InternalServerError
      */
-    .get(controller.getSubbranches);
+    .get(passport.authenticate('jwt'), controller.getSubbranches);
 
   router.route('/:branchid/modlog')
     /**
@@ -333,7 +336,7 @@ module.exports = app => {
      * @apiUse NotFound
      * @apiUse InternalServerError
      */
-    .get((req, res, next) => {
+    .get(passport.authenticate('jwt'), (req, res, next) => {
       ACL.validateRole(ACL.Roles.Moderator, req.params.branchid)(req, res, next);
     }, controller.getModLog);
 

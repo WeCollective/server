@@ -1,10 +1,13 @@
 'use strict';
 
 const express = require('express');
-const router = express.Router();
+
 const ACL = require('../../config/acl');
 const error = require('../../responses/errors');
+const passport = require('../../config/passport')();
 const success = require('../../responses/successes');
+
+const router = express.Router();
 
 module.exports = app => {
   const controller = require('./controller');
@@ -25,7 +28,7 @@ module.exports = app => {
      * @apiUse BadRequest
      * @apiUse InternalServerError
      */
-    .post(ACL.validateRole(ACL.Roles.AuthenticatedUser), controller.post)
+    .post(passport.authenticate('jwt'), ACL.validateRole(ACL.Roles.AuthenticatedUser), controller.post)
     /**
      * @api {poll} /:postid/answer Get the answers for a particular poll
      * @apiName Get Poll Answers
@@ -41,7 +44,7 @@ module.exports = app => {
      * @apiUse BadRequest
      * @apiUse InternalServerError
      */
-    .get(controller.get);
+    .get(passport.authenticate('jwt'), controller.get);
 
   router.route('/:postid/answer/:answerid/vote')
     /**
@@ -60,7 +63,7 @@ module.exports = app => {
      * @apiUse NotFound
      * @apiUse InternalServerError
      */
-    .put(ACL.validateRole(ACL.Roles.AuthenticatedUser), controller.votePoll);
+    .put(passport.authenticate('jwt'), ACL.validateRole(ACL.Roles.AuthenticatedUser), controller.votePoll);
 
   return router;
 }

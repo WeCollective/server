@@ -1,8 +1,11 @@
 'use strict';
 
 const express = require('express');
-const router = express.Router({ mergeParams: true });
+
 const ACL = require('../../config/acl');
+const passport = require('../../config/passport')();
+
+const router = express.Router({ mergeParams: true });
 
 module.exports = app => {
   const controller = require('./controller');
@@ -22,7 +25,7 @@ module.exports = app => {
      * @apiUse NotFound
      * @apiUse InternalServerError
      */
-    .get(controller.get)
+    .get(passport.authenticate('jwt'), controller.get)
     /**
      * @api {post} /branch/:branchid/mods Add Branch Mod
      * @apiName Add Branch Mod
@@ -39,7 +42,7 @@ module.exports = app => {
      * @apiUse Forbidden
      * @apiUse InternalServerError
      */
-    .post( (req, res, next) => {
+    .post(passport.authenticate('jwt'), (req, res, next) => {
       ACL.validateRole(ACL.Roles.Moderator, req.params.branchid)(req, res, next);
     }, controller.post)
 
@@ -61,7 +64,7 @@ module.exports = app => {
      * @apiUse Forbidden
      * @apiUse InternalServerError
      */
-    .delete( (req, res, next) => {
+    .delete(passport.authenticate('jwt'), (req, res, next) => {
       ACL.validateRole(ACL.Roles.Moderator, req.params.branchid)(req, res, next);
     }, controller.delete);
 

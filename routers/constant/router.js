@@ -1,9 +1,12 @@
 'use strict';
 
 const express = require('express');
-const router = express.Router();
+
 const ACL = require('../../config/acl');
+const passport = require('../../config/passport')();
 const success = require('../../responses/successes');
+
+const router = express.Router();
 
 module.exports = app => {
   const controller = require('./controller');
@@ -22,7 +25,7 @@ module.exports = app => {
      * @apiUse NotFound
      * @apiUse InternalServerError
      */
-    .get(controller.get)
+    .get(passport.authenticate('jwt'), controller.get)
     /**
      * @api {put} /constant/:id Update a global constant
      * @apiName Update a global constant
@@ -38,7 +41,7 @@ module.exports = app => {
      * @apiUse NotFound
      * @apiUse InternalServerError
      */
-    .put(ACL.validateRole(ACL.Roles.Admin), controller.put);
+    .put(passport.authenticate('jwt'), ACL.validateRole(ACL.Roles.Admin), controller.put);
 
   return router;
 };

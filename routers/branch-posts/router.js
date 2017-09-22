@@ -1,8 +1,11 @@
 'use strict';
 
 const express = require('express');
-const router = express.Router({ mergeParams: true });
+
 const ACL = require('../../config/acl');
+const passport = require('../../config/passport')();
+
+const router = express.Router({ mergeParams: true });
 
 module.exports = app => {
   const controller = require('./controller');
@@ -57,7 +60,7 @@ module.exports = app => {
      * @apiUse BadRequest
      * @apiUse InternalServerError
      */
-    .get(controller.get);
+    .get(passport.authenticate('jwt'), controller.get);
 
   router.route('/:postid')
     /**
@@ -95,7 +98,7 @@ module.exports = app => {
      * @apiUse BadRequest
      * @apiUse InternalServerError
      */
-    .get(controller.getPost)
+    .get(passport.authenticate('jwt'), controller.getPost)
 
     /**
      * @api {put} /branch/:branchid/posts/:postid Vote on Post
@@ -113,7 +116,7 @@ module.exports = app => {
      * @apiUse BadRequest
      * @apiUse InternalServerError
      */
-    .put(ACL.validateRole(ACL.Roles.AuthenticatedUser), controller.put);
+    .put(passport.authenticate('jwt'), ACL.validateRole(ACL.Roles.AuthenticatedUser), controller.put);
 
   router.route('/:postid/resolve')
     /**
@@ -136,7 +139,7 @@ module.exports = app => {
      * @apiUse BadRequest
      * @apiUse InternalServerError
      */
-    .post((req, res, next) => {
+    .post(passport.authenticate('jwt'), (req, res, next) => {
       ACL.validateRole(ACL.Roles.Moderator, req.params.branchid)(req, res, next);
     }, controller.resolveFlag);
 

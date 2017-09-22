@@ -202,7 +202,13 @@ module.exports = () => {
   // passport.ACL = () => passport.authenticate('jwt', JwtConfig.jwtSession);
 
   return {
-    authenticate: (strategy, callback) => passport.authenticate(strategy, callback || JwtConfig.jwtSession),
+    authenticate: (strategy, callback) => (req, res, next) => {
+      if (strategy === 'jwt') {
+        // Allow guests to pass the token check, the req.user simply won't be defined.
+        return passport.authenticate('jwt', JwtConfig.jwtSession, (err, user, info) => next())(req, res, next);
+      }
+      return passport.authenticate(strategy, callback || JwtConfig.jwtSession)(req, res, next);
+    },
     initialize: () => passport.initialize(),
   };
 };

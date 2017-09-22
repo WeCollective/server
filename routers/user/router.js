@@ -1,12 +1,13 @@
 'use strict';
 
 const express = require('express');
-const router = express.Router();
 
 const ACL = require('../../config/acl');
 const Constant = require('../../models/constant');
 const passport = require('../../config/passport')();
 const success = require('../../responses/successes');
+
+const router = express.Router();
 
 module.exports = app => {
   const controller = require('./controller');
@@ -113,7 +114,7 @@ module.exports = app => {
    */
   router.route('/logout')
     .get(passport.authenticate('jwt'), (req, res, next) => {
-      req.logout();
+      // req.logout();
       return success.OK(res);
     });
 

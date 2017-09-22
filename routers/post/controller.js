@@ -401,80 +401,80 @@ const self = module.exports = {
   getOnePost(id, req) {
     let post;
 
-    return new Promise((resolve, reject) => {
-      return new Post().findById(id)
-        .then(posts => {
-          if (!posts || posts.length === 0) {
-            return Promise.reject({ code: 404 });
+    return new Promise((resolve, reject) => new Post().findById(id)
+      .then(posts => {
+        console.log('show 1');
+        if (!posts || posts.length === 0) {
+          return Promise.reject({ code: 404 });
+        }
+
+        let idx = 0;
+
+        for (let i = 0; i < posts.length; i++) {
+          if (posts[i].branchid === 'root') {
+            idx = i;
+            break;
           }
+        }
 
-          let idx = 0;
+        post = posts[idx];
 
-          for (let i = 0; i < posts.length; i++) {
-            if (posts[i].branchid === 'root') {
-              idx = i;
-              break;
-            }
-          }
+        return new PostData()
+          .findById(id)
+          .then(data => {
+            console.log('show 2');
+            post.data = data;
+            return Promise.resolve();
+          })
+          .catch(reject);
+      })
+      // attach post image url to each post
+      .then(() => Promise.resolve(new Promise((resolve, reject) => {
+        console.log('show 3');
+        this.getPostPicture(id, false)
+          .then(url => {
+            console.log('show 4');
+            post.profileUrl = url;
+            return resolve();
+          })
+      })))
+      // Attach post image thumbnail url to each post.
+      .then(() => Promise.resolve(new Promise((resolve, reject) => {
+        console.log('show 5');
+        this.getPostPicture(id, true)
+          .then(url => {
+            console.log('show 6');
+            post.profileUrlThumb = url;
+            return resolve();
+          })
+      })))
+      // Extend the posts with information about user vote.
+      .then(() => {
+        console.log('show 7');
+        if (req && req.user && req.user.username) {
+          return new Promise((resolve, reject) => new Vote()
+            .findByUsernameAndItemId(req.user.username, `post-${post.id}`)
+            .then(existingVoteData => {
+              console.log('show 8');
+              if (existingVoteData) {
+                post.votes.userVoted = existingVoteData.direction;
+              }
 
-          post = posts[idx];
-
-          return new PostData()
-            .findById(id)
-            .then(data => {
-              post.data = data;
-              return Promise.resolve();
+              return resolve();
             })
-            .catch(reject);
-        })
-        // attach post image url to each post
-        .then(() => {
-          return Promise.resolve(new Promise((resolve, reject) => {
-            this.getPostPicture(id, false)
-              .then(url => {
-                post.profileUrl = url;
-                return resolve();
-              })
-          }));
-        })
-        // Attach post image thumbnail url to each post.
-        .then(() => {
-          return Promise.resolve(new Promise((resolve, reject) => {
-            this.getPostPicture(id, true)
-              .then(url => {
-                post.profileUrlThumb = url;
-                return resolve();
-              })
-          }));
-        })
-        // Extend the posts with information about user vote.
-        .then(() => {
-          if (req && req.user && req.user.username) {
-            return new Promise((resolve, reject) => {
-              new Vote()
-                .findByUsernameAndItemId(req.user.username, `post-${post.id}`)
-                .then(existingVoteData => {
-                  if (existingVoteData) {
-                    post.votes.userVoted = existingVoteData.direction;
-                  }
+            .catch(reject));
+        }
 
-                  return resolve();
-                })
-                .catch(reject);
-            });
-          }
+        return Promise.resolve();
+      })
+      .then(() => resolve(post))
+      .catch(err => {
+        if (err) {
+          console.error(`Error fetching post data: `, err);
+        }
 
-          return Promise.resolve();
-        })
-        .then(() => resolve(post))
-        .catch(err => {
-          if (err) {
-            console.error(`Error fetching post data: `, err);
-          }
-
-          return reject(err);
-        });
-    });
+        return reject(err);
+      }));
   },
 
   getPostPicture(postid, thumbnail = false) {

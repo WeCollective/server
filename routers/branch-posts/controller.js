@@ -117,7 +117,6 @@ module.exports = {
     let posts = [];
     
     new Promise((resolve, reject) => {
-      console.log('stopper 5');
       // Client wants only results that appear after this post (pagination).
       if (req.query.lastPostId) {
         const post = new Post();
@@ -135,7 +134,6 @@ module.exports = {
             return resolve();
           })
           .catch(err => {
-            console.log('that me 3');
             if (err) {
               return reject(err);
             }
@@ -144,8 +142,6 @@ module.exports = {
             return reject({ code: 404 });
           });
       }
-
-      console.log('stopper 6');
       
       // No last post specified, continue...
       return resolve();
@@ -153,40 +149,31 @@ module.exports = {
       // Authenticated users can set to display nsfw posts.
       .then(() => new Promise((resolve, reject) => userCanDisplayNSFWPosts(req)
         .then(displayNSFWPosts => {
-          console.log('stopper 7');
           opts.nsfw = displayNSFWPosts;
           return resolve();
         })
-        .catch(err => {
-          console.log('that me 4');
-          return reject(err);
-        })
+        .catch(reject)
       ))
       // Check if the user has permissions to fetch the requested posts.
       .then(() => new Promise((resolve, reject) => {
         if (opts.fetchOnlyflaggedPosts) {
           if (!req.user) {
-            console.log('that me 2');
             return reject({ code: 403 });
           }
 
           // User must be a mod.
           return ACL.validateRole(ACL.Roles.Moderator, req.params.branchid)(req, res, resolve);
         }
-
-        console.log('stopper 1');
         
         return resolve();
       }))
       // Get the posts - metadata, votes, etc.
       .then(() => {
-        console.log('stopper 2');
         const post = opts.fetchOnlyflaggedPosts ? new FlaggedPost() : new Post();
         return post.findByBranch(req.params.branchid, opts.timeafter, opts.nsfw, opts.sortBy, opts.stat, opts.postType, lastPost);
       })
       // Get posts.
       .then(results => {
-        console.log('stopper 3');
         posts = results;
 
         const promises = [];
@@ -198,16 +185,13 @@ module.exports = {
             Object.assign(posts[index], post);
             return resolve();
           })
-          .catch(err => {
-            console.log('that me');
-            return reject(err);
-          }))));
+          .catch(reject))));
 
         return Promise.all(promises);
       })
       .then(() => success.OK(res, posts))
       .catch(err => {
-        console.error('Error fetching branch posts:', err);
+        console.error('Error fetching posts:', err);
 
         if (typeof err === 'object' && err.code) {
           return error.code(res, err.code, err.message);

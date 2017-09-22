@@ -403,7 +403,6 @@ const self = module.exports = {
 
     return new Promise((resolve, reject) => new Post().findById(id)
       .then(posts => {
-        console.log('show 1');
         if (!posts || posts.length === 0) {
           return Promise.reject({ code: 404 });
         }
@@ -422,40 +421,37 @@ const self = module.exports = {
         return new PostData()
           .findById(id)
           .then(data => {
-            console.log('show 2');
             post.data = data;
             return Promise.resolve();
           })
-          .catch(reject);
+          .catch(err => {
+            console.log('IT IS ME! tadadadaaaaa');
+            console.log(post, idx, posts);
+            return reject(err);
+          });
       })
       // attach post image url to each post
-      .then(() => Promise.resolve(new Promise((resolve, reject) => {
-        console.log('show 3');
+      .then(() => Promise.resolve(new Promise(resolve => {
         this.getPostPicture(id, false)
           .then(url => {
-            console.log('show 4');
             post.profileUrl = url;
             return resolve();
           })
       })))
       // Attach post image thumbnail url to each post.
-      .then(() => Promise.resolve(new Promise((resolve, reject) => {
-        console.log('show 5');
+      .then(() => Promise.resolve(new Promise(resolve => {
         this.getPostPicture(id, true)
           .then(url => {
-            console.log('show 6');
             post.profileUrlThumb = url;
             return resolve();
           })
       })))
       // Extend the posts with information about user vote.
       .then(() => {
-        console.log('show 7');
         if (req && req.user && req.user.username) {
           return new Promise((resolve, reject) => new Vote()
             .findByUsernameAndItemId(req.user.username, `post-${post.id}`)
             .then(existingVoteData => {
-              console.log('show 8');
               if (existingVoteData) {
                 post.votes.userVoted = existingVoteData.direction;
               }
@@ -478,7 +474,7 @@ const self = module.exports = {
   },
 
   getPostPicture(postid, thumbnail = false) {
-    return new Promise((resolve, reject) => {
+    return new Promise(resolve => {
       if (!postid) return resolve('');
 
       const image = new PostImage();

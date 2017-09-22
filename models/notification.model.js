@@ -111,7 +111,8 @@ Notification.prototype.save = function (sessionId) {
 
   return new Promise((resolve, reject) => {
     // Fetch the session for the user given by the sessionId.
-    // todo
+    // todo Legacy now since we don't use sessions anymore. Not sure how the original
+    // implementation was meant to work.
     /*
     if (sessionId) {
       aws.dbClient.get({

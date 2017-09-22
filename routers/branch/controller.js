@@ -193,7 +193,7 @@ module.exports = {
           });
         }
 
-        return request.save(req.sessionID);
+        return request.save();
       })
       // Make the user automatically the only moderator of this new branch.
       .then(() => {

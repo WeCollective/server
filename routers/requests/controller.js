@@ -18,7 +18,7 @@ const success = require('../../responses/successes');
 const _ = require('lodash');
 
 const put = {
-  createNotification(type, creator, data, date, sessionId) {
+  createNotification(type, creator, data, date) {
     const notification = new Notification({
       data,
       date,
@@ -35,7 +35,7 @@ const put = {
       return Promise.reject({ code: 500 });
     }
 
-    return notification.save(sessionId);
+    return notification.save();
   },
 
   verifyParams(req) {
@@ -159,7 +159,7 @@ module.exports = {
           });
         }
 
-        return request.save(req.sessionID);;
+        return request.save();;
       })
       // Create a mod log entry about the event.
       .then(() => {
@@ -239,7 +239,7 @@ module.exports = {
 
       for (let i = 0; i < mods.length; i += 1) {
         const creator = mods[i].username;
-        promises.push(put.createNotification(type, creator, data, date, req.sessionID));
+        promises.push(put.createNotification(type, creator, data, date));
       }
 
       return Promise.all(promises);
@@ -255,7 +255,7 @@ module.exports = {
       };
       const type = NotificationTypes.CHILD_BRANCH_REQUEST_ANSWERED;
 
-      return put.createNotification(type, creator, data, date, req.sessionID);
+      return put.createNotification(type, creator, data, date);
     };
 
     return put.verifyParams(req)

@@ -458,7 +458,7 @@ module.exports = {
           console.error('Error creating notification.');
           return error.InternalServerError(res);
         }
-        return notification.save(req.sessionID);
+        return notification.save();
       }).then(function() {
         return success.OK(res);
       }).catch(function(err) {
@@ -506,7 +506,7 @@ module.exports = {
           console.error('Error creating notification.');
           return error.InternalServerError(res);
         }
-        return notification.save(req.sessionID);
+        return notification.save();
       }).then(function() {
         // notify global mods of posts removed for breaching site rules
         if(req.body.reason === 'site_rules') {
@@ -535,7 +535,7 @@ module.exports = {
                 console.error('Error creating notification.');
                 return error.InternalServerError(res);
               }
-              promises.push(notification.save(req.sessionID));
+              promises.push(notification.save());
             }
             return Promise.all(promises);
           }).then(function() {

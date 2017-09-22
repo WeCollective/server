@@ -105,7 +105,7 @@ module.exports = {
               console.error('Error creating notification.');
               return error.InternalServerError(res);
             }
-            promises.push(notification.save(req.sessionID));
+            promises.push(notification.save());
           }
           return Promise.all(promises);
         }).then(function () {
@@ -221,7 +221,7 @@ module.exports = {
             console.error('Error creating notification: invalid ' + invalids[0]);
             return error.InternalServerError(res);
           }
-          promises.push(notification.save(req.sessionID));
+          promises.push(notification.save());
         }
         return Promise.all(promises);
       }).then(function () {

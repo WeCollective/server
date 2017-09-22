@@ -166,21 +166,21 @@ module.exports = {
     // if lastNotificationId is specified, client wants results which appear _after_ this notification (pagination)
     let lastNotification = null;
     
-    new Promise( (resolve, reject) => {
+    new Promise((resolve, reject) => {
       if (req.query.lastNotificationId) {
         const notification = new Notification();
         // get the post
         notification.findById(req.query.lastNotificationId)
-          .then( _ => {
+          .then(() => {
             // create lastNotification object
             lastNotification = notification.data;
             return resolve();
           })
-          .catch( err => {
+          .catch(err => {
             if (err) {
               return reject();
             }
-            
+
             return error.NotFound(res); // lastNotificationId is invalid
           });
       }
@@ -189,9 +189,9 @@ module.exports = {
         return resolve();
       }
     })
-      .then( _ => new Notification().findByUsername(req.user.username, unreadCount, lastNotification) )
-      .then( notifications => success.OK(res, notifications) )
-      .catch( err => {
+      .then(() => new Notification().findByUsername(req.user.username, unreadCount, lastNotification))
+      .then(notifications => success.OK(res, notifications))
+      .catch(err => {
         if (err) {
           console.error(`Error fetching user notifications:`, err);
           return error.InternalServerError(res);
@@ -410,7 +410,7 @@ module.exports = {
 
         req.body.unread = (req.body.unread === 'true');
         notification.set('unread', Boolean(req.body.unread));
-        return notification.save(); // req.sessionID
+        return notification.save();
       })
       .then( _ => success.OK(res) )
       .catch( err => {

@@ -158,7 +158,7 @@ module.exports = {
       .then(() => new Promise((resolve, reject) => {
         if (opts.fetchOnlyflaggedPosts) {
           if (!req.user) {
-            return Promise.reject({ code: 403 });
+            return reject({ code: 403 });
           }
 
           // User must be a mod.
@@ -185,7 +185,7 @@ module.exports = {
             Object.assign(posts[index], post);
             return resolve();
           })
-          .catch(err => reject()))));
+          .catch(err => reject(err)))));
 
         return Promise.all(promises);
       })

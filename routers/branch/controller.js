@@ -163,12 +163,12 @@ module.exports = {
     return new Branch()
       .findById(childBranchId)
       .then(() => Promise.reject({
-          code: 400,
-          message: `${childBranchId} already exists`,
+        code: 400,
+        message: `${childBranchId} already exists`,
       }))
       // If there was a genuine error, abort the operation.
       // Otherwise it only means the branch with this name doesn't exist yet.
-      .catch(err => err ? Promise.reject() : Promise.resolve())
+      .catch(err => err ? Promise.reject(err) : Promise.resolve())
       // The parent branch must exist.
       .then(() => new Branch().findById(parentBranchId))
       // If we are attaching branch to anything other than root, we will

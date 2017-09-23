@@ -497,9 +497,10 @@ const self = module.exports = {
     // fetch the tags of each specfied branch. The union of these is the list of
     // the branches the post should be tagged to.
     const branchidsArr = [];
+    const date = new Date().getTime();
     const user = new User();
 
-    let id;
+    const id = `${req.user.username}-${date}`;
 
     return post.verifyParams(req)
       .then(req => {
@@ -547,10 +548,7 @@ const self = module.exports = {
       })
       // Now create the branch ids.
       .then(() => {
-        const date = new Date().getTime();
         const promises = [];
-
-        id = `${req.user.username}-${date}`;
 
         for (let i = 0; i < branchidsArr.length; i += 1) {
           const branchid = branchidsArr[i];

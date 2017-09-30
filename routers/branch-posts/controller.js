@@ -41,10 +41,12 @@ const VALID_SORT_BY_USER_VALUES = [
 
 function userCanDisplayNSFWPosts(req) {
   return new Promise((resolve, reject) => {
-    if (req.isAuthenticated() && req.user.username) {
+    const username = req.user.username;
+
+    if (req.isAuthenticated() && username) {
       const user = new User();
 
-      user.findByUsername(req.user.username)
+      user.findByUsername(username)
         .then(() => resolve(user.data.show_nsfw))
         .catch(reject);
     }
@@ -88,7 +90,9 @@ const put = {
 
 module.exports = {
   get(req, res) {
-    if (!req.params.branchid) {
+    const branchid = req.params.branchid;
+
+    if (!branchid) {
       return error.BadRequest(res, 'Missing branchid parameter');
     }
 
@@ -120,17 +124,17 @@ module.exports = {
       // Client wants only results that appear after this post (pagination).
       if (req.query.lastPostId) {
         const post = new Post();
-        const postdata = new PostData();
+        const postData = new PostData();
 
         // get the post
         return post
-          .findByPostAndBranchIds(req.query.lastPostId, req.params.branchid)
+          .findByPostAndBranchIds(req.query.lastPostId, branchid)
           // fetch post data
-          .then(() => postdata.findById(req.query.lastPostId) )
+          .then(() => postData.findById(req.query.lastPostId) )
           .then(() => {
             // create lastPost object
             lastPost = post.data;
-            lastPost.data = postdata.data;
+            lastPost.data = postData.data;
             return resolve();
           })
           .catch(err => {
@@ -162,7 +166,7 @@ module.exports = {
           }
 
           // User must be a mod.
-          return ACL.validateRole(ACL.Roles.Moderator, req.params.branchid)(req, res, resolve);
+          return ACL.validateRole(ACL.Roles.Moderator, branchid)(req, res, resolve);
         }
         
         return resolve();
@@ -170,7 +174,7 @@ module.exports = {
       // Get the posts - metadata, votes, etc.
       .then(() => {
         const post = opts.fetchOnlyflaggedPosts ? new FlaggedPost() : new Post();
-        return post.findByBranch(req.params.branchid, opts.timeafter, opts.nsfw, opts.sortBy, opts.stat, opts.postType, lastPost);
+        return post.findByBranch(branchid, opts.timeafter, opts.nsfw, opts.sortBy, opts.stat, opts.postType, lastPost);
       })
       // Get posts.
       .then(results => {
@@ -202,7 +206,10 @@ module.exports = {
   },
 
   put(req, res) {
+    const branchid = req.params.branchid;
     const branchIds = [];
+    const postid = req.params.postid;
+    const username = req.user.username;
     const vote = new Vote();
 
     let newVoteDirection;
@@ -214,13 +221,13 @@ module.exports = {
     put.verifyParams(req)
       .then(() => {
         post = new Post({
-          branchid: req.params.branchid,
-          id: req.params.postid,
+          branchid,
+          id: postid,
         });
 
         newVoteDirection = req.body.vote;
 
-        return vote.findByUsernameAndItemId(req.user.username, `post-${req.params.postid}`);
+        return vote.findByUsernameAndItemId(username, `post-${postid}`);
       })
       .then(existingVoteData => {
         if (existingVoteData) {
@@ -233,7 +240,7 @@ module.exports = {
 
         return Promise.resolve();
       })
-      .then(() => new Post().findById(req.params.postid))
+      .then(() => new Post().findById(postid))
       // Update the post "up" and "down" attributes.
       // Vote stats will be auto-updated by a lambda function.
       .then(posts => {
@@ -244,7 +251,7 @@ module.exports = {
           branchIds.push(posts[i].branchid);
 
           // Find the post on the specified branchid.
-          if (posts[i].branchid === req.params.branchid) {
+          if (posts[i].branchid === branchid) {
             let delta = 0;
 
             if (userAlreadyVoted) {
@@ -315,8 +322,8 @@ module.exports = {
         
         const newVote = new Vote({
           direction: newVoteDirection,
-          itemid: `post-${req.params.postid}`,
-          username: req.user.username,
+          itemid: `post-${postid}`,
+          username,
         });
 
         const propertiesToCheck = [
@@ -349,227 +356,290 @@ module.exports = {
       });
   },
 
-  getPost (req, res) {
-    if(!req.params.branchid) {
+  getPost(req, res) {
+    const branchid = req.params.branchid;
+    const post = new Post();
+    const postid = req.params.postid;
+
+    if (!branchid) {
       return error.BadRequest(res, 'Missing branchid');
     }
-    if(!req.params.postid) {
+
+    if (!postid) {
       return error.BadRequest(res, 'Missing postid');
     }
 
-    var post = new Post();
-    post.findByPostAndBranchIds(req.params.postid, req.params.branchid).then(function() {
-      return success.OK(res, post.data);
-    }, function(err) {
-      if(err) {
-        console.error('Error fetching post on branch:', err);
-        return error.InternalServerError(res);
-      }
-      return error.NotFound(res);
-    });
+    post.findByPostAndBranchIds(postid, branchid)
+      .then(() => success.OK(res, post.data))
+      .catch(err => {
+        if (err) {
+          console.error('Error fetching post on branch:', err);
+          return error.InternalServerError(res);
+        }
+        return error.NotFound(res);
+      });
   },
 
-  resolveFlag (req, res) {
-    if(!req.params.branchid) {
+  resolveFlag(req, res) {
+    const action = req.body.action;
+    const branchid = req.params.branchid;
+    const message = req.body.message;
+    const postid = req.params.postid;
+    const reason = req.body.reason;
+    const type = req.body.type;
+    const username = req.user.username;
+
+    const date = new Date().getTime();
+
+    if (!branchid) {
       return error.BadRequest(res, 'Missing branchid');
     }
-    if(!req.params.postid) {
+
+    if (!postid) {
       return error.BadRequest(res, 'Missing postid');
     }
-    if(!req.user.username) {
-      console.error("No username found in session.");
+
+    if (!username) {
+      console.error('No username found in session.');
       return error.InternalServerError(res);
     }
 
-    if(!req.body.action || (req.body.action !== 'change_type' && req.body.action !== 'remove' && req.body.action !== 'approve' && req.body.action !== 'mark_nsfw')) {
+    if (!action || !['approve', 'change_type', 'mark_nsfw', 'remove'].includes(action)) {
       return error.BadRequest(res, 'Missing/invalid action parameter');
     }
 
-    if(req.body.action === 'change_type' && !req.body.type) {
+    if (action === 'change_type' && !type) {
       return error.BadRequest(res, 'Missing type parameter');
     }
-    if(req.body.action === 'remove' && !req.body.reason) {
+
+    if (action === 'remove' && !reason) {
       return error.BadRequest(res, 'Missing reason parameter');
     }
 
-    if(req.body.action === 'change_type' || req.body.action === 'mark_nsfw') {
-      var originalpost = new Post();
-      var postdata = new PostData();
-      // get the post's data
-      postdata.findById(req.params.postid).then(function() {
-        if(req.body.action === 'change_type') {
-          // change post type for all branches it appears in
-          return new Post().findById(req.params.postid);
-        } else {
-          // get the original post
-          return originalpost.findByPostAndBranchIds(req.params.postid, req.params.branchid);
-        }
-      }).then(function(posts) {
-        if(req.body.action === 'change_type') {
-          if(!posts || posts.length === 0) {
-            return error.NotFound(res);
-          }
-          var promises = [];
-          for(var i = 0; i < posts.length; i += 1) {
-            var post = new Post();
-            post.set('type', req.body.type);
-            // validate post properties
-            var propertiesToCheck = ['type'];
-            var invalids = post.validate(propertiesToCheck);
-            if(invalids.length > 0) {
-              return error.BadRequest(res, 'Invalid type parameter');
-            }
-            promises.push(post.update({
-              id: posts[i].id,
-              branchid: posts[i].branchid
-            }));
-          }
-          return Promise.all(promises);
-        } else {
-          originalpost.set('nsfw', true);
-          return originalpost.update();
-        }
-      }).then(function () {
-        // now delete post flags
+    switch (action) {
+      // Delete flag for this post on this branch.
+      case 'approve': {
         return new FlaggedPost().delete({
-          id: req.params.postid,
-          branchid: req.params.branchid
-        });
-      }).then(function() {
-        // notify the OP that their post type was changed
-        var time = new Date().getTime();
-        var notification = new Notification({
-          id: postdata.data.creator + '-' + time,
-          user: postdata.data.creator,
-          date: time,
-          unread: true,
-          type: (req.body.action === 'change_type') ? NotificationTypes.POST_TYPE_CHANGED : NotificationTypes.POST_MARKED_NSFW,
-          data: {
-            branchid: req.params.branchid,
-            username: req.user.username,
-            postid: req.params.postid
-          }
-        });
-        if(req.body.action === 'change_type') notification.data.data.type = req.body.type;
-
-        var propertiesToCheck = ['id', 'user', 'date', 'unread', 'type', 'data'];
-        var invalids = notification.validate(propertiesToCheck);
-        if(invalids.length > 0) {
-          console.error('Error creating notification.');
-          return error.InternalServerError(res);
-        }
-        return notification.save();
-      }).then(function() {
-        return success.OK(res);
-      }).catch(function(err) {
-        if(err) {
-          console.error('Error fetching post on branch:', err);
-          return error.InternalServerError(res);
-        }
-        return error.NotFound(res);
-      });
-    } else if(req.body.action === 'remove') {
-      var postdata = new PostData();
-      // get the original post
-      postdata.findById(req.params.postid).then(function() {
-        // delete flag for this post on this branch
-        return new FlaggedPost().delete({
-          id: req.params.postid,
-          branchid: req.params.branchid
+          branchid,
+          id: postid,
         })
-      }).then(function() {
-        // delete actual post from this branch
-        return new Post().delete({
-          id: req.params.postid,
-          branchid: req.params.branchid
-        });
-      }).then(function() {
-        // notify the OP that their post was removed
-        var time = new Date().getTime();
-        var notification = new Notification({
-          id: postdata.data.creator + '-' + time,
-          user: postdata.data.creator,
-          date: time,
-          unread: true,
-          type: NotificationTypes.POST_REMOVED,
-          data: {
-            branchid: req.params.branchid,
-            username: req.user.username,
-            postid: req.params.postid,
-            reason: req.body.reason,
-            message: req.body.message
-          }
-        });
-        var propertiesToCheck = ['id', 'user', 'date', 'unread', 'type', 'data'];
-        var invalids = notification.validate(propertiesToCheck);
-        if(invalids.length > 0) {
-          console.error('Error creating notification.');
-          return error.InternalServerError(res);
-        }
-        return notification.save();
-      }).then(function() {
-        // notify global mods of posts removed for breaching site rules
-        if(req.body.reason === 'site_rules') {
-          var promises = [];
-          var time = new Date().getTime();
-          // get global mods
-          new Mod().findByBranch('root').then(function(mods) {
-            for(var i = 0; i < mods.length; i += 1) {
-              var notification = new Notification({
-                id: mods[i].username + '-' + time,
-                user: mods[i].username,
-                date: time,
-                unread: true,
-                type: NotificationTypes.POST_REMOVED,
-                data: {
-                  branchid: req.params.branchid,
-                  username: req.user.username,
-                  postid: req.params.postid,
-                  reason: req.body.reason,
-                  message: req.body.message
-                }
-              });
-              var propertiesToCheck = ['id', 'user', 'date', 'unread', 'type', 'data'];
-              var invalids = notification.validate(propertiesToCheck);
-              if(invalids.length > 0) {
-                console.error('Error creating notification.');
-                return error.InternalServerError(res);
-              }
-              promises.push(notification.save());
+          .then(() => success.OK(res))
+          .catch(err => {
+            if (err) {
+              console.error('Error fetching post on branch:', err);
+              return error.InternalServerError(res);
             }
-            return Promise.all(promises);
-          }).then(function() {
-            return success.OK(res);
-          }).catch(function(err) {
-            console.error("Error sending notification to root mods: ", err);
-            return error.InternalServerError(res);
+            return error.NotFound(res);
           });
-        } else {
-          return success.OK(res);
-        }
-      }).catch(function(err) {
-        if(err) {
-          console.error('Error fetching post on branch:', err);
-          return error.InternalServerError(res);
-        }
-        return error.NotFound(res);
-      });
-    } else if(req.body.action === 'approve') {
-      // delete flag for this post on this branch
-      new FlaggedPost().delete({
-        id: req.params.postid,
-        branchid: req.params.branchid
-      }).then(function() {
-        return success.OK(res);
-      }).catch(function(err) {
-        if(err) {
-          console.error('Error fetching post on branch:', err);
-          return error.InternalServerError(res);
-        }
-        return error.NotFound(res);
-      });
-    } else {
-      return error.BadRequest(res, 'Invalid action parameter');
+      }
+
+      case 'change_type':
+      case 'mark_nsfw': {
+        const oldPost = new Post();
+        const postData = new PostData();
+
+        // Get the post data.
+        return postData.findById(postid)
+          .then(() => {
+            // Change post type for all branches it appears in.
+            if (action === 'change_type') {
+              return new Post().findById(postid);
+            }
+
+            // Get the original post.
+            return oldPost.findByPostAndBranchIds(postid, branchid);
+          })
+          .then(posts => {
+            if (action === 'change_type') {
+              if (!posts || posts.length === 0) {
+                return Promise.reject({ code: 404 });
+              }
+
+              const promises = [];
+
+              for (let i = 0; i < posts.length; i += 1) {
+                const post = new Post();
+                post.set('type', type);
+
+                // validate post properties
+                const propertiesToCheck = ['type'];
+                const invalids = post.validate(propertiesToCheck);
+                if (invalids.length > 0) {
+                  return Promise.reject({
+                    code: 400,
+                    message: 'Invalid type parameter',
+                  });
+                }
+
+                promises.push(post.update({
+                  branchid: posts[i].branchid,
+                  id: posts[i].id,
+                }));
+              }
+
+              return Promise.all(promises);
+            }
+
+            oldPost.set('nsfw', true);
+            return oldPost.update();
+          })
+          // Now delete post flags.
+          .then(() => new FlaggedPost().delete({
+            branchid,
+            id: postid,
+          }))
+          // Notify the OP that their post type was changed.
+          .then(() => {
+            const user = postData.data.creator;
+
+            const notification = new Notification({
+              data: {
+                branchid,
+                postid,
+                username,
+              },
+              date,
+              id: `${user}-${date}`,
+              type: (action === 'change_type') ? NotificationTypes.POST_TYPE_CHANGED : NotificationTypes.POST_MARKED_NSFW,
+              unread: true,
+              user,
+            });
+
+            if (action === 'change_type') {
+              notification.data.data.type = type;
+            }
+
+            const invalids = notification.validate();
+            if (invalids.length > 0) {
+              console.error('Error creating notification.', invalids);
+              return Promise.reject({ code: 500 });
+            }
+
+            return notification.save();
+          })
+          .then(() => success.OK(res))
+          .catch(err => {
+            if (err) {
+              console.error('Error fetching post on branch:', err);
+              return error.InternalServerError(res);
+            }
+            return error.NotFound(res);
+          });
+      }
+
+      case 'remove': {
+        const deletedPost = new Post();
+        const parentBranch = new Branch();
+        const postData = new PostData();
+
+        let pointsToSubtract = 0;
+        let commentsToSubtract = 0;
+
+        // Get the original post.
+        return postData.findById(postid)
+          // Update the branch stats. Grab the deleted posts comments and global points.
+          // Subtract those values from the branch totals for the branch where this post
+          // belonged to. Also decrease the branch post totals by one. We are applying
+          // this diff only to a single branch. If this post resides in any child branches,
+          // we do not interact with those or modify the post's instances in those branches.
+          .then(() => deletedPost.findByPostAndBranchIds(postid, branchid))
+          .then(() => {
+            pointsToSubtract = deletedPost.data.global;
+            commentsToSubtract = deletedPost.data.comment_count;
+            return parentBranch.findById(branchid);
+          })
+          .then(() => {
+            parentBranch.set('post_comments', parentBranch.data.post_comments - commentsToSubtract);
+            parentBranch.set('post_count', parentBranch.data.post_count - 1);
+            parentBranch.set('post_points', parentBranch.data.post_points - pointsToSubtract);
+            return parentBranch.update();
+          })
+          // Delete flag for this post on this branch.
+          .then(() => new FlaggedPost().delete({
+            branchid,
+            id: postid,
+          }))
+          // Delete actual post from this branch.
+          .then(() => deletedPost.delete())
+          // Notify the OP that their post was removed.
+          .then(() => {
+            const user = postData.data.creator;
+
+            const notification = new Notification({
+              data: {
+                branchid,
+                message,
+                postid,
+                reason,
+                username,
+              },
+              date,
+              id: `${user}-${date}`,
+              type: NotificationTypes.POST_REMOVED,
+              unread: true,
+              user,
+            });
+
+            const invalids = notification.validate();
+            if (invalids.length > 0) {
+              console.error('Error creating notification.', invalids);
+              return Promise.reject({ code: 500 });
+            }
+
+            return notification.save();
+          })
+          // Notify global mods of posts removed for breaching site rules.
+          .then(() => {
+            if (reason === 'site_rules') {
+              const promises = [];
+
+              // Get global mods.
+              return new Mod().findByBranch('root')
+                .then(mods => {
+                  for (let i = 0; i < mods.length; i += 1) {
+                    const notification = new Notification({
+                      data: {
+                        branchid,
+                        message,
+                        postid,
+                        reason,
+                        username,
+                      },
+                      date,
+                      id: `${mods[i].username}-${date}`,
+                      type: NotificationTypes.POST_REMOVED,
+                      unread: true,
+                      user: mods[i].username,
+                    });
+
+                    const invalids = notification.validate();
+                    if (invalids.length > 0) {
+                      console.error('Error creating notification.', invalids);
+                      return Promise.reject({ code: 500 });
+                    }
+
+                    promises.push(notification.save());
+                  }
+
+                  return Promise.all(promises);
+                })
+                .catch(err => Promise.reject(err));
+            }
+
+            return Promise.resolve();
+          })
+          .then(() => success.OK(res))
+          .catch(err => {
+            if (err) {
+              console.error('Error fetching post on branch:', err);
+              return error.InternalServerError(res);
+            }
+            return error.NotFound(res);
+          });
+      }
+
+      default:
+        return error.BadRequest(res, 'Invalid action parameter');
     }
   }
 };

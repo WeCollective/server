@@ -76,9 +76,10 @@ PostData.prototype.validate = function (properties, postType) {
     }
   }
 
+  const text = this.data.text;
   if (properties.includes('text')) {
-    if ((postType !== 'poll' && (!this.data.text || this.data.text.length < 1)) ||
-      (this.data.text && this.data.text.length > 20000)) {
+    if ((!['poll', 'text'].includes(postType) &&
+      (!text || text.length < 1)) || (text && text.length > 20000)) {
       invalids.push('text');
     }
   }

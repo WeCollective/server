@@ -620,11 +620,14 @@ module.exports = {
   },
 
   getSubbranches(req, res) {
-    if (!req.params.branchid) {
+    const branchid = req.params.branchid;
+    const timeafter = req.query.timeafter;
+
+    if (!branchid) {
       return error.BadRequest(res, 'Missing branchid');
     }
 
-    if (!req.query.timeafter) {
+    if (!timeafter) {
       return error.BadRequest(res, 'Missing timeafter');
     }
 
@@ -635,93 +638,94 @@ module.exports = {
     let lastBranch = null;
     
     // if lastBranchId is specified, client wants results which appear _after_ this branch (pagination)
-    new Promise( (resolve, reject) => {
+    return new Promise((resolve, reject) => {
       if (req.query.lastBranchId) {
         const last = new Branch();
 
         // get the branch
-        last.findById(req.query.lastBranchId)
+        return last.findById(req.query.lastBranchId)
           .then(() => {
             lastBranch = last.data;
             return resolve();
           })
           .catch(err => {
             if (err) {
-              return reject();
+              return reject(err);
             }
 
-            return error.NotFound(res);
+            return reject({ code: 404 });
           });
       }
-      else {
-        // no last branch specified, continue
-        return resolve();
-      }
+
+      // No last branch specified, continue.
+      return resolve();
     })
-    .then(() => branch.findSubbranches(req.params.branchid, req.query.timeafter, sortBy, lastBranch) )
-    .then(results => {
-      branches = results;
+      .then(() => branch.findSubbranches(branchid, timeafter, sortBy, lastBranch))
+      // Attach branch profile images.
+      .then(results => {
+        branches = results;
 
-      let promises = [];
+        let promises = [];
 
-      for (let i = 0; i < branches.length; i += 1) {
-        promises.push(new Promise((resolve, reject) => {
-          new BranchImage()
-            .findById(branches[i].id, 'picture')
-            .then(branchimage => {
-              const Bucket = fs.Bucket.BranchImagesResized;
-              const Key = `${branchimage.id}-640.${branchimage.extension}`;
-              return resolve(`https://${Bucket}.s3-eu-west-1.amazonaws.com/${Key}`);
-            })
-            .catch(err => {
-              if (err) {
-                return reject();
-              }
+        for (let i = 0; i < branches.length; i += 1) {
+          promises.push(new Promise((resolve, reject) => {
+            new BranchImage()
+              .findById(branches[i].id, 'picture')
+              .then(branchimage => {
+                const Bucket = fs.Bucket.BranchImagesResized;
+                const Key = `${branchimage.id}-640.${branchimage.extension}`;
+                return resolve(`https://${Bucket}.s3-eu-west-1.amazonaws.com/${Key}`);
+              })
+              .catch(err => {
+                if (err) {
+                  return reject();
+                }
 
-              return resolve('');
-            });
-        }));
-      }
+                return resolve('');
+              });
+          }));
+        }
 
-      return Promise.all(promises);
-    })
-    .then(urls => {
-      let promises = [];
-      
-      for (let i = 0; i < branches.length; i += 1) {
-        // attach branch image url to each branch
-        branches[i].profileUrl = urls[i];
+        return Promise.all(promises);
+      })
+      // Attach branch thumbnail images.
+      .then(urls => {
+        let promises = [];
         
-        promises.push(new Promise(function(resolve, reject) {
-          new BranchImage().findById(branches[i].id, 'picture')
-            .then(branchimage => {
-              const Bucket = fs.Bucket.BranchImagesResized;
-              const Key = `${branchimage.id}-200.${branchimage.extension}`;
-              return resolve(`https://${Bucket}.s3-eu-west-1.amazonaws.com/${Key}`);
-            })
-            .catch(err => {
-              if (err) {
-                return reject();
-              }
+        for (let i = 0; i < branches.length; i += 1) {
+          // attach branch image url to each branch
+          branches[i].profileUrl = urls[i];
+          
+          promises.push(new Promise((resolve, reject) => {
+            new BranchImage().findById(branches[i].id, 'picture')
+              .then(branchimage => {
+                const Bucket = fs.Bucket.BranchImagesResized;
+                const Key = `${branchimage.id}-200.${branchimage.extension}`;
+                return resolve(`https://${Bucket}.s3-eu-west-1.amazonaws.com/${Key}`);
+              })
+              .catch(err => {
+                if (err) {
+                  return reject();
+                }
 
-              return resolve('');
-            });
-        }));
-      }
+                return resolve('');
+              });
+          }));
+        }
 
-      return Promise.all(promises);
-    })
-    .then(urls => {
-      // attach branch image thumbnail url to each branch
-      for (let i = 0; i < branches.length; i += 1) {
-        branches[i].profileUrlThumb = urls[i];
-      }
+        return Promise.all(promises);
+      })
+      .then(urls => {
+        // attach branch image thumbnail url to each branch
+        for (let i = 0; i < branches.length; i += 1) {
+          branches[i].profileUrlThumb = urls[i];
+        }
 
-      return success.OK(res, branches);
-    })
-    .catch(err => {
-      console.error(`Error fetching subbranches:`, err);
-      return error.InternalServerError(res);
-    });
+        return success.OK(res, branches);
+      })
+      .catch(err => {
+        console.error(`Error fetching subbranches:`, err);
+        return error.InternalServerError(res);
+      });
   },
 };

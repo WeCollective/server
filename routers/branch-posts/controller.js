@@ -41,12 +41,10 @@ const VALID_SORT_BY_USER_VALUES = [
 
 function userCanDisplayNSFWPosts(req) {
   return new Promise((resolve, reject) => {
-    const username = req.user.username;
-
-    if (req.isAuthenticated() && username) {
+    if (req.isAuthenticated() && req.user.username) {
       const user = new User();
 
-      user.findByUsername(username)
+      user.findByUsername(req.user.username)
         .then(() => resolve(user.data.show_nsfw))
         .catch(reject);
     }

@@ -31,7 +31,7 @@ module.exports = app => {
   router.route('/')
     .post((req, res, next) => {
       // local-signup with override of done() method to access info object from passport strategy
-      passport.authenticate(passport.authenticate('jwt'), 'local-signup', (err, user, info) => {
+      passport.authenticate('LocalSignUp', (err, user, info) => {
         if (err) {
           return next(err);
         }

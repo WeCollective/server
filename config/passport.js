@@ -97,7 +97,9 @@ module.exports = () => {
       });
   })));
 
-  passport.use('LocalSignUp', new LocalStrategy((req, username, password, done) => process.nextTick(() => {
+  passport.use('LocalSignUp', new LocalStrategy({
+    passReqToCallback: true,
+  }, (req, username, password, done) => process.nextTick(() => {
     const user = new User();
     username = username.toLowerCase();
 
@@ -193,13 +195,6 @@ module.exports = () => {
         return done(null, false, err);
       });
   })));
-
-  // Alias the strategies for legacy API using hyphens.
-  passport._strategies['local-login']  = passport._strategies.LocalSignIn;
-  passport._strategies['local-signup'] = passport._strategies.LocalSignUp;
-
-  // Used to authenticate routes with JWT.
-  // passport.ACL = () => passport.authenticate('jwt', JwtConfig.jwtSession);
 
   return {
     authenticate: (strategy, callback) => (req, res, next) => {

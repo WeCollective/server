@@ -44,15 +44,15 @@ Notification.prototype.findById = function (id) {
   });
 };
 
-Notification.prototype.findByUsername = function (username, unreadCount, last) {
+Notification.prototype.findByUsername = function (username, unreadCount, last, getAllUnread) {
   const self = this;
-  const limit = 20;
+  const limit = getAllUnread !== undefined ? 0 : 20;
   
   if (last) {
     const tmp = {
       id: last.id,
       date: last.date,
-      user: last.user
+      user: last.user,
     };
 
     last = tmp;
@@ -77,7 +77,7 @@ Notification.prototype.findByUsername = function (username, unreadCount, last) {
       TableName: self.config.table,
     };
 
-    if (unreadCount) {
+    if (unreadCount || getAllUnread === true) {
       options.FilterExpression = 'unread = :unread';
       options.ExpressionAttributeValues[':unread'] = true;
     }
@@ -98,7 +98,14 @@ Notification.prototype.findByUsername = function (username, unreadCount, last) {
         }
       }
 
-      const result = data.Items ? data.Items.slice(0, limit) : data.Count;
+      let result;
+      if (data.Items) {
+        result = limit ? data.Items.slice(0, limit) : data.Items;
+      }
+      else {
+        result = data.Count;
+      }
+
       return resolve(result);
     });
   });

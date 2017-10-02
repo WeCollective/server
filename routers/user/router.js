@@ -562,6 +562,25 @@ module.exports = app => {
       controller.getNotifications)
 
     /**
+     * @api {post} /:username/notifications Mark All Notifications As Read
+     * @apiName Mark All Notifications As Read
+     * @apiDescription Marks all received user notifications as read.
+     * @apiGroup User
+     * @apiPermission self
+     * @apiVersion 1.0.0
+     *
+     * @apiParam (URL Parameters) {String} username User's unique username.
+     *
+     * @apiUse OK
+     * @apiUse Forbidden
+     * @apiUse InternalServerError
+     * @apiUse NotFound
+     */
+    .post(passport.authenticate('jwt'), ACL.validateRole(ACL.Roles.AuthenticatedUser),
+      (req, res, next) => ACL.validateRole(ACL.Roles.Self, req.params.username)(req, res, next),
+      controller.markAllNotificationsRead)
+
+    /**
      * @api {put} /:username/notifications Subscribe to Notifications
      * @apiName Subscribe to Notifications
      * @apiDescription Subscribe the user to receive real-time notifications using Web Sockets.

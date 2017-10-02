@@ -166,11 +166,12 @@ module.exports = {
     // if lastNotificationId is specified, client wants results which appear _after_ this notification (pagination)
     let lastNotification = null;
     
-    new Promise((resolve, reject) => {
+    return new Promise((resolve, reject) => {
       if (req.query.lastNotificationId) {
         const notification = new Notification();
+
         // get the post
-        notification.findById(req.query.lastNotificationId)
+        return notification.findById(req.query.lastNotificationId)
           .then(() => {
             // create lastNotification object
             lastNotification = notification.data;
@@ -184,10 +185,9 @@ module.exports = {
             return error.NotFound(res); // lastNotificationId is invalid
           });
       }
-      else {
-        // no last notification specified, continue
-        return resolve();
-      }
+
+      // no last notification specified, continue
+      return resolve();
     })
       .then(() => new Notification().findByUsername(req.user.username, unreadCount, lastNotification))
       .then(notifications => success.OK(res, notifications))
@@ -333,6 +333,43 @@ module.exports = {
           return resolve('');
         });
     });
+  },
+
+  markAllNotificationsRead(req, res) {
+    const username = req.user.username;
+
+    if (!username) {
+      return error.InternalServerError(res);
+    }
+
+    return new Notification()
+      .findByUsername(username, false, null, true)
+      .then(notifications => {
+        const promises = [];
+
+        notifications.forEach(notification => {
+          const row = new Notification();
+          promises.push(row
+            .findById(notification.id)
+            .then(() => {
+              row.set('unread', false);
+              return row.save();
+            })
+            .catch(err => Promise.reject(err))
+          );
+        })
+
+        return Promise.all(promises);
+      })
+      .then(() => success.OK(res))
+      .catch(err => {
+        if (err) {
+          console.error(`Error marking user notifications as read:`, err);
+          return error.InternalServerError(res);
+        }
+
+        return error.NotFound(res);
+      });
   },
 
   put (req, res) {

@@ -107,34 +107,25 @@ module.exports = () => {
     let token;
 
     return user.findByUsername(username)
-      .then(() => done(null, false, {
+      .then(() => Promise.reject({
         message: 'Username already exists',
         status: 400,
       }))
       .catch(err => {
         if (err) {
-          console.error('Error signing up:', err);
-          
-          return done(err, false, {
-            status: 500,
-            message: 'Something went wrong',
-          });
+          return Promise.reject(err);
         }
 
         return Promise.resolve();
       })
       .then(() => new User().findByEmail(req.body.email))
-      .then(() => done(null, false, {
+      .then(() => Promise.reject({
         message: 'Email already exists',
         status: 400,
       }))
       .catch(err => {
         if (err) {
-          console.error('Error signing up:', err);
-          return done(err, false, {
-            message: 'Something went wrong',
-            status: 500,
-          });
+          return Promise.reject(err);
         }
 
         return Promise.resolve();
@@ -173,7 +164,7 @@ module.exports = () => {
         const invalids = newUser.validate(propertiesToCheck);
         
         if (invalids.length) {
-          return done(null, false, {
+          return Promise.reject({
             message: invalids[0],
             status: 400,
           });
@@ -192,7 +183,7 @@ module.exports = () => {
       .then(() => done(null, { username }))
       .catch(err => {
         console.error('Error signing up:', err);
-        return done(null, false, err);
+        return done(err, false, err);
       });
   })));
 

@@ -41,8 +41,6 @@ module.exports = app => {
           return res.status(info.status || 403).json({ message: info.message });
         }
 
-        req.logout();
-
         const userCount = new Constant();
         
         return userCount.findById('user_count')
@@ -86,19 +84,6 @@ module.exports = app => {
         }
 
         return success.OK(res, user.jwt);
-        /*
-
-        console.log(req.logIn);
-
-        // manually log in user to establish session
-        req.logIn(user, err => {
-          if (err) {
-            return next(err);
-          }
-
-          return success.OK(res);
-        });
-        */
       })(req, res, next);
     });
 
@@ -113,10 +98,7 @@ module.exports = app => {
    * @apiUse InternalServerError
    */
   router.route('/logout')
-    .get(passport.authenticate('jwt'), (req, res, next) => {
-      // req.logout();
-      return success.OK(res);
-    });
+    .get(passport.authenticate('jwt'), (req, res, next) => success.OK(res));
 
   router.route('/me')
     /**

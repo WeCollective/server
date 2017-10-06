@@ -515,6 +515,8 @@ const self = module.exports = {
 
         for (let i = 0; i < posts.length; i++) {
           const postBranchId = posts[i].branchid;
+          // We can request which instance of the post we want.
+          // By default, the root instance will be returned.
           if ((branchid && postBranchId === branchid) ||
             (!branchid && postBranchId === 'root')) {
             idx = i;

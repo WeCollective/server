@@ -542,8 +542,6 @@ module.exports = {
           // we do not interact with those or modify the post's instances in those branches.
           .then(() => deletedPost.findByPostAndBranchIds(postid, branchid))
           .then(() => {
-            console.log(deletedPost, postid, branchid);
-            return Promise.reject('fail me');
             pointsToSubtract = deletedPost.data.global;
             commentsToSubtract = deletedPost.data.comment_count;
             return parentBranch.findById(branchid);

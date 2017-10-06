@@ -502,7 +502,7 @@ const self = module.exports = {
     });
   },
 
-  getOnePost(id, req) {
+  getOnePost(id, req, branchid) {
     let post;
 
     return new Promise((resolve, reject) => new Post().findById(id)
@@ -514,7 +514,9 @@ const self = module.exports = {
         let idx = 0;
 
         for (let i = 0; i < posts.length; i++) {
-          if (posts[i].branchid === 'root') {
+          const postBranchId = posts[i].branchid;
+          if ((branchid && postBranchId === branchid) ||
+            (!branchid && postBranchId === 'root')) {
             idx = i;
             break;
           }

@@ -181,7 +181,7 @@ module.exports = {
         const promises = [];
 
         posts.forEach((post, index) => promises.push(new Promise((resolve, reject) => PostCtrl
-          .getOnePost(post.id, req)
+          .getOnePost(post.id, req, branchid)
           .then(post => {
             // Extend object so we don't delete the flag properties.
             Object.assign(posts[index], post);
@@ -542,6 +542,8 @@ module.exports = {
           // we do not interact with those or modify the post's instances in those branches.
           .then(() => deletedPost.findByPostAndBranchIds(postid, branchid))
           .then(() => {
+            console.log(deletedPost, postid, branchid);
+            return Promise.reject('fail me');
             pointsToSubtract = deletedPost.data.global;
             commentsToSubtract = deletedPost.data.comment_count;
             return parentBranch.findById(branchid);

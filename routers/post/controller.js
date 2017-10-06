@@ -102,6 +102,110 @@ const voteComment = {
 };
 
 const self = module.exports = {
+  delete(req, res) {
+    const postid = req.params.postid;
+
+    if (!req.user || !req.user.username) {
+      return error.Forbidden(res);
+    }
+
+    if (!postid) {
+      return error.BadRequest(res, 'Missing postid');
+    }
+
+    const branchesToUpdate = [];
+
+    let postComments = null;
+    let postGlobalPoints = null;
+
+    // Delete all post entries on all branches where it was included.
+    // NB: Do not remove post data and post images for now - may want to reinstate posts.
+    new Post()
+      .findById(postid)
+      .then(posts => {
+        const promises = [];
+
+        for (let i = 0; i < posts.length; i += 1) {
+          const post = posts[i];
+          const branchid = post.branchid;
+
+          branchesToUpdate.push(branchid);
+
+          if (postComments === null) {
+            postComments = post.comment_count;
+          }
+
+          if (postGlobalPoints === null) {
+            postGlobalPoints = post.global;
+          }
+
+          promises.push(new Post().delete({
+            branchid,
+            id: post.id,
+          }));
+        }
+
+        return Promise.all(promises);
+      })
+      // Delete all flagged post instances.
+      .then(() => new FlaggedPost().findById(postid))
+      .then(posts => {
+        const promises = [];
+
+        for (let i = 0; i < posts.length; i += 1) {
+          const post = posts[i];
+          promises.push(new FlaggedPost().delete({
+            branchid: post.branchid,
+            id: post.id,
+          }));
+        }
+
+        return Promise.all(promises);
+      })
+      // Update branch stats.
+      .then(() => {
+        const promises = [];
+
+        for (let i = 0; i < branchesToUpdate.length; i += 1) {
+          const branchid = branchesToUpdate[i];
+          promises.push(new Promise((resolve, reject) => {
+            const branch = new Branch();
+            return branch
+              .findById(branchid)
+              .then(() => resolve(branch))
+              .catch(err => reject(err));
+          }));
+        }
+
+        return Promise.all(promises);
+      })
+      .then(branches => {
+        const promises = [];
+
+        for (let i = 0; i < branches.length; i += 1) {
+          const branch = branches[i];
+          promises.push(new Promise((resolve, reject) => {
+            branch.set('post_count', branch.data.post_count - 1);
+            branch.set('post_comments', branch.data.post_comments - postComments);
+            branch.set('post_points', branch.data.post_points - postGlobalPoints);
+            return branch.update()
+              .then(() => resolve())
+              .then(err => reject(err));
+          }));
+        }
+
+        return Promise.all(promises);
+      })
+      .then(() => success.OK(res))
+      .catch(err => {
+        if (err) {
+          console.error('Error deleting posts: ', err);
+          return error.InternalServerError(res);
+        }
+        return error.NotFound(res);
+      });
+  },
+
   deleteComment(req, res) {
     const commentid = req.params.commentid;
     const parentComment = new Comment();
@@ -963,48 +1067,7 @@ const self = module.exports = {
 
 
 
-  delete(req, res) {
-    if(!req.user || !req.user.username) {
-      return error.Forbidden(res);
-    }
-    if(!req.params.postid) {
-      return error.BadRequest(res, 'Missing postid');
-    }
 
-    // delete all post entries on branches
-    // NB: do not remove post data and post images for now - may want to
-    // reinstate posts
-    new Post().findById(req.params.postid).then(function(posts) {
-      var promises = [];
-      for(var i = 0; i < posts.length; i++) {
-        promises.push(new Post().delete({
-          id: posts[i].id,
-          branchid: posts[i].branchid
-        }));
-      }
-      return Promise.all(promises);
-    }).then(function() {
-      // delete any instances of the post when flagged
-      return new FlaggedPost().findById(req.params.postid);
-    }).then(function(posts) {
-      var promises = [];
-      for(var i = 0; i < posts.length; i++) {
-        promises.push(new FlaggedPost().delete({
-          id: posts[i].id,
-          branchid: posts[i].branchid,
-        }));
-      }
-      return Promise.all(promises);
-    }).then(function() {
-      return success.OK(res);
-    }).catch(function(err) {
-      if(err) {
-        console.error("Error deleting posts: ", err);
-        return error.InternalServerError(res);
-      }
-      return error.NotFound(res);
-    });
-  },
 
   getPictureUploadUrl(req, res) {
     if(!req.user || !req.user.username) {

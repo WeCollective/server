@@ -217,8 +217,6 @@ module.exports = {
     const action = req.body.action;
     const childBranchId = req.params.childid;
     const parentBranchId = req.params.branchid;
-    const postsDeleteFromBranchIds = [];
-    const postsInsertIntoBranchIds = [];
     const username = req.user.username;
 
     let modLogEntryChildBranch;
@@ -228,7 +226,6 @@ module.exports = {
     let tagsChildBranch;
     let tagsParentBranch;
     let treeBranchIds;
-    let treePosts;
 
     const createModBranchMovedNotifications = mods => {
       const data = {
@@ -344,12 +341,11 @@ module.exports = {
           // Example: root - a - b - child
           // 
           // This will return [root, a, b, child]
-          .then(() => tag.findByBranch(childBranchId)
-            .then(tags => {
-              tagsChildBranch = tags.map(obj => obj.tag);
-              return Promise.resolve();
-            })
-          )
+          .then(() => tag.findByBranch(childBranchId))
+          .then(tags => {
+            tagsChildBranch = tags.map(obj => obj.tag);
+            return Promise.resolve();
+          })
           // Sanitise both tag arrays before we perform the move.
           .then(() => {
             // This will always have at least root.
@@ -362,6 +358,8 @@ module.exports = {
             // Remove child branch id from the child tags as we will not mutate it.
             // Child branch id stays the same, so it is not needed here.
             tagsChildBranch.splice(tagsChildBranch.indexOf(childBranchId), 1);
+
+            return Promise.resolve();
           })
           // Get the tree that will be relocated to the new parent branch.
           //
@@ -370,29 +368,10 @@ module.exports = {
           //               - parent
           //
           // We will be moving [child, c, d, e, f] under parent. That's our tree.
-          .then(() => tag.findByTag(childBranchId)
-            .then(tags => {
-              treeBranchIds = tags.map(obj => obj.branchid);
-              return Promise.resolve();
-            })
-          )
-          // Get the posts that will be updated. Records in branches that will be removed will
-          // also be removed, new branch posts will be inserted.
-          .then(() => post.findByBranch(childBranchId)
-            .then(posts => {
-              treePosts = posts;
-              return Promise.resolve();
-            })
-          )
-          .then(() => {
-            console.log('++++++++++++++++++++++++++++++++++++++++++');
-            console.log('Child branch id:', childBranchId);
-            console.log('Parent branch id:', parentBranchId);
-            console.log('Child branch tags:', tagsChildBranch);
-            console.log('Parent branch tags:', tagsParentBranch);
-            console.log('Branch tree:', treeBranchIds);
-            console.log('Posts:', treePosts);
-            console.log('++++++++++++++++++++++++++++++++++++++++++');
+          .then(() => tag.findByTag(childBranchId))
+          .then(tags => {
+            treeBranchIds = tags.map(obj => obj.branchid);
+            return Promise.resolve();
           })
           // Figure out how many operations we will have to carry out.
           // If we are about to delete 4 tags and add 2 tags, we will
@@ -407,46 +386,33 @@ module.exports = {
             for (let i = 0; i < branchOperationsLength; i += 1) {
               treeBranchIds.forEach(branchId => {
                 const operationTag = new Tag();
-                // todo investigate when I moved branch `wooooo` from `lubosdevtest` to `localartists`
-                // it did not update tags and branch parent id properly. parent id stayed the same,
-                // and one tag was not updated from `lubosdevtest` to `localartists`. Looks like an
-                // off by one bug, fix it.
-
                 if (i < TCBLength) {
-                  // Update row.
-                  if (i < TPBLength) {
-                    postsDeleteFromBranchIds.push(tagsChildBranch[i]);
-                    postsInsertIntoBranchIds.push(tagsParentBranch[i]);
-                    
-                    branchOperationsArr.push(operationTag.findByBranchAndTag(branchId, tagsChildBranch[i])
-                      .then(() => {
-                        operationTag.set('tag', tagsParentBranch[i]);
-                        return operationTag.update();
-                      })
-                    );
-                    
-                  }
-                  // Delete row.
-                  else {
-                    postsDeleteFromBranchIds.push(tagsChildBranch[i]);
-                    
-                    branchOperationsArr.push(operationTag.findByBranchAndTag(branchId, tagsChildBranch[i])
-                      .then(() => operationTag.delete())
-                    );
-                    
-                  }
+                  // Delete row in either case. We cannot update the tag directly because it is a
+                  // part of the primary key. See http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_AttributeValueUpdate.html.
+                  // Instead, we delete it and then insert a new tag with the updated attributes.
+                  branchOperationsArr.push(operationTag.findByBranchAndTag(branchId, tagsChildBranch[i])
+                    .then(() => operationTag.delete())
+                    .then(() => {
+                      if (i < TPBLength) {
+                        return new Tag({
+                          branchid: branchId,
+                          tag: tagsParentBranch[i],
+                        })
+                          .save();
+                      }
+
+                      return Promise.resolve();
+                    })
+                  );
                 }
                 // Insert row.
                 else {
-                  postsInsertIntoBranchIds.push(tagsParentBranch[i]);
-                  
                   branchOperationsArr.push(new Tag({
                     branchid: branchId,
                     tag: tagsParentBranch[i],
                   })
                     .save()
                   );
-                  
                 }
               });
             }
@@ -455,8 +421,6 @@ module.exports = {
           })
           // Update child branch parentid.
           .then(() => {
-            // return Promise.reject();
-
             const updatedBranch = new Branch({ id: childBranchId });
             updatedBranch.set('parentid', parentBranchId);
             return updatedBranch.update();
@@ -473,79 +437,10 @@ module.exports = {
             const modsChildAndParentBranch = _.uniqBy(modsParentBranch.concat(modsChildBranch), 'username');
             return createModBranchMovedNotifications(modsChildAndParentBranch);
           })
-          .catch(() => Promise.resolve())
-          // Update post locations - delete and insert as necessary.
-          .then(() => {
-            console.log('Delete posts from:');
-            console.log(postsDeleteFromBranchIds);
-
-            // todo add diff delete and insert to reduce amount of operations
-
-            const promises = [];
-
-            for (let i = 0; i < postsDeleteFromBranchIds.length; i += 1) {
-              const branchid = postsDeleteFromBranchIds[i];
-
-              for (let j = 0; j < treePosts.length; j += 1) {
-                const treePost = treePosts[j];
-                promises.push(new Promise((resolve, reject) => {
-                  const post = new Post();
-                  return post
-                    .findByPostAndBranchIds(treePost.id, branchid)
-                    .then(() => {
-                      console.log(post);
-                      return post.delete();
-                    })
-                    .then(() => resolve())
-                    .catch(err => reject(err));
-                }));
-              }
-            }
-
-            return Promise.all(promises);
-          })
-          .then(() => {
-            console.log('++++++++++++++++++++++++++++++++++++++++++');
-            console.log('Insert posts into:');
-            console.log(postsInsertIntoBranchIds);
-
-            const promises = [];
-
-            for (let i = 0; i < postsInsertIntoBranchIds.length; i += 1) {
-              const branchid = postsInsertIntoBranchIds[i];
-
-              for (let j = 0; j < treePosts.length; j += 1) {
-                const treePost = treePosts[j];
-                const newPost = new Post({
-                  branchid,
-                  comment_count: treePost.comment_count,
-                  date: treePost.date,
-                  down: treePost.down,
-                  global: treePost.global,
-                  id: treePost.id,
-                  individual: treePost.individual,
-                  local: treePost.local,
-                  locked: treePost.locked,
-                  nsfw: treePost.nsfw,
-                  type: treePost.type,
-                  up: treePost.up,
-                });
-
-                promises.push(newPost.save());
-              }
-            }
-
-            return Promise.all(promises);
-          })
-          // todo update flagged posts records
-          /*
-          .then(() => {
-            return Promise.reject({
-              code: 400,
-              message: 'Just messing around',
-            });
+          .catch(err => {
+            console.log(err);
+            return Promise.reject(err);
           });
-          */
       })
       // Remove the subbranch request.
       .then(() => request.delete({
@@ -560,10 +455,6 @@ module.exports = {
       .then(() => success.OK(res))
       .catch(err => {
         if (err) {
-          console.log('++++++++++++++++++++++++++++++++++++++++++');
-          console.log(err);
-          console.log('++++++++++++++++++++++++++++++++++++++++++');
-
           if (typeof err === 'object' && err.code) {
             return error.code(res, err.code, err.message);
           }

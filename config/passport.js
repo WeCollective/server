@@ -48,6 +48,10 @@ module.exports = () => {
             return Promise.reject('User account not verified');
           }
 
+          if (user.data.banned === true) {
+            return Promise.reject('Your account has been permanently banned from Weco.');
+          }
+
           isAuthenticated = true;
           req.user = user.data;
 
@@ -75,6 +79,13 @@ module.exports = () => {
           return Promise.reject(null, 'Your account has not been verified', 403);
         }
 
+        if (user.data.banned === true) {
+          return Promise.reject({
+            message: 'Your account has been permanently banned from Weco.',
+            status: 403,
+          });
+        }
+
         return auth.compare(password, user.data.password);
       })
       .then(() => {
@@ -91,8 +102,8 @@ module.exports = () => {
         }
 
         return done(null, false, {
+          message: message || 'User doesn\'t exist',
           status: status || 400,
-          message: message || `User doesn't exist`,
         });
       });
   })));

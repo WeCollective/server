@@ -134,6 +134,7 @@ module.exports = () => {
         token = auth.generateToken();
 
         newUser = new User({
+          banned: false,
           datejoined: new Date().getTime(),
           email: req.body.email,
           name: req.body.name,

@@ -135,6 +135,7 @@ const Schema = {
   },
   
   User: {
+    banned: null,
     datejoined: null,
     dob: null,
     email: null,

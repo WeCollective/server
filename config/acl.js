@@ -1,11 +1,9 @@
-'use strict';
-
 const _ = require('lodash');
 const Branch = require('../models/branch.model');
 const error = require('../responses/errors');
 const Mod = require('../models/mod.model');
 
-let ACL = {};
+const ACL = {};
 
 /**
  * @apiDefine guest Guest access
@@ -37,7 +35,7 @@ ACL.Roles = {
 
 ACL.Schema = (role, model) => {
   if ('User' === model) {
-    switch(role) {
+    switch (role) {
       case ACL.Roles.Guest:
       case ACL.Roles.AuthenticatedUser:
         return {
@@ -48,7 +46,7 @@ ACL.Schema = (role, model) => {
           num_comments: null,
           num_mod_positions: null,
           num_posts: null,
-          username: null
+          username: null,
         };
 
       case ACL.Roles.Self:
@@ -62,7 +60,7 @@ ACL.Schema = (role, model) => {
           num_mod_positions: null,
           num_posts: null,
           show_nsfw: null,
-          username: null
+          username: null,
         };
 
       default:
@@ -74,24 +72,24 @@ ACL.Schema = (role, model) => {
 };
 
 // Middleware to ensure a user is logged in
-function isLoggedIn(req, res, next) {
+const isLoggedIn = (req, res, next) => {
   if (req.isAuthenticated()) {
     req.ACLRole = ACL.Roles.AuthenticatedUser;
     return next();
   }
   
   return error.Forbidden(res);
-}
+};
 
 // Middleware to ensure a user is logged in as the specified user
-function isLoggedInAsSelf(req, res, next, username) {
+const isLoggedInAsSelf = (req, res, next, username) => {
   if (req.isAuthenticated() && req.user.username === username) {
     req.ACLRole = ACL.Roles.Self;
     return next();
   }
 
   return error.Forbidden(res);
-}
+};
 
 // Attach the specified role to the request body if the role's conditions are met
 ACL.validateRole = (role, resourceId) => {
@@ -125,7 +123,7 @@ ACL.validateRole = (role, resourceId) => {
         mod.findByBranch(resourceId)
           .then( mods => {
             if (!mods) {
-              console.error(`No mods object received.`);
+              console.error('No mods object received.');
               return error.InternalServerError(res);
             }
 
@@ -140,7 +138,7 @@ ACL.validateRole = (role, resourceId) => {
           })
           .catch( err => {
             if (err) {
-              console.error(`Error fetching branch mods:`, err);
+              console.error('Error fetching branch mods:', err);
               return error.InternalServerError(res);
             }
 
@@ -158,11 +156,11 @@ ACL.validateRole = (role, resourceId) => {
         mod.findByBranch('root')
           .then( mods => {
             if (!mods) {
-              console.error(`No mods object received.`);
+              console.error('No mods object received.');
               return error.InternalServerError(res);
             }
             
-            for (let i = 0; i < mods.length; i++) {
+            for (let i = 0; i < mods.length; i += 1) {
               if (mods[i].username == req.user.username) {
                 req.ACLRole = ACL.Roles.Admin;
                 return next();
@@ -173,7 +171,7 @@ ACL.validateRole = (role, resourceId) => {
           })
           .catch( err => {
             if (err) {
-              console.error(`Error fetching branch mods:`, err);
+              console.error('Error fetching branch mods:', err);
               return error.InternalServerError(res);
             }
 
@@ -182,7 +180,7 @@ ACL.validateRole = (role, resourceId) => {
         break;
 
       default:
-        console.error(`Unknown ACL Role`);
+        console.error('Unknown ACL Role');
         return;
     }
   };

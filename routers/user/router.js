@@ -167,6 +167,8 @@ module.exports = app => {
       ACL.attachRole(ACL.Roles.Self), controller.put);
 
   router.route('/:username')
+    .delete(passport.authenticate('jwt'), ACL.validateRole(ACL.Roles.Admin),
+      ACL.attachRole(ACL.Roles.Admin), controller.ban)
     /**
      * @api {get} /user/:username Get User
      * @apiName Get User

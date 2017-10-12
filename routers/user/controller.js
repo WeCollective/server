@@ -40,25 +40,60 @@ function getUsername (req) {
 }
 
 module.exports = {
-  delete (req, res) {
+  ban(req, res) {
+    const bannedUser = new User();
+    const username = req.params.username;
+
+    if (!req.user.username) {
+      return error.InternalServerError(res);
+    }
+
+    if (!username) {
+      return error.BadRequest(res, 'Missing username');
+    }
+
+    return bannedUser.findByUsername(username)
+      .then(() => {
+        if (bannedUser.data.banned === true) {
+          return Promise.reject({
+            code: 400,
+            message: `${username} is already banned`,
+          });
+        }
+
+        bannedUser.set('banned', true);
+        return bannedUser.update();
+      })
+      .then(() => success.OK(res))
+      .catch(err => {
+        console.error('Error fetching posts:', err);
+
+        if (typeof err === 'object' && err.code) {
+          return error.code(res, err.code, err.message);
+        }
+
+        return error.code(res, 404, `User "${username}" does not exist`);
+      });
+  },
+
+  delete(req, res) {
     if (req.ACLRole !== ACL.Roles.Self || !req.user || !req.user.username) {
       return error.Forbidden(res);
     }
 
-    const user = new User();
-
-    user.delete({ username: req.user.username })
-      .then( _ => {
+    return new User()
+      .delete({ username: req.user.username })
+      .then(() => {
         req.logout();
         return success.OK(res);
       })
-      .catch( _ => {
-        console.error(`Error deleting user from database.`);
+      .catch(() => {
+        console.error('Error deleting user from database.');
         return error.InternalServerError(res);
       });
   },
 
-  followBranch (req, res) {
+  followBranch(req, res) {
     if (!req.user.username) {
       return error.InternalServerError(res);
     }
@@ -83,12 +118,12 @@ module.exports = {
     // ensure specified branchid exists
     const branch = new Branch();
 
-    branch.findById(req.body.branchid)
-      .then( _ => follow.save() )
-      .then( _ => success.OK(res) )
-      .catch( err => {
+    return branch.findById(req.body.branchid)
+      .then(() => follow.save())
+      .then(() => success.OK(res))
+      .catch(err => {
         if (err) {
-          console.error(`Error following branch:`, err);
+          console.error('Error following branch:', err);
           return error.InternalServerError(res);
         }
 
@@ -96,40 +131,40 @@ module.exports = {
       });
   },
 
-  get (req, res) {
-    getUsername(req).then( username => {
-      const p1 = module.exports.getUserPicture(username, 'picture', false);
-      const p2 = module.exports.getUserPicture(username, 'picture', true);
-      const p3 = module.exports.getUserPicture(username, 'cover', false);
-      const p4 = module.exports.getUserPicture(username, 'cover', true);
-      const p5 = module.exports.getUserFollowedBranches(username);
+  get(req, res) {
+    return getUsername(req)
+      .then(username => {
+        const p1 = module.exports.getUserPicture(username, 'picture', false);
+        const p2 = module.exports.getUserPicture(username, 'picture', true);
+        const p3 = module.exports.getUserPicture(username, 'cover', false);
+        const p4 = module.exports.getUserPicture(username, 'cover', true);
+        const p5 = module.exports.getUserFollowedBranches(username);
 
-      Promise.all([p1, p2, p3, p4, p5]).then( values => {
-        const user = new User();
-        
-        user.findByUsername(username)
-          .then( _ => {
-            let sanitized = user.sanitize(user.data, ACL.Schema(req.ACLRole, 'User'));
-            sanitized.profileUrl = values[0];
-            sanitized.profileUrlThumb = values[1];
-            sanitized.coverUrl = values[2];
-            sanitized.coverUrlThumb = values[3];
-            sanitized.followed_branches = values[4];
-            return success.OK(res, sanitized);
-          })
-          .catch( err => {
-            if (err) {
-              console.error(`Error fetching user:`, err);
-              return error.InternalServerError(res);
-            }
+        return Promise.all([p1, p2, p3, p4, p5])
+          .then(values => {
+            const user = new User();
             
-            return error.NotFound(res);
+            user.findByUsername(username)
+              .then(() => {
+                let sanitized = user.sanitize(user.data, ACL.Schema(req.ACLRole, 'User'));
+                sanitized.profileUrl = values[0];
+                sanitized.profileUrlThumb = values[1];
+                sanitized.coverUrl = values[2];
+                sanitized.coverUrlThumb = values[3];
+                sanitized.followed_branches = values[4];
+                return success.OK(res, sanitized);
+              })
+              .catch( err => {
+                if (err) {
+                  console.error(`Error fetching user:`, err);
+                  return error.InternalServerError(res);
+                }
+                
+                return error.NotFound(res);
+              });
           });
-      });
-    })
-    .catch( errorCb => {
-      return errorCb(res);
-    });
+      })
+      .catch(errorCb => errorCb(res));
   },
 
   // Legacy version.

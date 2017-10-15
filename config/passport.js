@@ -6,6 +6,7 @@
  * Visit http://passportjs.org/docs to learn how the Strategies work.
  */
 const auth = require('./auth');
+const error = require('../responses/errors');
 const ExtractJwt = require('passport-jwt').ExtractJwt;
 const jwt = require('jwt-simple');
 const JwtConfig = require('./jwt');
@@ -45,11 +46,17 @@ module.exports = () => {
       return user.findByUsername(payload.username)
         .then(() => {
           if (!user.data.verified) {
-            return Promise.reject('User account not verified');
+            return Promise.reject({
+              message: 'User account not verified',
+              status: 403,
+            });
           }
 
           if (user.data.banned === true) {
-            return Promise.reject('Your account has been permanently banned from Weco.');
+            return Promise.reject({
+              message: 'Your account has been permanently banned from Weco.',
+              status: 401,
+            });
           }
 
           isAuthenticated = true;
@@ -58,13 +65,15 @@ module.exports = () => {
           return done(null, user.data);
         })
         .catch(err => {
-          console.log(err);
-          return done(err, false);
+          return done(null, false, err);
         });
     }
 
     if (req.token) {
-      return done('Invalid token', false);
+      return done(null, false, {
+        message: 'Invalid token',
+        status: 403,
+      });
     }
 
     return done(null, false);
@@ -82,7 +91,7 @@ module.exports = () => {
         if (user.data.banned === true) {
           return Promise.reject({
             message: 'Your account has been permanently banned from Weco.',
-            status: 403,
+            status: 401,
           });
         }
 
@@ -203,7 +212,12 @@ module.exports = () => {
     authenticate: (strategy, callback) => (req, res, next) => {
       if (strategy === 'jwt') {
         // Allow guests to pass the token check, the req.user simply won't be defined.
-        return passport.authenticate('jwt', JwtConfig.jwtSession, (err, user, info) => next())(req, res, next);
+        return passport.authenticate('jwt', JwtConfig.jwtSession, (err, user, info) => {
+          if (!user && info && typeof info === 'object') {
+            return error.code(res, info.status, info.message);
+          }
+          return next();
+        })(req, res, next);
       }
       return passport.authenticate(strategy, callback || JwtConfig.jwtSession)(req, res, next);
     },

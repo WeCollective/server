@@ -213,7 +213,7 @@ module.exports = () => {
       if (strategy === 'jwt') {
         // Allow guests to pass the token check, the req.user simply won't be defined.
         return passport.authenticate('jwt', JwtConfig.jwtSession, (err, user, info) => {
-          if (!user && info && typeof info === 'object') {
+          if (!user && info && typeof info === 'object' && req.headers.authorization) {
             return error.code(res, info.status, info.message);
           }
           return next();

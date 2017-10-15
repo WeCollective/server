@@ -25,7 +25,7 @@ module.exports = app => {
      * @apiUse NotFound
      * @apiUse InternalServerError
      */
-    .get(passport.authenticate('jwt'), controller.get)
+    .get(controller.get)
     /**
      * @api {put} /constant/:id Update a global constant
      * @apiName Update a global constant

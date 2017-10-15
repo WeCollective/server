@@ -1,75 +1,74 @@
-'use strict';
-
-var aws = require('../../config/aws.js');
-var fs = require('../../config/filestorage.js');
-var ACL = require('../../config/acl.js');
-
-// Models
+const ACL = require('../../config/acl');
+const aws = require('../../config/aws');
 const Constant = require('../../models/constant');
-
-// Responses
-var success = require('../../responses/successes.js');
-var error = require('../../responses/errors.js');
+const error = require('../../responses/errors');
+const fs = require('../../config/filestorage');
+const success = require('../../responses/successes');
 
 module.exports = {
-  get: function(req, res) {
-    if(!req.params.id) {
+  get(req, res) {
+    const id = req.params.id;
+    const wecoConstant = new Constant();
+
+    if (!id) {
+      return error.BadRequest(res, 'Missing id parameter');
+    }
+    
+    return wecoConstant
+      .findById(id)
+      .then(() => success.OK(res, wecoConstant.data))
+      .catch(err => {
+        if (err) {
+          console.error('Error fetching constant:', err);
+          return error.InternalServerError(res);
+        }
+
+        return error.NotFound(res);
+      });
+  },
+
+  put(req, res) {
+    const data = req.body.data;
+    const id = req.params.id;
+    const wecoConstant = new Constant();
+
+    if (!id) {
       return error.BadRequest(res, 'Missing id parameter');
     }
 
-    // fetch the parameter
-    var wecoConstant = new Constant();
-    wecoConstant.findById(req.params.id).then(function() {
-      return success.OK(res, wecoConstant.data);
-    }).catch(function() {
-      if(err) {
-        console.error("Error fetching constant:", err);
-        return error.InternalServerError(res);
-      }
-      return error.NotFound(res);
-    });
-  },
-  put:  function(req, res) {
-    if(!req.params.id) {
-      return error.BadRequest(res, 'Missing id parameter');
-    }
-    if(!req.body.data && req.body.data !== 0) {
+    if (!data && data !== 0) {
       return error.BadRequest(res, 'Missing data parameter');
     }
 
-    // ensure constant exists
-    var wecoConstant = new Constant();
-    wecoConstant.findById(req.params.id).then(function() {
-      // ensure correct type
-      switch(req.params.id) {
-        case 'donation_total':
-        case 'raised_total':
-        case 'user_count':
-        case 'branch_count':
-          req.body.data = Number(req.body.data);
-          break;
-      }
+    return wecoConstant
+      .findById(id)
+      .then(() => {
+        let integer;
 
-      // set the new value
-      wecoConstant.set('data', req.body.data);
+        if (['branch_count', 'donation_total', 'raised_total', 'user_count'].includes(id)) {
+          integer = Number(data);
+        }
 
-      // validate post properties
-      var propertiesToCheck = ['id', 'data'];
-      var invalids = wecoConstant.validate(propertiesToCheck);
-      if(invalids.length > 0) {
-        return error.BadRequest(res, 'Invalid ' + invalids[0]);
-      }
+        wecoConstant.set('data', integer);
 
-      // update the constant
-      return wecoConstant.update();
-    }).then(function() {
-      return success.OK(res);
-    }).catch(function(err) {
-      if(err) {
-        console.error("Error fetching constant:", err);
-        return error.InternalServerError(res);
-      }
-      return error.NotFound(res);
-    });
+        const invalids = wecoConstant.validate();
+        if (invalids.length > 0) {
+          return Promise.reject({
+            code: 400,
+            message: `Invalid ${invalids[0]}`,
+          });
+        }
+
+        return wecoConstant.update();
+      })
+      .then(() => success.OK(res))
+      .catch(err => {
+        if (err) {
+          console.error('Error fetching constant:', err);
+          return error.InternalServerError(res);
+        }
+
+        return error.NotFound(res);
+      });
   }
 };

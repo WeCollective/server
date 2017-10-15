@@ -1,5 +1,3 @@
-'use strict';
-
 const aws = require('../config/aws');
 const db = require('../config/database');
 const Model = require('./model');
@@ -46,6 +44,13 @@ Constant.prototype.findById = function (id) {
 // Validate the properties specified in 'properties' on the Constant object,
 // returning an array of any invalid ones
 Constant.prototype.validate = function (properties) {
+  if (!properties || properties.length === 0) {
+    properties = [
+      'data',
+      'id',
+    ];
+  }
+
   const invalids = [];
 
   if (properties.includes('data')) {

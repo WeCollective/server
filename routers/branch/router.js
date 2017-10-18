@@ -79,7 +79,10 @@ module.exports = app => {
      * @apiUse InternalServerError
      */
     .delete(passport.authenticate('jwt'), (req, res, next) => {
-      ACL.validateRole(ACL.Roles.Moderator, req.params.branchid)(req, res, next);
+      ACL.validateRole(ACL.Roles.Moderator, req.params.branchid, {
+        code: 403,
+        message: `You need to be an admin of b/${req.params.branchid}`,
+      })(req, res, next);
     }, controller.delete);
 
   router.route('/:branchid/picture-upload-url')

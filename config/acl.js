@@ -92,7 +92,7 @@ const isLoggedInAsSelf = (req, res, next, username) => {
 };
 
 // Attach the specified role to the request body if the role's conditions are met
-ACL.validateRole = (role, resourceId) => {
+ACL.validateRole = (role, resourceId, customError) => {
   return (req, res, next) => {
     const mod = new Mod();
 
@@ -121,22 +121,26 @@ ACL.validateRole = (role, resourceId) => {
 
         // Moderator must be one of the mods of the specified branch
         mod.findByBranch(resourceId)
-          .then( mods => {
+          .then(mods => {
             if (!mods) {
               console.error('No mods object received.');
               return error.InternalServerError(res);
             }
 
-            for (let i = 0; i < mods.length; i++) {
+            for (let i = 0; i < mods.length; i += 1) {
               if (mods[i].username == req.user.username) {
                 req.ACLRole = ACL.Roles.Moderator;
                 return next();
               }
             }
 
+            if (customError && typeof customError === 'object') {
+              return error.code(res, customError.code, customError.message);
+            }
+
             return error.Forbidden(res);
           })
-          .catch( err => {
+          .catch(err => {
             if (err) {
               console.error('Error fetching branch mods:', err);
               return error.InternalServerError(res);
@@ -154,7 +158,7 @@ ACL.validateRole = (role, resourceId) => {
 
         // Admin is a moderator of the root branch
         mod.findByBranch('root')
-          .then( mods => {
+          .then(mods => {
             if (!mods) {
               console.error('No mods object received.');
               return error.InternalServerError(res);
@@ -169,7 +173,7 @@ ACL.validateRole = (role, resourceId) => {
 
             return error.Forbidden(res);
           })
-          .catch( err => {
+          .catch(err => {
             if (err) {
               console.error('Error fetching branch mods:', err);
               return error.InternalServerError(res);

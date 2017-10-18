@@ -19,28 +19,6 @@ var BranchImage = function (data) {
 BranchImage.prototype = Object.create(Model.prototype);
 BranchImage.prototype.constructor = BranchImage;
 
-// Validate user picture object, returning an array of any invalid properties
-BranchImage.prototype.validate = function () {
-  let invalids = [];
-
-  // check for valid id ending with -picture or -cover
-  if (!this.data.id || (!this.data.id.endsWith('-picture') && !this.data.id.endsWith('-cover'))) {
-    invalids.push('id');
-  }
-
-  // check for valid date
-  if (!validate.date(this.data.date)) {
-    invalids.push('date');
-  }
-
-  // check for valid extension
-  if (!validate.extension(this.data.extension)) {
-    invalids.push('extension');
-  }
-
-  return invalids;
-};
-
 // Get a branch image of given type ('picture', 'cover') by it's id from the db, and
 // instantiate the object with this data.
 // Rejects promise with true if database error, with false if no image entry found.
@@ -69,6 +47,28 @@ BranchImage.prototype.findById = function (id, type) {
       return resolve(data.Item);
     });
   });
+};
+
+// Validate user picture object, returning an array of any invalid properties
+BranchImage.prototype.validate = function () {
+  const invalids = [];
+
+  // check for valid id ending with -picture or -cover
+  if (!this.data.id || (!this.data.id.endsWith('-picture') && !this.data.id.endsWith('-cover'))) {
+    invalids.push('id');
+  }
+
+  // check for valid date
+  if (!validate.date(this.data.date)) {
+    invalids.push('date');
+  }
+
+  // check for valid extension
+  if (!validate.extension(this.data.extension)) {
+    invalids.push('extension');
+  }
+
+  return invalids;
 };
 
 module.exports = BranchImage;

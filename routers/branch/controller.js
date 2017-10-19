@@ -13,10 +13,160 @@ const success = require('../../responses/successes');
 const Tag = require('../../models/tag.model');
 const User = require('../../models/user.model');
 
-// todo delete branch and move it's children under b/root
+const fetchBranchPicture = (branchid, type) => new BranchImage()
+  .findById(branchid, type)
+  .catch(err => {
+    if (err) {
+      return Promise.reject(err);
+    }
+
+    return Promise.resolve();
+  });
+
+// Deletes the branch completely and moves all of its children under b/root.
 const deleteBranch = branch => {
-  console.log(`Delete b/${branch.data.id}...`);
-  return Promise.resolve();
+  const branchCount = new Constant();
+  const branchid = branch && branch.data && branch.data.id ? branch.data.id : null;
+  const deletedImagesArr = [];
+  const deletedImagesResizedArr = [];
+
+  return branch
+    .delete({ id: branchid })
+    // Fetch branch pictures.
+    .then(() => fetchBranchPicture(branchid, 'picture'))
+    .then(pic => {
+      if (pic) {
+        deletedImagesArr.push({ Key: `${pic.id}-orig.${pic.extension}` });
+        deletedImagesResizedArr.push({ Key: `${pic.id}-200.${pic.extension}` });
+        deletedImagesResizedArr.push({ Key: `${pic.id}-640.${pic.extension}` });
+      }
+
+      return fetchBranchPicture(branchid, 'cover');
+    })
+    // Delete branch profile and cover pictures from storage.
+    .then(pic => {
+      if (pic) {
+        deletedImagesArr.push({ Key: `${pic.id}-orig.${pic.extension}` });
+        deletedImagesResizedArr.push({ Key: `${pic.id}-800.${pic.extension}` });
+        deletedImagesResizedArr.push({ Key: `${pic.id}-1920.${pic.extension}` });
+      }
+
+      if (deletedImagesArr.length === 0) {
+        return Promise.resolve();
+      }
+
+      return new Promise((resolve, reject) => aws.s3Client.deleteObjects({
+        Bucket: fs.Bucket.BranchImages,
+        Delete: {
+          Objects: deletedImagesArr,
+        },
+      }, err => {
+        if (err) {
+          return reject(err);
+        }
+
+        return resolve();
+      }));
+    })
+    .then(() => {
+      if (deletedImagesResizedArr.length === 0) {
+        return Promise.resolve();
+      }
+
+      return new Promise((resolve, reject) => {
+        return aws.s3Client.deleteObjects({
+          Bucket: fs.Bucket.BranchImagesResized,
+          Delete: {
+            Objects: deletedImagesResizedArr,
+          },
+        }, err => {
+          if (err) {
+            return reject(err);
+          }
+
+          return resolve();
+        });
+      });
+    })
+    // Delete branch pictures from database.
+    .then(() => new BranchImage().delete({ id: `${branchid}-picture` }))
+    .then(() => new BranchImage().delete({ id: `${branchid}-cover` }))
+    // Delete mod log entries.
+    .then(() => new ModLogEntry().findByBranch(branchid))
+    .then(entries => {
+      const promises = [];
+
+      for (let i = 0; i < entries.length; i += 1) {
+        promises.push(new ModLogEntry().delete({
+          branchid: entries[i].branchid,
+          date: entries[i].date,
+        }));
+      }
+
+      return Promise.all(promises);
+    })
+    // Delete branch moderators.
+    .then(() => new Mod().findByBranch(branchid))
+    .then(mods => {
+      const promises = [];
+
+      for (let i = 0; i < mods.length; i += 1) {
+        promises.push(new Mod().delete({
+          branchid: mods[i].branchid,
+          date: mods[i].date,
+        }));
+      }
+
+      return Promise.all(promises);
+    })
+    // Delete all branch tags.
+    .then(() => new Tag().findByBranch(branchid))
+    .then(tags => {
+      const promises = [];
+
+      for (let i = 0; i < tags.length; i += 1) {
+        promises.push(new Tag().delete({
+          branchid: tags[i].branchid,
+          tag: tags[i].tag,
+        }));
+      }
+
+      return Promise.all(promises);
+    })
+    // Delete this branch's tag from its children.
+    .then(() => new Tag().findByTag(branchid))
+    .then(tags => {
+      const promises = [];
+
+      for (let i = 0; i < tags.length; i += 1) {
+        promises.push(new Tag().delete({
+          branchid: tags[i].branchid,
+          tag: tags[i].tag,
+        }));
+      }
+
+      return Promise.all(promises);
+    })
+    // Change all direct children parentid to b/root.
+    .then(() => branch.findSubbranches(branchid, 0, 'date', null, 0))
+    .then(children => {
+      const promises = [];
+
+      for (let i = 0; i < children.length; i += 1) {
+        const child = new Branch(children[i]);
+        child.set('parentid', 'root');
+        promises.push(child.update());
+      }
+
+      return Promise.all(promises);
+    })
+    // Decrement the branch_count constant.
+    .then(() => branchCount.findById('branch_count'))
+    .then(() => {
+      branchCount.set('data', branchCount.data.data - 1);
+      return branchCount.update();
+    })
+    .catch(err => Promise.reject(err));
 };
 
 // Detaches the branch from its parent and moves it under b/root.
@@ -78,9 +228,6 @@ module.exports.delete = (req, res) => {
   const parentBranch = req.params.branchid;
 
   const branch = new Branch();
-  const branchCount = new Constant();
-  const cover = new BranchImage();
-  const profile = new BranchImage();
   let child;
 
   return branch
@@ -131,181 +278,7 @@ module.exports.delete = (req, res) => {
       // Delete this branch.
       return deleteBranch(branch);
     })
-    .then(() => {
-      return Promise.reject({
-        code: 400,
-        message: 'Fail',
-      });
-
-      // IF THE BRANCH IS A ROOT BRANCH, DELETE PERMANENTLY
-      if (branch.data.parentid === 'root') {
-        // delete the branch
-        return branch
-          .delete({ id: parentBranch })
-          // get branch profile picture
-          .then(() => profile
-            .findById(parentBranch, 'picture')
-            .catch(err => {
-              if (err) {
-                return Promise.reject(err);
-              }
-
-              return Promise.resolve();
-            })
-          )
-          // get branch cover picture
-          .then(() => profile
-            .findById(parentBranch, 'cover')
-            .catch(err => {
-              if (err) {
-                return Promise.reject(err);
-              }
-
-              return Promise.resolve();
-            })
-          )
-          // delete orig branch profile and cover pictures from s3
-          .then(() => new Promise((resolve, reject) => {
-            const Objects = [];
-
-            if (profile.data.id) {
-              Objects.push({ Key: `${profile.data.id}-orig.${profile.data.extension}` });
-            }
-
-            if (cover.data.id) {
-              Objects.push({ Key: `${cover.data.id}-orig.${cover.data.extension}` });
-            }
-
-            if (Objects.length === 0) {
-              return resolve();
-            }
-
-            return aws.s3Client.deleteObjects({
-              Bucket: fs.Bucket.BranchImages,
-              Delete: { Objects },
-            }, err => {
-              if (err) {
-                return reject(err);
-              }
-
-              return resolve();
-            });
-          }))
-          // delete resized branch profile and cover pictures from s3
-          .then(() => new Promise((resolve, reject) => {
-            const Objects = [];
-
-            if (profile.data.id) {
-              Objects.push({ Key: `${profile.data.id}-640.${profile.data.extension}` });
-            }
-
-            if (cover.data.id) {
-              Objects.push({ Key: `${cover.data.id}-1920.${cover.data.extension}` });
-            }
-
-            if (Objects.length === 0) {
-              return resolve();
-            }
-
-            return aws.s3Client.deleteObjects({
-              Bucket: fs.Bucket.BranchImagesResized,
-              Delete: { Objects },
-            }, err => {
-              if (err) {
-                return reject(err);
-              }
-
-              return resolve();
-            });
-          }))
-          // delete branch profile image from db
-          .then(() => new BranchImage().delete({ id: `${parentBranch}-picture` }))
-          // delete branch cover image from db
-          .then(() => new BranchImage().delete({ id: `${parentBranch}-cover` }))
-          // get mod log entries for this branch
-          .then(() => new ModLogEntry().findByBranch(parentBranch))
-          // delete all mod log entries
-          .then(entries => {
-            const promises = [];
-
-            for (let i = 0; i < entries.length; i += 1) {
-              promises.push(new ModLogEntry().delete({
-                branchid: entries[i].branchid,
-                date: entries[i].date,
-              }));
-            }
-
-            return Promise.all(promises);
-          })
-          // fetch all mods for this branch
-          .then(() => new Mod().findByBranch(parentBranch))
-          // delete all mods
-          .then(mods => {
-            const promises = [];
-
-            for (let i = 0; i < mods.length; i += 1) {
-              promises.push(new Mod().delete({
-                branchid: mods[i].branchid,
-                date: mods[i].date,
-              }));
-            }
-
-            return Promise.all(promises);
-          })
-          // fetch all tags on this branch
-          .then(() => new Tag().findByBranch(parentBranch))
-          // delete all tags
-          .then(tags => {
-            const promises = [];
-
-            for (let i = 0; i < tags.length; i += 1) {
-              promises.push(new Tag().delete({
-                branchid: tags[i].branchid,
-                tag: tags[i].tag,
-              }));
-            }
-
-            return Promise.all(promises);
-          })
-          // fetch all tags of this branch on other branches
-          .then(() => new Tag().findByTag(parentBranch))
-          // delete all tags
-          .then(tags => {
-            const promises = [];
-
-            for (let i = 0; i < tags.length; i += 1) {
-              promises.push(new Tag().delete({
-                branchid: tags[i].branchid,
-                tag: tags[i].tag,
-              }));
-            }
-
-            return Promise.all(promises);
-          })
-          // get the deleted branch's subbranches
-          .then(() => branch.findSubbranches(parentBranch, 0, 'date'))
-          // update all subbranches parents to 'root'
-          .then(subbranches => {
-            const promises = [];
-
-            for (let i = 0; i < subbranches.length; i += 1) {
-              const b = new Branch(subbranches[i]);
-              b.set('parentid', 'root');
-              promises.push(b.update());
-            }
-
-            return Promise.all(promises);
-          })
-          .then(() => branchCount.findById('branch_count'))
-          // decrement branch_count constant
-          .then(() => {
-            branchCount.set('data', branchCount.data.data - 1);
-            return branchCount.update();
-          })
-          .then(() => success.OK(res))
-          .catch(err => Promise.reject(err));
-      }
-    })
+    .then(() => success.OK(res))
     .catch(err => {
       if (err) {
         if (typeof err === 'object' && err.code) {

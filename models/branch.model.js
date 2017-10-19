@@ -48,10 +48,13 @@ Branch.prototype.findById = function (id) {
 // TODO: this has an upper limit on the number of results; if so, a LastEvaluatedKey
 // will be supplied to indicate where to continue the search from
 // (see: http://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/DynamoDB.html#query-property)
-Branch.prototype.findSubbranches = function(parentid, timeafter, sortBy, last) {
+Branch.prototype.findSubbranches = function(parentid, timeafter, sortBy, last, limit) {
   const self = this;
-  
-  const limit = 20;
+
+  if (limit === undefined || limit === null) {
+    limit = 20;
+  }
+
   let IndexName;
 
   switch(sortBy) {
@@ -119,7 +122,8 @@ Branch.prototype.findSubbranches = function(parentid, timeafter, sortBy, last) {
         return reject();
       }
 
-      return resolve(data.Items.slice(0, limit));
+      const slice = limit ? data.Items.slice(0, limit) : data.Items;
+      return resolve(slice);
     });
   });
 }

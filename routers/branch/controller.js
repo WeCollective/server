@@ -332,11 +332,8 @@ module.exports.put = (req, res) => {
 
 // todo prevent from deleting root
 module.exports.delete = (req, res) => {
-  const branchid = req.params.branchid;
-
-  if (!branchid) {
-    return error.BadRequest(res, 'Missing branchid');
-  }
+  const childBranch = req.query.child;
+  const parentBranch = req.params.branchid;
 
   const branch = new Branch();
   const branchCount = new Constant();
@@ -344,14 +341,16 @@ module.exports.delete = (req, res) => {
   const profile = new BranchImage();
 
   return branch
-    .findById(branchid)
-    .then(() => {
-      if (branch.data.id === 'root') {
+    .findById(parentBranch)
+    .then(branchData => {
+      if (branchData.id === 'root') {
         return Promise.reject({
           code: 403,
           message: 'You cannot remove the root branch.',
         });
       }
+
+      console.log(branchData);
 
       return Promise.reject({
         code: 400,
@@ -359,13 +358,13 @@ module.exports.delete = (req, res) => {
       });
 
       // IF THE BRANCH IS A ROOT BRANCH, DELETE PERMANENTLY
-      if (branch.data.parentid === 'root') {
+      if (branchData.parentid === 'root') {
         // delete the branch
         return branch
-          .delete({ id: branchid })
+          .delete({ id: parentBranch })
           // get branch profile picture
           .then(() => profile
-            .findById(branchid, 'picture')
+            .findById(parentBranch, 'picture')
             .catch(err => {
               if (err) {
                 return Promise.reject(err);
@@ -376,7 +375,7 @@ module.exports.delete = (req, res) => {
           )
           // get branch cover picture
           .then(() => profile
-            .findById(branchid, 'cover')
+            .findById(parentBranch, 'cover')
             .catch(err => {
               if (err) {
                 return Promise.reject(err);
@@ -440,11 +439,11 @@ module.exports.delete = (req, res) => {
             });
           }))
           // delete branch profile image from db
-          .then(() => new BranchImage().delete({ id: `${branchid}-picture` }))
+          .then(() => new BranchImage().delete({ id: `${parentBranch}-picture` }))
           // delete branch cover image from db
-          .then(() => new BranchImage().delete({ id: `${branchid}-cover` }))
+          .then(() => new BranchImage().delete({ id: `${parentBranch}-cover` }))
           // get mod log entries for this branch
-          .then(() => new ModLogEntry().findByBranch(branchid))
+          .then(() => new ModLogEntry().findByBranch(parentBranch))
           // delete all mod log entries
           .then(entries => {
             const promises = [];
@@ -459,7 +458,7 @@ module.exports.delete = (req, res) => {
             return Promise.all(promises);
           })
           // fetch all mods for this branch
-          .then(() => new Mod().findByBranch(branchid))
+          .then(() => new Mod().findByBranch(parentBranch))
           // delete all mods
           .then(mods => {
             const promises = [];
@@ -474,7 +473,7 @@ module.exports.delete = (req, res) => {
             return Promise.all(promises);
           })
           // fetch all tags on this branch
-          .then(() => new Tag().findByBranch(branchid))
+          .then(() => new Tag().findByBranch(parentBranch))
           // delete all tags
           .then(tags => {
             const promises = [];
@@ -489,7 +488,7 @@ module.exports.delete = (req, res) => {
             return Promise.all(promises);
           })
           // fetch all tags of this branch on other branches
-          .then(() => new Tag().findByTag(branchid))
+          .then(() => new Tag().findByTag(parentBranch))
           // delete all tags
           .then(tags => {
             const promises = [];
@@ -504,7 +503,7 @@ module.exports.delete = (req, res) => {
             return Promise.all(promises);
           })
           // get the deleted branch's subbranches
-          .then(() => branch.findSubbranches(branchid, 0, 'date'))
+          .then(() => branch.findSubbranches(parentBranch, 0, 'date'))
           // update all subbranches parents to 'root'
           .then(subbranches => {
             const promises = [];
@@ -539,15 +538,15 @@ module.exports.delete = (req, res) => {
           // remove all tags from branch to be removed (except self)
           // and remember these - they'll be removed from all children too
           new Tag()
-            .findByBranch(branch.data.id)
+            .findByBranch(branchData.id)
             .then(tags => {
               const promises = [];
 
               for (let i = 0; i < tags.length; i += 1) {
-                if (tags[i].tag !== branch.data.id && tags[i].tag !== 'root') {
+                if (tags[i].tag !== branchData.id && tags[i].tag !== 'root') {
                   tagsToRemove.push(tags[i].tag);
                   promises.push(new Tag().delete({
-                    branchid: branch.data.id,
+                    branchid: branchData.id,
                     tag: tags[i].tag,
                   }));
                 }
@@ -556,7 +555,7 @@ module.exports.delete = (req, res) => {
               return Promise.all(promises);
             })
             // get all children of the branch being removed on path to leaves
-            .then(() => new Tag().findByTag(branch.data.id))
+            .then(() => new Tag().findByTag(branchData.id))
             // remove the tags from all children
             .then(children => {
               const promises = [];

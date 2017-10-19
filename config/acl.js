@@ -119,6 +119,10 @@ ACL.validateRole = (role, resourceId, customError) => {
           return error.Forbidden(res);
         }
 
+        if (!resourceId) {
+          return error.InternalServerError(res);
+        }
+
         // Moderator must be one of the mods of the specified branch
         mod.findByBranch(resourceId)
           .then(mods => {

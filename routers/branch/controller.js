@@ -259,7 +259,7 @@ module.exports.delete = (req, res) => {
 
         return Promise.reject({
           code: 403,
-          message: 'You cannot remove the root branch.',
+          message: 'You cannot delete the root branch.',
         });
       }
 

@@ -253,7 +253,7 @@ module.exports.delete = (req, res) => {
     .then(() => {
       if (branch.data.id === 'root') {
         // Delete any branch, we are admins so we can pick any.
-        if (child) {
+        if (child && child.data.id !== 'root') {
           return deleteBranch(child);
         }
 

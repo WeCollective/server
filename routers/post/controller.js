@@ -424,7 +424,7 @@ module.exports.getComments = (req, res) => {
 
       comments.forEach((comment, index) => {
         promises.push(new Promise((resolve, reject) => {
-          self
+          module.exports
             .getOneComment(comment.id, req)
             .then(comment => {
               comments[index] = comment;

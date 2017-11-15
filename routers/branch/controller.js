@@ -727,9 +727,10 @@ module.exports.getSubbranches = (req, res) => {
           new BranchImage()
             .findById(branches[i].id, 'picture')
             .then(branchimage => {
+              const time = branchimage.date ? `?time=${branchimage.date}` : '';
               const Bucket = fs.Bucket.BranchImagesResized;
               const Key = `${branchimage.id}-640.${branchimage.extension}`;
-              return resolve(`https://${Bucket}.s3-eu-west-1.amazonaws.com/${Key}`);
+              return resolve(`https://${Bucket}.s3-eu-west-1.amazonaws.com/${Key}${time}`);
             })
             .catch(err => {
               if (err) {
@@ -754,9 +755,10 @@ module.exports.getSubbranches = (req, res) => {
         promises.push(new Promise((resolve, reject) => {
           new BranchImage().findById(branches[i].id, 'picture')
             .then(branchimage => {
+              const time = branchimage.date ? `?time=${branchimage.date}` : '';
               const Bucket = fs.Bucket.BranchImagesResized;
               const Key = `${branchimage.id}-200.${branchimage.extension}`;
-              return resolve(`https://${Bucket}.s3-eu-west-1.amazonaws.com/${Key}`);
+              return resolve(`https://${Bucket}.s3-eu-west-1.amazonaws.com/${Key}${time}`);
             })
             .catch(err => {
               if (err) {

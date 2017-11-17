@@ -102,6 +102,10 @@ module.exports = {
       return error.BadRequest(res, 'Missing branchid');
     }
 
+    if (req.body.branchid === 'root') {
+      return error.BadRequest(res, 'Invalid branchid');
+    }
+
     const follow = new FollowedBranch({
       username: req.user.username,
       branchid: req.body.branchid
@@ -649,7 +653,7 @@ module.exports = {
     */
   },
 
-  unfollowBranch (req, res) {
+  unfollowBranch(req, res) {
     if (!req.user.username) {
       return error.InternalServerError(res);
     }
@@ -658,20 +662,22 @@ module.exports = {
       return error.BadRequest(res, 'Missing branchid');
     }
 
+    if (req.query.branchid === 'root') {
+      return error.BadRequest(res, 'Invalid branchid');
+    }
+
     // ensure specified branchid exists
     const branch = new Branch();
 
-    branch.findById(req.query.branchid)
-      .then( _ => {
-        return new FollowedBranch().delete({
-          username: req.user.username,
-          branchid: req.query.branchid
-        });
-      })
-      .then( _ => success.OK(res) )
-      .catch( err => {
+    return branch.findById(req.query.branchid)
+      .then(() => new FollowedBranch().delete({
+        branchid: req.query.branchid,
+        username: req.user.username,
+      }))
+      .then(() => success.OK(res))
+      .catch(err => {
         if (err) {
-          console.error(`Error following branch:`, err);
+          console.error('Error unfollowing branch:', err);
           return error.InternalServerError(res);
         }
         

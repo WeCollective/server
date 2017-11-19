@@ -607,6 +607,10 @@ module.exports.post = (req, res) => {
   const date = new Date().getTime();
   const user = new User();
 
+  if (req.body.captcha !== '') {
+    return error.Forbidden(res);
+  }
+
   const id = `${req.user.username}-${date}`;
 
   return post.verifyParams(req)

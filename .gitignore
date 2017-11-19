@@ -2,3 +2,5 @@ node_modules/
 docs/
 .env
 npm-debug.log
+.idea
+.elasticbeanstalk/logs

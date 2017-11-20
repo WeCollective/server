@@ -2,7 +2,6 @@
 
 const aws = require('../config/aws');
 const db = require('../config/database');
-const io = require('../config/io')();
 const Model = require('./model');
 const validate = require('./validate');
 
@@ -113,7 +112,7 @@ Notification.prototype.findByUsername = function (username, unreadCount, last, g
 
 // Override Model.save() in order to emit notification event to client
 // Save a new database entry according to the model data
-Notification.prototype.save = function (sessionId) {
+Notification.prototype.save = function () {
   const self = this;
 
   return new Promise((resolve, reject) => {
@@ -145,7 +144,7 @@ Notification.prototype.save = function (sessionId) {
     aws.dbClient.put({
       Item: self.data,
       TableName: self.config.table,
-    }, (err, data) => {
+    }, (err) => {
       if (err) {
         return reject(err);
       }

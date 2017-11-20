@@ -46,7 +46,7 @@ UserImage.prototype.validate = function () {
 // Rejects promise with true if database error, with false if no image entry found.
 UserImage.prototype.findByUsername = function (username, type) {
   if ('picture' !== type && 'cover' !== type) {
-    return reject();
+    return Promise.reject();
   }
 
   const self = this;
@@ -54,7 +54,7 @@ UserImage.prototype.findByUsername = function (username, type) {
   return new Promise( (resolve, reject) => {
     aws.dbClient.get({
       Key: { id: `${username}-${type}` },
-      TableName: self.config.table
+      TableNaWme: self.config.table
     }, (err, data) => {
       if (err) {
         return reject(err);

@@ -35,7 +35,7 @@ module.exports.OK = (res, data) => {
 module.exports.Created = res => {
   res.statusCode = 201;
   const success = {
-    message: `The request has been fulfilled and resulted in a new resource being created`,
+    message: 'The request has been fulfilled and resulted in a new resource being created',
   };
   res.send(success);
 };

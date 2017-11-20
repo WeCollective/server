@@ -2,7 +2,6 @@ module.exports = grunt => {
   // Load tasks
   grunt.loadNpmTasks('grunt-apidoc');
   grunt.loadNpmTasks('grunt-concurrent');
-  grunt.loadNpmTasks('grunt-contrib-jshint');
   grunt.loadNpmTasks('grunt-contrib-watch');
   grunt.loadNpmTasks('grunt-exec');
   grunt.loadNpmTasks('grunt-mocha-test');
@@ -10,23 +9,10 @@ module.exports = grunt => {
 
   // Configure tasks
   grunt.initConfig({
-    // Javascript linting
-    jshint: {
-      files: ['Gruntfile.js', 'server.js', 'public/**/*.js'],
-      options: {
-        esversion: 6,
-        globals: {  // list of global variables and whether they are assignable
-          angular: false
-        },
-        node: true, // tell jshint we are using nodejs to avoid incorrect errors
-        unused: true
-      }
-    },
     // File watching
     watch: {
       js: {
         files: ['**/*.js'],
-        tasks: ['jshint'],
         options: {
           spawn: false
         }
@@ -79,11 +65,11 @@ module.exports = grunt => {
     },
     apidoc: {
       app: {
-        src: "./",
-        dest: "docs/",
+        src: './',
+        dest: 'docs/',
         options: {
-          includeFilters: [ ".*\\.js$" ],
-          excludeFilters: [ "node_modules/" ]
+          includeFilters: [ '.*\\.js$' ],
+          excludeFilters: [ 'node_modules/' ]
           //debug: true
         }
       }
@@ -97,8 +83,8 @@ module.exports = grunt => {
   **    grunt deploy:env      builds the current branch, tests, and deploys to the specified environment
   **                          (either "development" or "production"), merging into production if needed.
   */
-  grunt.registerTask('test', ['jshint', 'mochaTest']);
-  grunt.registerTask('serve', ['apidoc', 'jshint', 'concurrent:serve']);
+  grunt.registerTask('test', ['mochaTest']);
+  grunt.registerTask('serve', ['apidoc', 'concurrent:serve']);
   grunt.registerTask('publish', ['apidoc', 'test', 'exec:commit', 'exec:publish']);
   grunt.registerTask('deploy:dev', ['apidoc', 'test', 'exec:commit', 'exec:deploy:development']);
   grunt.registerTask('deploy:production', ['publish', 'exec:deploy:production']);

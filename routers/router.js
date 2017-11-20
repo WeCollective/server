@@ -4,11 +4,8 @@ const express = require('express');
 const router = express.Router();
 
 const error = require('../responses/errors');
-const success = require('../responses/successes');
 
-const ACL = require('../config/acl');
 const http = require('http');
-const https = require('https');
 const url = require('url');
 
 module.exports = app => {
@@ -54,9 +51,9 @@ module.exports = app => {
         return error.NotFound(res);
       }
     })
-    .on('error', () => {
-      return error.BadRequest(res, 'Invalid URL parameter');
-    });
+      .on('error', () => {
+        return error.BadRequest(res, 'Invalid URL parameter');
+      });
   });
 
   const branchModsRouter = require('./mods/router')(app);

@@ -24,7 +24,7 @@ module.exports = {
     });
   },
 
-  generateSalt(iterations) {
+  generateSalt() {
     return new Promise( (resolve, reject) => {
       bcrypt.genSalt(10, (err, salt) => {
         if (err) {

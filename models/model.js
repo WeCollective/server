@@ -2,12 +2,11 @@
 
 const _ = require('lodash');
 const aws = require('../config/aws');
-const db = require('../config/database');
 
 // Model constructor
 const Model = function() {
   if (this.constructor === Model) {
-    throw new Error(`Can't instantiate abstract class!`);
+    throw new Error('Can\'t instantiate abstract class!');
   }
 };
 
@@ -34,7 +33,7 @@ Model.prototype.delete = function (Key) {
     aws.dbClient.delete({
       Key,
       TableName: self.config.table,
-    }, (err, data) => {
+    }, (err) => {
       if (err) {
         return reject(err);
       }
@@ -64,7 +63,7 @@ Model.prototype.save = function () {
     aws.dbClient.put({
       Item: self.data,
       TableName: self.config.table,
-    }, (err, data) => {
+    }, (err) => {
       if (err) {
         return reject(err);
       }

@@ -11,12 +11,12 @@
  *     }
  */
 module.exports.BadRequest = (res, msg, rtnPromise) => {
-  return this.code(res, 400, msg || `The server could not process the request`, rtnPromise);
+  return this.code(res, 400, msg || 'The server could not process the request', rtnPromise);
 };
 
 module.exports.code = (res, code, msg, rtnPromise) => {
   res.statusCode = code || 500;
-  res.send({ message: msg || `Something went wrong. We're looking into it.`});
+  res.send({ message: msg || 'Something went wrong. We\'re looking into it.'});
 
   if (rtnPromise) {
     return Promise.reject(code);
@@ -48,7 +48,7 @@ module.exports.Forbidden = (res, msg, rtnPromise) => {
  *     }
  */
 module.exports.NotFound = (res, msg, rtnPromise) => {
-  return this.code(res, 404, msg || `The requested resource couldn't be found`, rtnPromise);
+  return this.code(res, 404, msg || 'The requested resource couldn\'t be found', rtnPromise);
 };
 
 /**
@@ -61,5 +61,5 @@ module.exports.NotFound = (res, msg, rtnPromise) => {
  *     }
  */
 module.exports.InternalServerError = (res, msg, rtnPromise) => {
-  return this.code(res, 500, msg || `Something went wrong. We're looking into it.`, rtnPromise);
+  return this.code(res, 500, msg || 'Something went wrong. We\'re looking into it.', rtnPromise);
 };

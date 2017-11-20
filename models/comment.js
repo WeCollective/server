@@ -1,6 +1,5 @@
 'use strict';
 
-const _ = require('lodash');
 const aws = require('../config/aws');
 const db = require('../config/database');
 const Model = require('./model');
@@ -66,18 +65,18 @@ Comment.prototype.findByParent = function (postid, parentid, sortBy, last) {
   let IndexName;
 
   switch(sortBy) {
-    case 'date':
-      IndexName = self.config.keys.globalIndexes[1];
-      break;
+  case 'date':
+    IndexName = self.config.keys.globalIndexes[1];
+    break;
 
-    case 'replies':
-      IndexName = self.config.keys.globalIndexes[2];
-      break;
+  case 'replies':
+    IndexName = self.config.keys.globalIndexes[2];
+    break;
 
-    case 'points':
-    default:
-      IndexName = self.config.keys.globalIndexes[0];
-      break;
+  case 'points':
+  default:
+    IndexName = self.config.keys.globalIndexes[0];
+    break;
   }
 
   if (last) {

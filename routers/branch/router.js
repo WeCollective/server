@@ -7,7 +7,7 @@ const passport = require('../../config/passport')();
 
 const router = express.Router();
 
-module.exports = app => {
+module.exports = () => {
   const controller = require('./controller');
 
   router.route('/')

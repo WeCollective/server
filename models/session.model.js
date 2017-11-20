@@ -3,7 +3,6 @@
 var Model = require('./model.js');
 var db = require('../config/database.js');
 var aws = require('../config/aws.js');
-var validate = require('./validate.js');
 
 var Session = function(data) {
   this.config = {
@@ -20,7 +19,7 @@ Session.prototype.constructor = Session;
 
 // Validate the properties specified in 'properties' on the Session object,
 // returning an array of any invalid ones
-Session.prototype.validate = function(properties) {
+Session.prototype.validate = function() {
   var invalids = [];
 
   // TODO: validate socketID

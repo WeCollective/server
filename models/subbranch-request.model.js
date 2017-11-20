@@ -121,7 +121,7 @@ SubBranchRequest.prototype.save = function () {
           const invalids = notification.validate();
           if (invalids.length > 0) {
             console.error('Error creating notification.');
-            return error.InternalServerError(res);
+            return reject()
           }
 
           promises.push(notification.save());
@@ -134,7 +134,7 @@ SubBranchRequest.prototype.save = function () {
         aws.dbClient.put({
           Item: self.data,
           TableName: self.config.table,
-        }, (err, data) => {
+        }, (err) => {
           if (err) {
             return reject(err);
           }

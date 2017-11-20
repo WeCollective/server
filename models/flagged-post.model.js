@@ -5,8 +5,6 @@ var db = require('../config/database.js');
 var aws = require('../config/aws.js');
 var validate = require('./validate.js');
 
-var _ = require('lodash');
-
 var FlaggedPost = function(data) {
   this.config = {
     schema: db.Schema.FlaggedPost,
@@ -87,9 +85,9 @@ FlaggedPost.prototype.findById = function(id) {
   return new Promise(function(resolve, reject) {
     aws.dbClient.query({
       TableName: self.config.table,
-      KeyConditionExpression: "id = :id",
+      KeyConditionExpression: 'id = :id',
       ExpressionAttributeValues: {
-        ":id": id
+        ':id': id
       }
     }, function(err, data) {
       if(err) return reject(err);
@@ -106,10 +104,10 @@ FlaggedPost.prototype.findByPostAndBranchIds = function(postid, branchid) {
   return new Promise(function(resolve, reject) {
     aws.dbClient.query({
       TableName: self.config.table,
-      KeyConditionExpression: "id = :postid AND branchid = :branchid",
+      KeyConditionExpression: 'id = :postid AND branchid = :branchid',
       ExpressionAttributeValues: {
-        ":postid": postid,
-        ":branchid": branchid
+        ':postid': postid,
+        ':branchid': branchid
       }
     }, function(err, data) {
       if(err) return reject(err);
@@ -152,22 +150,22 @@ FlaggedPost.prototype.findByBranch = function(branchid, timeafter, nsfw, sortBy,
         TableName: self.config.table,
         IndexName: index,
         Select: 'ALL_PROJECTED_ATTRIBUTES',
-        KeyConditionExpression: "branchid = :branchid AND #date >= :timeafter",
+        KeyConditionExpression: 'branchid = :branchid AND #date >= :timeafter',
         // date is a reserved dynamodb keyword so must use this alias:
         ExpressionAttributeNames: {
-          "#date": "date"
+          '#date': 'date'
         },
         ExpressionAttributeValues: {
-          ":branchid": String(branchid),
-          ":timeafter": Number(timeafter)
+          ':branchid': String(branchid),
+          ':timeafter': Number(timeafter)
         },
         ExclusiveStartKey: last || null,  // fetch results which come _after_ this
         ScanIndexForward: false   // return results highest first
       };
       if(postType !== 'all') {
-        params.FilterExpression = "#type = :postType";
-        params.ExpressionAttributeNames["#type"] = "type";
-        params.ExpressionAttributeValues[":postType"] = String(postType);
+        params.FilterExpression = '#type = :postType';
+        params.ExpressionAttributeNames['#type'] = 'type';
+        params.ExpressionAttributeValues[':postType'] = String(postType);
       }
       aws.dbClient.query(params, function(err, data) {
         if(err) {
@@ -193,23 +191,23 @@ FlaggedPost.prototype.findByBranch = function(branchid, timeafter, nsfw, sortBy,
         TableName: self.config.table,
         IndexName: index,
         Select: 'ALL_PROJECTED_ATTRIBUTES',
-        KeyConditionExpression: "branchid = :branchid",
-        FilterExpression: "#date >= :timeafter",
+        KeyConditionExpression: 'branchid = :branchid',
+        FilterExpression: '#date >= :timeafter',
         // date is a reserved dynamodb keyword so must use this alias:
         ExpressionAttributeNames: {
-          "#date": "date"
+          '#date': 'date'
         },
         ExpressionAttributeValues: {
-          ":branchid": String(branchid),
-          ":timeafter": Number(timeafter)
+          ':branchid': String(branchid),
+          ':timeafter': Number(timeafter)
         },
         ExclusiveStartKey: last || null,  // fetch results which come _after_ this
         ScanIndexForward: false   // return results highest first
       };
       if(postType !== 'all') {
-        params.FilterExpression += " AND #type = :postType";
-        params.ExpressionAttributeNames["#type"] = "type";
-        params.ExpressionAttributeValues[":postType"] = String(postType);
+        params.FilterExpression += ' AND #type = :postType';
+        params.ExpressionAttributeNames['#type'] = 'type';
+        params.ExpressionAttributeValues[':postType'] = String(postType);
       }
       aws.dbClient.query(params, function(err, data) {
         if(err) {

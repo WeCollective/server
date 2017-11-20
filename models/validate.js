@@ -164,19 +164,19 @@ validate.wecoConstantId = value => {
 
 validate.wecoConstantValue = (id, value) => {
   switch(id) {
-    case 'branch_count':
-    case 'donation_total':
-    case 'raised_total':
-    case 'user_count':
-      console.log('TYPEOF: ', typeof value);
+  case 'branch_count':
+  case 'donation_total':
+  case 'raised_total':
+  case 'user_count':
+    console.log('TYPEOF: ', typeof value);
       
-      if (typeof value === 'number') {
-        return true;
-      }
-      return false;
+    if (typeof value === 'number') {
+      return true;
+    }
+    return false;
 
-    default:
-      return false;
+  default:
+    return false;
   }
 };
 

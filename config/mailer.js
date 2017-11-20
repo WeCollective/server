@@ -62,7 +62,7 @@ module.exports = {
         body: mail.toJSON()
       });
 
-      sendgrid.API(req, (err, res) => {
+      sendgrid.API(req, (err) => {
         if (err) {
           return reject();
         }
@@ -93,7 +93,7 @@ module.exports = {
         body: mail.toJSON()
       });
 
-      sendgrid.API(req, (err, res) => {
+      sendgrid.API(req, (err) => {
         if (err) {
           return reject();
         }
@@ -123,7 +123,7 @@ module.exports = {
         body: mail.toJSON()
       });
 
-      sendgrid.API(req, (err, res) => {
+      sendgrid.API(req, (err) => {
         if (err) {
           return reject();
         }

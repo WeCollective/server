@@ -1,6 +1,5 @@
 'use strict';
 
-const _ = require('lodash');
 const aws = require('../config/aws');
 const db  = require('../config/database');
 const Model = require('./model');
@@ -66,17 +65,17 @@ Post.prototype.findByBranch = function (branchid, timeafter, nsfw, sortBy, stat,
 
     if (sortBy === 'points') {
       switch(stat) {
-        case 'global':
-          indexName = self.config.keys.globalIndexes[4];
-          break;
+      case 'global':
+        indexName = self.config.keys.globalIndexes[4];
+        break;
 
-        case 'individual':
-          indexName = self.config.keys.globalIndexes[0];
-          break;
+      case 'individual':
+        indexName = self.config.keys.globalIndexes[0];
+        break;
 
-        case 'local':
-          indexName = self.config.keys.globalIndexes[1];
-          break;
+      case 'local':
+        indexName = self.config.keys.globalIndexes[1];
+        break;
       }
 
       if (last) {

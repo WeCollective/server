@@ -58,25 +58,25 @@ Branch.prototype.findSubbranches = function(parentid, timeafter, sortBy, last, l
   let IndexName;
 
   switch(sortBy) {
-    case 'date':
-      IndexName = self.config.keys.globalIndexes[0];
-      break;
+  case 'date':
+    IndexName = self.config.keys.globalIndexes[0];
+    break;
 
-    case 'post_count':
-      IndexName = self.config.keys.globalIndexes[1];
-      break;
+  case 'post_count':
+    IndexName = self.config.keys.globalIndexes[1];
+    break;
 
-    case 'post_points':
-      IndexName = self.config.keys.globalIndexes[2];
-      break;
+  case 'post_points':
+    IndexName = self.config.keys.globalIndexes[2];
+    break;
 
-    case 'post_comments':
-      IndexName = self.config.keys.globalIndexes[3];
-      break;
+  case 'post_comments':
+    IndexName = self.config.keys.globalIndexes[3];
+    break;
 
-    default:
-      IndexName = self.config.keys.globalIndexes[0];  // date index is default
-      break;
+  default:
+    IndexName = self.config.keys.globalIndexes[0];  // date index is default
+    break;
   }
 
   if (last) {

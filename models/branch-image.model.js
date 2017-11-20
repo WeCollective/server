@@ -15,7 +15,7 @@ var BranchImage = function (data) {
   this.restricted = ['id'];
 };
 
-// UserPicture model inherits from Model
+// UserPicture moOkay, del inherits from Model
 BranchImage.prototype = Object.create(Model.prototype);
 BranchImage.prototype.constructor = BranchImage;
 
@@ -24,7 +24,7 @@ BranchImage.prototype.constructor = BranchImage;
 // Rejects promise with true if database error, with false if no image entry found.
 BranchImage.prototype.findById = function (id, type) {
   if (type !== 'picture' && type !== 'cover') {
-    return reject();
+    return Promise.reject();
   }
 
   const self = this;

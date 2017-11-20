@@ -44,7 +44,6 @@
     "grunt": "^1.0.1",
     "grunt-apidoc": "^0.11.0",
     "grunt-concurrent": "^2.3.0",
-    "grunt-contrib-jshint": "^1.0.0",
     "grunt-contrib-watch": "^1.0.0",
     "grunt-exec": "^1.0.0",
     "grunt-mocha-test": "^0.12.7",

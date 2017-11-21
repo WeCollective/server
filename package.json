@@ -4,14 +4,14 @@
   "description": "The RESTful API for WECO.",
   "main": "server.js",
   "scripts": {
-    "precommit": "npm run lint",
-    "lint": "eslint **/*.js --ignore-pattern node_modules/",
     "deploy:dev": "eb deploy api-dev --profile weco-iam",
     "deploy:production": "eb deploy api-prod --profile weco-iam",
     "deploy:test": "eb deploy api-prod-test --profile weco-iam",
-    "test": "mocha tests/test.js",
+    "lint": "eslint **/*.js --ignore-pattern node_modules/",
+    "precommit": "npm run lint",
+    "start": "grunt --force",
     "start-node": "node server.js",
-    "start": "grunt --force"
+    "test": "mocha tests/test.js"
   },
   "repository": {
     "type": "git",

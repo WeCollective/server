@@ -15,7 +15,7 @@ var BranchImage = function (data) {
   this.restricted = ['id'];
 };
 
-// UserPicture moOkay, del inherits from Model
+// UserPicture model inherits from Model
 BranchImage.prototype = Object.create(Model.prototype);
 BranchImage.prototype.constructor = BranchImage;
 

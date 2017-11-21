@@ -9,7 +9,7 @@ let UserImage = function (data) {
   this.config = {
     keys: db.Keys.UserImages,
     schema: db.Schema.UserImages,
-    table: db.Table.UserImages
+    table: db.Table.UserImages,
   };
   this.restricted = ['id'];
   this.data = this.sanitize(data);
@@ -54,7 +54,7 @@ UserImage.prototype.findByUsername = function (username, type) {
   return new Promise( (resolve, reject) => {
     aws.dbClient.get({
       Key: { id: `${username}-${type}` },
-      TableNaWme: self.config.table
+      TableName: self.config.table,
     }, (err, data) => {
       if (err) {
         return reject(err);

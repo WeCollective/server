@@ -1,5 +1,3 @@
-'use strict';
-
 const Schema = {
   Branch: {
     creator: null,
@@ -59,6 +57,12 @@ const Schema = {
   FollowedBranch: {
     branchid: null,
     username: null,
+  },
+
+  Logger: {
+    createdAt: null,
+    event: null,
+    extra: null,
   },
 
   Mod: {
@@ -218,6 +222,11 @@ const Keys = {
     primary: 'username',
     sort: 'branchid',
   },
+
+  Loggers: {
+    primary: 'event',
+    sort: 'createdAt',
+  },
   
   Mods: {
     primary: 'branchid',
@@ -307,6 +316,7 @@ const DynamoDBConfig = {
     Constants: 'Constants',
     FlaggedPosts: 'FlaggedPosts',
     FollowedBranches: 'FollowedBranches',
+    Loggers: 'Loggers',
     ModLog: 'ModLog',
     Mods: 'Mods',
     Notifications: 'Notifications',
@@ -323,7 +333,7 @@ const DynamoDBConfig = {
 };
 
 // Use development tables in the development environment.
-if ('production' !== process.env.NODE_ENV) {
+if (process.env.NODE_ENV !== 'production') {
   for (const name in DynamoDBConfig.Table) {
     if (DynamoDBConfig.Table.hasOwnProperty(name)) {
       DynamoDBConfig.Table[name] = `dev${DynamoDBConfig.Table[name]}`;

@@ -7,6 +7,7 @@ const CommentData = require('../../models/comment-data.model');
 const error = require('../../responses/errors');
 const FlaggedPost = require('../../models/flagged-post.model');
 const fs = require('../../config/filestorage');
+const Logger = require('../../models/logger.model');
 const mailer = require('../../config/mailer');
 const Mod = require('../../models/mod.model');
 const Notification = require('../../models/notification.model');
@@ -602,13 +603,24 @@ module.exports.post = (req, res) => {
   // the branches the post should be tagged to.
   const branchidsArr = [];
   const date = new Date().getTime();
+  const id = `${req.user.username}-${date}`;
+  const logger = new Logger();
   const user = new User();
 
   if (req.body.captcha !== '') {
+    logger.record('HoneyPot', JSON.stringify({
+      branchids: req.body.branchids,
+      captcha: req.body.catpcha,
+      id,
+      locked: req.body.locked,
+      nsfw: !!req.body.nsfw,
+      text: req.body.text,
+      title: req.body.title,
+      type: req.body.type,
+    }))
+      .catch(err => console.log(err));
     return error.Forbidden(res);
   }
-
-  const id = `${req.user.username}-${date}`;
 
   return post.verifyParams(req)
     .then(req => {

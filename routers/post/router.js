@@ -5,11 +5,10 @@ const express = require('express');
 const ACL = require('../../config/acl');
 const error = require('../../responses/errors');
 const passport = require('../../config/passport')();
-const success = require('../../responses/successes');
 
 const router = express.Router();
 
-module.exports = app => {
+module.exports = () => {
   const controller = require('./controller');
 
   router.route('/')

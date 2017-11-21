@@ -22,7 +22,7 @@ function getUsername (req) {
     if (req.ACLRole === ACL.Roles.Self) {
       // ensure user object has been attached by passport
       if (!req.user.username) {
-        console.error(`No username found in session.`);
+        console.error('No username found in session.');
         return reject(error.InternalServerError);
       }
       
@@ -158,9 +158,9 @@ module.exports = {
                 sanitized.followed_branches = values[4];
                 return success.OK(res, sanitized);
               })
-              .catch( err => {
+              .catch(err => {
                 if (err) {
-                  console.error(`Error fetching user:`, err);
+                  console.error('Error fetching user:', err);
                   return error.InternalServerError(res);
                 }
                 
@@ -172,30 +172,29 @@ module.exports = {
   },
 
   // Legacy version.
-  getFollowedBranches (req, res) {
-    getUsername(req).then( username => {
-      const branch = new FollowedBranch();
+  getFollowedBranches(req, res) {
+    getUsername(req)
+      .then(username => {
+        const branch = new FollowedBranch();
 
-      branch.findByUsername(username)
-        .then( branches => {
-          var branchIds = _.map(branches, 'branchid');
-          return success.OK(res, branchIds);
-        })
-        .catch( err => {
-          if (err) {
-            console.error(`Error fetching followed branches:`, err);
-            return error.InternalServerError(res);
-          }
+        branch.findByUsername(username)
+          .then(branches => {
+            var branchIds = _.map(branches, 'branchid');
+            return success.OK(res, branchIds);
+          })
+          .catch(err => {
+            if (err) {
+              console.error('Error fetching followed branches:', err);
+              return error.InternalServerError(res);
+            }
 
-          return error.NotFound(res);
-        });
-    })
-    .catch( errorCb => {
-      return errorCb(res);
-    });
+            return error.NotFound(res);
+          });
+      })
+      .catch(errorCb => errorCb(res));
   },
 
-  getNotifications (req, res) {
+  getNotifications(req, res) {
     if (!req.user.username) {
       return error.InternalServerError(res);
     }
@@ -232,7 +231,7 @@ module.exports = {
       .then(notifications => success.OK(res, notifications))
       .catch(err => {
         if (err) {
-          console.error(`Error fetching user notifications:`, err);
+          console.error('Error fetching user notifications:', err);
           return error.InternalServerError(res);
         }
 
@@ -241,7 +240,7 @@ module.exports = {
   },
 
   // Legacy version.
-  getPicture (req, res, type, thumbnail) {
+  getPicture(req, res, type, thumbnail) {
     let size,
       username;
 
@@ -263,7 +262,7 @@ module.exports = {
     }
 
     if (type !== 'picture' && type !== 'cover') {
-      console.error(`Invalid picture type.`);
+      console.error('Invalid picture type.');
       return error.InternalServerError(res);
     }
 
@@ -277,13 +276,13 @@ module.exports = {
     const image = new UserImage();
 
     image.findByUsername(username, type)
-      .then( _ => {
+      .then(() => {
         aws.s3Client.getSignedUrl('getObject', {
           Bucket: fs.Bucket.UserImagesResized,
           Key: `${image.data.id}-${size}.${image.data.extension}`
         }, (err, url) => {
           if (err) {
-            console.error(`Error getting signed url:`, err);
+            console.error('Error getting signed url:', err);
             return error.InternalServerError(res);
           }
 
@@ -291,7 +290,7 @@ module.exports = {
         });
       }, err => {
         if (err) {
-          console.error(`Error fetching user image:`, err);
+          console.error('Error fetching user image:', err);
           return error.InternalServerError(res);
         }
 
@@ -300,13 +299,13 @@ module.exports = {
   },
 
   // Legacy version.
-  getPictureUploadUrl (req, res, type) {
+  getPictureUploadUrl(req, res, type) {
     if (!req.user || !req.user.username) {
       return error.Forbidden(res);
     }
 
     if ('picture' !== type && 'cover' !== type) {
-      console.error(`Invalid picture type.`);
+      console.error('Invalid picture type.');
       return error.InternalServerError(res);
     }
 
@@ -316,11 +315,11 @@ module.exports = {
       Key: `${req.user.username}-${type}-orig.jpg`
     }
 
-    let url = aws.s3Client.getSignedUrl('putObject', params, (err, url) => success.OK(res, url) );
+    aws.s3Client.getSignedUrl('putObject', params, (err, url) => success.OK(res, url));
   },
 
   getUserFollowedBranches (username) {
-    return new Promise( (resolve, reject) => {
+    return new Promise(resolve => {
       let branches = [];
 
       if (!username) return resolve(branches);
@@ -328,13 +327,13 @@ module.exports = {
       const branch = new FollowedBranch();
 
       branch.findByUsername(username)
-        .then( branches => {
+        .then(branches => {
           branches = _.map(branches, 'branchid');
           return resolve(branches);
         })
         .catch( err => {
           if (err) {
-            console.error(`Error fetching followed branches:`, err);
+            console.error('Error fetching followed branches:', err);
           }
 
           return resolve(branches);
@@ -342,8 +341,8 @@ module.exports = {
     });
   },
 
-  getUserPicture (username, type, thumbnail = false) {
-    return new Promise( (resolve, reject) => {
+  getUserPicture(username, type, thumbnail = false) {
+    return new Promise(resolve => {
       if (!username || ('picture' !== type && 'cover' !== type)) return resolve('');
 
       let size;
@@ -358,14 +357,14 @@ module.exports = {
       const image = new UserImage();
 
       image.findByUsername(username, type)
-        .then( _ => {
+        .then(() => {
           const Bucket = fs.Bucket.UserImagesResized;
           const Key = `${image.data.id}-${size}.${image.data.extension}`;
           return resolve(`https://${Bucket}.s3-eu-west-1.amazonaws.com/${Key}`);
         })
-        .catch( err => {
+        .catch(err => {
           if (err) {
-            console.error(`Error fetching user image:`, err);
+            console.error('Error fetching user image:', err);
             return resolve('');
           }
 
@@ -403,7 +402,7 @@ module.exports = {
       .then(() => success.OK(res))
       .catch(err => {
         if (err) {
-          console.error(`Error marking user notifications as read:`, err);
+          console.error('Error marking user notifications as read:', err);
           return error.InternalServerError(res);
         }
 
@@ -411,7 +410,7 @@ module.exports = {
       });
   },
 
-  put (req, res) {
+  put(req, res) {
     if (req.ACLRole !== ACL.Roles.Self || !req.user || !req.user.username) {
       return error.Forbidden(res);
     }
@@ -451,18 +450,16 @@ module.exports = {
     }
 
     user.update()
-      .then( _ => {
-        // update the SendGrid contact list with the new user data
-        return mailer.addContact(user.data, true);
-      })
-      .then( _ => success.OK(res) )
-      .catch( _ => {
-        console.error(`Error updating user.`);
+      // update the SendGrid contact list with the new user data
+      .then(() => mailer.addContact(user.data, true))
+      .then(() => success.OK(res))
+      .catch(() => {
+        console.error('Error updating user.');
         return error.InternalServerError(res);
       });
   },
 
-  putNotification (req, res) {
+  putNotification(req, res) {
     if (!req.user.username) {
       return error.InternalServerError(res);
     }
@@ -478,7 +475,7 @@ module.exports = {
     const notification = new Notification();
 
     notification.findById(req.params.notificationid)
-      .then( _ => {
+      .then(() => {
         // check notification actually belongs to user
         if (notification.data.user !== req.user.username) {
           return error.Forbidden(res);
@@ -488,10 +485,10 @@ module.exports = {
         notification.set('unread', Boolean(req.body.unread));
         return notification.save();
       })
-      .then( _ => success.OK(res) )
-      .catch( err => {
+      .then(() => success.OK(res))
+      .catch(err => {
         if (err) {
-          console.error(`Error updating notification unread: `, err);
+          console.error('Error updating notification unread:', err);
           return error.InternalServerError(res);
         }
 
@@ -499,7 +496,7 @@ module.exports = {
       });
   },
 
-  resendVerification (req, res) {
+  resendVerification(req, res) {
     if (!req.params.username) {
       return error.BadRequest(res, 'Missing username parameter');
     }
@@ -507,7 +504,7 @@ module.exports = {
     const user = new User();
 
     user.findByUsername(req.params.username)
-      .then( _ => {
+      .then(() => {
         // return error if already verified
         if (user.data.verified) {
           return error.BadRequest(res, 'Account is already verified');
@@ -515,10 +512,10 @@ module.exports = {
 
         return mailer.sendVerification(user.data, user.data.token);
       })
-      .then( _ => success.OK(res) )
-      .catch( err => {
+      .then(() => success.OK(res))
+      .catch(err => {
         if (err) {
-          console.error(`Error resending verification email: `, err);
+          console.error('Error resending verification email:', err);
           return error.InternalServerError(res);
         }
 
@@ -526,7 +523,7 @@ module.exports = {
       });
   },
 
-  resetPassword (req, res) {
+  resetPassword(req, res) {
     if (!req.params.username || !req.params.token) {
       return error.BadRequest(res, 'Missing username or token parameter');
     }
@@ -538,7 +535,7 @@ module.exports = {
     const user = new User();
     
     user.findByUsername(req.params.username)
-      .then( _ => {
+      .then(() => {
         const token = JSON.parse(user.data.resetPasswordToken);
         
         // check token matches
@@ -558,9 +555,9 @@ module.exports = {
         const invalids = user.validate(propertiesToCheck);
         
         if (invalids.length) {
-          return done(null, false, {
+          return Promise.reject({
             message: `Invalid ${invalids[0]}`,
-            status: 400
+            status: 400,
           });
         }
 
@@ -573,14 +570,12 @@ module.exports = {
             user.set('resetPasswordToken', null);
             return user.update();
           })
-          .then( _ => success.OK(res) )
-          .catch( _ => {
-            return error.InternalServerError(res);
-          });
+          .then(() => success.OK(res))
+          .catch(() => error.InternalServerError(res));
       })
-      .catch( _ => {
+      .catch(err => {
         if (err) {
-          console.error(`Error changing password: `, err);
+          console.error('Error changing password:', err);
           return error.InternalServerError(res);
         }
 
@@ -588,7 +583,7 @@ module.exports = {
       });
   },
 
-  sendResetPasswordLink (req, res) {
+  sendResetPasswordLink(req, res) {
     if (!req.params.username) {
       return error.BadRequest(res, 'Missing username parameter');
     }
@@ -597,7 +592,7 @@ module.exports = {
     let token;
 
     user.findByUsername(req.params.username)
-      .then( _ => {
+      .then(() => {
         let expires = new Date();
         expires.setHours(expires.getHours() + 1);
         token = {
@@ -608,20 +603,18 @@ module.exports = {
         return user.update();
       }, err => {
         if (err) {
-          console.error(`Error sending password reset: `, err);
+          console.error('Error sending password reset:', err);
           return error.InternalServerError(res);
         }
 
         return error.NotFound(res);
       })
-      .then( _ => mailer.sendResetPasswordLink(user.data, token.token) )
-      .then( _ => success.OK(res) )
-      .catch( err => {
-        return error.InternalServerError(res);
-      });
+      .then(() => mailer.sendResetPasswordLink(user.data, token.token))
+      .then(() => success.OK(res))
+      .catch(() => error.InternalServerError(res));
   },
 
-  subscribeToNotifications (req, res) {
+  subscribeToNotifications(req, res) {
     if (!req.user.username || !req.sessionID) {
       return error.InternalServerError(res);
     }
@@ -685,7 +678,7 @@ module.exports = {
       });
   },
 
-  unsubscribeFromNotifications (req, res) {
+  unsubscribeFromNotifications(req, res) {
     if (!req.user.username || !req.sessionID) {
       return error.InternalServerError(res);
     }
@@ -714,7 +707,7 @@ module.exports = {
     */
   },
 
-  verify (req, res) {
+  verify(req, res) {
     if (!req.params.username || !req.params.token) {
       return error.BadRequest(res, 'Missing username or token parameter');
     }
@@ -722,7 +715,7 @@ module.exports = {
     const user = new User();
 
     user.findByUsername(req.params.username)
-      .then( _ => {
+      .then(() => {
         // return success if already verified
         if (user.data.verified) {
           return success.OK(res);
@@ -736,17 +729,17 @@ module.exports = {
         user.set('verified', true);
         return user.update();
       })
-      .then( _ => {
+      .then(() => {
         // save the user's contact info in SendGrid contact list for email marketing
         const sanitized = user.sanitize(user.data, ACL.Schema(ACL.Roles.Self, 'User'));
         return mailer.addContact(sanitized);
       })
       // send the user a welcome email
-      .then( _ => mailer.sendWelcome(user.data) )
-      .then( _ => success.OK(res) )
+      .then(() => mailer.sendWelcome(user.data) )
+      .then(() => success.OK(res) )
       .catch( err => {
         if (err) {
-          console.error(`Error verifying user: `, err);
+          console.error('Error verifying user: ', err);
           return error.InternalServerError(res);
         }
 

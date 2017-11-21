@@ -7,7 +7,7 @@
     "deploy:dev": "eb deploy api-dev --profile weco-iam",
     "deploy:production": "eb deploy api-prod --profile weco-iam",
     "deploy:test": "eb deploy api-prod-test --profile weco-iam",
-    "lint": "eslint **/*.js --ignore-pattern node_modules/",
+    "lint": "eslint . .js",
     "precommit": "npm run lint",
     "start": "grunt --force",
     "start-node": "node server.js",

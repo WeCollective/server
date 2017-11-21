@@ -1,8 +1,5 @@
-const ACL = require('../../config/acl');
-const aws = require('../../config/aws');
 const Constant = require('../../models/constant');
 const error = require('../../responses/errors');
-const fs = require('../../config/filestorage');
 const success = require('../../responses/successes');
 
 module.exports = {

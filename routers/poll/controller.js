@@ -40,27 +40,27 @@ module.exports = {
         resolve();
       }
     })
-    .then(() => new PollAnswer().findByPost(req.params.postid, sortBy, lastAnswer))
-    .then(answers => {
-      if (!answers || !answers.length) {
+      .then(() => new PollAnswer().findByPost(req.params.postid, sortBy, lastAnswer))
+      .then(answers => {
+        if (!answers || !answers.length) {
+          return error.NotFound(res);
+        }
+
+        return success.OK(res, answers);
+      })
+      .catch(err => {
+        if (err) {
+          console.error('Error fetching post data:', err);
+          return error.InternalServerError(res);
+        }
+
         return error.NotFound(res);
-      }
-
-      return success.OK(res, answers);
-    })
-    .catch(err => {
-      if (err) {
-        console.error('Error fetching post data:', err);
-        return error.InternalServerError(res);
-      }
-
-      return error.NotFound(res);
-    });
+      });
   },
 
   post(req, res) {
     if (!req.user.username) {
-      console.error(`No username found in session.`);
+      console.error('No username found in session.');
       return error.InternalServerError(res);
     }
 
@@ -73,7 +73,7 @@ module.exports = {
           return error.NotFound(res);
         }
 
-        return new Promise((resolve, reject) => {
+        return new Promise(resolve => {
           if (posts[0].locked) {
             postdata.findById(req.params.postid)
               .then(() => {

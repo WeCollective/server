@@ -227,7 +227,7 @@ module.exports.deleteComment = (req, res) => {
       if (comment.data.creator !== req.user.username) {
         return Promise.reject({
           code: 403,
-          message: `You cannot delete other user's comments!`,
+          message: 'You cannot delete other user\'s comments!',
         });
       }
 
@@ -456,49 +456,46 @@ module.exports.getComments = (req, res) => {
 module.exports.getOneComment = (id, req) => {
   let comment;
 
-  return new Promise((resolve, reject) => {
-    new Promise((resolve, reject) => {
-      return resolve(new Comment().findById(id));
+  return new Promise((resolve, reject) => new Comment()
+    .findById(id)
+    .then(newComment => {
+      comment = newComment;
+
+      return new CommentData()
+        .findById(id)
+        .then(data => {
+          comment.data = data;
+          return Promise.resolve();
+        })
+        .catch(reject);
     })
-      .then(newComment => {
-        comment = newComment;
+    // Extend the comment with information about user vote.
+    .then(() => {
+      if (req && req.user && req.user.username) {
+        return new Promise((resolve, reject) => {
+          new Vote()
+            .findByUsernameAndItemId(req.user.username, `comment-${id}`)
+            .then(existingVoteData => {
+              if (existingVoteData) {
+                comment.votes.userVoted = existingVoteData.direction;
+              }
 
-        return new CommentData()
-          .findById(id)
-          .then(data => {
-            comment.data = data;
-            return Promise.resolve();
-          })
-          .catch(reject);
-      })
-      // Extend the comment with information about user vote.
-      .then(() => {
-        if (req && req.user && req.user.username) {
-          return new Promise((resolve, reject) => {
-            new Vote()
-              .findByUsernameAndItemId(req.user.username, `comment-${id}`)
-              .then(existingVoteData => {
-                if (existingVoteData) {
-                  comment.votes.userVoted = existingVoteData.direction;
-                }
+              return resolve();
+            })
+            .catch(reject);
+        });
+      }
 
-                return resolve();
-              })
-              .catch(reject);
-          });
-        }
+      return Promise.resolve();
+    })
+    .then(() => resolve(comment))
+    .catch(err => {
+      if (err) {
+        console.error('Error fetching comment data:', err);
+      }
 
-        return Promise.resolve();
-      })
-      .then(() => resolve(comment))
-      .catch(err => {
-        if (err) {
-          console.error('Error fetching comment data:', err);
-        }
-
-        return reject(err);
-      });
-  });
+      return reject(err);
+    }));
 };
 
 module.exports.getOnePost = (id, req, branchid) => {
@@ -569,7 +566,7 @@ module.exports.getOnePost = (id, req, branchid) => {
     .then(() => resolve(post))
     .catch(err => {
       if (err) {
-        console.error(`Error fetching post data: `, err);
+        console.error('Error fetching post data:', err);
       }
 
       return reject(err);
@@ -591,7 +588,7 @@ module.exports.getPostPicture = (postid, thumbnail = false) => {
       })
       .catch(err => {
         if (err) {
-          console.error(`Error fetching post image:`, err);
+          console.error('Error fetching post image:', err);
           return resolve('');
         }
 
@@ -1098,12 +1095,13 @@ module.exports.getPictureUploadUrl = (req, res) => {
       Key: filename,
       ContentType: 'image/*'
     }
-    var url = aws.s3Client.getSignedUrl('putObject', params, function(err, url) {
+
+    aws.s3Client.getSignedUrl('putObject', params, function(err, url) {
       return success.OK(res, url);
     });
   }, function(err) {
     if(err) {
-      console.error("Error fetching post data:", err);
+      console.error('Error fetching post data:', err);
       return error.InternalServerError(res);
     }
     return error.NotFound(res);
@@ -1124,14 +1122,14 @@ module.exports.getPicture = (req, res, thumbnail) => {
       Key: image.data.id + '-' + size + '.' + image.data.extension
     }, function(err, url) {
       if(err) {
-        console.error("Error getting signed url:", err);
+        console.error('Error getting signed url:', err);
         return error.InternalServerError(res);
       }
       return success.OK(res, url);
     });
   }, function(err) {
     if(err) {
-      console.error("Error fetching post image:", err);
+      console.error('Error fetching post image:', err);
       return error.InternalServerError(res);
     }
     return error.NotFound(res);
@@ -1164,7 +1162,7 @@ module.exports.flagPost = (req, res) => {
       resolve();
     }, function(err) {
       if(err) {
-        console.error("Error fetching flagged post:", err);
+        console.error('Error fetching flagged post:', err);
         return error.InternalServerError(res);
       }
       // no flagged post exists: create one.
@@ -1222,7 +1220,7 @@ module.exports.flagPost = (req, res) => {
     return success.OK(res);
   }).catch(function(err) {
     if(err) {
-      console.error("Error flagging post: ", err);
+      console.error('Error flagging post:', err);
       return error.InternalServerError(res);
     }
     return error.NotFound(res);
@@ -1237,7 +1235,7 @@ module.exports.putComment = (req, res) => {
     return error.BadRequest(res, 'Missing commentid');
   }
   if(!req.user.username) {
-    console.error("No username found in session.");
+    console.error('No username found in session.');
     return error.InternalServerError(res);
   }
 

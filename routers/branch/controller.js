@@ -332,7 +332,7 @@ module.exports.get = (req, res) => {
       })
       .catch(err => {
         if (err) {
-          console.error(`Error fetching branch:`, err);
+          console.error('Error fetching branch:', err);
           return error.InternalServerError(res);
         }
 
@@ -342,7 +342,7 @@ module.exports.get = (req, res) => {
 };
 
 module.exports.getBranchPicture = (branchid, type, thumbnail = false) => {
-  return new Promise((resolve, reject) => {
+  return new Promise(resolve => {
     if (!branchid || ('picture' !== type && 'cover' !== type)) return resolve('');
 
     let size;
@@ -371,7 +371,7 @@ module.exports.getBranchPicture = (branchid, type, thumbnail = false) => {
       })
       .catch(err => {
         if (err) {
-          console.error(`Error fetching branch image:`, err);
+          console.error('Error fetching branch image:', err);
           return resolve('');
         }
 
@@ -496,16 +496,16 @@ module.exports.post = (req, res) => {
     // Skip validation as we have already established above that childBranchId
     // is valid. We have created a branch with its name, after all.
     .then(() => new Tag({
-        branchid: childBranchId,
-        tag: childBranchId,
-      })
-        .save()
+      branchid: childBranchId,
+      tag: childBranchId,
+    })
+      .save()
     )
     .then(() => new Tag({
-        branchid: childBranchId,
-        tag: 'root',
-      })
-        .save()
+      branchid: childBranchId,
+      tag: 'root',
+    })
+      .save()
     )
     // Increase user's branch and mod count.
     .then(() => user.findByUsername(creator))

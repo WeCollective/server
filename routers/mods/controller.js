@@ -1,7 +1,5 @@
 'use strict';
 
-var aws = require('../../config/aws.js');
-var fs = require('../../config/filestorage.js');
 var NotificationTypes = require('../../config/notification-types.js');
 var mailer = require('../../config/mailer.js');
 
@@ -60,7 +58,7 @@ module.exports = {
       var checkMod = new Mod();
       checkMod.findByBranch(req.params.branchid).then(function(mods) {
         if(!mods) {
-          console.error("Error fetching mods.");
+          console.error('Error fetching mods.');
           return error.InternalServerError(res);
         }
         branchMods = mods;
@@ -84,10 +82,10 @@ module.exports = {
               branchMods.splice(i, 1);
             }
           }
-          for(var i = 0; i < branchMods.length; i++) {
+          for(var j = 0; j < branchMods.length; j++) {
             var notification = new Notification({
-              id: branchMods[i].username + '-' + time,
-              user: branchMods[i].username,
+              id: branchMods[j].username + '-' + time,
+              user: branchMods[j].username,
               date: time,
               unread: true,
               type: NotificationTypes.MODERATOR,
@@ -118,17 +116,17 @@ module.exports = {
         }).then(function() {
           return success.OK(res);
         }).catch(function(err) {
-          console.error("Error saving new moderator: ", err);
+          console.error('Error saving new moderator:', err);
           return error.InternalServerError(res);
         });
       }, function() {
         // either an error, or no mods found; should be at least one!
-        console.error("Error fetching mods.");
+        console.error('Error fetching mods.');
         return error.InternalServerError(res);
       });
     }, function(err) {
       if(err) {
-        console.error("Error fetching user.");
+        console.error('Error fetching user.');
         return error.InternalServerError(res);
       }
       // user doesn't exist
@@ -145,7 +143,7 @@ module.exports = {
       return success.OK(res, response);
     }, function(err) {
       if(err) {
-        console.error("Error fetching mods.");
+        console.error('Error fetching mods.');
         return error.InternalServerError(res);
       }
       return error.NotFound(res);
@@ -200,10 +198,10 @@ module.exports = {
             branchMods.splice(i, 1);
           }
         }
-        for(var i = 0; i < branchMods.length; i++) {
+        for(var j = 0; j < branchMods.length; j++) {
           var notification = new Notification({
-            id: branchMods[i].username + '-' + time,
-            user: branchMods[i].username,
+            id: branchMods[j].username + '-' + time,
+            user: branchMods[j].username,
             date: time,
             unread: true,
             type: NotificationTypes.MODERATOR,
@@ -237,11 +235,11 @@ module.exports = {
       }).then(function() {
         return success.OK(res);
       }).catch(function(err) {
-        console.error("Error deleting mod: ", err);
+        console.error('Error deleting mod:', err);
         return error.InternalServerError(res);
       });
-    }, function() {
-      console.error("Error fetching mods: ", err);
+    }, function(err) {
+      console.error('Error fetching mods:', err);
       return error.InternalServerError(res);
     });
   }

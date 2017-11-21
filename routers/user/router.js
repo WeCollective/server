@@ -9,7 +9,7 @@ const success = require('../../responses/successes');
 
 const router = express.Router();
 
-module.exports = app => {
+module.exports = () => {
   const controller = require('./controller');
 
   /**
@@ -98,7 +98,7 @@ module.exports = app => {
    * @apiUse InternalServerError
    */
   router.route('/logout')
-    .get(passport.authenticate('jwt'), (req, res, next) => success.OK(res));
+    .get(passport.authenticate('jwt'), (req, res) => success.OK(res));
 
   router.route('/me')
     /**

@@ -1,14 +1,10 @@
 'use strict';
 
-const aws = require('../../config/aws');
-const fs = require('../../config/filestorage');
-
 const Branch = require('../../models/branch.model');
 const Mod = require('../../models/mod.model');
 const ModLogEntry = require('../../models/mod-log-entry.model');
 const Notification = require('../../models/notification.model');
 const NotificationTypes = require('../../config/notification-types');
-const Post = require('../../models/post.model');
 const SubBranchRequest = require('../../models/subbranch-request.model');
 const Tag = require('../../models/tag.model');
 
@@ -158,7 +154,7 @@ module.exports.post = (req, res) => {
         });
       }
 
-      return request.save();;
+      return request.save();
     })
     // Create a mod log entry about the event.
     .then(() => {
@@ -209,7 +205,6 @@ module.exports.post = (req, res) => {
 
 module.exports.put = (req, res) => {
   const date = new Date().getTime();
-  const post = new Post();
   const request = new SubBranchRequest();
   const tag = new Tag();
 

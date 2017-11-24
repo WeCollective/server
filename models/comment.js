@@ -1,20 +1,9 @@
-'use strict';
-
 const aws = require('../config/aws');
 const db = require('../config/database');
 const Model = require('./model');
 const validate = require('./validate');
 
-const Comment = function (data) {
-  this.config = {
-    keys: db.Keys.Comments,
-    schema: db.Schema.Comment,
-    table: db.Table.Comments,
-  };
-  this.data = this.sanitize(data);
-};
-
-function formatCommentsToNewAPI (comments) {
+const formatCommentsToNewAPI = comments => {
   comments = comments || [];
 
   comments.forEach(comment => {
@@ -28,178 +17,216 @@ function formatCommentsToNewAPI (comments) {
   return comments;
 }
 
-// Comment model inherits from Model
-Comment.prototype = Object.create(Model.prototype);
-Comment.prototype.constructor = Comment;
+class Comment extends Model {
+  constructor(props) {
+    super(props);
 
-// Get a comment by its id from the db, and
-// instantiate the object with this data.
-// Rejects promise with true if database error, with false if no user found.
-Comment.prototype.findById = function (id) {
-  const self = this;
-
-  return new Promise((resolve, reject) => {
-    aws.dbClient.get({
-      Key: { id },
-      TableName: self.config.table,
-    }, (err, data) => {
-      if (err) {
-        return reject(err);
-      }
-      
-      if (!data || !data.Item) {
-        return reject();
-      }
-
-      const comments = formatCommentsToNewAPI([data.Item]);
-      self.data = comments[0];
-      return resolve(self.data);
-    });
-  });
-};
-
-Comment.prototype.findByParent = function (postid, parentid, sortBy, last) {
-  const self = this;
-
-  const limit = 20;
-  let IndexName;
-
-  switch(sortBy) {
-  case 'date':
-    IndexName = self.config.keys.globalIndexes[1];
-    break;
-
-  case 'replies':
-    IndexName = self.config.keys.globalIndexes[2];
-    break;
-
-  case 'points':
-  default:
-    IndexName = self.config.keys.globalIndexes[0];
-    break;
-  }
-
-  if (last) {
-    let tmp = {
-      id: last.id,
-      postid: last.postid,
+    this.config = {
+      keys: db.Keys.Comments,
+      schema: db.Schema.Comment,
+      table: db.Table.Comments,
     };
 
-    if (sortBy === 'points') {
-      tmp.individual = last.individual;
-    }
-    else {
-      tmp[sortBy] = last[sortBy];
-    }
-
-    last = tmp;
+    this.data = this.sanitize(props);
   }
 
-  return new Promise((resolve, reject) => {
-    aws.dbClient.query({
-      ExclusiveStartKey: last || null,  // fetch results which come _after_ this
-      ExpressionAttributeValues: {
-        ':parentid': parentid,
-        ':postid': postid,
-      },
-      FilterExpression: 'parentid = :parentid',
-      IndexName,
-      KeyConditionExpression: 'postid = :postid',
-      ScanIndexForward: false,   // return results highest first
-      Select: 'ALL_PROJECTED_ATTRIBUTES',
-      TableName: self.config.table,
-    }, (err, data) => {
-      if (err) {
-        return reject(err);
-      }
+  // Get a comment by its id from the db, and
+  // instantiate the object with this data.
+  // Rejects promise with true if database error, with false if no user found.
+  findById(id) {
+    const self = this;
 
-      if (!data || !data.Items) {
-        return reject();
-      }
+    return new Promise((resolve, reject) => {
+      aws.dbClient.get({
+        Key: {
+          id,
+        },
+        TableName: self.config.table,
+      }, (err, data) => {
+        if (err) {
+          return reject(err);
+        }
 
-      const comments = formatCommentsToNewAPI(data.Items.slice(0, limit));
-      return resolve({
-        comments,
-        hasMoreComments: data.Items.length !== comments.length,
+        if (!data || !data.Item) {
+          return reject();
+        }
+
+        const comments = formatCommentsToNewAPI([data.Item]);
+        self.data = comments[0];
+        return resolve(self.data);
       });
     });
-  });
-};
-
-// Validate the properties specified in 'properties' on the Comment object,
-// returning an array of any invalid ones
-Comment.prototype.validate = function (properties) {
-  if (!properties || properties.length === 0) {
-    properties = [
-      'date',
-      'down',
-      'id',
-      'individual',
-      'parentid',
-      'postid',
-      'rank',
-      'replies',
-      'up',
-    ];
   }
 
-  const invalids = [];
+  findByParent(postid, parentid, sortBy, last) {
+    const limit = 20;
+    const self = this;
+    let IndexName;
 
-  if (properties.includes('date')) {
-    if (!validate.date(this.data.date)) {
-      invalids.push('date');
+    switch(sortBy) {
+    case 'date':
+      IndexName = self.config.keys.globalIndexes[1];
+      break;
+
+    case 'replies':
+      IndexName = self.config.keys.globalIndexes[2];
+      break;
+
+    case 'points':
+    default:
+      IndexName = self.config.keys.globalIndexes[0];
+      break;
     }
-  }
 
-  if (properties.includes('down')) {
-    if (isNaN(this.data.down)) {
-      invalids.push('down');
+    if (last) {
+      const tmp = {
+        id: last.id,
+        postid: last.postid,
+      };
+
+      if (sortBy === 'points') {
+        tmp.individual = last.individual;
+      }
+      else {
+        tmp[sortBy] = last[sortBy];
+      }
+
+      last = tmp;
     }
+
+    return new Promise((resolve, reject) => {
+      aws.dbClient.query({
+        ExclusiveStartKey: last || null, // fetch results which come _after_ this
+        ExpressionAttributeValues: {
+          ':parentid': parentid,
+          ':postid': postid,
+        },
+        FilterExpression: 'parentid = :parentid',
+        IndexName,
+        KeyConditionExpression: 'postid = :postid',
+        ScanIndexForward: false, // return results highest first
+        Select: 'ALL_PROJECTED_ATTRIBUTES',
+        TableName: self.config.table,
+      }, (err, data) => {
+        if (err) {
+          return reject(err);
+        }
+
+        if (!data || !data.Items) {
+          return reject();
+        }
+
+        const comments = formatCommentsToNewAPI(data.Items.slice(0, limit));
+        return resolve({
+          comments,
+          hasMoreComments: data.Items.length !== comments.length,
+        });
+      });
+    });
   }
 
-  if (properties.includes('id')) {
-    if (!validate.commentid(this.data.id)) {
-      invalids.push('id');
+  // Validate the properties specified in 'properties' on the Comment object,
+  // returning an array of any invalid ones
+  validate(props) {
+    if (!Array.isArray(props) || !props.length) {
+      props = [
+        'date',
+        'down',
+        'id',
+        'individual',
+        'parentid',
+        'postid',
+        'rank',
+        'replies',
+        'up',
+      ];
     }
-  }
 
-  if (properties.includes('individual')) {
-    if (isNaN(this.data.individual)) {
-      invalids.push('individual');
+    let invalids = [];
+
+    if (props.includes('date')) {
+      if (!validate.date(this.data.date)) {
+        invalids = [
+          ...invalids,
+          'date',
+        ];
+      }
     }
-  }
 
-  if (properties.includes('parentid')) {
-    if (!validate.commentid(this.data.parentid)) {
-      invalids.push('parentid');
+    if (props.includes('down')) {
+      if (Number.isNaN(this.data.down)) {
+        invalids = [
+          ...invalids,
+          'down',
+        ];
+      }
     }
-  }
 
-  if (properties.includes('postid')) {
-    if (!validate.postid(this.data.postid)) {
-      invalids.push('postid');
+    if (props.includes('id')) {
+      if (!validate.commentid(this.data.id)) {
+        invalids = [
+          ...invalids,
+          'id',
+        ];
+      }
     }
-  }
 
-  if (properties.includes('rank')) {
-    if (isNaN(this.data.rank)) {
-      invalids.push('rank');
+    if (props.includes('individual')) {
+      if (Number.isNaN(this.data.individual)) {
+        invalids = [
+          ...invalids,
+          'individual',
+        ];
+      }
     }
-  }
 
-  if (properties.includes('replies')) {
-    if (isNaN(this.data.replies)) {
-      invalids.push('replies');
+    if (props.includes('parentid')) {
+      if (!validate.commentid(this.data.parentid)) {
+        invalids = [
+          ...invalids,
+          'parentid',
+        ];
+      }
     }
-  }
 
-  if (properties.includes('up')) {
-    if (isNaN(this.data.up)) {
-      invalids.push('up');
+    if (props.includes('postid')) {
+      if (!validate.postid(this.data.postid)) {
+        invalids = [
+          ...invalids,
+          'postid',
+        ];
+      }
     }
-  }
 
-  return invalids;
-};
+    if (props.includes('rank')) {
+      if (Number.isNaN(this.data.rank)) {
+        invalids = [
+          ...invalids,
+          'rank',
+        ];
+      }
+    }
+
+    if (props.includes('replies')) {
+      if (Number.isNaN(this.data.replies)) {
+        invalids = [
+          ...invalids,
+          'replies',
+        ];
+      }
+    }
+
+    if (props.includes('up')) {
+      if (Number.isNaN(this.data.up)) {
+        invalids = [
+          ...invalids,
+          'up',
+        ];
+      }
+    }
+
+    return invalids;
+  }
+}
 
 module.exports = Comment;

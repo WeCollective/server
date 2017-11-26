@@ -209,17 +209,18 @@ module.exports = () => {
   })));
 
   return {
-    authenticate: (strategy, callback) => (req, res, next) => {
+    authenticate: (strategy, callbackOrOptional) => (req, res, next) => {
       if (strategy === 'jwt') {
         // Allow guests to pass the token check, the req.user simply won't be defined.
         return passport.authenticate('jwt', JwtConfig.jwtSession, (err, user, info) => {
+          // callbackOrOptional
           if (!user && info && typeof info === 'object' && req.headers.authorization) {
             return error.code(res, info.status, info.message);
           }
           return next();
         })(req, res, next);
       }
-      return passport.authenticate(strategy, callback || JwtConfig.jwtSession)(req, res, next);
+      return passport.authenticate(strategy, callbackOrOptional || JwtConfig.jwtSession)(req, res, next);
     },
     initialize: () => passport.initialize(),
   };

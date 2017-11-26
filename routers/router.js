@@ -63,6 +63,7 @@ module.exports = app => {
   const constantRouter = require('./constant/router')(app);
   const pollRouter = require('./poll/router')(app);
   const postRouter = require('./post/router')(app);
+  const searchRouter = require('./search/router')(app);
   const userRouter = require('./user/router')(app);
 
   app.use(`${version}/branch`, branchRouter);
@@ -72,6 +73,7 @@ module.exports = app => {
   app.use(`${version}/constant`, constantRouter);
   app.use(`${version}/poll`, pollRouter);
   app.use(`${version}/post`, postRouter);
+  app.use(`${version}/search`, searchRouter);
   app.use(`${version}/user`, userRouter);
 
   return router;

@@ -706,44 +706,62 @@ module.exports = {
       });
     */
   },
+};
 
-  verify(req, res) {
-    if (!req.params.username || !req.params.token) {
-      return error.BadRequest(res, 'Missing username or token parameter');
-    }
+module.exports.verify = (req, res) => {
+  const {
+    token,
+    username,
+  } = req.params;
+  const user = new User();
 
-    const user = new User();
-
-    user.findByUsername(req.params.username)
-      .then(() => {
-        // return success if already verified
-        if (user.data.verified) {
-          return success.OK(res);
-        }
-
-        // check token matches
-        if (user.data.token !== req.params.token) {
-          return error.BadRequest(res, 'Invalid token');
-        }
-
-        user.set('verified', true);
-        return user.update();
-      })
-      .then(() => {
-        // save the user's contact info in SendGrid contact list for email marketing
-        const sanitized = user.sanitize(user.data, ACL.Schema(ACL.Roles.Self, 'User'));
-        return mailer.addContact(sanitized);
-      })
-      // send the user a welcome email
-      .then(() => mailer.sendWelcome(user.data) )
-      .then(() => success.OK(res) )
-      .catch( err => {
-        if (err) {
-          console.error('Error verifying user: ', err);
-          return error.InternalServerError(res);
-        }
-
-        return error.NotFound(res);
-      });
+  if (!username) {
+    return error.BadRequest(res, 'Missing username.');
   }
+
+  if (!token) {
+    return error.BadRequest(res, 'Missing token.');
+  }
+
+  user.findByUsername(username)
+    .then(() => {
+      // Skip if already verified.
+      if (user.data.verified) {
+        return Promise.reject('verified');
+      }
+
+      // Token must be valid.
+      if (user.data.token !== token) {
+        return Promise.reject({
+          code: 400,
+          message: 'Invalid token.',
+        });
+      }
+
+      user.set('verified', true);
+      return user.update();
+    })
+    // Save the user's contact info in SendGrid contact list for email marketing.
+    .then(() => {
+      const sanitized = user.sanitize(user.data, ACL.Schema(ACL.Roles.Self, 'User'));
+      return mailer.addContact(sanitized);
+    })
+    // Send the user a welcome email.
+    .then(() => mailer.sendWelcome(user.data))
+    .catch(err => {
+      if (err === 'verified') {
+        return Promise.resolve();
+      }
+
+      return Promise.reject(err);
+    })
+    .then(() => success.OK(res))
+    .catch(err => {
+      if (err) {
+        console.error('Error verifying user:', err);
+        return error.InternalServerError(res);
+      }
+
+      return error.NotFound(res);
+    });
 };

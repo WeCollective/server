@@ -167,13 +167,22 @@ module.exports.search = query => {
       const posts = content.results[1];
       const users = content.results[2];
 
-      console.log('Branches', branches);
-      console.log('Posts', posts);
-      console.log('Users', users);
+      const bResults = branches.hits.map(x => ({
+        id: x.objectID,
+        text: x.name,
+      }));
 
-      const results = [...branches.hits, ...posts.hits, ...users.hits];
-      console.log(results);
-      // const results = content.hits.map(result => ({ text: result.name }));
+      const pResults = posts.hits.map(x => ({
+        id: x.objectID,
+        text: x.title,
+      }));
+
+      const uResults = users.hits.map(x => ({
+        id: x.objectID,
+        text: x.name,
+      }));
+
+      const results = [...bResults, ...pResults, ...uResults];
       return resolve(results);
     });
   });

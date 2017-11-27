@@ -102,6 +102,21 @@ module.exports = () => {
 
   router.route('/me')
     /**
+     * @api {delete} /user/me Delete Self
+     * @apiName Delete Self
+     * @apiGroup User
+     * @apiPermission self
+     * @apiVersion 1.0.0
+     *
+     * @apiUse OK
+     * @apiUse Forbidden
+     * @apiUse BadRequest
+     * @apiUse InternalServerError
+     * @apiUse NotFound
+     */
+    .delete(passport.authenticate('jwt'), ACL.validateRole(ACL.Roles.AuthenticatedUser),
+      ACL.attachRole(ACL.Roles.Self), controller.delete)
+    /**
      * @api {get} /user/me Get Self
      * @apiName Get Self
      * @apiGroup User
@@ -132,21 +147,6 @@ module.exports = () => {
      */
     .get(passport.authenticate('jwt'), ACL.validateRole(ACL.Roles.AuthenticatedUser),
       ACL.attachRole(ACL.Roles.Self), controller.get)
-    /**
-     * @api {delete} /user/me Delete Self
-     * @apiName Delete Self
-     * @apiGroup User
-     * @apiPermission self
-     * @apiVersion 1.0.0
-     *
-     * @apiUse OK
-     * @apiUse Forbidden
-     * @apiUse BadRequest
-     * @apiUse InternalServerError
-     * @apiUse NotFound
-     */
-    .delete(passport.authenticate('jwt'), ACL.validateRole(ACL.Roles.AuthenticatedUser),
-      ACL.attachRole(ACL.Roles.Self), controller.delete)
     /**
      * @api {put} /user/me Update Self
      * @apiName Update Self

@@ -5,6 +5,7 @@
  * 
  * Visit http://passportjs.org/docs to learn how the Strategies work.
  */
+const algolia = require('./algolia');
 const auth = require('./auth');
 const error = require('../responses/errors');
 const ExtractJwt = require('passport-jwt').ExtractJwt;
@@ -201,6 +202,7 @@ module.exports = () => {
         newUser.set('password', hash);
         return newUser.save();
       })
+      .then(() => algolia.addObjects(newUser.data, 'user'))
       .then(() => done(null, { username }))
       .catch(err => {
         console.error('Error signing up:', err);

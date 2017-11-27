@@ -20,6 +20,7 @@
   "author": "WE Collective",
   "license": "ISC",
   "dependencies": {
+    "algoliasearch": "^3.24.6",
     "aws-sdk": "^2.4.0",
     "bcrypt-nodejs": "0.0.3",
     "bcryptjs": "^2.3.0",

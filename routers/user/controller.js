@@ -1,12 +1,11 @@
-'use strict';
-
-const _   = require('lodash');
+const _ = require('lodash');
 const ACL = require('../../config/acl');
-const auth  = require('../../config/auth');
-const aws   = require('../../config/aws');
+const algolia = require('../../config/algolia');
+const auth = require('../../config/auth');
+const aws = require('../../config/aws');
 const error = require('../../responses/errors');
 const fs = require('../../config/filestorage');
-const mailer  = require('../../config/mailer');
+const mailer = require('../../config/mailer');
 const success = require('../../responses/successes');
 
 // Models
@@ -410,55 +409,6 @@ module.exports = {
       });
   },
 
-  put(req, res) {
-    if (req.ACLRole !== ACL.Roles.Self || !req.user || !req.user.username) {
-      return error.Forbidden(res);
-    }
-
-    let user = new User(req.user);
-    let propertiesToCheck = [];
-
-    if (req.body.dob) {
-      if (!Number(req.body.dob)) {
-        return error.BadRequest(res, 'Invalid dob');
-      }
-
-      user.set('dob', Number(req.body.dob));
-      propertiesToCheck.push('dob');
-    }
-
-    if (req.body.email) {
-      user.set('email', req.body.email);
-      propertiesToCheck.push('email');
-    }
-
-    if (req.body.name) {
-      user.set('name', req.body.name);
-      propertiesToCheck.push('name');
-    }
-    
-    if (req.body.show_nsfw) {
-      user.set('show_nsfw', req.body.show_nsfw === 'true');
-      propertiesToCheck.push('show_nsfw');
-    }
-
-    // Check new parameters are valid, ignoring username and password validity
-    let invalids = user.validate(propertiesToCheck);
-    
-    if (invalids.length) {
-      return error.BadRequest(res, `Invalid ${invalids[0]}`);
-    }
-
-    user.update()
-      // update the SendGrid contact list with the new user data
-      .then(() => mailer.addContact(user.data, true))
-      .then(() => success.OK(res))
-      .catch(() => {
-        console.error('Error updating user.');
-        return error.InternalServerError(res);
-      });
-  },
-
   putNotification(req, res) {
     if (!req.user.username) {
       return error.InternalServerError(res);
@@ -706,6 +656,68 @@ module.exports = {
       });
     */
   },
+};
+
+module.exports.put = (req, res) => {
+  if (req.ACLRole !== ACL.Roles.Self || !req.user || !req.user.username) {
+    return error.Forbidden(res);
+  }
+
+  const user = new User(req.user);
+  let propertiesToCheck = [];
+
+  if (req.body.dob) {
+    if (!Number(req.body.dob)) {
+      return error.BadRequest(res, 'Invalid dob');
+    }
+
+    user.set('dob', Number(req.body.dob));
+    propertiesToCheck = [
+      ...propertiesToCheck,
+      'dob',
+    ];
+  }
+
+  if (req.body.email) {
+    user.set('email', req.body.email);
+    propertiesToCheck = [
+      ...propertiesToCheck,
+      'email',
+    ];
+  }
+
+  if (req.body.name) {
+    user.set('name', req.body.name);
+    propertiesToCheck = [
+      ...propertiesToCheck,
+      'name',
+    ];
+  }
+  
+  if (req.body.show_nsfw) {
+    user.set('show_nsfw', req.body.show_nsfw === 'true');
+    propertiesToCheck = [
+      ...propertiesToCheck,
+      'show_nsfw',
+    ];
+  }
+
+  // Check new parameters are valid, ignoring username and password validity
+  const invalids = user.validate(propertiesToCheck);
+  
+  if (invalids.length) {
+    return error.BadRequest(res, `Invalid ${invalids[0]}`);
+  }
+
+  user.update()
+    // update the SendGrid contact list with the new user data
+    .then(() => mailer.addContact(user.data, true))
+    .then(() => algolia.updateObjects(user.data, 'user'))
+    .then(() => success.OK(res))
+    .catch(() => {
+      console.error('Error updating user.');
+      return error.InternalServerError(res);
+    });
 };
 
 module.exports.verify = (req, res) => {

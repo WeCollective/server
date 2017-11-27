@@ -170,16 +170,19 @@ module.exports.search = query => {
       const bResults = branches.hits.map(x => ({
         id: x.objectID,
         text: x.name,
+        type: 'branch',
       }));
 
       const pResults = posts.hits.map(x => ({
         id: x.objectID,
         text: x.title,
+        type: 'post',
       }));
 
       const uResults = users.hits.map(x => ({
         id: x.objectID,
         text: x.name,
+        type: 'user',
       }));
 
       const results = [...bResults, ...pResults, ...uResults];

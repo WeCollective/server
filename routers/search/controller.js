@@ -10,21 +10,8 @@ module.exports.search = (req, res) => {
     username = req.user.username;
   }
 
+  // todo save user data?
   console.log(query, username);
-
-  /*
-  const results = [{
-    text: 'item 1',
-  }, {
-    text: 'item 2',
-  }, {
-    text: 'item 3',
-  }, {
-    text: 'item 4',
-  }, {
-    text: 'item 5',
-  }];
-  */
 
   return algolia.search(query)
     .then(results => success.OK(res, { results }))

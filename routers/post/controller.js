@@ -1,5 +1,4 @@
-'use strict';
-
+const algolia = require('../../config/algolia');
 const aws = require('../../config/aws');
 const Branch = require('../../models/branch.model');
 const Comment = require('../../models/comment');
@@ -189,6 +188,7 @@ module.exports.delete = (req, res) => {
           branch.set('post_comments', branch.data.post_comments - postComments);
           branch.set('post_points', branch.data.post_points - postGlobalPoints);
           return branch.update()
+            .then(() => algolia.updateObjects(branch.data, 'branch'))
             .then(() => resolve())
             .then(err => reject(err));
         }));
@@ -599,35 +599,61 @@ module.exports.getPostPicture = (postid, thumbnail = false) => {
 };
 
 module.exports.post = (req, res) => {
+  let {
+    branchids,
+    captcha,
+    locked,
+    nsfw,
+    text,
+    title,
+    type,
+  } = req.body;
+  const { username } = req.user;
   // fetch the tags of each specfied branch. The union of these is the list of
   // the branches the post should be tagged to.
   const branchidsArr = [];
   const date = new Date().getTime();
-  const id = `${req.user.username}-${date}`;
+  const id = `${username}-${date}`;
   const logger = new Logger();
   const user = new User();
 
-  if (req.body.captcha !== '') {
+  locked = !!locked;
+  nsfw = !!nsfw;
+
+  if (captcha !== '') {
     logger.record('HoneyPot', JSON.stringify({
-      branchids: req.body.branchids,
-      captcha: req.body.catpcha,
+      branchids,
+      captcha,
       id,
-      locked: req.body.locked,
-      nsfw: !!req.body.nsfw,
-      text: req.body.text,
-      title: req.body.title,
-      type: req.body.type,
+      locked,
+      nsfw,
+      text,
+      title,
+      type,
     }))
       .catch(err => console.log(err));
     return error.Forbidden(res);
   }
 
+  let searchIndexData = {};
+
   return post.verifyParams(req)
     .then(req => {
+      // Overwrite the variables after parsing.
+      ({
+        branchids,
+        captcha,
+        locked,
+        nsfw,
+        text,
+        title,
+        type,
+      } = req.body);
+
       const tagPromises = [];
 
-      for (let i = 0; i < req.body.branchids.length; i += 1) {
-        const branchid = req.body.branchids[i];
+      for (let i = 0; i < branchids.length; i += 1) {
+        const branchid = branchids[i];
         tagPromises.push(new Tag()
           .findByBranch(branchid)
           .then(tags => {
@@ -648,16 +674,18 @@ module.exports.post = (req, res) => {
     })
     // Validate the post data first, so this method doesn't fail halfway through.
     .then(() => {
-      const newPostData = new PostData({
-        creator: req.user.username,
+      const data = {
+        creator: username,
         id,
-        original_branches: JSON.stringify(req.body.branchids),
-        text: req.body.text,
-        title: req.body.title,
-      });
+        original_branches: JSON.stringify(branchids),
+        text,
+        title,
+      };
+      const newPostData = new PostData(data);
+      searchIndexData = data;
 
-      const invalids = newPostData.validate(undefined, req.body.type);
-      if (invalids.length > 0) {
+      const invalids = newPostData.validate(undefined, type);
+      if (invalids.length) {
         return Promise.reject({
           code: 400,
           message: `Invalid ${invalids[0]}.`,
@@ -682,11 +710,13 @@ module.exports.post = (req, res) => {
           id,
           individual: 0,
           local: 0,
-          locked: !!req.body.locked,
-          nsfw: !!req.body.nsfw,
-          type: req.body.type,
+          locked,
+          nsfw,
+          type,
           up: 0,
         });
+
+        searchIndexData.global = 0;
 
         const invalids = newPost.validate();
         if (invalids.length > 0) {
@@ -701,6 +731,8 @@ module.exports.post = (req, res) => {
 
       return Promise.all(promises);
     })
+    // Add new post to the search index.
+    .then(() => algolia.addObjects(searchIndexData, 'post'))
     // Increment the post counters on the branch objects
     .then(() => {
       const promises = [];
@@ -722,7 +754,7 @@ module.exports.post = (req, res) => {
 
       return Promise.all(promises);
     })
-    .then(() => user.findByUsername(req.user.username))
+    .then(() => user.findByUsername(username))
     .then(() => {
       // increment user's post count
       user.set('num_posts', user.data.num_posts + 1);
@@ -1041,7 +1073,7 @@ module.exports.voteComment = (req, res) => {
         }
 
         return vote.delete();
-      } 
+      }
 
       const newVote = new Vote({
         direction: newVoteDirection,

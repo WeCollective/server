@@ -12,10 +12,21 @@ const INDEX_BRANCHES = `${prefix}branches`;
 const INDEX_POSTS = `${prefix}posts`;
 const INDEX_USERS = `${prefix}users`;
 
-const INDEX_ATTRS_BRANCH = [];
-const INDEX_ATTRS_POST = [];
+const INDEX_ATTRS_BRANCH = [
+  ['id', 'objectID'],
+  'name',
+  'id',
+  'description',
+  'post_points',
+];
+const INDEX_ATTRS_POST = [
+  ['id', 'objectID'],
+  'title',
+  'text',
+  'global',
+];
 const INDEX_ATTRS_USER = [
-  ['datejoined', 'objectID'],
+  ['username', 'objectID'],
   'name',
   'username',
 ];
@@ -40,6 +51,7 @@ const castToArray = objects => {
 // Enrich the searchable index object only with allowed properties.
 const cleanProps = (obj, props) => {
   const clean = {};
+
   if (obj && typeof obj === 'object') {
     props.forEach(prop => {
       let objProp = prop;
@@ -57,6 +69,11 @@ const cleanProps = (obj, props) => {
       }
     });
   }
+
+  if (!Object.keys(clean).length) {
+    return undefined;
+  }
+
   return clean;
 };
 
@@ -99,6 +116,8 @@ const sanitizeArray = (objects, type) => {
       break;
     }
   });
+  // Remove empty entries.
+  cleanArr = cleanArr.filter(x => !!x);
   return cleanArr;
 };
 

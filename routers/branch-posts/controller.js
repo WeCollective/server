@@ -1,5 +1,4 @@
-'use strict';
-
+const algolia = require('../../config/algolia');
 const ACL = require('../../config/acl');
 const Branch = require('../../models/branch.model');
 const error  = require('../../responses/errors');
@@ -197,157 +196,6 @@ module.exports = {
         }
 
         return error.InternalServerError(res);
-      });
-  },
-
-  put(req, res) {
-    const branchid = req.params.branchid;
-    const branchIds = [];
-    const postid = req.params.postid;
-    const username = req.user.username;
-    const vote = new Vote();
-
-    let newVoteDirection;
-    let newVoteOppositeDirection;
-    let post;
-    let resData = { delta: 0 };
-    let userAlreadyVoted = false;
-
-    put.verifyParams(req)
-      .then(() => {
-        post = new Post({
-          branchid,
-          id: postid,
-        });
-
-        newVoteDirection = req.body.vote;
-
-        return vote.findByUsernameAndItemId(username, `post-${postid}`);
-      })
-      .then(existingVoteData => {
-        if (existingVoteData) {
-          userAlreadyVoted = true;
-
-          if (existingVoteData.direction !== newVoteDirection) {
-            newVoteOppositeDirection = newVoteDirection === 'up' ? 'down' : 'up';
-          }
-        }
-
-        return Promise.resolve();
-      })
-      .then(() => new Post().findById(postid))
-      // Update the post "up" and "down" attributes.
-      // Vote stats will be auto-updated by a lambda function.
-      .then(posts => {
-        // find all post entries to get the list of branches it is tagged to
-        let promise;
-
-        for (let i = 0; i < posts.length; i += 1) {
-          branchIds.push(posts[i].branchid);
-
-          // Find the post on the specified branchid.
-          if (posts[i].branchid === branchid) {
-            let delta = 0;
-
-            if (userAlreadyVoted) {
-              // Undo the last vote and add the new vote.
-              if (newVoteOppositeDirection) {
-                post.set(newVoteOppositeDirection, posts[i][newVoteOppositeDirection] - 1);
-                post.set(newVoteDirection, posts[i][newVoteDirection] + 1);
-                delta = (newVoteOppositeDirection === 'up') ? 2 : -2;
-              }
-              // Undo the last vote.
-              else {
-                post.set(newVoteDirection, posts[i][newVoteDirection] - 1);
-                delta = (newVoteDirection === 'up') ? -1 : 1;
-              }
-            }
-            else {
-              post.set(newVoteDirection, posts[i][newVoteDirection] + 1);
-              delta = (newVoteDirection === 'up') ? 1 : -1;
-            }
-
-            promise = post.update();
-            resData.delta = delta;
-          }
-        }
-
-        if (!promise) {
-          return Promise.reject({
-            code: 400,
-            message: 'Invalid branchid',
-          });
-        }
-
-        return promise;
-      })
-      // Update the post points count on each branch object the post appears in.
-      .then(() => {
-        const promises = [];        
-
-        for (let i = 0; i < branchIds.length; i += 1) {
-          promises.push(new Promise((resolve, reject) => {
-            const branch = new Branch();
-
-            branch.findById(branchIds[i])
-              .then(() => {
-                branch.set('post_points', branch.data.post_points + resData.delta);
-
-                branch
-                  .update()
-                  .then(resolve)
-                  .catch(reject);
-              })
-              .catch(reject);
-          }));
-        }
-
-        return Promise.all(promises);
-      })
-      // Create, update, or delete the vote record in the database.
-      .then(() => {
-        if (userAlreadyVoted) {
-          if (newVoteOppositeDirection) {
-            vote.set('direction', newVoteDirection);
-            return vote.update();
-          }
-
-          return vote.delete();
-        } 
-        
-        const newVote = new Vote({
-          direction: newVoteDirection,
-          itemid: `post-${postid}`,
-          username,
-        });
-
-        const propertiesToCheck = [
-          'itemid',
-          'username',
-        ];
-
-        const invalids = newVote.validate(propertiesToCheck);
-
-        if (invalids.length > 0) {
-          console.error(`Error creating Vote: invalid ${invalids[0]}`);
-          return Promise.reject({ code: 500 });
-        }
-
-        return newVote.save();
-      })
-      .then(() => success.OK(res, resData))
-      .catch(err => {
-        if (err) {
-          console.error('Error voting on a post: ', err);
-
-          if (typeof err === 'object' && err.code) {
-            return error.code(res, err.code, err.message);
-          }
-
-          return error.InternalServerError(res);
-        }
-
-        return error.NotFound(res);
       });
   },
 
@@ -549,6 +397,7 @@ module.exports = {
           parentBranch.set('post_points', parentBranch.data.post_points - pointsToSubtract);
           return parentBranch.update();
         })
+        .then(() => algolia.updateObjects(parentBranch.data, 'branch'))
         // Delete flag for this post on this branch.
         .then(() => new FlaggedPost().delete({
           branchid,
@@ -637,4 +486,155 @@ module.exports = {
       return error.BadRequest(res, 'Invalid action parameter');
     }
   }
+};
+
+module.exports.put = (req, res) => {
+  const branchid = req.params.branchid;
+  const branchIds = [];
+  const postid = req.params.postid;
+  const username = req.user.username;
+  const vote = new Vote();
+
+  let newVoteDirection;
+  let newVoteOppositeDirection;
+  let post;
+  let resData = { delta: 0 };
+  let userAlreadyVoted = false;
+
+  put.verifyParams(req)
+    .then(() => {
+      post = new Post({
+        branchid,
+        id: postid,
+      });
+
+      newVoteDirection = req.body.vote;
+
+      return vote.findByUsernameAndItemId(username, `post-${postid}`);
+    })
+    .then(existingVoteData => {
+      if (existingVoteData) {
+        userAlreadyVoted = true;
+
+        if (existingVoteData.direction !== newVoteDirection) {
+          newVoteOppositeDirection = newVoteDirection === 'up' ? 'down' : 'up';
+        }
+      }
+
+      return Promise.resolve();
+    })
+    .then(() => new Post().findById(postid))
+    // Update the post "up" and "down" attributes.
+    // Vote stats will be auto-updated by a lambda function.
+    .then(posts => {
+      // find all post entries to get the list of branches it is tagged to
+      let promise;
+
+      for (let i = 0; i < posts.length; i += 1) {
+        branchIds.push(posts[i].branchid);
+
+        // Find the post on the specified branchid.
+        if (posts[i].branchid === branchid) {
+          let delta = 0;
+
+          if (userAlreadyVoted) {
+            // Undo the last vote and add the new vote.
+            if (newVoteOppositeDirection) {
+              post.set(newVoteOppositeDirection, posts[i][newVoteOppositeDirection] - 1);
+              post.set(newVoteDirection, posts[i][newVoteDirection] + 1);
+              delta = (newVoteOppositeDirection === 'up') ? 2 : -2;
+            }
+            // Undo the last vote.
+            else {
+              post.set(newVoteDirection, posts[i][newVoteDirection] - 1);
+              delta = (newVoteDirection === 'up') ? -1 : 1;
+            }
+          }
+          else {
+            post.set(newVoteDirection, posts[i][newVoteDirection] + 1);
+            delta = (newVoteDirection === 'up') ? 1 : -1;
+          }
+
+          promise = post.update();
+          resData.delta = delta;
+        }
+      }
+
+      if (!promise) {
+        return Promise.reject({
+          code: 400,
+          message: 'Invalid branchid',
+        });
+      }
+
+      return promise;
+    })
+    // Update the post points count on each branch object the post appears in.
+    .then(() => {
+      const promises = [];        
+
+      for (let i = 0; i < branchIds.length; i += 1) {
+        promises.push(new Promise((resolve, reject) => {
+          const branch = new Branch();
+
+          branch.findById(branchIds[i])
+            .then(() => {
+              branch.set('post_points', branch.data.post_points + resData.delta);
+
+              branch
+                .update()
+                .then(() => algolia.updateObjects(branch.data, 'branch'))
+                .then(resolve)
+                .catch(reject);
+            })
+            .catch(reject);
+        }));
+      }
+
+      return Promise.all(promises);
+    })
+    // Create, update, or delete the vote record in the database.
+    .then(() => {
+      if (userAlreadyVoted) {
+        if (newVoteOppositeDirection) {
+          vote.set('direction', newVoteDirection);
+          return vote.update();
+        }
+
+        return vote.delete();
+      } 
+      
+      const newVote = new Vote({
+        direction: newVoteDirection,
+        itemid: `post-${postid}`,
+        username,
+      });
+
+      const propertiesToCheck = [
+        'itemid',
+        'username',
+      ];
+
+      const invalids = newVote.validate(propertiesToCheck);
+      if (invalids.length) {
+        console.error(`Error creating Vote: invalid ${invalids[0]}`);
+        return Promise.reject({ code: 500 });
+      }
+
+      return newVote.save();
+    })
+    .then(() => success.OK(res, resData))
+    .catch(err => {
+      if (err) {
+        console.error('Error voting on a post:', err);
+
+        if (typeof err === 'object' && err.code) {
+          return error.code(res, err.code, err.message);
+        }
+
+        return error.InternalServerError(res);
+      }
+
+      return error.NotFound(res);
+    });
 };

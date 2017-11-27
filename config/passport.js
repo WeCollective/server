@@ -1,5 +1,3 @@
-'use strict';
-
 /**
  * Uses Passport.js
  * 
@@ -202,6 +200,7 @@ module.exports = () => {
         newUser.set('password', hash);
         return newUser.save();
       })
+      // Add new user to the search index.
       .then(() => algolia.addObjects(newUser.data, 'user'))
       .then(() => done(null, { username }))
       .catch(err => {

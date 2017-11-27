@@ -30,6 +30,27 @@ module.exports = () => {
 
   router.route('/:branchid')
     /**
+     * @api {delete} /:branchid Delete Branch
+     * @apiName Delete Branch
+     * @apiDescription Permanently delete a root branch. The child branches are made into root branches.
+     * @apiGroup Branch
+     * @apiPermission admin
+     * @apiVersion 1.0.0
+     *
+     * @apiParam (URL Parameters) {String} branchid Branch unique id.
+     *
+     * @apiUse OK
+     * @apiUse NotFound
+     * @apiUse BadRequest
+     * @apiUse InternalServerError
+     */
+    .delete(passport.authenticate('jwt'), (req, res, next) => {
+      ACL.validateRole(ACL.Roles.Moderator, req.params.branchid, {
+        code: 403,
+        message: `You need to be an admin of b/${req.params.branchid}`,
+      })(req, res, next);
+    }, controller.delete)
+    /**
      * @api {get} /:branchid Get Branch
      * @apiName Get Branch
      * @apiGroup Branch
@@ -62,28 +83,7 @@ module.exports = () => {
      */
     .put(passport.authenticate('jwt'), (req, res, next) => {
       ACL.validateRole(ACL.Roles.Moderator, req.params.branchid)(req, res, next);
-    }, controller.put)
-    /**
-     * @api {delete} /:branchid Delete Branch
-     * @apiName Delete Branch
-     * @apiDescription Permanently delete a root branch. The child branches are made into root branches.
-     * @apiGroup Branch
-     * @apiPermission admin
-     * @apiVersion 1.0.0
-     *
-     * @apiParam (URL Parameters) {String} branchid Branch unique id.
-     *
-     * @apiUse OK
-     * @apiUse NotFound
-     * @apiUse BadRequest
-     * @apiUse InternalServerError
-     */
-    .delete(passport.authenticate('jwt'), (req, res, next) => {
-      ACL.validateRole(ACL.Roles.Moderator, req.params.branchid, {
-        code: 403,
-        message: `You need to be an admin of b/${req.params.branchid}`,
-      })(req, res, next);
-    }, controller.delete);
+    }, controller.put);
 
   router.route('/:branchid/picture-upload-url')
     /**

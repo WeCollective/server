@@ -1,3 +1,4 @@
+const algolia = require('../../config/algolia');
 const aws = require('../../config/aws');
 const Branch = require('../../models/branch.model');
 const BranchImage = require('../../models/branch-image.model');
@@ -491,6 +492,8 @@ module.exports.post = (req, res) => {
     })
     // Create the new branch.
     .then(() => branch.save())
+    // Add new branch to the search index.
+    .then(() => algolia.addObjects(branch.data, 'branch'))
     // Create tags for the new branch - since it's only a child of root for now,
     // these will always be equal to 'root' and childBranchId.
     // Skip validation as we have already established above that childBranchId
@@ -567,41 +570,55 @@ module.exports.post = (req, res) => {
 };
 
 module.exports.put = (req, res) => {
-  if(!req.params.branchid) {
+  const { branchid } = req.params;
+  const {
+    description,
+    name,
+    rules,
+  } = req.body;
+  let propertiesToCheck = [];
+
+  if (!branchid) {
     return error.BadRequest(res, 'Missing branchid');
   }
 
-  var branch = new Branch({
-    id: req.params.branchid
-  });
+  const branch = new Branch({ id: branchid });  
 
-  var propertiesToCheck = [];
-  if(req.body.name) {
-    branch.set('name', req.body.name);
-    propertiesToCheck.push('name');
+  if (description) {
+    branch.set('description', description);
+    propertiesToCheck = [
+      ...propertiesToCheck,
+      'description',
+    ];
   }
 
-  if(req.body.description) {
-    branch.set('description', req.body.description);
-    propertiesToCheck.push('description');
+  if (name) {
+    branch.set('name', name);
+    propertiesToCheck = [
+      ...propertiesToCheck,
+      'name',
+    ];
   }
 
-  if(req.body.rules) {
-    branch.set('rules', req.body.rules);
-    propertiesToCheck.push('rules');
+  if (rules) {
+    branch.set('rules', rules);
+    propertiesToCheck = [
+      ...propertiesToCheck,
+      'rules',
+    ];
   }
 
   // Check new parameters are valid, ignoring id validity
-  var invalids = branch.validate(propertiesToCheck);
-
-  if(invalids.length > 0) {
-    return error.BadRequest(res, 'Invalid ' + invalids[0]);
+  const invalids = branch.validate(propertiesToCheck);
+  if (invalids.length) {
+    return error.BadRequest(res, `Invalid ${invalids[0]}`);
   }
-  branch.update().then(function() {
-    return success.OK(res);
-  }, function() {
-    return error.InternalServerError(res);
-  });
+
+  return branch.update()
+    // Update branch in the search index.
+    .then(() => algolia.updateObjects(branch.data, 'branch'))
+    .then(() => success.OK(res))
+    .catch(() => error.InternalServerError(res));
 };
 
 

@@ -8,7 +8,7 @@ const Notification = require('../../models/notification.model');
 const NotificationTypes = require('../../config/notification-types');
 const Post = require('../../models/post.model');
 const PostCtrl = require('../post/controller');
-const PostData  = require('../../models/post-data.model');
+const PostData = require('../../models/post-data.model');
 const success   = require('../../responses/successes');
 const User = require('../../models/user.model');
 const Vote = require('../../models/user-vote.model');
@@ -489,10 +489,12 @@ module.exports = {
 };
 
 module.exports.put = (req, res) => {
-  const branchid = req.params.branchid;
+  const {
+    branchid,
+    postid,
+  } = req.params;
   const branchIds = [];
-  const postid = req.params.postid;
-  const username = req.user.username;
+  const { username } = req.user;
   const vote = new Vote();
 
   let newVoteDirection;
@@ -502,6 +504,16 @@ module.exports.put = (req, res) => {
   let userAlreadyVoted = false;
 
   put.verifyParams(req)
+    .then(() => new Post().isAuthor(username, postid))
+    .then(isAuthor => {
+      if (isAuthor) {
+        return Promise.reject({
+          code: 401,
+          message: 'You cannot vote on your own content.',
+        });
+      }
+      return Promise.resolve();
+    })
     .then(() => {
       post = new Post({
         branchid,
@@ -512,6 +524,7 @@ module.exports.put = (req, res) => {
 
       return vote.findByUsernameAndItemId(username, `post-${postid}`);
     })
+    // If the vote already exists, we can update it.
     .then(existingVoteData => {
       if (existingVoteData) {
         userAlreadyVoted = true;
@@ -524,7 +537,7 @@ module.exports.put = (req, res) => {
       return Promise.resolve();
     })
     .then(() => new Post().findById(postid))
-    // Update the post "up" and "down" attributes.
+    // Update the post 'up' and 'down' attributes.
     // Vote stats will be auto-updated by a lambda function.
     .then(posts => {
       // find all post entries to get the list of branches it is tagged to

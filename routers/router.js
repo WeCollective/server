@@ -1,12 +1,9 @@
-'use strict';
-
-const express = require('express');
-const router = express.Router();
-
 const error = require('../responses/errors');
-
+const express = require('express');
 const http = require('http');
 const url = require('url');
+
+const router = express.Router();
 
 module.exports = app => {
   const version = '/v1';

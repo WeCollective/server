@@ -30,6 +30,7 @@
     "express": "^4.13.4",
     "express-bearer-token": "^2.1.0",
     "helmet": "^2.1.1",
+    "htmlparser": "^1.7.7",
     "jwt-simple": "^0.5.1",
     "lodash": "^4.13.1",
     "node-gyp": "^3.3.1",

@@ -6,6 +6,7 @@ const CommentData = require('../../models/comment-data.model');
 const error = require('../../responses/errors');
 const FlaggedPost = require('../../models/flagged-post.model');
 const fs = require('../../config/filestorage');
+const htmlparser = require('htmlparser');
 const Logger = require('../../models/logger.model');
 const mailer = require('../../config/mailer');
 const Mod = require('../../models/mod.model');
@@ -14,10 +15,26 @@ const NotificationTypes = require('../../config/notification-types');
 const Post = require('../../models/post.model');
 const PostData = require('../../models/post-data.model');
 const PostImage = require('../../models/post-image.model');
+const request = require('request');
 const success = require('../../responses/successes');
 const Tag = require('../../models/tag.model');
 const User = require('../../models/user.model');
 const Vote = require('../../models/user-vote.model');
+
+const ensureHost = (url, host) => {
+  const protocol = 'https';
+
+  if (!url.includes('http') && !url.includes('ftp') && url.indexOf('//') !== 0) {
+    if (!url.includes(host)) {
+      url = `${protocol}://${host}${url}`;
+    }
+    else {
+      url = `${protocol}://${url}`;
+    }
+  }
+
+  return url;
+};
 
 const post = {
   verifyParams(req) {
@@ -67,6 +84,95 @@ const post = {
 
     return Promise.resolve(req);
   },
+};
+
+const shouldAddImage = attrs => {
+  const {
+    height,
+    width,
+  } = attrs;
+
+  const h = Number.parseInt(height, 10);
+  const w = Number.parseInt(width, 10);
+
+  if (!Number.isNaN(h) || !Number.isNaN(w)) {
+    // Skip tracking pixels.
+    if (h <= 1 || w <= 1) {
+      return false;
+    }
+  }
+
+  return true;
+};
+
+const searchImages = node => {
+  const {
+    children,
+    name,
+    type,
+  } = node;
+
+  let resultsArr = [];
+  let { attribs } = node;
+
+  attribs = attribs || {};
+
+  if (type === 'tag') {
+    const {
+      itemprop,
+      name: aName,
+      property,
+    } = attribs;
+
+    if (name === 'meta') {
+      const metaTagsArr = [
+        'twitter:image',
+        'og:image',
+      ];
+
+      if (itemprop === 'image' && shouldAddImage(attribs)) {
+        resultsArr = [
+          ...resultsArr,
+          {
+            src: attribs.content,
+            weight: 1,
+          },
+        ];
+      }
+
+      if ((metaTagsArr.includes(property) ||
+        metaTagsArr.includes(aName)) && shouldAddImage(attribs)) {
+        resultsArr = [
+          ...resultsArr,
+          {
+            src: attribs.content,
+            weight: 3,
+          },
+        ];
+      }
+    }
+
+    if (name === 'img' && shouldAddImage(attribs)) {
+      resultsArr = [
+        ...resultsArr,
+        {
+          src: attribs.src,
+          weight: 2,
+        },
+      ];
+    }
+  }
+
+  if (children) {
+    for (let i = 0; i < children.length; i += 1) {
+      resultsArr = [
+        ...resultsArr,
+        ...searchImages(children[i]),
+      ];
+    }
+  }
+
+  return resultsArr;
 };
 
 const voteComment = {
@@ -581,6 +687,57 @@ module.exports.getOnePost = (id, req, branchid) => {
     }));
 };
 
+module.exports.getPictureUrlSuggestion = (req, res) => {
+  const { url } = req.query;
+  let result = '';
+
+  if (!url) {
+    return error.BadRequest(res, 'Missing url.');
+  }
+
+  const path = url.includes('http') ? url : `https://${url}`;
+
+  return new Promise((resolve, reject) => request(path, (err, res, body) => {
+    if (err) {
+      if (err.code === 'ENOTFOUND') {
+        return resolve(result);
+      }
+      console.log(err);
+      return reject(err);
+    }
+
+    const handler = new htmlparser.DefaultHandler((error, dom) => {
+      let foundImagesArr = [];
+
+      if (error) {
+        console.log(error);
+      }
+
+      for (let i = 0; i < dom.length; i += 1) {
+        foundImagesArr = [
+          ...foundImagesArr,
+          ...searchImages(dom[i]),
+        ];
+      }
+
+      let highWeight = 0;
+      foundImagesArr.forEach(img => {
+        if (img.weight > highWeight) {
+          result = ensureHost(img.src, res.request.originalHost);
+          highWeight = img.weight;
+        }
+      });
+    });
+
+    const parser = new htmlparser.Parser(handler);
+    parser.parseComplete(body);
+    console.log(`Found suggested image at ${result}`);
+    return resolve(result);
+  }))
+    .then(data => success.OK(res, data))
+    .catch(err => error.InternalServerError(res, err));
+};
+
 module.exports.getPostPicture = (postid, thumbnail = false) => {
   return new Promise(resolve => {
     if (!postid) return resolve('');
@@ -1031,7 +1188,6 @@ module.exports.voteComment = (req, res) => {
     })
     .then(() => new CommentData().findById(commentid))
     .then(commentData => {
-      console.log(commentData.creator);
       if (commentData.creator === 'N/A') {
         return Promise.reject({
           code: 403,

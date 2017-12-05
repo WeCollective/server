@@ -193,51 +193,6 @@ module.exports = {
       .catch(errorCb => errorCb(res));
   },
 
-  getNotifications(req, res) {
-    if (!req.user.username) {
-      return error.InternalServerError(res);
-    }
-
-    const unreadCount = req.query.unreadCount === 'true';
-
-    // if lastNotificationId is specified, client wants results which appear _after_ this notification (pagination)
-    let lastNotification = null;
-    
-    return new Promise((resolve, reject) => {
-      if (req.query.lastNotificationId) {
-        const notification = new Notification();
-
-        // get the post
-        return notification.findById(req.query.lastNotificationId)
-          .then(() => {
-            // create lastNotification object
-            lastNotification = notification.data;
-            return resolve();
-          })
-          .catch(err => {
-            if (err) {
-              return reject();
-            }
-
-            return error.NotFound(res); // lastNotificationId is invalid
-          });
-      }
-
-      // no last notification specified, continue
-      return resolve();
-    })
-      .then(() => new Notification().findByUsername(req.user.username, unreadCount, lastNotification))
-      .then(notifications => success.OK(res, notifications))
-      .catch(err => {
-        if (err) {
-          console.error('Error fetching user notifications:', err);
-          return error.InternalServerError(res);
-        }
-
-        return error.NotFound(res);
-      });
-  },
-
   // Legacy version.
   getPicture(req, res, type, thumbnail) {
     let size,
@@ -656,6 +611,57 @@ module.exports = {
       });
     */
   },
+};
+
+module.exports.getNotifications = (req, res) => {
+  const {
+    lastNotificationId,
+    unreadCount,
+  } = req.query;
+  const { username } = req.user;
+
+  if (!username) {
+    return error.InternalServerError(res);
+  }
+
+  const isUnread = unreadCount === 'true';
+
+  // if lastNotificationId is specified, client wants results which appear _after_ this notification (pagination)
+  let lastNotification = null;
+  
+  return new Promise((resolve, reject) => {
+    if (lastNotificationId) {
+      const notification = new Notification();
+
+      // get the post
+      return notification.findById(lastNotificationId)
+        .then(() => {
+          // create lastNotification object
+          lastNotification = notification.data;
+          return resolve();
+        })
+        .catch(err => {
+          if (err) {
+            return reject();
+          }
+
+          return error.NotFound(res); // lastNotificationId is invalid
+        });
+    }
+
+    // no last notification specified, continue
+    return resolve();
+  })
+    .then(() => new Notification().findByUsername(username, isUnread, lastNotification))
+    .then(notifications => success.OK(res, notifications))
+    .catch(err => {
+      if (err) {
+        console.error('Error fetching user notifications:', err);
+        return error.InternalServerError(res);
+      }
+
+      return error.NotFound(res);
+    });
 };
 
 module.exports.put = (req, res) => {

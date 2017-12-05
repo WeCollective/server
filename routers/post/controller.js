@@ -697,6 +697,10 @@ module.exports.getPictureUrlSuggestion = (req, res) => {
 
   const path = url.includes('http') ? url : `https://${url}`;
 
+  if (path.length <= 'http://'.length) {
+    return error.BadRequest(res, 'Invalid url.');
+  }
+
   return new Promise((resolve, reject) => request(path, (err, res, body) => {
     if (err) {
       if (err.code === 'ENOTFOUND') {

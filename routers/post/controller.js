@@ -71,26 +71,33 @@ const post = {
 
 const voteComment = {
   verifyParams(req) {
-    if (!req.params.postid) {
+    const {
+      commentid,
+      postid,
+    } = req.params;
+    const { username } = req.user;
+    const { vote } = req.body;
+
+    if (!postid) {
       return Promise.reject({
         code: 400,
         message: 'Missing postid',
       });
     }
 
-    if (!req.params.commentid) {
+    if (!commentid) {
       return Promise.reject({
         code: 400,
         message: 'Missing commentid',
       });
     }
 
-    if (!req.user.username) {
+    if (!username) {
       console.error('No username found in session.');
       return Promise.reject({ code: 500 });
     }
 
-    if (!req.body.vote || (req.body.vote !== 'up' && req.body.vote !== 'down')) {
+    if (!vote || !['down', 'up'].includes(vote)) {
       return Promise.reject({
         code: 400,
         message: 'Missing or malformed vote parameter.',
@@ -719,7 +726,7 @@ module.exports.post = (req, res) => {
         searchIndexData.global = 0;
 
         const invalids = newPost.validate();
-        if (invalids.length > 0) {
+        if (invalids.length) {
           return Promise.reject({
             code: 400,
             message: `Invalid ${invalids[0]}.`,
@@ -814,12 +821,12 @@ module.exports.postComment = (req, res) => {
   });
 
   let invalids = comment.validate();
-  if (invalids.length > 0) {
+  if (invalids.length) {
     return error.BadRequest(res, `Invalid ${invalids[0]}`);
   }
 
   invalids = commentdata.validate();
-  if (invalids.length > 0) {
+  if (invalids.length) {
     return error.BadRequest(res, `Invalid ${invalids[0]}`);
   }
 
@@ -946,7 +953,7 @@ module.exports.postComment = (req, res) => {
       });
 
       const invalids = notification.validate();
-      if (invalids.length > 0) {
+      if (invalids.length) {
         console.error('Error creating notification. Invalids: ', invalids);
         return Promise.reject({
           code: 500,
@@ -975,44 +982,56 @@ module.exports.postComment = (req, res) => {
 };
 
 module.exports.voteComment = (req, res) => {
+  const {
+    commentid,
+    postid,
+  } = req.params;
+  const { username } = req.user;
   const vote = new Vote();
 
-  const commentId = req.params.commentid;
-  const postId = req.params.postid;
-  const username = req.user.username;
-
   let comment;
-  let newVoteDirection;
-  let newVoteOppositeDirection;
   let resData = { delta: 0 };
   let userAlreadyVoted = false;
+  let voteDirection;
+  let voteOppositeDirection;
 
   voteComment.verifyParams(req)
+    .then(() => new Comment().isAuthor(username, commentid))
+    .then(isAuthor => {
+      if (isAuthor) {
+        return Promise.reject({
+          code: 403,
+          message: 'You cannot vote on your own content.',
+        });
+      }
+      return Promise.resolve();
+    })
     .then(() => {
       comment = new Comment({
-        id: commentId,
-        postid: postId,
+        id: commentid,
+        postid,
       });
 
-      const propertiesToCheck = [
+      const checkProps = [
         'id',
         'postid',
       ];
 
-      const invalids = comment.validate(propertiesToCheck);
-      if (invalids.length > 0) {
+      const invalids = comment.validate(checkProps);
+      if (invalids.length) {
         return Promise.reject({
           code: 400,
           message: `Invalid ${invalids[0]}`,
         });
       }
 
-      newVoteDirection = req.body.vote;
+      voteDirection = req.body.vote;
 
-      return comment.findById(commentId);
+      return comment.findById(commentid);
     })
-    .then(() => new CommentData().findById(commentId))
+    .then(() => new CommentData().findById(commentid))
     .then(commentData => {
+      console.log(commentData.creator);
       if (commentData.creator === 'N/A') {
         return Promise.reject({
           code: 403,
@@ -1020,14 +1039,14 @@ module.exports.voteComment = (req, res) => {
         });
       }
 
-      return vote.findByUsernameAndItemId(username, `comment-${commentId}`);
+      return vote.findByUsernameAndItemId(username, `comment-${commentid}`);
     })
     .then(existingVoteData => {
       if (existingVoteData) {
         userAlreadyVoted = true;
 
-        if (existingVoteData.direction !== newVoteDirection) {
-          newVoteOppositeDirection = newVoteDirection === 'up' ? 'down' : 'up';
+        if (existingVoteData.direction !== voteDirection) {
+          voteOppositeDirection = voteDirection === 'up' ? 'down' : 'up';
         }
       }
 
@@ -1036,7 +1055,7 @@ module.exports.voteComment = (req, res) => {
     // Update the comment 'up' and 'down' attributes.
     .then(() => {
       // Check the specfied comment actually belongs to this post.
-      if (comment.data.postid !== postId) {
+      if (comment.data.postid !== postid) {
         return Promise.reject({ code: 404 });
       }
 
@@ -1044,20 +1063,20 @@ module.exports.voteComment = (req, res) => {
 
       if (userAlreadyVoted) {
         // Undo the last vote and add the new vote.
-        if (newVoteOppositeDirection) {
-          comment.set(newVoteOppositeDirection, comment.data[newVoteOppositeDirection] - 1);
-          comment.set(newVoteDirection, comment.data[newVoteDirection] + 1);
-          delta = (newVoteOppositeDirection === 'up') ? 2 : -2;
+        if (voteOppositeDirection) {
+          comment.set(voteOppositeDirection, comment.data[voteOppositeDirection] - 1);
+          comment.set(voteDirection, comment.data[voteDirection] + 1);
+          delta = (voteOppositeDirection === 'up') ? 2 : -2;
         }
         // Undo the last vote.
         else {
-          comment.set(newVoteDirection, comment.data[newVoteDirection] - 1);
-          delta = (newVoteDirection === 'up') ? -1 : 1;
+          comment.set(voteDirection, comment.data[voteDirection] - 1);
+          delta = (voteDirection === 'up') ? -1 : 1;
         }
       }
       else {
-        comment.set(newVoteDirection, comment.data[newVoteDirection] + 1);
-        delta = (newVoteDirection === 'up') ? 1 : -1;
+        comment.set(voteDirection, comment.data[voteDirection] + 1);
+        delta = (voteDirection === 'up') ? 1 : -1;
       }
 
       resData.delta = delta;
@@ -1067,8 +1086,8 @@ module.exports.voteComment = (req, res) => {
     // Create, update, or delete the vote record in the database.
     .then(() => {
       if (userAlreadyVoted) {
-        if (newVoteOppositeDirection) {
-          vote.set('direction', newVoteDirection);
+        if (voteOppositeDirection) {
+          vote.set('direction', voteDirection);
           return vote.update();
         }
 
@@ -1076,19 +1095,19 @@ module.exports.voteComment = (req, res) => {
       }
 
       const newVote = new Vote({
-        direction: newVoteDirection,
-        itemid: `comment-${commentId}`,
+        direction: voteDirection,
+        itemid: `comment-${commentid}`,
         username,
       });
 
-      const propertiesToCheck = [
+      const checkProps = [
         'itemid',
         'username',
       ];
 
-      const invalids = newVote.validate(propertiesToCheck);
+      const invalids = newVote.validate(checkProps);
 
-      if (invalids.length > 0) {
+      if (invalids.length) {
         console.error(`Error creating Vote: invalid ${invalids[0]}`);
         return Promise.reject({ code: 500 });
       }
@@ -1251,9 +1270,9 @@ module.exports.flagPost = (req, res) => {
           reason: req.body.flag_type
         }
       });
-      var propertiesToCheck = ['id', 'user', 'date', 'unread', 'type', 'data'];
-      var invalids = notification.validate(propertiesToCheck);
-      if(invalids.length > 0) {
+      var checkProps = ['id', 'user', 'date', 'unread', 'type', 'data'];
+      var invalids = notification.validate(checkProps);
+      if(invalids.length) {
         console.error('Error creating notification.');
         return error.InternalServerError(res);
       }
@@ -1272,46 +1291,53 @@ module.exports.flagPost = (req, res) => {
 };
 
 module.exports.putComment = (req, res) => {
-  if(!req.params.postid) {
+  const {
+    commentid,
+    postid,
+  } = req.params;
+  const { username } = req.user;
+  const { text } = req.body;
+
+  if (!postid) {
     return error.BadRequest(res, 'Missing postid');
   }
-  if(!req.params.commentid) {
+
+  if (!commentid) {
     return error.BadRequest(res, 'Missing commentid');
   }
-  if(!req.user.username) {
+
+  if (!username) {
     console.error('No username found in session.');
     return error.InternalServerError(res);
   }
 
-  // ensure new comment text is valid
-  if(!req.body.text) {
+  if (!text) {
     return error.BadRequest(res, 'Missing text');
   }
-  var updatedCommentData = new CommentData({
-    id: req.params.commentid
-  });
-  updatedCommentData.set('text', req.body.text);
-  updatedCommentData.set('edited', true);
-  // validate comment properties
-  var propertiesToCheck = ['id', 'text'];
-  var invalids = updatedCommentData.validate(propertiesToCheck);
-  if(invalids.length > 0) {
-    return error.BadRequest(res, 'Invalid ' + invalids[0]);
+
+  const comment = new Comment();
+  const commentData = new CommentData({ id: commentid });
+
+  commentData.set('text', text);
+  commentData.set('edited', true);
+
+  const checkProps = ['id', 'text'];
+  const invalids = commentData.validate(checkProps);
+  if (invalids.length) {
+    return error.BadRequest(res, `Invalid ${invalids[0]}`);
   }
 
-  var comment = new Comment();
-  // check the specfied comment actually belongs to this post
-  comment.findById(req.params.commentid).then(function() {
-    if(comment.data.postid != req.params.postid) {
-      return error.NotFound(res);
-    }
-
-    // update the comment
-    return updatedCommentData.update();
-  }).then(function() {
-    return success.OK(res);
-  }).catch(function() {
-    console.error('Error updating comment.');
-    return error.InternalServerError(res);
-  });
+  // Check the comment belongs to this post.
+  return comment.findById(commentid)
+    .then(() => {
+      if (comment.data.postid !== postid) {
+        return Promise.reject({ code: 404 });
+      }
+      return commentData.update();
+    })
+    .then(() => success.OK(res))
+    .catch(err => {
+      console.error('Error updating comment.', err);
+      return error.InternalServerError(res);
+    });
 };

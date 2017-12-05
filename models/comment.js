@@ -1,4 +1,5 @@
 const aws = require('../config/aws');
+const CommentData = require('./comment-data.model');
 const db = require('../config/database');
 const Model = require('./model');
 const validate = require('./validate');
@@ -123,6 +124,13 @@ class Comment extends Model {
         });
       });
     });
+  }
+
+  isAuthor(username, commentid) {
+    return new Promise((resolve, reject) => new CommentData()
+      .findById(commentid)
+      .then(commentData => resolve(commentData.creator === username))
+      .catch(err => reject(err)));
   }
 
   // Validate the properties specified in 'properties' on the Comment object,

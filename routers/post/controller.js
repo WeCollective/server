@@ -431,6 +431,82 @@ module.exports.deleteComment = (req, res) => {
     });
 };
 
+module.exports.editComment = (req, res) => {
+  const {
+    commentid,
+    postid,
+  } = req.params;
+  const { username } = req.user;
+  const { text } = req.body;
+  const comment = new Comment();
+  const commentData = new CommentData();
+
+  if (!postid) {
+    return error.BadRequest(res, 'Missing postid');
+  }
+
+  if (!commentid) {
+    return error.BadRequest(res, 'Missing commentid');
+  }
+
+  if (!username) {
+    console.error('No username found in session.');
+    return error.InternalServerError(res);
+  }
+
+  if (!text) {
+    return error.BadRequest(res, 'Missing text');
+  }
+
+  return comment.findById(commentid)
+    // Check if the comment belongs to this post.
+    .then(() => {
+      if (comment.data.postid !== postid) {
+        return Promise.reject({ code: 404 });
+      }
+
+      return commentData.findById(commentid);
+    })
+    // Check if user is the author fo the comment.
+    // Otherwise, they cannot edit it.
+    .then(() => {
+      const { data } = commentData;
+
+      if (data.creator !== username) {
+        return Promise.reject({
+          code: 403,
+          message: 'You can edit only your own comments.',
+        });
+      }
+
+      commentData.set('edited', true);
+      commentData.set('text', text);
+
+      const checkProps = ['text'];
+      const invalids = commentData.validate(checkProps);
+      if (invalids.length) {
+        return Promise.reject({
+          code: 400,
+          message: `Invalid ${invalids[0]}`,
+        });
+      }
+
+      return commentData.update();
+    })
+    .then(() => success.OK(res))
+    .catch(err => {
+      console.error('Error editing comment:', err);
+
+      if (err) {
+        if (typeof err === 'object' && err.code) {
+          return error.code(res, err.code, err.message);
+        }
+      }
+
+      return error.InternalServerError(res);
+    });
+};
+
 module.exports.get = (req, res) => {
   const postid = req.params.postid;
 
@@ -1448,56 +1524,4 @@ module.exports.flagPost = (req, res) => {
     }
     return error.NotFound(res);
   });
-};
-
-module.exports.putComment = (req, res) => {
-  const {
-    commentid,
-    postid,
-  } = req.params;
-  const { username } = req.user;
-  const { text } = req.body;
-
-  if (!postid) {
-    return error.BadRequest(res, 'Missing postid');
-  }
-
-  if (!commentid) {
-    return error.BadRequest(res, 'Missing commentid');
-  }
-
-  if (!username) {
-    console.error('No username found in session.');
-    return error.InternalServerError(res);
-  }
-
-  if (!text) {
-    return error.BadRequest(res, 'Missing text');
-  }
-
-  const comment = new Comment();
-  const commentData = new CommentData({ id: commentid });
-
-  commentData.set('text', text);
-  commentData.set('edited', true);
-
-  const checkProps = ['id', 'text'];
-  const invalids = commentData.validate(checkProps);
-  if (invalids.length) {
-    return error.BadRequest(res, `Invalid ${invalids[0]}`);
-  }
-
-  // Check the comment belongs to this post.
-  return comment.findById(commentid)
-    .then(() => {
-      if (comment.data.postid !== postid) {
-        return Promise.reject({ code: 404 });
-      }
-      return commentData.update();
-    })
-    .then(() => success.OK(res))
-    .catch(err => {
-      console.error('Error updating comment.', err);
-      return error.InternalServerError(res);
-    });
 };

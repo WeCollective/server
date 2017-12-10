@@ -373,7 +373,7 @@ module.exports = () => {
         controller.voteComment(req, res);
       }
       else if (req.body.text) {
-        controller.putComment(req, res);
+        controller.editComment(req, res);
       }
       else {
         return error.BadRequest(res, 'Must specify either vote or text in body');

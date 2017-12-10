@@ -80,7 +80,10 @@ Model.prototype.set = function (name, value) {
 
   // set dirty flag for this property
   if (!this.dirtys.includes(name)) {
-    this.dirtys.push(name);
+    this.dirtys = [
+      ...this.dirtys,
+      name,
+    ];
   }
 };
 
@@ -105,10 +108,11 @@ Model.prototype.update = function (Key) {
 
     for (let i = 0; i < self.dirtys.length; i += 1) {
       const name = self.dirtys[i];
+      const value = self.data[name];
 
       AttributeUpdates[name] = {
         Action: 'PUT',
-        Value: self.data[name],
+        Value: value === '' ? null : self.data[name],
       };
     }
 
@@ -119,6 +123,7 @@ Model.prototype.update = function (Key) {
       TableName: self.config.table,
     }, err => {
       if (err) {
+        console.log(err);
         return reject(err);
       }
 

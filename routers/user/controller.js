@@ -16,27 +16,25 @@ const Notification = require('../../models/notification.model');
 const User = require('../../models/user.model');
 const UserImage = require('../../models/user-image.model');
 
-function getUsername (req) {
-  return new Promise( (resolve, reject) => {
-    if (req.ACLRole === ACL.Roles.Self) {
-      // ensure user object has been attached by passport
-      if (!req.user.username) {
-        console.error('No username found in session.');
-        return reject(error.InternalServerError);
-      }
-      
-      return resolve(req.user.username);
+const getUsername = req => new Promise((resolve, reject) => {
+  if (req.ACLRole === ACL.Roles.Self) {
+    // ensure user object has been attached by passport
+    if (!req.user.username) {
+      console.error('No username found in session.');
+      return reject(error.InternalServerError);
     }
-    else {
-      // ensure username is specified
-      if (!req.params.username) {
-        return reject(error.BadRequest);
-      }
-      
-      return resolve(req.params.username);
+
+    return resolve(req.user.username);
+  }
+  else {
+    // ensure username is specified
+    if (!req.params.username) {
+      return reject(error.BadRequest);
     }
-  });
-}
+
+    return resolve(req.params.username);
+  }
+});
 
 module.exports = {
   ban(req, res) {
@@ -132,42 +130,6 @@ module.exports = {
 
         return error.NotFound(res);
       });
-  },
-
-  get(req, res) {
-    return getUsername(req)
-      .then(username => {
-        const p1 = module.exports.getUserPicture(username, 'picture', false);
-        const p2 = module.exports.getUserPicture(username, 'picture', true);
-        const p3 = module.exports.getUserPicture(username, 'cover', false);
-        const p4 = module.exports.getUserPicture(username, 'cover', true);
-        const p5 = module.exports.getUserFollowedBranches(username);
-
-        return Promise.all([p1, p2, p3, p4, p5])
-          .then(values => {
-            const user = new User();
-            
-            user.findByUsername(username)
-              .then(() => {
-                let sanitized = user.sanitize(user.data, ACL.Schema(req.ACLRole, 'User'));
-                sanitized.profileUrl = values[0];
-                sanitized.profileUrlThumb = values[1];
-                sanitized.coverUrl = values[2];
-                sanitized.coverUrlThumb = values[3];
-                sanitized.followed_branches = values[4];
-                return success.OK(res, sanitized);
-              })
-              .catch(err => {
-                if (err) {
-                  console.error('Error fetching user:', err);
-                  return error.InternalServerError(res);
-                }
-                
-                return error.NotFound(res);
-              });
-          });
-      })
-      .catch(errorCb => errorCb(res));
   },
 
   // Legacy version.
@@ -461,7 +423,7 @@ module.exports = {
         
         if (invalids.length) {
           return Promise.reject({
-            message: `Invalid ${invalids[0]}`,
+            message: invalids[0],
             status: 400,
           });
         }
@@ -613,6 +575,40 @@ module.exports = {
   },
 };
 
+module.exports.get = (req, res) => getUsername(req)
+  .then(username => {
+    const p1 = module.exports.getUserPicture(username, 'picture', false);
+    const p2 = module.exports.getUserPicture(username, 'picture', true);
+    const p3 = module.exports.getUserPicture(username, 'cover', false);
+    const p4 = module.exports.getUserPicture(username, 'cover', true);
+    const p5 = module.exports.getUserFollowedBranches(username);
+
+    return Promise.all([p1, p2, p3, p4, p5])
+      .then(values => {
+        const user = new User();
+
+        user.findByUsername(username)
+          .then(() => {
+            let sanitized = user.sanitize(user.data, ACL.Schema(req.ACLRole, 'User'));
+            sanitized.profileUrl = values[0];
+            sanitized.profileUrlThumb = values[1];
+            sanitized.coverUrl = values[2];
+            sanitized.coverUrlThumb = values[3];
+            sanitized.followed_branches = values[4];
+            return success.OK(res, sanitized);
+          })
+          .catch(err => {
+            if (err) {
+              console.error('Error fetching user:', err);
+              return error.InternalServerError(res);
+            }
+            
+            return error.NotFound(res);
+          });
+      });
+  })
+  .catch(errorCb => errorCb(res));
+
 module.exports.getNotifications = (req, res) => {
   const {
     lastNotificationId,
@@ -712,7 +708,7 @@ module.exports.put = (req, res) => {
   const invalids = user.validate(propertiesToCheck);
   
   if (invalids.length) {
-    return error.BadRequest(res, `Invalid ${invalids[0]}`);
+    return error.BadRequest(res, invalids[0]);
   }
 
   user.update()

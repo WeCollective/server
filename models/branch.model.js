@@ -240,13 +240,7 @@ class Branch extends Model {
     }
 
     if (props.includes('rules')) {
-      if (!this.data.rules || this.data.rules.length < 1) {
-        invalids = [
-          ...invalids,
-          'Rules cannot be empty.',
-        ];
-      }
-      else if (this.data.rules.length > 10000) {
+      if (this.data.rules.length > 10000) {
         invalids = [
           ...invalids,
           'Rules cannot be longer than 10,000 characters.',

@@ -584,7 +584,7 @@ module.exports.put = (req, res) => {
 
   const branch = new Branch({ id: branchid });  
 
-  if (description) {
+  if (description !== undefined) {
     branch.set('description', description);
     propertiesToCheck = [
       ...propertiesToCheck,
@@ -592,7 +592,7 @@ module.exports.put = (req, res) => {
     ];
   }
 
-  if (name) {
+  if (name !== undefined) {
     branch.set('name', name);
     propertiesToCheck = [
       ...propertiesToCheck,
@@ -600,7 +600,7 @@ module.exports.put = (req, res) => {
     ];
   }
 
-  if (rules) {
+  if (rules !== undefined) {
     branch.set('rules', rules);
     propertiesToCheck = [
       ...propertiesToCheck,
@@ -611,7 +611,7 @@ module.exports.put = (req, res) => {
   // Check new parameters are valid, ignoring id validity
   const invalids = branch.validate(propertiesToCheck);
   if (invalids.length) {
-    return error.BadRequest(res, `Invalid ${invalids[0]}`);
+    return error.BadRequest(res, invalids[0]);
   }
 
   return branch.update()

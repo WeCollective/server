@@ -112,7 +112,7 @@ Model.prototype.update = function (Key) {
 
       AttributeUpdates[name] = {
         Action: 'PUT',
-        Value: value === '' ? null : self.data[name],
+        Value: value === '' ? null : value,
       };
     }
 

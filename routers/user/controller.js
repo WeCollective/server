@@ -706,7 +706,6 @@ module.exports.put = (req, res) => {
 
   // Check new parameters are valid, ignoring username and password validity
   const invalids = user.validate(propertiesToCheck);
-  
   if (invalids.length) {
     return error.BadRequest(res, invalids[0]);
   }

@@ -129,11 +129,11 @@ module.exports.addObjects = (objects, type) => {
 
   const index = client.initIndex(getIndexName(type));
 
-  return new Promise((resolve, reject) => {
+  return new Promise(resolve => {
     index.addObjects(objects, (err, content) => {
       if (err) {
         console.error(err);
-        return reject(err);
+        // return reject(err);
       }
       return resolve(content);
     });
@@ -156,36 +156,41 @@ module.exports.search = query => {
     query,
   }];
 
-  return new Promise((resolve, reject) => {
+  return new Promise(resolve => {
     client.search(queries, (err, content) => {
+      let results = [];
+
       if (err) {
         console.error(err);
-        return reject(err);
+        // return reject(err);
       }
 
-      const branches = content.results[0];
-      const posts = content.results[1];
-      const users = content.results[2];
+      if (content) {
+        const branches = content.results[0];
+        const posts = content.results[1];
+        const users = content.results[2];
 
-      const bResults = branches.hits.map(x => ({
-        id: x.objectID,
-        text: x._highlightResult.name.value,
-        type: 'branch',
-      }));
+        const bResults = branches.hits.map(x => ({
+          id: x.objectID,
+          text: x._highlightResult.name.value,
+          type: 'branch',
+        }));
 
-      const pResults = posts.hits.map(x => ({
-        id: x.objectID,
-        text: x._highlightResult.title.value,
-        type: 'post',
-      }));
+        const pResults = posts.hits.map(x => ({
+          id: x.objectID,
+          text: x._highlightResult.title.value,
+          type: 'post',
+        }));
 
-      const uResults = users.hits.map(x => ({
-        id: x.objectID,
-        text: x._highlightResult.name.value,
-        type: 'user',
-      }));
+        const uResults = users.hits.map(x => ({
+          id: x.objectID,
+          text: x._highlightResult.name.value,
+          type: 'user',
+        }));
 
-      const results = [...bResults, ...pResults, ...uResults];
+        results = [...bResults, ...pResults, ...uResults];
+      }
+
       return resolve(results);
     });
   });
@@ -197,11 +202,11 @@ module.exports.updateObjects = (objects, type) => {
 
   const index = client.initIndex(getIndexName(type));
 
-  return new Promise((resolve, reject) => {
+  return new Promise(resolve => {
     index.partialUpdateObjects(objects, (err, content) => {
       if (err) {
         console.error(err);
-        return reject(err);
+        // return reject(err);
       }
       return resolve(content);
     });

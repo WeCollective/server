@@ -542,7 +542,7 @@ module.exports.getComment = (req, res) => {
   }
 
   return module.exports.getOneComment(commentId, req)
-    .then(comment => success.OK(res, comment.data))
+    .then(comment => success.OK(res, comment))
     .catch(err => {
       if (err) {
         if (typeof err === 'object' && err.code) {

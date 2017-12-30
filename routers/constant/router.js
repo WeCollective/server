@@ -10,6 +10,20 @@ const router = express.Router();
 module.exports = () => {
   const controller = require('./controller');
 
+  router.route('/')
+    /**
+     * @api {get} /constant Get all global constants
+     * @apiName Get all global constants
+     * @apiGroup Constants
+     * @apiPermission guest
+     * @apiVersion 1.0.0
+     *
+     * @apiUse OK
+     * @apiUse NotFound
+     * @apiUse InternalServerError
+     */
+    .get(controller.getAll);
+
   router.route('/:id')
     /**
      * @api {get} /constant/:id Get a global constant

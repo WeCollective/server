@@ -33,6 +33,7 @@
     "htmlparser": "^1.7.7",
     "jwt-simple": "^0.5.1",
     "lodash": "^4.13.1",
+    "morgan": "^1.9.0",
     "node-gyp": "^3.3.1",
     "passport": "^0.3.2",
     "passport-jwt": "^3.0.0",

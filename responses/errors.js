@@ -1,5 +1,4 @@
 /* Module to send error responses to the client */
-'use strict';
 
 /**
  * @apiDefine BadRequest
@@ -15,6 +14,9 @@ module.exports.BadRequest = (res, msg, rtnPromise) => {
 };
 
 module.exports.code = (res, code, msg, rtnPromise) => {
+  console.log('❌ Sending back an error...');
+  console.log(`Code: ${code}`);
+  console.log(`Message: ${msg}`);
   res.statusCode = code || 500;
   res.send({ message: msg || 'Something went wrong. We\'re looking into it.'});
 

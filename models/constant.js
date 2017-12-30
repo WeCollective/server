@@ -16,28 +16,42 @@ class Constant extends Model {
     this.data = this.sanitize(props);
   }
 
-  // Get a Constant by its id from the db, and
-  // instantiate the object with this data.
+  // Get a Constant by its id from the db, and instantiate the object with this data.
   // Rejects promise with true if database error, with false if no constant found.
-  findById(id) {
+  // Update: Preserve functionality, but support fetching multiple constants at once.
+  // this.validate() will not work in such cases, we should support multiple items in all
+  // models though.
+  findById(ids) {
     const self = this;
+    const { table } = this.config;
+
+    if (!Array.isArray(ids)) {
+      ids = [ids];
+    }
 
     return new Promise((resolve, reject) => {
-      aws.dbClient.get({
-        Key: {
-          id,
+      aws.dbClient.batchGet({
+        RequestItems: {
+          [table]: {
+            Keys: ids.map(id => ({ id })),
+          },
         },
-        TableName: self.config.table,
       }, (err, data) => {
         if (err) {
           return reject(err);
         }
 
-        if (!data || !data.Item) {
+        if (!data || !data.Responses) {
           return reject();
         }
 
-        self.data = data.Item;
+        const Responses = data.Responses[table];
+
+        if (!Responses || !Responses.length) {
+          return reject();
+        }
+
+        self.data = ids.length === 1 ? Responses[0] : Responses;
         return resolve(self.data);
       });
     });

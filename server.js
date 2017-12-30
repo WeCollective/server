@@ -9,17 +9,20 @@
   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
   SOFTWARE.
 */
-'use strict';
 
 // REQUIRE MODULES
-require('dotenv').config();                        // load any environment variables from the .env file
+require('dotenv').config(); // load any environment variables from the .env file
 
-const express = require('express');                // call express
-const app = express();                             // define our app using express
-const helmet = require('helmet');                  // protect against common web vulnerabilities
 const bearerToken = require('express-bearer-token');
-const bodyParser = require('body-parser');         // reading request bodies
-const cookieParser = require('cookie-parser');     // reading cookies
+const bodyParser = require('body-parser');
+const cookieParser = require('cookie-parser'); // reading cookies
+const express = require('express');
+const helmet = require('helmet'); // protect against common web vulnerabilities
+const morgan = require('morgan');
+
+const clearConsole = require('./utils/clear-console');
+
+const app = express(); // define our app using express
 
 // DISABLE LOGGING IF IN TEST MODE
 if (process.env.NODE_ENV === 'test') {
@@ -46,6 +49,9 @@ if (process.env.NODE_ENV === 'production') {
   });
 }
 
+// Request logging.
+app.use(morgan(process.env.NODE_ENV === 'production' ? 'common' : 'dev'));
+
 // CROSS ORIGIN RESOURCE SHARING
 app.use((req, res, next) => {
   const allowedOrigins = [
@@ -58,9 +64,9 @@ app.use((req, res, next) => {
     'http://www.weco.io',
     'https://www.weco.io',
     'http://weco.io',
-    'https://weco.io'
+    'https://weco.io',
   ];
-  const origin = req.headers.origin;
+  const { origin } = req.headers;
 
   if (allowedOrigins.includes(origin)) {
     res.header('Access-Control-Allow-Origin', origin);
@@ -69,7 +75,7 @@ app.use((req, res, next) => {
   res.header('Access-Control-Allow-Credentials', 'true');
   res.header('Access-Control-Allow-Methods', 'GET, PUT, POST, DELETE, PATCH, OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Authorization, Accept');
-  
+
   next();
 });
 
@@ -102,7 +108,9 @@ app.use('/docs', express.static(`${__dirname}/docs`));
 
 // START THE SERVER
 server.listen(port);
-console.log(`Magic happens on port ${port}`);
+
+clearConsole();
+console.log(`🎩 Magic happens on port ${port}!`);
 
 // export app for testing
 module.exports = server;

@@ -1,5 +1,5 @@
 const aws = require('../config/aws');
-const db  = require('../config/database');
+const db = require('../config/database');
 const Model = require('./model');
 const PostData = require('./post-data.model');
 const validate = require('./validate');

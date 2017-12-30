@@ -1,66 +1,79 @@
-'use strict';
+const aws = require('../config/aws');
+const db = require('../config/database');
+const Model = require('./model');
+const validate = require('./validate');
 
-var Model = require('./model.js');
-var db = require('../config/database.js');
-var aws = require('../config/aws.js');
-var validate = require('./validate.js');
+class PostImage extends Model {
+  constructor(props) {
+    super(props);
 
-var PostImage = function(data) {
-  this.config = {
-    schema: db.Schema.PostImages,
-    table: db.Table.PostImages,
-    keys: db.Keys.PostImages
-  };
-  this.restricted = ['id'];
-  this.data = this.sanitize(data);
-};
+    this.config = {
+      keys: db.Keys.PostImages,
+      schema: db.Schema.PostImages,
+      table: db.Table.PostImages,
+    };
 
-// UserPicture model inherits from Model
-PostImage.prototype = Object.create(Model.prototype);
-PostImage.prototype.constructor = PostImage;
-
-// Validate user picture object, returning an array of any invalid properties
-PostImage.prototype.validate = function() {
-  var invalids = [];
-
-  // check for valid id ending with -picture or -cover
-  if(!this.data.id || (!this.data.id.endsWith('-picture'))) {
-    invalids.push('id');
+    this.data = this.sanitize(props);
+    this.restricted = ['id'];
   }
 
-  // check for valid date
-  if(!validate.date(this.data.date)) {
-    invalids.push('date');
-  }
+  // Get a branch image of given type ('picture', 'cover') by it's id from the db, and
+  // instantiate the object with this data.
+  // Rejects promise with true if database error, with false if no image entry found.
+  findById(id) {
+    const self = this;
 
-  // check for valid extension
-  if(!validate.extension(this.data.extension)) {
-    invalids.push('extension');
-  }
+    return new Promise((resolve, reject) => {
+      aws.dbClient.get({
+        Key: {
+          'id': `${id}-picture`,
+        },
+        TableName: self.config.table,
+      }, (err, data) => {
+        if (err) {
+          return reject(err);
+        }
 
-  return invalids;
-};
+        if (!data || !data.Item) {
+          return reject();
+        }
 
-// Get a branch image of given type ('picture', 'cover') by it's id from the db, and
-// instantiate the object with this data.
-// Rejects promise with true if database error, with false if no image entry found.
-PostImage.prototype.findById = function(id) {
-  var self = this;
-  return new Promise(function(resolve, reject) {
-    aws.dbClient.get({
-      TableName: self.config.table,
-      Key: {
-        'id': id + '-picture'
-      }
-    }, function(err, data) {
-      if(err) return reject(err);
-      if(!data || !data.Item) {
-        return reject();
-      }
-      self.data = data.Item;
-      return resolve(data.Item);
+        self.data = data.Item;
+        return resolve(data.Item);
+      });
     });
-  });
-};
+  }
+
+  // Validate user picture object, returning an array of any invalid properties
+  validate() {
+    let invalids = [];
+
+    // check for valid id ending with -picture or -cover
+    if (!this.data.id || !this.data.id.endsWith('-picture')) {
+      invalids = [
+        ...invalids,
+        'id',
+      ];
+    }
+
+    // check for valid date
+    if (!validate.date(this.data.date)) {
+      invalids = [
+        ...invalids,
+        'date',
+      ];
+    }
+
+    // check for valid extension
+    if (!validate.extension(this.data.extension)) {
+      invalids = [
+        ...invalids,
+        'extension',
+      ];
+    }
+
+    return invalids;
+  }
+}
 
 module.exports = PostImage;

@@ -12,7 +12,6 @@ const success = require('../../responses/successes');
 const Branch = require('../../models/branch.model');
 const FollowedBranch = require('../../models/followed-branch.model');
 const Notification = require('../../models/notification.model');
-// const Session = require('../../models/session.model');
 const User = require('../../models/user.model');
 const UserImage = require('../../models/user-image.model');
 
@@ -482,35 +481,13 @@ module.exports = {
   },
 
   subscribeToNotifications(req, res) {
-    if (!req.user.username || !req.sessionID) {
+    if (!req.user.username) {
       return error.InternalServerError(res);
     }
 
     if (!req.body.socketID) {
       return error.BadRequest(res, 'Missing socketID');
     }
-
-    // fetch user's session
-    // todo
-    /*
-    const session = new Session();
-    
-    session.findById(`sess:${req.sessionID}`)
-      .then( _ => {
-        // add the socketID and save
-        session.set('socketID', req.body.socketID);
-        return session.save();
-      })
-      .then( _ => success.OK(res) )
-      .catch( err => {
-        if (err) {
-          console.error(`Error subscribing to notifications: `, err);
-          return error.InternalServerError(res);
-        }
-
-        return error.NotFound(res);
-      });
-    */
   },
 
   unfollowBranch(req, res) {
@@ -546,68 +523,51 @@ module.exports = {
   },
 
   unsubscribeFromNotifications(req, res) {
-    if (!req.user.username || !req.sessionID) {
+    if (!req.user.username) {
       return error.InternalServerError(res);
     }
-
-    // fetch user's session
-    /*
-    const session = new Session();
-    
-    session.findById(`sess:${req.sessionID}`)
-      .then( _ => {
-        // add the socketID and save
-        session.set('socketID', null);
-        return session.save();
-      })
-      .then( _ => {
-        return success.OK(res);
-      })
-      .catch( err => {
-        if (err) {
-          console.error(`Error unsubscribing from notifications: `, err);
-          return error.InternalServerError(res);
-        }
-
-        return error.NotFound(res);
-      });
-    */
   },
 };
 
-module.exports.get = (req, res) => getUsername(req)
-  .then(username => {
-    const p1 = module.exports.getUserPicture(username, 'picture', false);
-    const p2 = module.exports.getUserPicture(username, 'picture', true);
-    const p3 = module.exports.getUserPicture(username, 'cover', false);
-    const p4 = module.exports.getUserPicture(username, 'cover', true);
-    const p5 = module.exports.getUserFollowedBranches(username);
+module.exports.get = (req, res) => {
+  const user = new User();
+  let username;
 
-    return Promise.all([p1, p2, p3, p4, p5])
-      .then(values => {
-        const user = new User();
+  return getUsername(req)
+    .then(uName => {
+      username = uName;
+      return user.findByUsername(username);
+    })
+    .then(() => {
+      const p1 = module.exports.getUserPicture(username, 'picture', false);
+      const p2 = module.exports.getUserPicture(username, 'picture', true);
+      const p3 = module.exports.getUserPicture(username, 'cover', false);
+      const p4 = module.exports.getUserPicture(username, 'cover', true);
+      const p5 = module.exports.getUserFollowedBranches(username);
+      return Promise.all([p1, p2, p3, p4, p5]);
+    })
+    .then(values => {
+      let sanitized = user.sanitize(user.data, ACL.Schema(req.ACLRole, 'User'));
+      sanitized.profileUrl = values[0];
+      sanitized.profileUrlThumb = values[1];
+      sanitized.coverUrl = values[2];
+      sanitized.coverUrlThumb = values[3];
+      sanitized.followed_branches = values[4];
+      return success.OK(res, sanitized);
+    })
+    .catch(err => {
+      if (typeof err === 'function') {
+        return err(res);
+      }
 
-        user.findByUsername(username)
-          .then(() => {
-            let sanitized = user.sanitize(user.data, ACL.Schema(req.ACLRole, 'User'));
-            sanitized.profileUrl = values[0];
-            sanitized.profileUrlThumb = values[1];
-            sanitized.coverUrl = values[2];
-            sanitized.coverUrlThumb = values[3];
-            sanitized.followed_branches = values[4];
-            return success.OK(res, sanitized);
-          })
-          .catch(err => {
-            if (err) {
-              console.error('Error fetching user:', err);
-              return error.InternalServerError(res);
-            }
-            
-            return error.NotFound(res);
-          });
-      });
-  })
-  .catch(errorCb => errorCb(res));
+      if (err) {
+        console.error('Error fetching user:', err);
+        return error.InternalServerError(res);
+      }
+      
+      return error.NotFound(res);
+    });
+};
 
 module.exports.getNotifications = (req, res) => {
   const {

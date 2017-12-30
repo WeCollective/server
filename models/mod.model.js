@@ -1,81 +1,89 @@
-'use strict';
-
 const aws = require('../config/aws');
 const db = require('../config/database');
 const Model = require('./model');
 const validate = require('./validate');
 
-const Mod = function (data) {
-  this.config = {
-    keys: db.Keys.Mods,
-    schema: db.Schema.Mod,
-    table: db.Table.Mods,
-  };
-  this.data = this.sanitize(data);
-};
+class Mod extends Model {
+  constructor(props) {
+    super(props);
 
-// User model inherits from Model
-Mod.prototype = Object.create(Model.prototype);
-Mod.prototype.constructor = Mod;
+    this.config = {
+      keys: db.Keys.Mods,
+      schema: db.Schema.Mod,
+      table: db.Table.Mods,
+    };
 
-// Get the mods of a specific branch, passing results into resolve
-// Rejects promise with true if database error, with false if no mods found.
-Mod.prototype.findByBranch = function (branchid) {
-  const self = this;
+    this.data = this.sanitize(props);
+  }
 
-  return new Promise((resolve, reject) => {
-    aws.dbClient.query({
-      ExpressionAttributeValues: {
-        ':id': branchid,
-      },
-      KeyConditionExpression: 'branchid = :id',
-      TableName: self.config.table,
-    }, (err, data) => {
-      if (err) {
-        return reject(err);
-      }
+  // Get the mods of a specific branch, passing results into resolve
+  // Rejects promise with true if database error, with false if no mods found.
+  findByBranch(branchid) {
+    const self = this;
 
-      if (!data || !data.Items) {
-        return reject();
-      }
+    return new Promise((resolve, reject) => {
+      aws.dbClient.query({
+        ExpressionAttributeValues: {
+          ':id': branchid,
+        },
+        KeyConditionExpression: 'branchid = :id',
+        TableName: self.config.table,
+      }, (err, data) => {
+        if (err) {
+          return reject(err);
+        }
 
-      return resolve(data.Items);
+        if (!data || !data.Items) {
+          return reject();
+        }
+
+        return resolve(data.Items);
+      });
     });
-  });
-};
-
-// Validate the properties specified in 'properties' on the mod object,
-// returning an array of any invalid ones
-Mod.prototype.validate = function (properties) {
-  if (!properties || properties.length === 0) {
-    properties = [
-      'branchid',
-      'date',
-      'username',
-    ];
   }
 
-  const invalids = [];
-
-  if (properties.includes('branchid')) {
-    if (!validate.branchid(this.data.branchid)) {
-      invalids.push('Invalid branchid.');
+  // Validate the properties specified in 'properties' on the mod object,
+  // returning an array of any invalid ones
+  validate(props) {
+    if (!Array.isArray(props) || !props.length) {
+      props = [
+        'branchid',
+        'date',
+        'username',
+      ];
     }
-  }
 
-  if (properties.includes('date')) {
-    if (!validate.date(this.data.date)) {
-      invalids.push('Invalid date.');
+    let invalids = [];
+
+    if (props.includes('branchid')) {
+      if (!validate.branchid(this.data.branchid)) {
+        invalids = [
+          ...invalids,
+          'Invalid branchid.',
+        ];
+      }
     }
-  }
 
-  if (properties.includes('username')) {
-    if (!validate.username(this.data.username)) {
-      invalids.push('Invalid username.');
+    if (props.includes('date')) {
+      if (!validate.date(this.data.date)) {
+        invalids = [
+          ...invalids,
+          'Invalid date.',
+        ];
+      }
     }
-  }
 
-  return invalids;
-};
+    if (props.includes('username')) {
+      if (!validate.username(this.data.username)) {
+        invalids = [
+          ...invalids,
+          'Invalid username.',
+        ];
+      }
+    }
+
+    return invalids;
+  }
+}
 
 module.exports = Mod;

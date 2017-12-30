@@ -20,6 +20,7 @@ module.exports.OK = (res, data) => {
     success.data = data;
   }
 
+  console.log(JSON.stringify(success, null, 2));
   res.send(success);
 };
 

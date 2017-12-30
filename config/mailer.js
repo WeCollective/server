@@ -1,5 +1,5 @@
 const mailHelper = require('sendgrid').mail;
-const sendgrid   = require('sendgrid')(process.env.SENDGRID_MAIL_API_KEY);
+const sendgrid = require('sendgrid')(process.env.SENDGRID_MAIL_API_KEY);
 
 function mmddyyyy(date) {
   const mm = (date.getMonth() + 1).toString();

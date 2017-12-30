@@ -1,8 +1,10 @@
-const aws = require('../config/aws');
-const db = require('../config/database');
-const Model = require('./model');
-const PostData = require('./post-data.model');
-const validate = require('./validate');
+const reqlib = require('app-root-path').require;
+
+const aws = reqlib('config/aws');
+const db = reqlib('config/database');
+const Model = reqlib('models/model');
+const PostData = reqlib('models/post-data.model');
+const validate = reqlib('models/validate');
 
 const formatPostsToNewAPI = posts => {
   posts = posts || [];

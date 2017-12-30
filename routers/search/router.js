@@ -1,8 +1,9 @@
 const express = require('express');
+const reqlib = require('app-root-path').require;
 
-// const ACL = require('../../config/acl');
-// const error = require('../../responses/errors');
-const passport = require('../../config/passport')();
+// const ACL = reqlib('config/acl');
+// const error = reqlib('responses/errors');
+const passport = reqlib('config/passport')();
 
 const router = express.Router();
 

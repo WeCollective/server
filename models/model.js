@@ -1,7 +1,9 @@
 'use strict';
 
 const _ = require('lodash');
-const aws = require('../config/aws');
+const reqlib = require('app-root-path').require;
+
+const aws = reqlib('config/aws');
 
 // Model constructor
 const Model = function() {

@@ -1,5 +1,7 @@
-const error = require('../responses/errors');
-const Mod = require('../models/mod.model');
+const reqlib = require('app-root-path').require;
+
+const error = reqlib('responses/errors');
+const Mod = reqlib('models/mod.model');
 
 const ACL = {};
 

@@ -1,19 +1,21 @@
 const _ = require('lodash');
-const ACL = require('../../config/acl');
-const algolia = require('../../config/algolia');
-const auth = require('../../config/auth');
-const aws = require('../../config/aws');
-const error = require('../../responses/errors');
-const fs = require('../../config/filestorage');
-const mailer = require('../../config/mailer');
-const success = require('../../responses/successes');
+const reqlib = require('app-root-path').require;
+
+const ACL = reqlib('config/acl');
+const algolia = reqlib('config/algolia');
+const auth = reqlib('config/auth');
+const aws = reqlib('config/aws');
+const error = reqlib('responses/errors');
+const fs = reqlib('config/filestorage');
+const mailer = reqlib('config/mailer');
+const success = reqlib('responses/successes');
 
 // Models
-const Branch = require('../../models/branch.model');
-const FollowedBranch = require('../../models/followed-branch.model');
-const Notification = require('../../models/notification.model');
-const User = require('../../models/user.model');
-const UserImage = require('../../models/user-image.model');
+const Branch = reqlib('models/branch.model');
+const FollowedBranch = reqlib('models/followed-branch.model');
+const Notification = reqlib('models/notification.model');
+const User = reqlib('models/user.model');
+const UserImage = reqlib('models/user-image.model');
 
 const getUsername = req => new Promise((resolve, reject) => {
   if (req.ACLRole === ACL.Roles.Self) {

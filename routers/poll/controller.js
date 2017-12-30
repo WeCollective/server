@@ -1,11 +1,11 @@
-'use strict';
+const reqlib = require('app-root-path').require;
 
-const error = require('../../responses/errors');
-const PollAnswer = require('../../models/poll-answer.model');
-const Post = require('../../models/post.model');
-const PostData = require('../../models/post-data.model');
-const success = require('../../responses/successes');
-const Vote = require('../../models/user-vote.model');
+const error = reqlib('responses/errors');
+const PollAnswer = reqlib('models/poll-answer.model');
+const Post = reqlib('models/post.model');
+const PostData = reqlib('models/post-data.model');
+const success = reqlib('responses/successes');
+const Vote = reqlib('models/user-vote.model');
 
 module.exports = {
   get(req, res) {

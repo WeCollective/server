@@ -1,4 +1,4 @@
-var bcrypt = require('bcryptjs');
+const bcrypt = require('bcryptjs');
 
 module.exports = {
   // Compare password with stored hash from database using bcrypt.

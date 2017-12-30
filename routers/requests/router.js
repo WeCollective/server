@@ -1,8 +1,8 @@
-'use strict';
-
-const ACL = require('../../config/acl');
 const express = require('express');
-const passport = require('../../config/passport')();
+const reqlib = require('app-root-path').require;
+
+const ACL = reqlib('config/acl');
+const passport = reqlib('config/passport')();
 
 const router = express.Router({ mergeParams: true });
 

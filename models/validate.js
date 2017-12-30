@@ -1,4 +1,7 @@
-const NotificationTypes = require('../config/notification-types');
+const reqlib = require('app-root-path').require;
+
+// const Limits = reqlib('config/limits');
+const NotificationTypes = reqlib('config/notification-types');
 
 const policy = /^[a-z0-9_-]+$/;
 const validate = {};
@@ -65,6 +68,7 @@ validate.extension = ext => {
 };
 
 validate.notificationid = id => {
+  console.log(id, id.length);
   if (!id || id.length < 1 || id.length > 30) {
     return false;
   }

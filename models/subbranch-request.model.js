@@ -1,11 +1,13 @@
 const _ = require('lodash');
-const aws = require('../config/aws');
-const db = require('../config/database');
-const Mod = require('./mod.model');
-const Model = require('./model');
-const Notification = require('./notification.model');
-const NotificationTypes = require('../config/notification-types');
-const validate = require('./validate');
+const reqlib = require('app-root-path').require;
+
+const aws = reqlib('config/aws');
+const db = reqlib('config/database');
+const Mod = reqlib('models/mod.model');
+const Model = reqlib('models/model');
+const Notification = reqlib('models/notification.model');
+const NotificationTypes = reqlib('config/notification-types');
+const validate = reqlib('models/validate');
 
 class SubBranchRequest extends Model {
   constructor(props) {

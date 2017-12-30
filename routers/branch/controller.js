@@ -1,18 +1,20 @@
-const algolia = require('../../config/algolia');
-const aws = require('../../config/aws');
-const Branch = require('../../models/branch.model');
-const BranchImage = require('../../models/branch-image.model');
-const Constant = require('../../models/constant');
-const error = require('../../responses/errors');
-const fs = require('../../config/filestorage');
-const mailer = require('../../config/mailer');
-const Mod = require('../../models/mod.model');
-const ModLogEntry = require('../../models/mod-log-entry.model');
-const RequestsController = require('../requests/controller');
-const SubBranchRequest = require('../../models/subbranch-request.model');
-const success = require('../../responses/successes');
-const Tag = require('../../models/tag.model');
-const User = require('../../models/user.model');
+const reqlib = require('app-root-path').require;
+
+const algolia = reqlib('config/algolia');
+const aws = reqlib('config/aws');
+const Branch = reqlib('models/branch.model');
+const BranchImage = reqlib('models/branch-image.model');
+const Constant = reqlib('models/constant');
+const error = reqlib('responses/errors');
+const fs = reqlib('config/filestorage');
+const mailer = reqlib('config/mailer');
+const Mod = reqlib('models/mod.model');
+const ModLogEntry = reqlib('models/mod-log-entry.model');
+const RequestsController = reqlib('routers/requests/controller');
+const SubBranchRequest = reqlib('models/subbranch-request.model');
+const success = reqlib('responses/successes');
+const Tag = reqlib('models/tag.model');
+const User = reqlib('models/user.model');
 
 const fetchBranchPicture = (branchid, type) => new BranchImage()
   .findById(branchid, type)

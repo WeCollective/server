@@ -3,17 +3,19 @@
  * 
  * Visit http://passportjs.org/docs to learn how the Strategies work.
  */
-const algolia = require('./algolia');
-const auth = require('./auth');
-const error = require('../responses/errors');
 const ExtractJwt = require('passport-jwt').ExtractJwt;
 const jwt = require('jwt-simple');
-const JwtConfig = require('./jwt');
 const LocalStrategy = require('passport-local').Strategy;
-const mailer = require('./mailer');
 const JwtStrategy = require('passport-jwt').Strategy;
 const passport = require('passport');
-const User = require('../models/user.model');
+const reqlib = require('app-root-path').require;
+
+const algolia = reqlib('config/algolia');
+const auth = reqlib('config/auth');
+const error = reqlib('responses/errors');
+const JwtConfig = reqlib('config/jwt');
+const mailer = reqlib('config/mailer');
+const User = reqlib('models/user.model');
 
 module.exports = () => {
   /* Potentially legacy */

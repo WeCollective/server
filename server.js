@@ -19,8 +19,9 @@ const cookieParser = require('cookie-parser'); // reading cookies
 const express = require('express');
 const helmet = require('helmet'); // protect against common web vulnerabilities
 const morgan = require('morgan');
+const reqlib = require('app-root-path').require;
 
-const clearConsole = require('./utils/clear-console');
+const clearConsole = reqlib('utils/clear-console');
 
 const app = express(); // define our app using express
 
@@ -82,12 +83,12 @@ app.use((req, res, next) => {
 // AUTHENTICATION AND JWT MANAGEMENT
 app.use(bearerToken());
 
-const auth = require('./config/passport')();
+const auth = reqlib('config/passport')();
 app.use(auth.initialize());
 
 // INITIALISE SOCKET.IO FOR EACH NAMESPACE
 const server = require('http').Server(app);
-const io = require('./config/io')(server);
+const io = reqlib('config/io')(server);
 
 io.notifications.on('connection', socket => {
   // Give the client their socket id so they can subscribe to real time notifications
@@ -100,7 +101,7 @@ io.notifications.on('connection', socket => {
 });
 
 // THE API ROUTES
-const apiRouter = require('./routers/router')(app);
+const apiRouter = reqlib('routers/router')(app);
 app.use('/', apiRouter);
 
 // SERVE THE DOCS ON THE BASE ROUTE

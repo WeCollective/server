@@ -1,17 +1,16 @@
-'use strict';
-
-const Branch = require('../../models/branch.model');
-const Mod = require('../../models/mod.model');
-const ModLogEntry = require('../../models/mod-log-entry.model');
-const Notification = require('../../models/notification.model');
-const NotificationTypes = require('../../config/notification-types');
-const SubBranchRequest = require('../../models/subbranch-request.model');
-const Tag = require('../../models/tag.model');
-
-const error = require('../../responses/errors');
-const success = require('../../responses/successes');
-
 const _ = require('lodash');
+const reqlib = require('app-root-path').require;
+
+const Branch = reqlib('models/branch.model');
+const Mod = reqlib('models/mod.model');
+const ModLogEntry = reqlib('models/mod-log-entry.model');
+const Notification = reqlib('models/notification.model');
+const NotificationTypes = reqlib('config/notification-types');
+const SubBranchRequest = reqlib('models/subbranch-request.model');
+const Tag = reqlib('models/tag.model');
+
+const error = reqlib('responses/errors');
+const success = reqlib('responses/successes');
 
 const put = {
   createNotification(type, creator, data, date) {

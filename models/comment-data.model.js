@@ -1,7 +1,9 @@
-const aws = require('../config/aws');
-const db = require('../config/database');
-const Model = require('./model');
-const validate = require('./validate');
+const reqlib = require('app-root-path').require;
+
+const aws = reqlib('config/aws');
+const db = reqlib('config/database');
+const Model = reqlib('models/model');
+const validate = reqlib('models/validate');
 
 class CommentData extends Model {
   constructor(props) {

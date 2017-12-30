@@ -1,17 +1,19 @@
-const algolia = require('../../config/algolia');
-const ACL = require('../../config/acl');
-const Branch = require('../../models/branch.model');
-const error  = require('../../responses/errors');
-const FlaggedPost = require('../../models/flagged-post.model');
-const Mod = require('../../models/mod.model');
-const Notification = require('../../models/notification.model');
-const NotificationTypes = require('../../config/notification-types');
-const Post = require('../../models/post.model');
-const PostCtrl = require('../post/controller');
-const PostData = require('../../models/post-data.model');
-const success   = require('../../responses/successes');
-const User = require('../../models/user.model');
-const Vote = require('../../models/user-vote.model');
+const reqlib = require('app-root-path').require;
+
+const algolia = reqlib('config/algolia');
+const ACL = reqlib('config/acl');
+const Branch = reqlib('models/branch.model');
+const error  = reqlib('responses/errors');
+const FlaggedPost = reqlib('models/flagged-post.model');
+const Mod = reqlib('models/mod.model');
+const Notification = reqlib('models/notification.model');
+const NotificationTypes = reqlib('config/notification-types');
+const Post = reqlib('models/post.model');
+const PostCtrl = reqlib('routers/post/controller');
+const PostData = reqlib('models/post-data.model');
+const success = reqlib('responses/successes');
+const User = reqlib('models/user.model');
+const Vote = reqlib('models/user-vote.model');
 
 const VALID_POST_TYPE_VALUES = [
   'all',

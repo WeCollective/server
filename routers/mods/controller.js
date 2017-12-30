@@ -1,15 +1,15 @@
-'use strict';
+const reqlib = require('app-root-path').require;
 
-var NotificationTypes = require('../../config/notification-types.js');
-var mailer = require('../../config/mailer.js');
+const mailer = reqlib('config/mailer');
+const NotificationTypes = reqlib('config/notification-types');
 
-var Mod = require('../../models/mod.model.js');
-var User = require('../../models/user.model.js');
-var ModLogEntry = require('../../models/mod-log-entry.model.js');
-var Notification = require('../../models/notification.model.js');
+const Mod = reqlib('models/mod.model');
+const ModLogEntry = reqlib('models/mod-log-entry.model');
+const Notification = reqlib('models/notification.model');
+const User = reqlib('models/user.model');
 
-var success = require('../../responses/successes.js');
-var error = require('../../responses/errors.js');
+const error = reqlib('responses/errors');
+const success = reqlib('responses/successes');
 
 function postModLogEntry(req, res, action, data) {
   return new Promise(function(resolve, reject) {

@@ -1,5 +1,3 @@
-'use strict';
-
 /**
  * @apiDefine OK
  * @apiError (Successes) 200-OK The server successfully carried out the request.

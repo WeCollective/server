@@ -1,11 +1,10 @@
-'use strict';
-
 const express = require('express');
+const reqlib = require('app-root-path').require;
 
-const ACL = require('../../config/acl');
-const Constant = require('../../models/constant');
-const passport = require('../../config/passport')();
-const success = require('../../responses/successes');
+const ACL = reqlib('config/acl');
+const Constant = reqlib('models/constant');
+const passport = reqlib('config/passport')();
+const success = reqlib('responses/successes');
 
 const router = express.Router();
 
@@ -29,32 +28,30 @@ module.exports = () => {
    * @apiUse InternalServerError
    */
   router.route('/')
-    .post((req, res, next) => {
-      // local-signup with override of done() method to access info object from passport strategy
-      passport.authenticate('LocalSignUp', (err, user, info) => {
-        if (err) {
-          return next(err);
-        }
-        
-        // If no user object, send error response
-        if (!user) {
-          return res.status(info.status || 403).json({ message: info.message });
-        }
+    // local-signup with override of done() method to access info object from passport strategy
+    .post((req, res, next) => passport.authenticate('LocalSignUp', (err, user, info) => {
+      if (err) {
+        return res.status(err.status || 403).json({ message: err.message });
+      }
+      
+      // If no user object, send error response
+      if (!user) {
+        return res.status(info.status || 403).json({ message: info.message });
+      }
 
-        const userCount = new Constant();
-        
-        return userCount.findById('user_count')
-          .then(() => {
-            userCount.set('data', userCount.data.data + 1);
-            return userCount.update();
-          })
-          .then(() => success.OK(res))
-          .catch(err => {
-            console.error('Error updating user count:', err);
-            return success.OK(res);
-          });
-      })(req, res, next);
-    });
+      const userCount = new Constant();
+      
+      return userCount.findById('user_count')
+        .then(() => {
+          userCount.set('data', userCount.data.data + 1);
+          return userCount.update();
+        })
+        .then(() => success.OK(res))
+        .catch(err => {
+          console.error('Error updating user count:', err);
+          return success.OK(res);
+        });
+    })(req, res, next));
 
   /**
    * @api {post} /user/login Login
@@ -71,21 +68,19 @@ module.exports = () => {
    * @apiUse InternalServerError
    */
   router.route('/login')
-    .post((req, res, next) => {
-      // local-login with override of done() method to access info object from passport strategy
-      passport.authenticate('LocalSignIn', (err, user, info) => {
-        if (err) {
-          return next(err);
-        }
-        
-        // if no user object, send error response
-        if (!user) {
-          return res.status(info.status).json({ message: info.message });
-        }
+    // local-login with override of done() method to access info object from passport strategy
+    .post((req, res, next) => passport.authenticate('LocalSignIn', (err, user, info) => {
+      if (err) {
+        return res.status(err.status).json({ message: err.message });
+      }
+      
+      // if no user object, send error response
+      if (!user) {
+        return res.status(info.status).json({ message: info.message });
+      }
 
-        return success.OK(res, user.jwt);
-      })(req, res, next);
-    });
+      return success.OK(res, user.jwt);
+    })(req, res, next));
 
   /**
    * @api {get} /user/logout Logout

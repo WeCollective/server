@@ -1,6 +1,8 @@
-const Constant = require('../../models/constant');
-const error = require('../../responses/errors');
-const success = require('../../responses/successes');
+const reqlib = require('app-root-path').require;
+
+const Constant = reqlib('models/constant');
+const error = reqlib('responses/errors');
+const success = reqlib('responses/successes');
 
 module.exports.get = (req, res) => {
   const id = req.params.id;

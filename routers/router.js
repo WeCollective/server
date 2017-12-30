@@ -1,8 +1,9 @@
-const error = require('../responses/errors');
 const express = require('express');
 const http = require('http');
+const reqlib = require('app-root-path').require;
 const url = require('url');
 
+const error = reqlib('responses/errors');
 const router = express.Router();
 
 module.exports = app => {

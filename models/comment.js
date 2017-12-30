@@ -1,8 +1,10 @@
-const aws = require('../config/aws');
-const CommentData = require('./comment-data.model');
-const db = require('../config/database');
-const Model = require('./model');
-const validate = require('./validate');
+const reqlib = require('app-root-path').require;
+
+const aws = reqlib('config/aws');
+const CommentData = reqlib('models/comment-data.model');
+const db = reqlib('config/database');
+const Model = reqlib('models/model');
+const validate = reqlib('models/validate');
 
 const formatCommentsToNewAPI = comments => {
   comments = comments || [];

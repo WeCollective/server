@@ -1,5 +1,7 @@
-const db = require('../config/database');
-const Model = require('./model');
+const reqlib = require('app-root-path').require;
+
+const db = reqlib('config/database');
+const Model = reqlib('models/model');
 
 class Logger extends Model {
   constructor(props) {

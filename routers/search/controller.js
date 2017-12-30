@@ -1,6 +1,8 @@
-const algolia = require('../../config/algolia');
-const error = require('../../responses/errors');
-const success = require('../../responses/successes');
+const reqlib = require('app-root-path').require;
+
+const algolia = reqlib('config/algolia');
+const error = reqlib('responses/errors');
+const success = reqlib('responses/successes');
 
 module.exports.search = (req, res) => {
   const { q: query } = req.query;

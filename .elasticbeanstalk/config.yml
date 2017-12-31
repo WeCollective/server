@@ -3,7 +3,8 @@ branch-defaults:
     environment: null
     group_suffix: null
   master:
-    environment: api-dev
+    environment: null
+    group_suffix: null
   production:
     environment: api-prod
 global:

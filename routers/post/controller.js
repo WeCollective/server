@@ -1043,12 +1043,17 @@ module.exports.postComment = (req, res) => {
     date,
     down: 0,
     id,
-    individual: 0,
+    individual: 1,
     parentid,
     postid,
     rank: 0,
     replies: 0,
-    up: 0,
+    up: 1,
+  });
+  const vote = new Vote({
+    direction: 'up',
+    itemid: `comment-${id}`,
+    username,
   });
 
   const commentdata = new CommentData({
@@ -1209,6 +1214,8 @@ module.exports.postComment = (req, res) => {
     })
     // update the SendGrid contact list with the new user data
     .then(() => mailer.addContact(user.data, true))
+    // Self-upvote the comment.
+    .then(() => vote.save())
     .then(() => success.OK(res, id))
     .catch(err => {
       if (err) {
@@ -1231,10 +1238,11 @@ module.exports.voteComment = (req, res) => {
   let comment;
   let resData = { delta: 0 };
   let userAlreadyVoted = false;
-  let voteDirection;
+  const voteDirection = 'up';
   let voteOppositeDirection;
 
   voteComment.verifyParams(req)
+    /*
     .then(() => new Comment().isAuthor(username, commentid))
     .then(isAuthor => {
       if (isAuthor) {
@@ -1245,6 +1253,7 @@ module.exports.voteComment = (req, res) => {
       }
       return Promise.resolve();
     })
+    */
     .then(() => {
       comment = new Comment({
         id: commentid,
@@ -1264,7 +1273,7 @@ module.exports.voteComment = (req, res) => {
         });
       }
 
-      voteDirection = req.body.vote;
+      // voteDirection = req.body.vote;
 
       return comment.findById(commentid);
     })

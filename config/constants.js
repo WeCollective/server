@@ -1,3 +1,5 @@
+// check each model validations and entity limits checking
+
 // BASE CONSTANTS.
 const DATE = 13; // We use 13-digit unix timestamps.
 const HYPHEN = 1; // Classic "-" character.

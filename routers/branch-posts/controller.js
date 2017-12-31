@@ -506,6 +506,7 @@ module.exports.put = (req, res) => {
   let userAlreadyVoted = false;
 
   put.verifyParams(req)
+    /*
     .then(() => new Post().isAuthor(username, postid))
     .then(isAuthor => {
       if (isAuthor) {
@@ -516,6 +517,7 @@ module.exports.put = (req, res) => {
       }
       return Promise.resolve();
     })
+    */
     .then(() => {
       post = new Post({
         branchid,

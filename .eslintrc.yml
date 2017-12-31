@@ -1,22 +1,26 @@
 env:
   es6: true
-  node: true
   mocha: true
+  node: true
+
 extends: 'eslint:recommended'
+
 parserOptions:
   sourceType: module
+
 rules:
   indent:
     - error
     - 2
+    - SwitchCase: 1
   linebreak-style:
     - error
     - unix
+  no-console: off
+  no-control-regex: off
   quotes:
     - error
     - single
-  no-console: off
-  no-control-regex: off
 #  semi:
 #    - error
 #    - never

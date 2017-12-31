@@ -1,6 +1,7 @@
 const reqlib = require('app-root-path').require;
 
 const aws = reqlib('config/aws');
+const Constants = reqlib('config/constants');
 const db = reqlib('config/database');
 const Model = reqlib('models/model');
 const validate = reqlib('models/validate');
@@ -97,7 +98,8 @@ class CommentData extends Model {
     }
 
     if (props.includes('text')) {
-      if (!this.data.text || this.data.text.length < 1 || this.data.text.length > 20000) {
+      const { commentText } = Constants.EntityLimits;
+      if (!this.data.text || this.data.text.length < 1 || this.data.text.length > commentText) {
         invalids = [
           ...invalids,
           'text',

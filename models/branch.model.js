@@ -1,6 +1,7 @@
 const reqlib = require('app-root-path').require;
 
 const aws = reqlib('config/aws');
+const Constants = reqlib('config/constants');
 const db = reqlib('config/database');
 const Model = reqlib('models/model');
 const validate = reqlib('models/validate');
@@ -167,16 +168,17 @@ class Branch extends Model {
     }
 
     if (props.includes('description')) {
+      const { branchDescription } = Constants.EntityLimits;
       if (!this.data.description || this.data.description.length < 1) {
         invalids = [
           ...invalids,
           'Description cannot be empty.',
         ];
       }
-      else if (this.data.description.length > 10000) {
+      else if (this.data.description.length > branchDescription) {
         invalids = [
           ...invalids,
-          'Description cannot be longer than 10,000 characters.',
+          `Description cannot be longer than ${branchDescription} characters.`,
         ];
       }
     }
@@ -191,16 +193,17 @@ class Branch extends Model {
     }
 
     if (props.includes('name')) {
+      const { branchName } = Constants.EntityLimits;
       if (!this.data.name || this.data.name.length < 1) {
         invalids = [
           ...invalids,
           'Visible name cannot be empty.',
         ];
       }
-      else if (this.data.name.length > 30) {
+      else if (this.data.name.length > branchName) {
         invalids = [
           ...invalids,
-          'Visible name cannot be longer than 30 characters.',
+          `Visible name cannot be longer than ${branchName} characters.`,
         ];
       }
     }
@@ -242,10 +245,11 @@ class Branch extends Model {
     }
 
     if (props.includes('rules')) {
-      if (this.data.rules.length > 10000) {
+      const { branchRules } = Constants.EntityLimits;
+      if (this.data.rules.length > branchRules) {
         invalids = [
           ...invalids,
-          'Rules cannot be longer than 10,000 characters.',
+          `Rules cannot be longer than ${branchRules} characters.`,
         ];
       }
     }

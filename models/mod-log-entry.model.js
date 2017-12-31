@@ -1,6 +1,7 @@
 const reqlib = require('app-root-path').require;
 
 const aws = reqlib('config/aws');
+const Constants = reqlib('config/constants');
 const db = reqlib('config/database');
 const Model = reqlib('models/model');
 const validate = reqlib('models/validate');
@@ -59,17 +60,11 @@ class ModLogEntry extends Model {
       ];
     }
 
-    const allowedActions = [
-      'addmod',
-      'answer-subbranch-request',
-      'make-subbranch-request',
-      'removemod',
-    ];
-
     let invalids = [];
 
     // Action and data must be checked whether specified or not.
-    if (!this.data.action || !allowedActions.includes(this.data.action)) {
+    const { ModLogActionTypes } = Constants.AllowedValues;
+    if (!this.data.action || !ModLogActionTypes.includes(this.data.action)) {
       invalids = [
         ...invalids,
         'action',
@@ -78,7 +73,6 @@ class ModLogEntry extends Model {
 
     if (props.includes('branchid')) {
       if (!validate.branchid(this.data.branchid)) {
-    
         invalids = [
           ...invalids,
           'branchid',

@@ -1,6 +1,7 @@
 const reqlib = require('app-root-path').require;
 
 const aws = reqlib('config/aws');
+const Constants = reqlib('config/constants');
 const db = reqlib('config/database');
 const Model = reqlib('models/model');
 const validate = reqlib('models/validate');
@@ -124,7 +125,8 @@ class PollAnswer extends Model {
 
     // ensure title is valid
     if (props.includes('text')) {
-      if (!this.data.text || this.data.text.length < 1 || this.data.text.length > 300) {
+      const { pollAnswerText } = Constants.EntityLimits;
+      if (!this.data.text || this.data.text.length < 1 || this.data.text.length > pollAnswerText) {
         invalids = [
           ...invalids,
           'text',

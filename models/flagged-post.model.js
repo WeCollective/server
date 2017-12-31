@@ -1,6 +1,7 @@
 const reqlib = require('app-root-path').require;
 
 const aws = reqlib('config/aws');
+const Constants = reqlib('config/constants');
 const db = reqlib('config/database');
 const Model = reqlib('models/model');
 const validate = reqlib('models/validate');
@@ -232,7 +233,8 @@ class FlaggedPost extends Model {
 
     // ensure type is valid
     if (props.includes('type')) {
-      if (!['text', 'page', 'image', 'audio', 'video'].includes(this.data.type)) {
+      const { PostTypes } = Constants.AllowedValues;
+      if (!PostTypes.includes(this.data.type)) {
         invalids = [
           ...invalids,
           'type',

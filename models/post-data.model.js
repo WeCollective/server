@@ -1,6 +1,7 @@
 const reqlib = require('app-root-path').require;
 
 const aws = reqlib('config/aws');
+const Constants = reqlib('config/constants');
 const db = reqlib('config/database');
 const Model = reqlib('models/model');
 const validate = reqlib('models/validate');
@@ -77,7 +78,10 @@ class PostData extends Model {
     }
 
     if (props.includes('title')) {
-      if (!this.data.title || this.data.title.length < 1 || this.data.title.length > 300) {
+      const { postTitle } = Constants.EntityLimits;
+      if (!this.data.title ||
+        this.data.title.length < 1 ||
+        this.data.title.length > postTitle) {
         invalids = [
           ...invalids,
           'title',
@@ -87,8 +91,9 @@ class PostData extends Model {
 
     const text = this.data.text;
     if (props.includes('text')) {
+      const { postText } = Constants.EntityLimits;
       if ((!['poll', 'text'].includes(postType) &&
-        (!text || text.length < 1)) || (text && text.length > 20000)) {
+        (!text || text.length < 1)) || (text && text.length > postText)) {
         invalids = [
           ...invalids,
           'text',

@@ -2,11 +2,10 @@ const moment = require('moment');
 const reqlib = require('app-root-path').require;
 
 const aws = reqlib('config/aws');
+const Constants = reqlib('config/constants');
 const db = reqlib('config/database');
 const Model = reqlib('models/model');
 const validate = reqlib('models/validate');
-
-const minimumAge = 13;
 
 // Check whether a string is an email using regex and the RFC822 spec
 const isEmail = email => /^([^\x00-\x20\x22\x28\x29\x2c\x2e\x3a-\x3c\x3e\x40\x5b-\x5d\x7f-\xff]+|\x22([^\x0d\x22\x5c\x80-\xff]|\x5c[\x00-\x7f])*\x22)(\x2e([^\x00-\x20\x22\x28\x29\x2c\x2e\x3a-\x3c\x3e\x40\x5b-\x5d\x7f-\xff]+|\x22([^\x0d\x22\x5c\x80-\xff]|\x5c[\x00-\x7f])*\x22))*\x40([^\x00-\x20\x22\x28\x29\x2c\x2e\x3a-\x3c\x3e\x40\x5b-\x5d\x7f-\xff]+|\x5b([^\x0d\x5b-\x5d\x80-\xff]|\x5c[\x00-\x7f])*\x5d)(\x2e([^\x00-\x20\x22\x28\x29\x2c\x2e\x3a-\x3c\x3e\x40\x5b-\x5d\x7f-\xff]+|\x5b([^\x0d\x5b-\x5d\x80-\xff]|\x5c[\x00-\x7f])*\x5d))*$/.test(email);
@@ -93,6 +92,7 @@ class User extends Model {
 
     if (props.includes('dob')) {
       const { dob } = this.data;
+      const { userAgeMin } = Constants.EntityLimits;
 
       if (!validate.date(dob)) {
         invalids = [
@@ -100,10 +100,10 @@ class User extends Model {
           'Invalid dob',
         ];
       }
-      else if (moment().diff(moment(dob), 'years') < minimumAge) {
+      else if (moment().diff(moment(dob), 'years') < userAgeMin) {
         invalids = [
           ...invalids,
-          `You need to be at least ${minimumAge} years old.`,
+          `You need to be at least ${userAgeMin} years old.`,
         ];
       }
     }
@@ -119,16 +119,21 @@ class User extends Model {
     }
 
     if (props.includes('name')) {
-      if (!this.data.name || this.data.name.length < 2) {
+      const {
+        userFullNameMax,
+        userFullNameMin,
+      } = Constants.EntityLimits;
+
+      if (!this.data.name || this.data.name.length < userFullNameMin) {
         invalids = [
           ...invalids,
-          'Name has to be at least 2 characters long.',
+          `Name has to be at least ${userFullNameMin} characters long.`,
         ];
       }
-      else if (this.data.name.length > 30) {
+      else if (this.data.name.length > userFullNameMax) {
         invalids = [
           ...invalids,
-          'Name cannot be more than 30 characters long.',
+          `Name cannot be more than ${userFullNameMax} characters long.`,
         ];
       }
     }
@@ -170,16 +175,21 @@ class User extends Model {
     }
 
     if (props.includes('password')) {
-      if (!this.data.password || this.data.password.length < 6) {
+      const {
+        userPasswordMax,
+        userPasswordMin,
+      } = Constants.EntityLimits;
+
+      if (!this.data.password || this.data.password.length < userPasswordMin) {
         invalids = [
           ...invalids,
-          'Password has to be at least 6 characters long.',
+          `Password has to be at least ${userPasswordMin} characters long.`,
         ];
       }
-      else if (this.data.password.length > 30) {
+      else if (this.data.password.length > userPasswordMax) {
         invalids = [
           ...invalids,
-          'Password cannot be more than 30 characters long.',
+          `Password cannot be more than ${userPasswordMax} characters long.`,
         ];
       }
       else if (/\s/g.test(this.data.password)) {

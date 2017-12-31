@@ -1,6 +1,7 @@
 const reqlib = require('app-root-path').require;
 
 const aws = reqlib('config/aws');
+const Constants = reqlib('config/constants');
 const db = reqlib('config/database');
 const Model = reqlib('models/model');
 const validate = reqlib('models/validate');
@@ -23,7 +24,7 @@ class BranchImage extends Model {
   // instantiate the object with this data.
   // Rejects promise with true if database error, with false if no image entry found.
   findById(id, type) {
-    if (!['picture', 'cover'].includes(type)) {
+    if (!Constants.AllowedValues.BranchImageTypes.includes(type)) {
       return Promise.reject();
     }
 

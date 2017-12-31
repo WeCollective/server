@@ -34,7 +34,7 @@ class Vote extends Model {
           return reject(err);
         }
 
-        if (!data || !data.Items || data.Items.length === 0) {
+        if (!data || !data.Items || !data.Items.length) {
           return resolve();
         }
 

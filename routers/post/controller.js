@@ -862,6 +862,11 @@ module.exports.post = (req, res) => {
   const id = `${username}-${date}`;
   const logger = new Logger();
   const user = new User();
+  const vote = new Vote({
+    direction: 'up',
+    itemid: `post-${id}`,
+    username,
+  });
 
   locked = !!locked;
   nsfw = !!nsfw;
@@ -952,14 +957,14 @@ module.exports.post = (req, res) => {
           comment_count: 0,
           date,
           down: 0,
-          global: 0,
+          global: 1,
           id,
-          individual: 0,
-          local: 0,
+          individual: branchid === 'root' ? 1 : 0,
+          local: branchid === 'root' ? 1 : 0,
           locked,
           nsfw,
           type,
-          up: 0,
+          up: branchid === 'root' ? 1 : 0,
         });
 
         searchIndexData.global = 0;
@@ -991,6 +996,7 @@ module.exports.post = (req, res) => {
             .findById(branchidsArr[i])
             .then(() => {
               branch.set('post_count', branch.data.post_count + 1);
+              branch.set('post_points', branch.data.post_points + 1);
               return branch.update();
             })
             .then(resolve)
@@ -1008,6 +1014,8 @@ module.exports.post = (req, res) => {
     })
     // update the SendGrid contact list with the new user data
     .then(() => mailer.addContact(user.data, true))
+    // Self-upvote the post.
+    .then(() => vote.save())
     .then(() => success.OK(res, id))
     .catch(err => {
       if (err) {
@@ -1242,18 +1250,6 @@ module.exports.voteComment = (req, res) => {
   let voteOppositeDirection;
 
   voteComment.verifyParams(req)
-    /*
-    .then(() => new Comment().isAuthor(username, commentid))
-    .then(isAuthor => {
-      if (isAuthor) {
-        return Promise.reject({
-          code: 403,
-          message: 'You cannot vote on your own content.',
-        });
-      }
-      return Promise.resolve();
-    })
-    */
     .then(() => {
       comment = new Comment({
         id: commentid,

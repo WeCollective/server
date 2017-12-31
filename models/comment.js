@@ -1,7 +1,6 @@
 const reqlib = require('app-root-path').require;
 
 const aws = reqlib('config/aws');
-const CommentData = reqlib('models/comment-data.model');
 const db = reqlib('config/database');
 const Model = reqlib('models/model');
 const validate = reqlib('models/validate');
@@ -126,13 +125,6 @@ class Comment extends Model {
         });
       });
     });
-  }
-
-  isAuthor(username, commentid) {
-    return new Promise((resolve, reject) => new CommentData()
-      .findById(commentid)
-      .then(commentData => resolve(commentData.creator === username))
-      .catch(err => reject(err)));
   }
 
   // Validate the properties specified in 'properties' on the Comment object,

@@ -506,18 +506,6 @@ module.exports.put = (req, res) => {
   let userAlreadyVoted = false;
 
   put.verifyParams(req)
-    /*
-    .then(() => new Post().isAuthor(username, postid))
-    .then(isAuthor => {
-      if (isAuthor) {
-        return Promise.reject({
-          code: 401,
-          message: 'You cannot vote on your own content.',
-        });
-      }
-      return Promise.resolve();
-    })
-    */
     .then(() => {
       post = new Post({
         branchid,

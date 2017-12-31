@@ -3,7 +3,6 @@ const reqlib = require('app-root-path').require;
 const aws = reqlib('config/aws');
 const db = reqlib('config/database');
 const Model = reqlib('models/model');
-const PostData = reqlib('models/post-data.model');
 const validate = reqlib('models/validate');
 
 const formatPostsToNewAPI = posts => {
@@ -220,13 +219,6 @@ class Post extends Model {
         return resolve(self.data);
       });
     });
-  }
-
-  isAuthor(username, postid) {
-    return new Promise((resolve, reject) => new PostData()
-      .findById(postid)
-      .then(postData => resolve(postData.creator === username))
-      .catch(err => reject(err)));
   }
 
   // Validate the properties specified in 'properties' on the Post object,

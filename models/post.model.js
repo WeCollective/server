@@ -66,17 +66,18 @@ class Post extends Model {
 
       if (sortBy === 'points') {
         switch(stat) {
-        case 'global':
-          indexName = self.config.keys.globalIndexes[4];
-          break;
+          case 'individual':
+            indexName = self.config.keys.globalIndexes[0];
+            break;
 
-        case 'individual':
-          indexName = self.config.keys.globalIndexes[0];
-          break;
+          case 'local':
+            indexName = self.config.keys.globalIndexes[1];
+            break;
 
-        case 'local':
-          indexName = self.config.keys.globalIndexes[1];
-          break;
+          case 'global':
+          default:
+            indexName = self.config.keys.globalIndexes[4];
+            break;
         }
 
         if (last) {

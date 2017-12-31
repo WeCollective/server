@@ -25,26 +25,26 @@ class FlaggedPost extends Model {
     let index;
 
     switch (sortBy) {
-    case 'branch_rules':
-      index = self.config.keys.globalIndexes[1];
-      break;
+      case 'branch_rules':
+        index = self.config.keys.globalIndexes[1];
+        break;
 
-    case 'nsfw':
-      index = self.config.keys.globalIndexes[4];
-      break;
+      case 'nsfw':
+        index = self.config.keys.globalIndexes[4];
+        break;
 
-    case 'site_rules':
-      index = self.config.keys.globalIndexes[2];
-      break;
+      case 'site_rules':
+        index = self.config.keys.globalIndexes[2];
+        break;
 
-    case 'wrong_type':
-      index = self.config.keys.globalIndexes[3];
-      break;
+      case 'wrong_type':
+        index = self.config.keys.globalIndexes[3];
+        break;
 
-    case 'date':
-    default:
-      index = self.config.keys.globalIndexes[0];
-      break;
+      case 'date':
+      default:
+        index = self.config.keys.globalIndexes[0];
+        break;
     }
 
     if (sortBy === 'date') {

@@ -67,18 +67,18 @@ class Comment extends Model {
     let IndexName;
 
     switch(sortBy) {
-    case 'date':
-      IndexName = self.config.keys.globalIndexes[1];
-      break;
+      case 'date':
+        IndexName = self.config.keys.globalIndexes[1];
+        break;
 
-    case 'replies':
-      IndexName = self.config.keys.globalIndexes[2];
-      break;
+      case 'replies':
+        IndexName = self.config.keys.globalIndexes[2];
+        break;
 
-    case 'points':
-    default:
-      IndexName = self.config.keys.globalIndexes[0];
-      break;
+      case 'points':
+      default:
+        IndexName = self.config.keys.globalIndexes[0];
+        break;
     }
 
     if (last) {

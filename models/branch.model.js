@@ -59,22 +59,22 @@ class Branch extends Model {
     let IndexName;
 
     switch(sortBy) {
-    case 'post_count':
-      IndexName = self.config.keys.globalIndexes[1];
-      break;
+      case 'post_count':
+        IndexName = self.config.keys.globalIndexes[1];
+        break;
 
-    case 'post_points':
-      IndexName = self.config.keys.globalIndexes[2];
-      break;
+      case 'post_points':
+        IndexName = self.config.keys.globalIndexes[2];
+        break;
 
-    case 'post_comments':
-      IndexName = self.config.keys.globalIndexes[3];
-      break;
+      case 'post_comments':
+        IndexName = self.config.keys.globalIndexes[3];
+        break;
 
-    case 'date':
-    default:
-      IndexName = self.config.keys.globalIndexes[0];
-      break;
+      case 'date':
+      default:
+        IndexName = self.config.keys.globalIndexes[0];
+        break;
     }
 
     if (last) {

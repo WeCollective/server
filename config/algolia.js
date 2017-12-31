@@ -80,17 +80,17 @@ const cleanProps = (obj, props) => {
 // Return the name of the searchable index for the given data type.
 const getIndexName = type => {
   switch (type) {
-  case 'branch':
-    return INDEX_BRANCHES;
+    case 'branch':
+      return INDEX_BRANCHES;
 
-  case 'post':
-    return INDEX_POSTS;
+    case 'post':
+      return INDEX_POSTS;
 
-  case 'user':
-    return INDEX_USERS;
+    case 'user':
+      return INDEX_USERS;
 
-  default:
-    return '';
+    default:
+      return '';
   }
 };
 
@@ -99,21 +99,21 @@ const sanitizeArray = (objects, type) => {
   let cleanArr = [];
   objects.forEach(object => {
     switch (type) {
-    case 'branch':
-      cleanArr = [...cleanArr, cleanProps(object, INDEX_ATTRS_BRANCH)];
-      break;
+      case 'branch':
+        cleanArr = [...cleanArr, cleanProps(object, INDEX_ATTRS_BRANCH)];
+        break;
 
-    case 'post':
-      cleanArr = [...cleanArr, cleanProps(object, INDEX_ATTRS_POST)];
-      break;
+      case 'post':
+        cleanArr = [...cleanArr, cleanProps(object, INDEX_ATTRS_POST)];
+        break;
 
-    case 'user':
-      cleanArr = [...cleanArr, cleanProps(object, INDEX_ATTRS_USER)];
-      break;
+      case 'user':
+        cleanArr = [...cleanArr, cleanProps(object, INDEX_ATTRS_USER)];
+        break;
 
-    default:
-      // Do nothing.
-      break;
+      default:
+        // Do nothing.
+        break;
     }
   });
   // Remove empty entries.

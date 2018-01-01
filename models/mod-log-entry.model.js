@@ -1,7 +1,6 @@
 const reqlib = require('app-root-path').require;
 
 const aws = reqlib('config/aws');
-const Constants = reqlib('config/constants');
 const db = reqlib('config/database');
 const Model = reqlib('models/model');
 const validate = reqlib('models/validate');
@@ -41,8 +40,6 @@ class ModLogEntry extends Model {
     });
   }
 
-  // Validate the properties specified in 'properties' on the ModLogEntry object,
-  // returning an array of any invalid ones
   validate(props) {
     if (!Array.isArray(props) || !props.length) {
       props = [
@@ -56,48 +53,42 @@ class ModLogEntry extends Model {
 
     let invalids = [];
 
-    // Action and data must be checked whether specified or not.
-    const { ModLogActionTypes } = Constants.AllowedValues;
-    if (!this.data.action || !ModLogActionTypes.includes(this.data.action)) {
-      invalids = [
-        ...invalids,
-        'action',
-      ];
-    }
+    props.forEach(key => {
+      const value = this.data[key];
+      let test;
 
-    if (props.includes('branchid')) {
-      if (!validate.branchid(this.data.branchid)) {
+      switch (key) {
+        case 'action':
+          test = validate.modLogAction;
+          break;
+
+        case 'branchid':
+          test = validate.branchid;
+          break;
+
+        case 'data':
+          test = validate.exists;
+          break;
+
+        case 'date':
+          test = validate.date;
+          break;
+
+        case 'username':
+          test = validate.username;
+          break;
+
+        default:
+          throw new Error(`Invalid validation key "${key}"`);
+      }
+
+      if (!test(value)) {
         invalids = [
           ...invalids,
-          'branchid',
+          `Invalid ${key} - ${value}.`,
         ];
       }
-    }
-
-    if (!this.data.data) {
-      invalids = [
-        ...invalids,
-        'data',
-      ];
-    }
-
-    if (props.includes('date')) {
-      if (!validate.date(this.data.date)) {
-        invalids = [
-          ...invalids,
-          'date',
-        ];
-      }
-    }
-
-    if (props.includes('username')) {
-      if (!validate.username(this.data.username)) {
-        invalids = [
-          ...invalids,
-          'username',
-        ];
-      }
-    }
+    });
 
     return invalids;
   }

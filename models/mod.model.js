@@ -38,8 +38,6 @@ class Mod extends Model {
     });
   }
 
-  // Validate the properties specified in 'properties' on the mod object,
-  // returning an array of any invalid ones
   validate(props) {
     if (!Array.isArray(props) || !props.length) {
       props = [
@@ -51,32 +49,34 @@ class Mod extends Model {
 
     let invalids = [];
 
-    if (props.includes('branchid')) {
-      if (!validate.branchid(this.data.branchid)) {
-        invalids = [
-          ...invalids,
-          'Invalid branchid.',
-        ];
-      }
-    }
+    props.forEach(key => {
+      const value = this.data[key];
+      let test;
 
-    if (props.includes('date')) {
-      if (!validate.date(this.data.date)) {
-        invalids = [
-          ...invalids,
-          'Invalid date.',
-        ];
-      }
-    }
+      switch (key) {
+        case 'branchid':
+          test = validate.branchid;
+          break;
 
-    if (props.includes('username')) {
-      if (!validate.username(this.data.username)) {
+        case 'date':
+          test = validate.date;
+          break;
+
+        case 'username':
+          test = validate.username;
+          break;
+
+        default:
+          throw new Error(`Invalid validation key "${key}"`);
+      }
+
+      if (!test(value)) {
         invalids = [
           ...invalids,
-          'Invalid username.',
+          `Invalid ${key} - ${value}.`,
         ];
       }
-    }
+    });
 
     return invalids;
   }

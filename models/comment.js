@@ -120,8 +120,6 @@ class Comment extends Model {
     });
   }
 
-  // Validate the properties specified in 'properties' on the Comment object,
-  // returning an array of any invalid ones
   validate(props) {
     if (!Array.isArray(props) || !props.length) {
       props = [
@@ -139,86 +137,44 @@ class Comment extends Model {
 
     let invalids = [];
 
-    if (props.includes('date')) {
-      if (!validate.date(this.data.date)) {
-        invalids = [
-          ...invalids,
-          'date',
-        ];
-      }
-    }
+    props.forEach(key => {
+      const value = this.data[key];
+      let params = [];
+      let test;
 
-    if (props.includes('down')) {
-      if (Number.isNaN(this.data.down)) {
-        invalids = [
-          ...invalids,
-          'down',
-        ];
-      }
-    }
+      switch (key) {
+        case 'date':
+          test = validate.date;
+          break;
 
-    if (props.includes('id')) {
-      if (!validate.commentid(this.data.id)) {
-        invalids = [
-          ...invalids,
-          'id',
-        ];
-      }
-    }
+        case 'down':
+        case 'individual':
+        case 'rank':
+        case 'replies':
+        case 'up':
+          test = validate.number;
+          break;
 
-    if (props.includes('individual')) {
-      if (Number.isNaN(this.data.individual)) {
-        invalids = [
-          ...invalids,
-          'individual',
-        ];
-      }
-    }
+        case 'id':
+        case 'parentid':
+          test = validate.commentid;
+          break;
 
-    if (props.includes('parentid')) {
-      if (!validate.commentid(this.data.parentid)) {
-        invalids = [
-          ...invalids,
-          'parentid',
-        ];
-      }
-    }
+        case 'postid':
+          test = validate.postid;
+          break;
 
-    if (props.includes('postid')) {
-      if (!validate.postid(this.data.postid)) {
-        invalids = [
-          ...invalids,
-          'postid',
-        ];
+        default:
+          throw new Error(`Invalid validation key "${key}"`);
       }
-    }
 
-    if (props.includes('rank')) {
-      if (Number.isNaN(this.data.rank)) {
+      if (!test(value, ...params)) {
         invalids = [
           ...invalids,
-          'rank',
+          `Invalid ${key} - ${value}.`,
         ];
       }
-    }
-
-    if (props.includes('replies')) {
-      if (Number.isNaN(this.data.replies)) {
-        invalids = [
-          ...invalids,
-          'replies',
-        ];
-      }
-    }
-
-    if (props.includes('up')) {
-      if (Number.isNaN(this.data.up)) {
-        invalids = [
-          ...invalids,
-          'up',
-        ];
-      }
-    }
+    });
 
     return invalids;
   }

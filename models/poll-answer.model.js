@@ -81,71 +81,51 @@ class PollAnswer extends Model {
     });
   }
 
-  // Validate the properties specified in 'properties' on the PollAnswer object,
-  // returning an array of any invalid ones
   validate(props) {
     let invalids = [];
 
-    // ensure id exists and is of correct length
-    if (props.includes('id')) {
-      if (!validate.pollanswerid(this.data.id)) {
-        invalids = [
-          ...invalids,
-          'id',
-        ];
-      }
-    }
+    props.forEach(key => {
+      const value = this.data[key];
+      let params = [];
+      let test;
 
-    // ensure postid exists and is of correct length
-    if (props.includes('postid')) {
-      if (!validate.postid(this.data.postid)) {
-        invalids = [
-          ...invalids,
-          'postid',
-        ];
-      }
-    }
+      switch (key) {
+        case 'creator':
+          test = validate.username;
+          break;
 
-    // ensure votes exists and is a valid number
-    if (props.includes('votes')) {
-      if (Number.isNaN(this.data.votes)) {
-        invalids = [
-          ...invalids,
-          'votes',
-        ];
-      }
-    }
+        case 'date':
+          test = validate.date;
+          break;
 
-    // ensure title is valid
-    if (props.includes('text')) {
-      const { pollAnswerText } = Constants.EntityLimits;
-      if (!this.data.text || this.data.text.length < 1 || this.data.text.length > pollAnswerText) {
-        invalids = [
-          ...invalids,
-          'text',
-        ];
-      }
-    }
+        case 'id':
+          test = validate.pollanswerid;
+          break;
 
-    // ensure creator is valid username
-    if (props.includes('creator')) {
-      if (!validate.username(this.data.creator)) {
-        invalids = [
-          ...invalids,
-          'creator',
-        ];
-      }
-    }
+        case 'postid':
+          test = validate.postid;
+          break;
 
-    // ensure creation date is valid
-    if (props.includes('date')) {
-      if (!validate.date(this.data.date)) {
+        case 'text':
+          params = [1, Constants.EntityLimits.pollAnswerText];
+          test = validate.range;
+          break;
+
+        case 'votes':
+          test = validate.number;
+          break;
+
+        default:
+          throw new Error(`Invalid validation key "${key}"`);
+      }
+
+      if (!test(value, ...params)) {
         invalids = [
           ...invalids,
-          'date',
+          `Invalid ${key} - ${value}.`,
         ];
       }
-    }
+    });
 
     return invalids;
   }

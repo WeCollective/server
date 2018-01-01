@@ -147,8 +147,6 @@ class Notification extends Model {
     });
   }
 
-  // Validate the properties specified in 'properties' on the Notification object,
-  // returning an array of any invalid ones
   validate(props) {
     if (!Array.isArray(props) || !props.length) {
       props = [
@@ -163,55 +161,47 @@ class Notification extends Model {
 
     let invalids = [];
 
-    // TODO check data is a valid JSON for the given type
-    if (props.includes('data')) {
-      // 
-    }
+    props.forEach(key => {
+      const value = this.data[key];
+      let test;
 
-    if (props.includes('date')) {
-      if (!validate.date(this.data.date)) {
+      switch (key) {
+        // TODO check data is a valid JSON for the given type
+        case 'data':
+          test = () => true;
+          break;
+
+        case 'date':
+          test = validate.date;
+          break;
+
+        case 'id':
+          test = validate.notificationid;
+          break;
+
+        case 'type':
+          test = validate.notificationType;
+          break;
+
+        case 'unread':
+          test = validate.boolean;
+          break;
+
+        case 'user':
+          test = validate.username;
+          break;
+
+        default:
+          throw new Error(`Invalid validation key "${key}"`);
+      }
+
+      if (!test(value)) {
         invalids = [
           ...invalids,
-          'date',
+          `Invalid ${key} - ${value}.`,
         ];
       }
-    }
-
-    if (props.includes('id')) {
-      if (!validate.notificationid(this.data.id)) {
-        invalids = [
-          ...invalids,
-          'id',
-        ];
-      }
-    }
-
-    if (props.includes('type')) {
-      if (!validate.notificationType(this.data.type)) {
-        invalids = [
-          ...invalids,
-          'type',
-        ];
-      }
-    }
-
-    if (props.includes('unread')) {
-      if (!validate.boolean(this.data.unread)) {
-        invalids = [
-          ...invalids,
-          'unread',
-        ];
-      }
-    }
-
-    if (props.includes('user')) {
-      if (!validate.username(this.data.user)) {
-        invalids = [
-          ...invalids,
-          'user',
-        ];
-      }
-    }
+    });
 
     return invalids;
   }

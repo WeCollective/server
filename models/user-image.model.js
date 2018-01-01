@@ -43,33 +43,43 @@ class UserImage extends Model {
     });
   }
 
-  // Validate user picture object, returning an array of any invalid properties
   validate() {
+    const props = [
+      'date',
+      'extension',
+      'id',
+    ];
+
     let invalids = [];
 
-    // check for valid id ending with -picture or -cover
-    if (!this.data.id || (!this.data.id.endsWith('-picture') && !this.data.id.endsWith('-cover'))) {
-      invalids = [
-        ...invalids,
-        'id',
-      ];
-    }
+    props.forEach(key => {
+      const value = this.data[key];
+      let test;
 
-    // check for valid date
-    if (!validate.date(this.data.date)) {
-      invalids = [
-        ...invalids,
-        'date',
-      ];
-    }
+      switch (key) {
+        case 'date':
+          test = validate.date;
+          break;
 
-    // check for valid extension
-    if (!validate.extension(this.data.extension)) {
-      invalids = [
-        ...invalids,
-        'extension',
-      ];
-    }
+        case 'extension':
+          test = validate.extension;
+          break;
+
+        case 'id':
+          test = validate.userImageId;
+          break;
+
+        default:
+          throw new Error(`Invalid validation key "${key}"`);
+      }
+
+      if (!test(value)) {
+        invalids = [
+          ...invalids,
+          `Invalid ${key} - ${value}.`,
+        ];
+      }
+    });
 
     return invalids;
   }

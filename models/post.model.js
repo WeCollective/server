@@ -1,7 +1,6 @@
 const reqlib = require('app-root-path').require;
 
 const aws = reqlib('config/aws');
-const Constants = reqlib('config/constants');
 const db = reqlib('config/database');
 const Model = reqlib('models/model');
 const validate = reqlib('models/validate');
@@ -213,141 +212,72 @@ class Post extends Model {
     });
   }
 
-  // Validate the properties specified in 'properties' on the Post object,
-  // returning an array of any invalid ones
   validate(props) {
     if (!Array.isArray(props) || !props.length) {
       props = [
-        'id',
         'branchid',
+        'comment_count',
         'date',
-        'type',
+        'down',
+        'global',
+        'id',
         'individual',
         'local',
-        'global',
-        'up',
-        'down',
-        'comment_count',
-        'nsfw',
         'locked',
+        'nsfw',
+        'type',
+        'up',
       ];
     }
 
     let invalids = [];
 
-    // ensure id exists and is of correct length
-    if (props.includes('id')) {
-      if (!validate.postid(this.data.id)) {
-        invalids = [
-          ...invalids,
-          'id',
-        ];
-      }
-    }
+    props.forEach(key => {
+      const value = this.data[key];
+      let test;
 
-    // ensure branchid exists and is of correct length
-    if (props.includes('branchid')) {
-      if (!validate.branchid(this.data.branchid)) {
-        invalids = [
-          ...invalids,
-          'branchid',
-        ];
-      }
-    }
+      switch (key) {
+        case 'branchid':
+          test = validate.branchid;
+          break;
 
-    // ensure creation date is valid
-    if (props.includes('date')) {
-      if (!validate.date(this.data.date)) {
-        invalids = [
-          ...invalids,
-          'date',
-        ];
-      }
-    }
+        case 'comment_count':
+        case 'down':
+        case 'global':
+        case 'individual':
+        case 'local':
+        case 'up':
+          test = validate.number;
+          break;
 
-    // ensure type is valid
-    if (props.includes('type')) {
-      const { PostTypes } = Constants.AllowedValues;
-      if (!PostTypes.includes(this.data.type)) {
-        invalids = [
-          ...invalids,
-          'type',
-        ];
-      }
-    }
+        case 'date':
+          test = validate.date;
+          break;
 
-    // ensure stats are valid numbers
-    if (props.includes('individual')) {
-      if (Number.isNaN(this.data.individual)) {
-        invalids = [
-          ...invalids,
-          'individual',
-        ];
-      }
-    }
-    
-    if (props.includes('local')) {
-      if (Number.isNaN(this.data.local)) {
-        invalids = [
-          ...invalids,
-          'local',
-        ];
-      }
-    }
+        case 'id':
+          test = validate.postid;
+          break;
 
-    if (props.includes('global')) {
-      if (Number.isNaN(this.data.global)) {
-        invalids = [
-          ...invalids,
-          'global',
-        ];
-      }
-    }
-    
-    if (props.includes('up')) {
-      if (Number.isNaN(this.data.up)) {
-        invalids = [
-          ...invalids,
-          'up',
-        ];
-      }
-    }
-    
-    if (props.includes('down')) {
-      if (Number.isNaN(this.data.down)) {
-        invalids = [
-          ...invalids,
-          'down',
-        ];
-      }
-    }
+        case 'locked':
+        case 'nsfw':
+          test = validate.boolean;
+          break;
 
-    if (props.includes('comment_count')) {
-      if (Number.isNaN(this.data.comment_count)) {
-        invalids = [
-          ...invalids,
-          'comment_count',
-        ];
-      }
-    }
+        case 'type':
+          test = validate.postType;
+          break;
 
-    if (props.includes('nsfw')) {
-      if (!validate.boolean(this.data.nsfw)) {
-        invalids = [
-          ...invalids,
-          'nsfw',
-        ];
+        default:
+          throw new Error(`Invalid validation key "${key}"`);
       }
-    }
 
-    if (props.includes('locked')) {
-      if (!validate.boolean(this.data.locked)) {
+      if (!test(value)) {
         invalids = [
           ...invalids,
-          'locked',
+          `Invalid ${key} - ${value}.`,
         ];
       }
-    }
+    });
 
     return invalids;
   }

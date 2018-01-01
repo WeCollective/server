@@ -38,28 +38,33 @@ class Vote extends Model {
     });
   }
 
-  // Validate the properties specified in 'properties' on the Vote object,
-  // returning an array of any invalid ones
   validate(props) {
     let invalids = [];
 
-    if (props.includes('direction')) {
-      if (this.data.direction !== 'up' && this.data.direction !== 'down') {
-        invalids = [
-          ...invalids,
-          'direction',
-        ];
-      }
-    }
+    props.forEach(key => {
+      const value = this.data[key];
+      let test;
 
-    if (props.includes('username')) {
-      if (!validate.username(this.data.username)) {
+      switch (key) {
+        case 'direction':
+          test = validate.voteDirection;
+          break;
+
+        case 'username':
+          test = validate.username;
+          break;
+
+        default:
+          throw new Error(`Invalid validation key "${key}"`);
+      }
+
+      if (!test(value)) {
         invalids = [
           ...invalids,
-          'username',
+          `Invalid ${key} - ${value}.`,
         ];
       }
-    }
+    });
 
     return invalids;
   }

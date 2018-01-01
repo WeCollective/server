@@ -121,8 +121,6 @@ class Branch extends Model {
     });
   }
 
-  // Validate the properties specified in 'properties' on the branch object,
-  // returning an array of any invalid ones
   validate(props) {
     if (!Array.isArray(props) || !props.length) {
       props = [
@@ -141,110 +139,57 @@ class Branch extends Model {
 
     let invalids = [];
 
-    if (props.includes('creator')) {
-      if (!validate.username(this.data.creator)) {
-        invalids = [
-          ...invalids,
-          'Invalid creator.',
-        ];
-      }
-    }
+    props.forEach(key => {
+      const value = this.data[key];
+      let params = [];
+      let test;
 
-    if (props.includes('date')) {
-      if (!validate.date(this.data.date)) {
-        invalids = [
-          ...invalids,
-          'Invalid date.',
-        ];
-      }
-    }
+      switch (key) {
+        case 'creator':
+          test = validate.username;
+          break;
 
-    if (props.includes('description')) {
-      const { branchDescription } = Constants.EntityLimits;
-      if (!this.data.description || this.data.description.length < 1) {
-        invalids = [
-          ...invalids,
-          'Description cannot be empty.',
-        ];
-      }
-      else if (this.data.description.length > branchDescription) {
-        invalids = [
-          ...invalids,
-          `Description cannot be longer than ${branchDescription} characters.`,
-        ];
-      }
-    }
+        case 'date':
+          test = validate.date;
+          break;
 
-    if (props.includes('id')) {
-      if (!validate.branchid(this.data.id)) {
-        invalids = [
-          ...invalids,
-          'Invalid id.',
-        ];
-      }
-    }
+        case 'description':
+          params = [1, Constants.EntityLimits.branchDescription];
+          test = validate.range;
+          break;
 
-    if (props.includes('name')) {
-      const { branchName } = Constants.EntityLimits;
-      if (!this.data.name || this.data.name.length < 1) {
-        invalids = [
-          ...invalids,
-          'Visible name cannot be empty.',
-        ];
-      }
-      else if (this.data.name.length > branchName) {
-        invalids = [
-          ...invalids,
-          `Visible name cannot be longer than ${branchName} characters.`,
-        ];
-      }
-    }
+        case 'id':
+        case 'parentid':
+          test = validate.branchid;
+          break;
 
-    if (props.includes('parentid')) {
-      if (!validate.branchid(this.data.parentid)) {
-        invalids = [
-          ...invalids,
-          'Invalid parentid.',
-        ];
-      }
-    }
+        case 'name':
+          params = [1, Constants.EntityLimits.branchName];
+          test = validate.range;
+          break;
 
-    if (props.includes('post_comments')) {
-      if (Number.isNaN(this.data.post_comments)) {
-        invalids = [
-          ...invalids,
-          'Invalid post_comments.',
-        ];
-      }
-    }
+        case 'post_comments':
+        case 'post_count':
+        case 'post_points':
+          test = validate.number;
+          break;
 
-    if (props.includes('post_count')) {
-      if (Number.isNaN(this.data.post_count)) {
-        invalids = [
-          ...invalids,
-          'Invalid post_count.',
-        ];
-      }
-    }
-    
-    if (props.includes('post_points')) {
-      if (Number.isNaN(this.data.post_points)) {
-        invalids = [
-          ...invalids,
-          'Invalid post_points.',
-        ];
-      }
-    }
+        case 'rules':
+          params = [null, Constants.EntityLimits.branchRules];
+          test = validate.range;
+          break;
 
-    if (props.includes('rules')) {
-      const { branchRules } = Constants.EntityLimits;
-      if (this.data.rules.length > branchRules) {
+        default:
+          throw new Error(`Invalid validation key "${key}"`);
+      }
+
+      if (!test(value, ...params)) {
         invalids = [
           ...invalids,
-          `Rules cannot be longer than ${branchRules} characters.`,
+          `Invalid ${key} - ${value}.`,
         ];
       }
-    }
+    });
 
     return invalids;
   }

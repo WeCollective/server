@@ -138,8 +138,6 @@ class SubBranchRequest extends Model {
     });
   }
 
-  // Validate the properties specified in 'properties' on the branch object,
-  // returning an array of any invalid ones
   validate(props) {
     if (!Array.isArray(props) || !props.length) {
       props = [
@@ -152,41 +150,35 @@ class SubBranchRequest extends Model {
 
     let invalids = [];
 
-    if (props.includes('childid')) {
-      if (!validate.branchid(this.data.childid)) {
-        invalids = [
-          ...invalids,
-          'Invalid childid.',
-        ];
-      }
-    }
+    props.forEach(key => {
+      const value = this.data[key];
+      let test;
 
-    if (props.includes('creator')) {
-      if (!validate.username(this.data.creator)) {
-        invalids = [
-          ...invalids,
-          'Invalid creator.',
-        ];
-      }
-    }
+      switch (key) {
+        case 'childid':
+        case 'parentid':
+          test = validate.branchid;
+          break;
 
-    if (props.includes('date')) {
-      if (!validate.date(this.data.date)) {
-        invalids = [
-          ...invalids,
-          'Invalid date.',
-        ];
-      }
-    }
+        case 'creator':
+          test = validate.username;
+          break;
 
-    if (props.includes('parentid')) {
-      if (!validate.branchid(this.data.parentid)) {
+        case 'date':
+          test = validate.date;
+          break;
+
+        default:
+          throw new Error(`Invalid validation key "${key}"`);
+      }
+
+      if (!test(value)) {
         invalids = [
           ...invalids,
-          'Invalid parentid.',
+          `Invalid ${key} - ${value}.`,
         ];
       }
-    }
+    });
 
     return invalids;
   }

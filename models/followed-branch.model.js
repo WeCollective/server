@@ -39,30 +39,33 @@ class FollowedBranch extends Model {
     });
   }
 
-  // Validate the properties specified in 'properties' on the FollowedBranch object,
-  // returning an array of any invalid ones
   validate(props) {
     let invalids = [];
 
-    // ensure username is valid username
-    if (props.includes('username')) {
-      if (!validate.username(this.data.username)) {
-        invalids = [
-          ...invalids,
-          'username',
-        ];
-      }
-    }
+    props.forEach(key => {
+      const value = this.data[key];
+      let test;
 
-    // ensure branchid exists and is of correct length
-    if (props.includes('branchid')) {
-      if (!validate.branchid(this.data.branchid)) {
+      switch (key) {
+        case 'branchid':
+          test = validate.branchid;
+          break;
+
+        case 'username':
+          test = validate.username;
+          break;
+
+        default:
+          throw new Error(`Invalid validation key "${key}"`);
+      }
+
+      if (!test(value)) {
         invalids = [
           ...invalids,
-          'branchid',
+          `Invalid ${key} - ${value}.`,
         ];
       }
-    }
+    });
 
     return invalids;
   }

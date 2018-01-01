@@ -1,15 +1,45 @@
+const moment = require('moment');
 const reqlib = require('app-root-path').require;
 
 const Constants = reqlib('config/constants');
 const NotificationTypes = reqlib('config/notification-types');
 
 // CONSTANTS.
-const ALLOWED_CONST = Constants.AllowedValues.WecoConstants;
-const ALLOWED_IMAGE_EXT = Constants.AllowedValues.ImageExtensions;
-const BANNED_BRANCH_IDS = Constants.BannedValues.BranchIds;
-const BANNED_USERNAMES = Constants.BannedValues.Usernames;
+const {
+  BranchImageTypes,
+  ImageExtensions,
+  ModLogActionTypes,
+  PostTypes,
+  PostTypesHasText,
+  VoteDirections,
+  WecoConstants,
+} = Constants.AllowedValues;
+const {
+  BranchIds,
+  Usernames,
+} = Constants.BannedValues;
+const {
+  postText,
+  timestamp,
+  userAgeMin,
+  userPasswordMax,
+  userPasswordMin,
+} = Constants.EntityLimits;
+const {
+  email,
+  id,
+  whitespace,
+} = Constants.Policy;
 
 // HELPERS.
+const allowExt = (str, allowArr) => {
+  for (let i = 0; i < allowArr.length; i += 1) {
+    if (str.endsWith(`-${allowArr[i]}`)) {
+      return true;
+    }
+  }
+  return false;
+};
 const allowStr = (str, allowArr) => str && typeof str === 'string' && allowArr.includes(str);
 const banStr = (str, banArr) => str && typeof str === 'string' && !banArr.includes(str);
 const checkId = (type, str) => {
@@ -23,34 +53,79 @@ const checkId = (type, str) => {
   // lowercase characters, digits, underscore, or hyphen.
   return !!(str && typeof str === 'string' &&
     str.length > 0 && str.length <= maxLen &&
-    !/\s/g.test(str) && /^[a-z0-9_-]+$/.test(str));
+    !/\s/g.test(str) && id.test(str));
 };
 
 // EXPORTS.
+const age = int => date(int) && moment().diff(moment(int), 'years') >= userAgeMin;
+const array = (arr, minEntries = 0) => Array.isArray(arr) && arr.length >= minEntries;
 const boolean = value => typeof value === 'boolean';
-const branchid = str => checkId('branch', str) && banStr(str, BANNED_BRANCH_IDS);
+const branchid = str => checkId('branch', str) && banStr(str, BranchIds);
+const branchImageId = str => checkId('branchImage', str) && allowExt(str, BranchImageTypes);
 const commentid = str => checkId('comment', str);
-const date = date => !!(date && Number(date) > 0);
-const extension = str => allowStr(str.toLowerCase(), ALLOWED_IMAGE_EXT);
+const date = int => int && Number(int) > 0 && int.toString().length === timestamp;
+const exists = str => !!str;
+const extension = str => allowStr(str.toLowerCase(), ImageExtensions);
+const isEmail = str => email.test(str);
+const modLogAction = str => allowStr(str, ModLogActionTypes);
 const notificationid = str => checkId('notification', str);
-const notificationType = int => !!NotificationTypes[int];
+const notificationType = int => exists(NotificationTypes[int]);
+const number = int => !Number.isNaN(int);
+const originalBranches = str => {
+  try {
+    const arr = JSON.parse(str);
+    return array(arr, 1);
+  }
+  catch (err) {
+    return false;
+  }
+};
 const pollanswerid = str => checkId('pollAnswer', str);
 const postid = str => checkId('post', str);
-const username = str => checkId('username', str) && !Number(str) && banStr(str, BANNED_USERNAMES);
-const wecoConstantId = str => allowStr(str, ALLOWED_CONST);
-const wecoConstantValue = (str, int) => allowStr(str, ALLOWED_CONST) && typeof int === 'number';
+const postImageId = str => checkId('postImage', str) && allowExt(str, [Constants.BranchThumbnailType]);
+const postType = str => allowStr(str, PostTypes);
+const range = (str, min, max) => str && (min === null || str.length >= min) && (max === null || str.length <= max);
+const userImageId = str => checkId('userImage', str) && allowExt(str, BranchImageTypes);
+const username = str => checkId('username', str) && !Number(str) && banStr(str, Usernames);
+const validateEmail = str => exists(str) && isEmail(str);
+const validatePostText = (str, type) => {
+  if (banStr(type, PostTypesHasText)) {
+    return !exists(str);
+  }
+  return range(str, null, postText);
+};
+const voteDirection = str => allowStr(str, VoteDirections);
+const wecoConstantId = str => allowStr(str, WecoConstants);
+const wecoConstantValue = (int, str) => allowStr(str, WecoConstants) && typeof int === 'number';
+
+const password = str => range(str, userPasswordMin, userPasswordMax) && !whitespace.test(str);
 
 module.exports = {
+  age,
+  array,
   boolean,
   branchid,
+  branchImageId,
   commentid,
   date,
+  email: validateEmail,
+  exists,
   extension,
+  modLogAction,
   notificationid,
   notificationType,
+  number,
+  originalBranches,
+  password,
   pollanswerid,
   postid,
+  postImageId,
+  postText: validatePostText,
+  postType,
+  range,
+  userImageId,
   username,
+  voteDirection,
   wecoConstantId,
   wecoConstantValue,
 };

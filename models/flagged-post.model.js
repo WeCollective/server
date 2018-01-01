@@ -1,7 +1,6 @@
 const reqlib = require('app-root-path').require;
 
 const aws = reqlib('config/aws');
-const Constants = reqlib('config/constants');
 const db = reqlib('config/database');
 const Model = reqlib('models/model');
 const validate = reqlib('models/validate');
@@ -187,88 +186,48 @@ class FlaggedPost extends Model {
     });
   }
 
-  // Validate the properties specified in 'properties' on the FlaggedPost object,
-  // returning an array of any invalid ones
   validate(props) {
     let invalids = [];
 
-    // ensure id exists and is of correct length
-    if (props.includes('id')) {
-      if (!validate.postid(this.data.id)) {
-        invalids = [
-          ...invalids,
-          'id',
-        ];
-      }
-    }
+    props.forEach(key => {
+      const value = this.data[key];
+      let test;
 
-    // ensure branchid exists and is of correct length
-    if (props.includes('branchid')) {
-      if (!validate.branchid(this.data.branchid)) {
-        invalids = [
-          ...invalids,
-          'branchid',
-        ];
-      }
-    }
+      switch (key) {
+        case 'branch_rules_count':
+        case 'nsfw_count':
+        case 'site_rules_count':
+        case 'wrong_type_count':
+          test = validate.number;
+          break;
 
-    // ensure creation date is valid
-    if (props.includes('date')) {
-      if (!validate.date(this.data.date)) {
-        invalids = [
-          ...invalids,
-          'date',
-        ];
-      }
-    }
+        case 'branchid':
+          test = validate.branchid;
+          break;
 
-    // ensure type is valid
-    if (props.includes('type')) {
-      const { PostTypes } = Constants.AllowedValues;
-      if (!PostTypes.includes(this.data.type)) {
-        invalids = [
-          ...invalids,
-          'type',
-        ];
-      }
-    }
+        case 'date':
+          test = validate.date;
+          break;
 
-    // ensure flag counts are valid numbers
-    if (props.includes('branch_rules_count')) {
-      if (Number.isNaN(this.data.branch_rules_count)) {
-        invalids = [
-          ...invalids,
-          'branch_rules_count',
-        ];
-      }
-    }
+        case 'id':
+          test = validate.postid;
+          break;
 
-    if (props.includes('site_rules_count')) {
-      if (Number.isNaN(this.data.site_rules_count)) {
-        invalids = [
-          ...invalids,
-          'site_rules_count',
-        ];
-      }
-    }
+        case 'type':
+          test = validate.postType;
+          break;
 
-    if (props.includes('wrong_type_count')) {
-      if (Number.isNaN(this.data.wrong_type_count)) {
-        invalids = [
-          ...invalids,
-          'wrong_type_count',
-        ];
+        default:
+          throw new Error(`Invalid validation key "${key}"`);
       }
-    }
 
-    if (props.includes('nsfw_count')) {
-      if (Number.isNaN(this.data.nsfw_count)) {
+      if (!test(value)) {
         invalids = [
           ...invalids,
-          'nsfw_count',
+          `Invalid ${key} - ${value}.`,
         ];
       }
-    }
+    });
 
     return invalids;
   }

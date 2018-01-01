@@ -40,8 +40,6 @@ class CommentData extends Model {
     });
   }
 
-  // Validate the properties specified in 'properties' on the CommentData object,
-  // returning an array of any invalid ones
   validate(props) {
     if (!Array.isArray(props) || !props.length) {
       props = [
@@ -55,51 +53,44 @@ class CommentData extends Model {
 
     let invalids = [];
 
-    if (props.includes('creator')) {
-      if (!validate.username(this.data.creator)) {
-        invalids = [
-          ...invalids,
-          'creator',
-        ];
-      }
-    }
+    props.forEach(key => {
+      const value = this.data[key];
+      let params = [];
+      let test;
 
-    if (props.includes('date')) {
-      if (!validate.date(this.data.date)) {
-        invalids = [
-          ...invalids,
-          'date',
-        ];
-      }
-    }
+      switch (key) {
+        case 'creator':
+          test = validate.username;
+          break;
 
-    if (props.includes('edited')) {
-      if (this.data.edited !== undefined && this.data.edited !== true && this.data.edited !== false) {
-        invalids = [
-          ...invalids,
-          'edited',
-        ];
-      }
-    }
+        case 'date':
+          test = validate.date;
+          break;
 
-    if (props.includes('id')) {
-      if (!validate.commentid(this.data.id)) {
-        invalids = [
-          ...invalids,
-          'id',
-        ];
-      }
-    }
+        case 'edited':
+          test = validate.boolean;
+          break;
 
-    if (props.includes('text')) {
-      const { commentText } = Constants.EntityLimits;
-      if (!this.data.text || this.data.text.length < 1 || this.data.text.length > commentText) {
+        case 'id':
+          test = validate.commentid;
+          break;
+
+        case 'text':
+          params = [1, Constants.EntityLimits.commentText];
+          test = validate.range;
+          break;
+
+        default:
+          throw new Error(`Invalid validation key "${key}"`);
+      }
+
+      if (!test(value, ...params)) {
         invalids = [
           ...invalids,
-          'text',
+          `Invalid ${key} - ${value}.`,
         ];
       }
-    }
+    });
 
     return invalids;
   }

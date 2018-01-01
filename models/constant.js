@@ -54,8 +54,6 @@ class Constant extends Model {
     });
   }
 
-  // Validate the properties specified in 'properties' on the Constant object,
-  // returning an array of any invalid ones
   validate(props) {
     if (!Array.isArray(props) || !props.length) {
       props = [
@@ -66,23 +64,32 @@ class Constant extends Model {
 
     let invalids = [];
 
-    if (props.includes('data')) {
-      if (!validate.wecoConstantValue(this.data.id, this.data.data)) {
-        invalids = [
-          ...invalids,
-          'data',
-        ];
-      }
-    }
+    props.forEach(key => {
+      const value = this.data[key];
+      let params = [];
+      let test;
 
-    if (props.includes('id')) {
-      if (!validate.wecoConstantId(this.data.id)) {
+      switch (key) {
+        case 'data':
+          params = [this.data.id]
+          test = validate.wecoConstantValue;
+          break;
+
+        case 'id':
+          test = validate.wecoConstantId;
+          break;
+
+        default:
+          throw new Error(`Invalid validation key "${key}"`);
+      }
+
+      if (!test(value, ...params)) {
         invalids = [
           ...invalids,
-          'id',
+          `Invalid ${key} - ${value}.`,
         ];
       }
-    }
+    });
 
     return invalids;
   }

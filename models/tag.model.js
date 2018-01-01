@@ -94,8 +94,6 @@ class Tag extends Model {
     });
   }
 
-  // Validate the properties specified in 'properties' on the Tag object,
-  // returning an array of any invalid ones
   validate(props) {
     if (!Array.isArray(props) || !props.length) {
       props = [
@@ -106,23 +104,27 @@ class Tag extends Model {
 
     let invalids = [];
 
-    if (props.includes('branchid')) {
-      if (!validate.branchid(this.data.branchid)) {
-        invalids = [
-          ...invalids,
-          'Invalid branchid.'
-        ];
-      }
-    }
+    props.forEach(key => {
+      const value = this.data[key];
+      let test;
 
-    if (props.includes('tag')) {
-      if (!validate.branchid(this.data.tag)) {
+      switch (key) {
+        case 'branchid':
+        case 'tag':
+          test = validate.branchid;
+          break;
+
+        default:
+          throw new Error(`Invalid validation key "${key}"`);
+      }
+
+      if (!test(value)) {
         invalids = [
           ...invalids,
-          'Invalid tag.'
+          `Invalid ${key} - ${value}.`,
         ];
       }
-    }
+    });
 
     return invalids;
   }

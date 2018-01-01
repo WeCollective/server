@@ -38,83 +38,58 @@ class PostData extends Model {
     });
   }
 
-  // Validate the properties specified in 'properties' on the PostData object,
-  // returning an array of any invalid ones
   validate(props, postType) {
     if (!Array.isArray(props) || !props.length) {
       props = [
-        'id',
         'creator',
-        'title',
-        'text',
+        'id',
         'original_branches',
+        'text',
+        'title',
       ];
     }
 
     let invalids = [];
 
-    if (props.includes('id')) {
-      if (!validate.postid(this.data.id)) {
-        invalids = [
-          ...invalids,
-          'id',
-        ];
-      }
-    }
+    props.forEach(key => {
+      const value = this.data[key];
+      let params = [];
+      let test;
 
-    if (props.includes('creator')) {
-      if (!validate.username(this.data.creator)) {
-        invalids = [
-          ...invalids,
-          'creator',
-        ];
-      }
-    }
+      switch (key) {
+        case 'creator':
+          test = validate.username;
+          break;
 
-    if (props.includes('title')) {
-      const { postTitle } = Constants.EntityLimits;
-      if (!this.data.title ||
-        this.data.title.length < 1 ||
-        this.data.title.length > postTitle) {
-        invalids = [
-          ...invalids,
-          'title',
-        ];
-      }
-    }
+        case 'id':
+          test = validate.postid;
+          break;
 
-    const text = this.data.text;
-    if (props.includes('text')) {
-      const { postText } = Constants.EntityLimits;
-      if ((!['poll', 'text'].includes(postType) &&
-        (!text || text.length < 1)) || (text && text.length > postText)) {
-        invalids = [
-          ...invalids,
-          'text',
-        ];
-      }
-    }
+        case 'original_branches':
+          test = validate.originalBranches;
+          break;
 
-    // Must be valid JSON array.
-    if (props.includes('original_branches')) {
-      if (!this.data.original_branches || !this.data.original_branches.length) {
+        case 'text':
+          params = [postType];
+          test = validate.postText;
+          break;
+
+        case 'title':
+          params = [1, Constants.EntityLimits.postTitle];
+          test = validate.range;
+          break;
+
+        default:
+          throw new Error(`Invalid validation key "${key}"`);
+      }
+
+      if (!test(value, ...params)) {
         invalids = [
           ...invalids,
-          'original_branches',
+          `Invalid ${key} - ${value}.`,
         ];
       }
-      else {
-        try {
-          JSON.parse(this.data.original_branches);
-        }
-        catch (err) {
-          invalids = [
-            ...invalids,
-            'original_branches',
-          ];
-        }
-      }
-    }
+    });
 
     return invalids;
   }

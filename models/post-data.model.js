@@ -19,12 +19,10 @@ class PostData extends Model {
   // instantiate the object with this data.
   // Rejects promise with true if database error, with false if no post found.
   findById(id) {
-    const self = this;
-
     return new Promise( (resolve, reject) => {
       aws.dbClient.get({
         Key: { id },
-        TableName: self.config.table,
+        TableName: this.config.table,
       }, (err, data) => {
         if (err) {
           return reject(err);
@@ -34,8 +32,8 @@ class PostData extends Model {
           return reject();
         }
 
-        self.data = data.Item;
-        return resolve(self.data);
+        this.data = data.Item;
+        return resolve(this.data);
       });
     });
   }

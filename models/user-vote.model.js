@@ -15,8 +15,6 @@ class Vote extends Model {
   }
 
   findByUsernameAndItemId(username, itemid) {
-    const self = this;
-
     return new Promise((resolve, reject) => {
       aws.dbClient.query({
         ExpressionAttributeValues: {
@@ -24,7 +22,7 @@ class Vote extends Model {
           ':username': username,
         },
         KeyConditionExpression: 'username = :username AND itemid = :itemid',
-        TableName: self.config.table,
+        TableName: this.config.table,
       }, (err, data) => {
         if (err) {
           return reject(err);
@@ -34,8 +32,8 @@ class Vote extends Model {
           return resolve();
         }
 
-        self.data = data.Items[0];
-        return resolve(self.data);
+        this.data = data.Items[0];
+        return resolve(this.data);
       });
     });
   }

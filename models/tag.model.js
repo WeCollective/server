@@ -17,15 +17,13 @@ class Tag extends Model {
   // Get the tags of a specific branch, passing in results to promise resolve.
   // Rejects promise with true if database error, with false if no data found.
   findByBranch(branchid) {
-    const self = this;
-
     return new Promise((resolve, reject) => {
       aws.dbClient.query({
         ExpressionAttributeValues: {
           ':id': branchid,
         },
         KeyConditionExpression: 'branchid = :id',
-        TableName: self.config.table,
+        TableName: this.config.table,
       }, (err, data) => {
         if (err) {
           return reject(err);
@@ -50,16 +48,14 @@ class Tag extends Model {
   // Get the all the branches with a specific tag, passing in results to promise resolve.
   // Rejects promise with true if database error, with false if no data found.
   findByTag(tag) {
-    const self = this;
-
     return new Promise((resolve, reject) => {
       aws.dbClient.query({
         ExpressionAttributeValues: {
           ':tag': tag,
         },
-        IndexName: self.config.keys.globalIndexes[0],
+        IndexName: this.config.keys.globalIndexes[0],
         KeyConditionExpression: 'tag = :tag',
-        TableName: self.config.table,
+        TableName: this.config.table,
       }, (err, data) => {
         if (err) {
           return reject(err);
@@ -75,8 +71,6 @@ class Tag extends Model {
   }
 
   findByBranchAndTag(branchid, tag) {
-    const self = this;
-
     return new Promise((resolve, reject) => {
       aws.dbClient.query({
         ExpressionAttributeValues: {
@@ -84,7 +78,7 @@ class Tag extends Model {
           ':tag': tag,
         },
         KeyConditionExpression: 'branchid = :branchid AND tag = :tag',
-        TableName: self.config.table,
+        TableName: this.config.table,
       }, (err, data) => {
         if (err) {
           return reject(err);
@@ -94,8 +88,8 @@ class Tag extends Model {
           return reject();
         }
 
-        self.data = data.Items[0];
-        return resolve(self.data);
+        this.data = data.Items[0];
+        return resolve(this.data);
       });
     });
   }

@@ -21,8 +21,6 @@ class SubBranchRequest extends Model {
   // Get a subbranch request by the parent and childs ids, passing data to resolve
   // Rejects promise with true if database error, with false if no data found.
   find(parentid, childid) {
-    const self = this;
-
     return new Promise((resolve, reject) => {
       aws.dbClient.query({
         ExpressionAttributeValues: {
@@ -30,7 +28,7 @@ class SubBranchRequest extends Model {
           ':parentid': parentid,
         },
         KeyConditionExpression: 'parentid = :parentid and childid = :childid',
-        TableName: self.config.table,
+        TableName: this.config.table,
       }, (err, data) => {
         if (err) {
           return reject(err);
@@ -48,18 +46,16 @@ class SubBranchRequest extends Model {
   // Get the subbranch requests of a specific branch, passing in results to promise resolve.
   // Rejects promise with true if database error, with false if no data found.
   findByBranch(branchid) {
-    const self = this;
-
     return new Promise((resolve, reject) => {
       aws.dbClient.query({
         ExpressionAttributeValues: {
           ':id': branchid,
         },
-        IndexName: self.config.keys.globalIndexes[0],
+        IndexName: this.config.keys.globalIndexes[0],
         KeyConditionExpression: 'parentid = :id',
         // return results newest first
         ScanIndexForward: false,
-        TableName: self.config.table,
+        TableName: this.config.table,
       }, (err, data) => {
         if (err) {
           return reject(err);
@@ -77,18 +73,16 @@ class SubBranchRequest extends Model {
   // Override Model.save() in order to create a notification for the branch
   // mods whenever a new SubBranchRequest is created
   save() {
-    const self = this;
-
     return new Promise((resolve, reject) => {
       // fetch the mods of the parent (recipient) branch
       let parentMods;
       let childMods;
 
       new Mod()
-        .findByBranch(self.data.parentid)
+        .findByBranch(this.data.parentid)
         .then(mods => {
           parentMods = mods;
-          return new Mod().findByBranch(self.data.childid);
+          return new Mod().findByBranch(this.data.childid);
         })
         .then(mods => {
           childMods = mods;
@@ -101,9 +95,9 @@ class SubBranchRequest extends Model {
           for (let i = 0; i < allMods.length; i += 1) {
             const notification = new Notification({
               data: {
-                childid: self.data.childid,
-                parentid: self.data.parentid,
-                username: self.data.creator,
+                childid: this.data.childid,
+                parentid: this.data.parentid,
+                username: this.data.creator,
               },
               date,
               id: `${allMods[i].username}-${date}`,
@@ -129,15 +123,15 @@ class SubBranchRequest extends Model {
         .then(() => {
           // save the subbranchRequest
           aws.dbClient.put({
-            Item: self.data,
-            TableName: self.config.table,
+            Item: this.data,
+            TableName: this.config.table,
           }, (err) => {
             if (err) {
               return reject(err);
             }
 
             // clear dirtys array
-            self.dirtys.splice(0, self.dirtys.length);
+            this.dirtys.splice(0, this.dirtys.length);
             return resolve();
           });
         });

@@ -17,15 +17,13 @@ class Mod extends Model {
   // Get the mods of a specific branch, passing results into resolve
   // Rejects promise with true if database error, with false if no mods found.
   findByBranch(branchid) {
-    const self = this;
-
     return new Promise((resolve, reject) => {
       aws.dbClient.query({
         ExpressionAttributeValues: {
           ':id': branchid,
         },
         KeyConditionExpression: 'branchid = :id',
-        TableName: self.config.table,
+        TableName: this.config.table,
       }, (err, data) => {
         if (err) {
           return reject(err);

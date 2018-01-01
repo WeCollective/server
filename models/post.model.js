@@ -54,25 +54,24 @@ class Post extends Model {
     }
 
     return new Promise((resolve, reject) => {
-      const self = this;
       const limit = 30;
 
-      let indexName = self.config.keys.globalIndexes[0];
+      let indexName = this.config.keys.globalIndexes[0];
       let params = {};
 
       if (sortBy === 'points') {
         switch(stat) {
           case 'individual':
-            indexName = self.config.keys.globalIndexes[0];
+            indexName = this.config.keys.globalIndexes[0];
             break;
 
           case 'local':
-            indexName = self.config.keys.globalIndexes[1];
+            indexName = this.config.keys.globalIndexes[1];
             break;
 
           case 'global':
           default:
-            indexName = self.config.keys.globalIndexes[4];
+            indexName = this.config.keys.globalIndexes[4];
             break;
         }
 
@@ -91,7 +90,7 @@ class Post extends Model {
         };
       }
       else if (sortBy === 'date') {
-        indexName = self.config.keys.globalIndexes[2];
+        indexName = this.config.keys.globalIndexes[2];
 
         if (last) {
           last = {
@@ -106,7 +105,7 @@ class Post extends Model {
         };
       }
       else if (sortBy === 'comment_count') {
-        indexName = self.config.keys.globalIndexes[3];
+        indexName = this.config.keys.globalIndexes[3];
 
         if (last) {
           last = {
@@ -132,7 +131,7 @@ class Post extends Model {
       params.IndexName = indexName;
       params.ScanIndexForward = false;   // return results highest first
       params.Select = 'ALL_PROJECTED_ATTRIBUTES';
-      params.TableName = self.config.table;
+      params.TableName = this.config.table;
 
       if (postType !== 'all') {
         params.FilterExpression = params.FilterExpression ? (params.FilterExpression + ' AND #type = :postType') : '#type = :postType';
@@ -163,15 +162,13 @@ class Post extends Model {
   // Get a post by its id, passing in results to promise resolve.
   // Rejects promise with true if database error, with false if no data found.
   findById(id) {
-    const self = this;
-
     return new Promise((resolve, reject) => {
       aws.dbClient.query({
         ExpressionAttributeValues: {
           ':id': id,
         },
         KeyConditionExpression: 'id = :id',
-        TableName: self.config.table,
+        TableName: this.config.table,
       }, (err, data) => {
         if (err) {
           return reject(err);
@@ -191,8 +188,6 @@ class Post extends Model {
   // Rejects promise with true if database error, with false if no data found.
   // Used to ensure a post exists on a given branch.
   findByPostAndBranchIds(postid, branchid) {
-    const self = this;
-
     return new Promise((resolve, reject) => {
       aws.dbClient.query({
         ExpressionAttributeValues: {
@@ -200,7 +195,7 @@ class Post extends Model {
           ':postid': postid,
         },
         KeyConditionExpression: 'id = :postid AND branchid = :branchid',
-        TableName: self.config.table,
+        TableName: this.config.table,
       }, (err, data) => {
         if (err) {
           return reject(err);
@@ -212,8 +207,8 @@ class Post extends Model {
 
         const posts = formatPostsToNewAPI(data.Items);
 
-        self.data = posts[0];
-        return resolve(self.data);
+        this.data = posts[0];
+        return resolve(this.data);
       });
     });
   }

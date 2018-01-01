@@ -32,14 +32,12 @@ class Comment extends Model {
   // instantiate the object with this data.
   // Rejects promise with true if database error, with false if no user found.
   findById(id) {
-    const self = this;
-
     return new Promise((resolve, reject) => {
       aws.dbClient.get({
         Key: {
           id,
         },
-        TableName: self.config.table,
+        TableName: this.config.table,
       }, (err, data) => {
         if (err) {
           return reject(err);
@@ -50,29 +48,28 @@ class Comment extends Model {
         }
 
         const comments = formatCommentsToNewAPI([data.Item]);
-        self.data = comments[0];
-        return resolve(self.data);
+        this.data = comments[0];
+        return resolve(this.data);
       });
     });
   }
 
   findByParent(postid, parentid, sortBy, last) {
     const limit = 20;
-    const self = this;
     let IndexName;
 
     switch(sortBy) {
       case 'date':
-        IndexName = self.config.keys.globalIndexes[1];
+        IndexName = this.config.keys.globalIndexes[1];
         break;
 
       case 'replies':
-        IndexName = self.config.keys.globalIndexes[2];
+        IndexName = this.config.keys.globalIndexes[2];
         break;
 
       case 'points':
       default:
-        IndexName = self.config.keys.globalIndexes[0];
+        IndexName = this.config.keys.globalIndexes[0];
         break;
     }
 
@@ -104,7 +101,7 @@ class Comment extends Model {
         KeyConditionExpression: 'postid = :postid',
         ScanIndexForward: false, // return results highest first
         Select: 'ALL_PROJECTED_ATTRIBUTES',
-        TableName: self.config.table,
+        TableName: this.config.table,
       }, (err, data) => {
         if (err) {
           return reject(err);

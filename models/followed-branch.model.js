@@ -18,15 +18,13 @@ class FollowedBranch extends Model {
   // instantiate the object with this data.
   // Rejects promise with true if database error, with false if no user found.
   findByUsername(username) {
-    const self = this;
-
     return new Promise((resolve, reject) => {
       aws.dbClient.query({
         ExpressionAttributeValues: {
           ':username': username,
         },
         KeyConditionExpression: 'username = :username',
-        TableName: self.config.table,
+        TableName: this.config.table,
       }, (err, data) => {
         if (err) {
           return reject(err);

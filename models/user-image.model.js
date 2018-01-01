@@ -22,14 +22,12 @@ class UserImage extends Model {
       return Promise.reject();
     }
 
-    const self = this;
-
     return new Promise((resolve, reject) => {
       aws.dbClient.get({
         Key: {
           id: `${username}-${type}`,
         },
-        TableName: self.config.table,
+        TableName: this.config.table,
       }, (err, data) => {
         if (err) {
           return reject(err);
@@ -39,7 +37,7 @@ class UserImage extends Model {
           return reject();
         }
 
-        self.data = data.Item;
+        this.data = data.Item;
         return resolve();
       });
     });

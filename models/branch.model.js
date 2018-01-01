@@ -19,14 +19,12 @@ class Branch extends Model {
   // instantiate the object with this data.
   // Rejects promise with true if database error, with false if no user found.
   findById(id) {
-    const self = this;
-
     return new Promise((resolve, reject) => {
       aws.dbClient.get({
         Key: {
           id,
         },
-        TableName: self.config.table,
+        TableName: this.config.table,
       }, (err, data) => {
         if (err) {
           return reject(err);
@@ -36,8 +34,8 @@ class Branch extends Model {
           return reject();
         }
 
-        self.data = data.Item;
-        return resolve(self.data);
+        this.data = data.Item;
+        return resolve(this.data);
       });
     });
   }
@@ -47,8 +45,6 @@ class Branch extends Model {
   // will be supplied to indicate where to continue the search from
   // (see: http://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/DynamoDB.html#query-property)
   findSubbranches(parentid, timeafter, sortBy, last, limit) {
-    const self = this;
-
     if (limit === undefined || limit === null) {
       limit = 20;
     }
@@ -57,20 +53,20 @@ class Branch extends Model {
 
     switch(sortBy) {
       case 'post_count':
-        IndexName = self.config.keys.globalIndexes[1];
+        IndexName = this.config.keys.globalIndexes[1];
         break;
 
       case 'post_points':
-        IndexName = self.config.keys.globalIndexes[2];
+        IndexName = this.config.keys.globalIndexes[2];
         break;
 
       case 'post_comments':
-        IndexName = self.config.keys.globalIndexes[3];
+        IndexName = this.config.keys.globalIndexes[3];
         break;
 
       case 'date':
       default:
-        IndexName = self.config.keys.globalIndexes[0];
+        IndexName = this.config.keys.globalIndexes[0];
         break;
     }
 
@@ -98,7 +94,7 @@ class Branch extends Model {
       // return results highest first
       ScanIndexForward: false,
       Select: 'ALL_PROJECTED_ATTRIBUTES',
-      TableName: self.config.table,
+      TableName: this.config.table,
     };
 
     if (sortBy === 'date') {

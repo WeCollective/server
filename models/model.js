@@ -63,18 +63,16 @@ class Model {
 
   // Save a new database entry according to the model data.
   save() {
-    const self = this;
-
     return new Promise((resolve, reject) => {
       aws.dbClient.put({
-        Item: self.data,
-        TableName: self.config.table,
+        Item: this.data,
+        TableName: this.config.table,
       }, (err) => {
         if (err) {
           return reject(err);
         }
 
-        self.dirtys.splice(0, self.dirtys.length); // clear dirtys array
+        this.dirtys.splice(0, this.dirtys.length); // clear dirtys array
         return resolve();
       });
     });

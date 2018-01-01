@@ -18,14 +18,12 @@ class PostImage extends Model {
   // instantiate the object with this data.
   // Rejects promise with true if database error, with false if no image entry found.
   findById(id) {
-    const self = this;
-
     return new Promise((resolve, reject) => {
       aws.dbClient.get({
         Key: {
           'id': `${id}-picture`,
         },
-        TableName: self.config.table,
+        TableName: this.config.table,
       }, (err, data) => {
         if (err) {
           return reject(err);
@@ -35,7 +33,7 @@ class PostImage extends Model {
           return reject();
         }
 
-        self.data = data.Item;
+        this.data = data.Item;
         return resolve(data.Item);
       });
     });

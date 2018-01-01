@@ -18,12 +18,10 @@ class Notification extends Model {
   // instantiate the object with this data.
   // Rejects promise with true if database error, with false if no user found.
   findById(id) {
-    const self = this;
-
     return new Promise((resolve, reject) => {
       aws.dbClient.get({
         Key: { id },
-        TableName: self.config.table,
+        TableName: this.config.table,
       }, (err, data) => {
         if (err) {
           return reject(err);
@@ -33,14 +31,13 @@ class Notification extends Model {
           return reject();
         }
 
-        self.data = data.Item;
-        return resolve(self.data);
+        this.data = data.Item;
+        return resolve(this.data);
       });
     });
   }
 
   findByUsername(username, unreadCount, last, getAllUnread) {
-    const self = this;
     const limit = getAllUnread !== undefined ? 0 : 20;
     
     if (last) {
@@ -64,12 +61,12 @@ class Notification extends Model {
         ExpressionAttributeValues: {
           ':username': String(username),
         },
-        IndexName: self.config.keys.globalIndexes[0],
+        IndexName: this.config.keys.globalIndexes[0],
         KeyConditionExpression: '#user = :username',
         // return results highest first
         ScanIndexForward: false,
         Select: unreadCount ? 'COUNT' : 'ALL_PROJECTED_ATTRIBUTES',
-        TableName: self.config.table,
+        TableName: this.config.table,
       };
 
       if (unreadCount || getAllUnread === true) {
@@ -109,8 +106,6 @@ class Notification extends Model {
   // Override Model.save() in order to emit notification event to client
   // Save a new database entry according to the model data
   save() {
-    const self = this;
-
     return new Promise((resolve, reject) => {
       // Fetch the session for the user given by the sessionId.
       // todo Legacy now since we don't use sessions anymore. Not sure how the original
@@ -138,15 +133,15 @@ class Notification extends Model {
       */
 
       aws.dbClient.put({
-        Item: self.data,
-        TableName: self.config.table,
+        Item: this.data,
+        TableName: this.config.table,
       }, (err) => {
         if (err) {
           return reject(err);
         }
 
         // Clear dirtys array.
-        self.dirtys.splice(0, self.dirtys.length);
+        this.dirtys.splice(0, this.dirtys.length);
         return resolve();
       });
     });

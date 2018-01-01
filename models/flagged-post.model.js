@@ -18,29 +18,28 @@ class FlaggedPost extends Model {
   // Fetch the flagged posts on a specific branch
   findByBranch(branchid, timeafter, nsfw, sortBy, stat, postType, last) {
     const limit = 30;
-    const self = this;
     let index;
 
     switch (sortBy) {
       case 'branch_rules':
-        index = self.config.keys.globalIndexes[1];
+        index = this.config.keys.globalIndexes[1];
         break;
 
       case 'nsfw':
-        index = self.config.keys.globalIndexes[4];
+        index = this.config.keys.globalIndexes[4];
         break;
 
       case 'site_rules':
-        index = self.config.keys.globalIndexes[2];
+        index = this.config.keys.globalIndexes[2];
         break;
 
       case 'wrong_type':
-        index = self.config.keys.globalIndexes[3];
+        index = this.config.keys.globalIndexes[3];
         break;
 
       case 'date':
       default:
-        index = self.config.keys.globalIndexes[0];
+        index = this.config.keys.globalIndexes[0];
         break;
     }
 
@@ -68,7 +67,7 @@ class FlaggedPost extends Model {
           KeyConditionExpression: 'branchid = :branchid AND #date >= :timeafter',
           ScanIndexForward: false, // return results highest first
           Select: 'ALL_PROJECTED_ATTRIBUTES',
-          TableName: self.config.table,
+          TableName: this.config.table,
         };
 
         if (postType !== 'all') {
@@ -116,7 +115,7 @@ class FlaggedPost extends Model {
           KeyConditionExpression: 'branchid = :branchid',
           ScanIndexForward: false, // return results highest first
           Select: 'ALL_PROJECTED_ATTRIBUTES',
-          TableName: self.config.table,
+          TableName: this.config.table,
         };
 
         if (postType !== 'all') {
@@ -143,15 +142,13 @@ class FlaggedPost extends Model {
   // Get a flaggedpost by its id, passing in results to promise resolve.
   // Rejects promise with true if database error, with false if no data found.
   findById(id) {
-    const self = this;
-
     return new Promise((resolve, reject) => {
       aws.dbClient.query({
         ExpressionAttributeValues: {
           ':id': id,
         },
         KeyConditionExpression: 'id = :id',
-        TableName: self.config.table,
+        TableName: this.config.table,
       }, (err, data) => {
         if (err) {
           return reject(err);
@@ -167,8 +164,6 @@ class FlaggedPost extends Model {
   }
 
   findByPostAndBranchIds(postid, branchid) {
-    const self = this;
-
     return new Promise((resolve, reject) => {
       aws.dbClient.query({
         ExpressionAttributeValues: {
@@ -176,7 +171,7 @@ class FlaggedPost extends Model {
           ':postid': postid,
         },
         KeyConditionExpression: 'id = :postid AND branchid = :branchid',
-        TableName: self.config.table,
+        TableName: this.config.table,
       }, (err, data) => {
         if (err) {
           return reject(err);
@@ -186,7 +181,7 @@ class FlaggedPost extends Model {
           return reject();
         }
 
-        self.data = data.Items[0];
+        this.data = data.Items[0];
         return resolve();
       });
     });

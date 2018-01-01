@@ -19,12 +19,10 @@ class PollAnswer extends Model {
   // instantiate the object with this data.
   // Rejects promise with true if database error, with false if no post found.
   findById(id) {
-    const self = this;
-
     return new Promise((resolve, reject) => {
       aws.dbClient.get({
         Key: { id },
-        TableName: self.config.table,
+        TableName: this.config.table,
       }, (err, data) => {
         if (err) {
           return reject(err);
@@ -34,8 +32,8 @@ class PollAnswer extends Model {
           return reject();
         }
 
-        self.data = data.Item;
-        return resolve(self.data);
+        this.data = data.Item;
+        return resolve(this.data);
       });
     });
   }
@@ -43,14 +41,13 @@ class PollAnswer extends Model {
   // Fetch the answers on a specific poll sorted by either date or number of votes
   findByPost(postid, sortBy, last) {
     const limit = 30;
-    const self = this;
-    let IndexName = self.config.keys.globalIndexes[1];
+    let IndexName = this.config.keys.globalIndexes[1];
 
     if (sortBy == 'date') {
-      IndexName = self.config.keys.globalIndexes[1];
+      IndexName = this.config.keys.globalIndexes[1];
     }
     else if (sortBy == 'votes') {
-      IndexName = self.config.keys.globalIndexes[2];
+      IndexName = this.config.keys.globalIndexes[2];
     }
 
     if (last) {
@@ -68,7 +65,7 @@ class PollAnswer extends Model {
         KeyConditionExpression: 'postid = :postid',
         ScanIndexForward: false, // return results highest first
         Select: 'ALL_PROJECTED_ATTRIBUTES',
-        TableName: self.config.table,
+        TableName: this.config.table,
       };
       aws.dbClient.query(params, (err, data) => {
         if (err) {

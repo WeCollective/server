@@ -20,7 +20,6 @@ class Constant extends Model {
   // this.validate() will not work in such cases, we should support multiple items in all
   // models though.
   findById(ids) {
-    const self = this;
     const { table } = this.config;
 
     if (!Array.isArray(ids)) {
@@ -49,8 +48,8 @@ class Constant extends Model {
           return reject();
         }
 
-        self.data = ids.length === 1 ? Responses[0] : Responses;
-        return resolve(self.data);
+        this.data = ids.length === 1 ? Responses[0] : Responses;
+        return resolve(this.data);
       });
     });
   }

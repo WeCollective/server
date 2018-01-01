@@ -18,8 +18,6 @@ class ModLogEntry extends Model {
   // Get a mod log by branch id, passing in results to promise resolve.
   // Rejects promise with true if database error, with false if no log data found.
   findByBranch(branchid) {
-    const self = this;
-
     return new Promise((resolve, reject) => {
       aws.dbClient.query({
         ExpressionAttributeValues: {
@@ -28,7 +26,7 @@ class ModLogEntry extends Model {
         KeyConditionExpression: 'branchid = :id',
         // Newest results first.
         ScanIndexForward: false,
-        TableName: self.config.table,
+        TableName: this.config.table,
       }, (err, data) => {
         if (err) {
           return reject(err);

@@ -21,15 +21,11 @@ const formatCommentsToNewAPI = comments => {
 
 class Comment extends Model {
   constructor(props) {
-    super(props);
-
-    this.config = {
+    super(props, {
       keys: db.Keys.Comments,
       schema: db.Schema.Comment,
       table: db.Table.Comments,
-    };
-
-    this.data = this.sanitize(props);
+    });
   }
 
   // Get a comment by its id from the db, and

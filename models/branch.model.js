@@ -8,15 +8,11 @@ const validate = reqlib('models/validate');
 
 class Branch extends Model {
   constructor(props) {
-    super(props);
-
-    this.config = {
+    super(props, {
       keys: db.Keys.Branches,
       schema: db.Schema.Branch,
       table: db.Table.Branches,
-    };
-
-    this.data = this.sanitize(props);
+    });
   }
 
   // Get a branch by its id from the db, and

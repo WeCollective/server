@@ -7,15 +7,11 @@ const validate = reqlib('models/validate');
 
 class Constant extends Model {
   constructor(props) {
-    super(props);
-
-    this.config = {
+    super(props, {
       keys: db.Keys.Constants,
       schema: db.Schema.Constant,
       table: db.Table.Constants,
-    };
-
-    this.data = this.sanitize(props);
+    });
   }
 
   // Get a Constant by its id from the db, and instantiate the object with this data.

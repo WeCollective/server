@@ -7,15 +7,11 @@ const validate = reqlib('models/validate');
 
 class Vote extends Model {
   constructor(props) {
-    super(props);
-
-    this.config = {
+    super(props, {
       keys: db.Keys.UserVotes,
       schema: db.Schema.UserVote,
       table: db.Table.UserVotes,
-    };
-
-    this.data = this.sanitize(props);
+    });
   }
 
   findByUsernameAndItemId(username, itemid) {

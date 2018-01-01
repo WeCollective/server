@@ -7,16 +7,11 @@ const validate = reqlib('models/validate');
 
 class UserImage extends Model {
   constructor(props) {
-    super(props);
-
-    this.config = {
+    super(props, {
       keys: db.Keys.UserImages,
       schema: db.Schema.UserImages,
       table: db.Table.UserImages,
-    };
-
-    this.data = this.sanitize(props);
-    this.restricted = ['id'];
+    });
   }
 
   // Get a user image of given type ('picture', 'cover') by their username from the db, and

@@ -8,15 +8,11 @@ const validate = reqlib('models/validate');
 
 class PostData extends Model {
   constructor(props) {
-    super(props);
-
-    this.config = {
+    super(props, {
       keys: db.Keys.PostData,
       schema: db.Schema.PostData,
       table: db.Table.PostData,
-    };
-
-    this.data = this.sanitize(props);
+    });
   }
 
   // Get a post' data by its id from the db, and

@@ -8,15 +8,11 @@ const validate = reqlib('models/validate');
 
 class CommentData extends Model {
   constructor(props) {
-    super(props);
-
-    this.config = {
+    super(props, {
       keys: db.Keys.CommentData,
       schema: db.Schema.CommentData,
       table: db.Table.CommentData,
-    };
-
-    this.data = this.sanitize(props);
+    });
   }
 
   // Get a comment's data by its id from the db, and

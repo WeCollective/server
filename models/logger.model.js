@@ -5,15 +5,11 @@ const Model = reqlib('models/model');
 
 class Logger extends Model {
   constructor(props) {
-    super(props);
-
-    this.config = {
+    super(props, {
       keys: db.Keys.Loggers,
       schema: db.Schema.Logger,
       table: db.Table.Loggers,
-    };
-
-    this.data = this.sanitize(props);
+    });
   }
 
   record(eventType, extra) {

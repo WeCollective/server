@@ -7,15 +7,11 @@ const validate = reqlib('models/validate');
 
 class Mod extends Model {
   constructor(props) {
-    super(props);
-
-    this.config = {
+    super(props, {
       keys: db.Keys.Mods,
       schema: db.Schema.Mod,
       table: db.Table.Mods,
-    };
-
-    this.data = this.sanitize(props);
+    });
   }
 
   // Get the mods of a specific branch, passing results into resolve

@@ -8,16 +8,11 @@ const validate = reqlib('models/validate');
 
 class BranchImage extends Model {
   constructor(props) {
-    super(props);
-
-    this.config = {
+    super(props, {
       keys: db.Keys.BranchImages,
       schema: db.Schema.BranchImages,
       table: db.Table.BranchImages,
-    };
-
-    this.data = this.sanitize(props);
-    this.restricted = ['id'];
+    });
   }
 
   // Get a branch image of given type ('picture', 'cover') by it's id from the db, and

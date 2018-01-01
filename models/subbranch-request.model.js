@@ -11,15 +11,11 @@ const validate = reqlib('models/validate');
 
 class SubBranchRequest extends Model {
   constructor(props) {
-    super(props);
-
-    this.config = {
+    super(props, {
       keys: db.Keys.SubBranchRequests,
       schema: db.Schema.SubBranchRequest,
       table: db.Table.SubBranchRequests,
-    };
-
-    this.data = this.sanitize(props);
+    });
   }
 
   // Get a subbranch request by the parent and childs ids, passing data to resolve

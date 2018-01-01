@@ -8,15 +8,11 @@ const validate = reqlib('models/validate');
 
 class ModLogEntry extends Model {
   constructor(props) {
-    super(props);
-
-    this.config = {
+    super(props, {
       keys: db.Keys.ModLog,
       schema: db.Schema.ModLogEntry,
       table: db.Table.ModLog,
-    };
-
-    this.data = this.sanitize(props);
+    });
   }
 
   // Get a mod log by branch id, passing in results to promise resolve.

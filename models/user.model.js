@@ -12,15 +12,11 @@ const isEmail = email => /^([^\x00-\x20\x22\x28\x29\x2c\x2e\x3a-\x3c\x3e\x40\x5b
 
 class User extends Model {
   constructor(props) {
-    super(props);
-
-    this.config = {
+    super(props, {
       keys: db.Keys.Users,
       schema: db.Schema.User,
       table: db.Table.Users,
-    };
-
-    this.data = this.sanitize(props);
+    });
   }
 
   findByEmail(email) {

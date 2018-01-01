@@ -7,15 +7,11 @@ const validate = reqlib('models/validate');
 
 class Tag extends Model {
   constructor(props) {
-    super(props);
-
-    this.config = {
+    super(props, {
       keys: db.Keys.Tags,
       schema: db.Schema.Tag,
       table: db.Table.Tags,
-    };
-
-    this.data = this.sanitize(props);
+    });
   }
 
   // Get the tags of a specific branch, passing in results to promise resolve.

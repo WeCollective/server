@@ -1,10 +1,10 @@
-// check each model validations and entity limits checking
+// check each controller validations and entity limits checking
 
 // BASE CONSTANTS.
 const DATE = 13; // We use 13-digit unix timestamps.
 const HYPHEN = 1; // Classic "-" character.
-const MAX_BRANCH = 30;
 const MAX_BRANCH_DESCRIPTION = 10000;
+const MAX_BRANCH_ID = 30;
 const MAX_BRANCH_NAME = 30;
 const MAX_BRANCH_RULES = 10000;
 const MAX_COMMENT_TEXT = 20000;
@@ -33,7 +33,7 @@ const BranchImageTypes = [
 
 // Defines maximum length for entities across Weco.
 const EntityLimits = {
-  branch: MAX_BRANCH,
+  branch: MAX_BRANCH_ID,
   branchDescription: MAX_BRANCH_DESCRIPTION,
   branchName: MAX_BRANCH_NAME,
   branchRules: MAX_BRANCH_RULES,

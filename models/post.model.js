@@ -24,15 +24,11 @@ const formatPostsToNewAPI = posts => {
 
 class Post extends Model {
   constructor(props) {
-    super(props);
-
-    this.config = {
+    super(props, {
       keys: db.Keys.Posts,
       schema: db.Schema.Post,
       table: db.Table.Posts,
-    };
-
-    this.data = this.sanitize(props);
+    });
   }
 
   // Fetch the posts on a specific branch, using a specific stat, and filtered by time

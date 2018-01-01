@@ -8,15 +8,11 @@ const validate = reqlib('models/validate');
 
 class FlaggedPost extends Model {
   constructor(props) {
-    super(props);
-
-    this.config = {
+    super(props, {
       keys: db.Keys.FlaggedPosts,
       schema: db.Schema.FlaggedPost,
       table: db.Table.FlaggedPosts,
-    };
-
-    this.data = this.sanitize(props);
+    });
   }
 
   // Fetch the flagged posts on a specific branch

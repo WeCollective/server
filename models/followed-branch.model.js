@@ -7,15 +7,11 @@ const validate = reqlib('models/validate');
 
 class FollowedBranch extends Model {
   constructor(props) {
-    super(props);
-
-    this.config = {
+    super(props, {
       keys: db.Keys.FollowedBranches,
       schema: db.Schema.FollowedBranch,
       table: db.Table.FollowedBranches,
-    };
-
-    this.data = this.sanitize(props);
+    });
   }
 
   // Get a FollowedBranch by its id from the db, and

@@ -8,15 +8,11 @@ const validate = reqlib('models/validate');
 
 class PollAnswer extends Model {
   constructor(props) {
-    super(props);
-
-    this.config = {
+    super(props, {
       keys: db.Keys.PollAnswers,
       schema: db.Schema.PollAnswer,
       table: db.Table.PollAnswers,
-    };
-
-    this.data = this.sanitize(props);
+    });
   }
 
   // Get a PollAnswer by its id from the db, and

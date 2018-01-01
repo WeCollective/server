@@ -7,15 +7,11 @@ const validate = reqlib('models/validate');
 
 class Notification extends Model {
   constructor(props) {
-    super(props);
-
-    this.config = {
+    super(props, {
       keys: db.Keys.Notifications,
       schema: db.Schema.Notification,
       table: db.Table.Notifications,
-    };
-
-    this.data = this.sanitize(props);
+    });
   }
 
   // Get a Notification by its id from the db, and

@@ -49,11 +49,9 @@ const checkId = (type, str) => {
     throw new Error(`Id type "${type}" is missing maximum length definition.`);
   }
 
-  // Ids cannot contain whitespace and must include only
-  // lowercase characters, digits, underscore, or hyphen.
   return !!(str && typeof str === 'string' &&
     str.length > 0 && str.length <= maxLen &&
-    !/\s/g.test(str) && id.test(str));
+    !whitespace.test(str) && id.test(str));
 };
 
 // EXPORTS.

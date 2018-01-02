@@ -129,7 +129,7 @@ module.exports = () => {
 
     return user.findByUsername(username)
       .then(() => Promise.reject({
-        message: 'Username already exists',
+        message: 'Username already exists.',
         status: 400,
       }))
       .catch(err => {
@@ -141,7 +141,7 @@ module.exports = () => {
       })
       .then(() => new User().findByEmail(req.body.email))
       .then(() => Promise.reject({
-        message: 'Email already exists',
+        message: 'Email already exists.',
         status: 400,
       }))
       .catch(err => {

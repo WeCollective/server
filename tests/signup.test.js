@@ -114,7 +114,7 @@ module.exports = server => {
       .send('email=test@email.com')
       .send('name=John')
       .expect(400, done)
-      // .expect({ message: 'Username already exists' }, done);
+      // .expect({ message: 'Username already exists.' }, done);
   });
   
 };

@@ -169,16 +169,18 @@ class Model {
         if (Array.isArray(validation.params)) {
           // Transpile any parameter references.
           testParams = validation.params.map(param => {
-            // Other key values.
-            if (typeof param === 'string' && param.substring(0, 2) === '$$') {
-              const key = param.substring(2);
-              param = this.data[key];
-            }
+            if (typeof param === 'string') {
+              // Other key values.
+              if (param.substring(0, 2) === '$$') {
+                const key = param.substring(2);
+                param = this.data[key];
+              }
 
-            // Method parameter.
-            if (typeof param === 'string' && param.substring(0, 1) === '%') {
-              const index = Number.parseInt(param.substring(1), 10);
-              param = params[index];
+              // Method parameter.
+              if (param.substring(0, 1) === '%') {
+                const index = Number.parseInt(param.substring(1), 10);
+                param = params[index];
+              }
             }
 
             return param;

@@ -4,22 +4,6 @@ const aws = reqlib('config/aws');
 const db = reqlib('config/database');
 const Model = reqlib('models/model');
 
-const formatPostsToNewAPI = posts => {
-  posts = posts || [];
-
-  posts.forEach(post => {
-    post.votes = {
-      down: post.down,
-      global: post.global,
-      individual: post.individual,
-      local: post.local,
-      up: post.up,
-    };
-  });
-
-  return posts;
-};
-
 class Post extends Model {
   constructor(props) {
     super(props, {
@@ -151,7 +135,7 @@ class Post extends Model {
           return reject();
         }
 
-        const posts = formatPostsToNewAPI(data.Items.slice(0, limit));
+        const posts = data.Items.slice(0, limit);
         return resolve(posts);
       });
     });
@@ -176,8 +160,7 @@ class Post extends Model {
           return reject();
         }
 
-        const posts = formatPostsToNewAPI(data.Items);
-        return resolve(posts);
+        return resolve(data.Items);
       });
     });
   }

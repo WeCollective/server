@@ -4,52 +4,12 @@ const aws = reqlib('config/aws');
 const db = reqlib('config/database');
 const Model = reqlib('models/model');
 
-const formatCommentsToNewAPI = comments => {
-  comments = comments || [];
-
-  comments.forEach(comment => {
-    comment.votes = {
-      down: comment.down,
-      individual: comment.individual,
-      up: comment.up,
-    };
-  });
-
-  return comments;
-}
-
 class Comment extends Model {
   constructor(props) {
     super(props, {
       keys: db.Keys.Comments,
       schema: db.Schema.Comment,
       table: db.Table.Comments,
-    });
-  }
-
-  // Get a comment by its id from the db, and
-  // instantiate the object with this data.
-  // Rejects promise with true if database error, with false if no user found.
-  findById(id) {
-    return new Promise((resolve, reject) => {
-      aws.dbClient.get({
-        Key: {
-          id,
-        },
-        TableName: this.config.table,
-      }, (err, data) => {
-        if (err) {
-          return reject(err);
-        }
-
-        if (!data || !data.Item) {
-          return reject();
-        }
-
-        const comments = formatCommentsToNewAPI([data.Item]);
-        this.data = comments[0];
-        return resolve(this.data);
-      });
     });
   }
 
@@ -110,7 +70,7 @@ class Comment extends Model {
           return reject();
         }
 
-        const comments = formatCommentsToNewAPI(data.Items.slice(0, limit));
+        const comments = data.Items.slice(0, limit);
         return resolve({
           comments,
           hasMoreComments: data.Items.length !== comments.length,

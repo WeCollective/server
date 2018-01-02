@@ -669,7 +669,7 @@ module.exports.getOneComment = (id, req) => {
             .findByUsernameAndItemId(req.user.username, `comment-${id}`)
             .then(existingVoteData => {
               if (existingVoteData) {
-                comment.votes.userVoted = existingVoteData.direction;
+                comment.userVoted = existingVoteData.direction;
               }
 
               return resolve();
@@ -745,7 +745,7 @@ module.exports.getOnePost = (id, req, branchid) => {
           .findByUsernameAndItemId(req.user.username, `post-${post.id}`)
           .then(existingVoteData => {
             if (existingVoteData) {
-              post.votes.userVoted = existingVoteData.direction;
+              post.userVoted = existingVoteData.direction;
             }
 
             return resolve();

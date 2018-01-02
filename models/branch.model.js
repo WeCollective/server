@@ -13,31 +13,6 @@ class Branch extends Model {
     });
   }
 
-  // Get a branch by its id from the db, and
-  // instantiate the object with this data.
-  // Rejects promise with true if database error, with false if no user found.
-  findById(id) {
-    return new Promise((resolve, reject) => {
-      aws.dbClient.get({
-        Key: {
-          id,
-        },
-        TableName: this.config.table,
-      }, (err, data) => {
-        if (err) {
-          return reject(err);
-        }
-
-        if (!data || !data.Item) {
-          return reject();
-        }
-
-        this.data = data.Item;
-        return resolve(this.data);
-      });
-    });
-  }
-
   // Get root branches using the GSI 'parentid', which will be set to 'root'.
   // TODO: this has an upper limit on the number of results; if so, a LastEvaluatedKey
   // will be supplied to indicate where to continue the search from

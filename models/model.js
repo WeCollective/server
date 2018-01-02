@@ -49,6 +49,44 @@ class Model {
     });
   }
 
+  // Supports fetching multiple rows at once.
+  // this.validate() doesn't work in such cases, we should support multiple items in all
+  // models in the future though.
+  findById(ids) {
+    const { table } = this.config;
+
+    if (!Array.isArray(ids)) {
+      ids = [ids];
+    }
+
+    return new Promise((resolve, reject) => {
+      aws.dbClient.batchGet({
+        RequestItems: {
+          [table]: {
+            Keys: ids.map(id => ({ id })),
+          },
+        },
+      }, (err, data) => {
+        if (err) {
+          return reject(err);
+        }
+
+        if (!data || !data.Responses) {
+          return reject();
+        }
+
+        const Responses = data.Responses[table];
+
+        if (!Responses || !Responses.length) {
+          return reject();
+        }
+
+        this.data = ids.length === 1 ? Responses[0] : Responses;
+        return resolve(this.data);
+      });
+    });
+  }
+
   get(name) {
     return this.data[name];
   }

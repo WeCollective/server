@@ -1,171 +1,551 @@
+const reqlib = require('app-root-path').require;
+
+const Constants = reqlib('config/constants');
+const validate = reqlib('models/validate');
+
+/**
+ * Legend references for params in validation.
+ *
+ * $$key = The schema key, used to grab the current value.
+ *
+ * Example:
+ * params: ['$$id']
+ * We will use the id value as a parameter.
+ *
+ * %int = Validation function parameter, indexed from 0.
+ *
+ * Example:
+ * params: ['%0']
+ * validate(props, param1, param2)
+ * We will grab param1.
+ *
+ */
 const Schema = {
   Branch: {
-    creator: null,
-    date: null,
-    description: null,
-    id: null,
-    name: null,
-    parentid: null,
-    post_comments: null,
-    post_count: null,
-    post_points: null,
-    rules: null,
+    creator: {
+      validate: validate.username,
+      value: null,
+    },
+    date: {
+      validate: validate.date,
+      value: null,
+    },
+    description: {
+      validate: {
+        params: [1, Constants.EntityLimits.branchDescription],
+        test: validate.range,
+      },
+      value: null,
+    },
+    id: {
+      validate: validate.branchid,
+      value: null,
+    },
+    name: {
+      validate: {
+        params: [1, Constants.EntityLimits.branchName],
+        test: validate.range,
+      },
+      value: null,
+    },
+    parentid: {
+      validate: validate.branchid,
+      value: null,
+    },
+    post_comments: {
+      validate: validate.number,
+      value: null,
+    },
+    post_count: {
+      validate: validate.number,
+      value: null,
+    },
+    post_points: {
+      validate: validate.number,
+      value: null,
+    },
+    rules: {
+      validate: {
+        params: [null, Constants.EntityLimits.branchRules],
+        test: validate.range,
+      },
+      value: null,
+    },
   },
   
   BranchImages: {
-    date: null,
-    extension: null,
-    id: null,
+    date: {
+      validate: validate.date,
+      value: null,
+    },
+    extension: {
+      validate: validate.extension,
+      value: null,
+    },
+    id: {
+      validate: validate.branchImageId,
+      value: null,
+    },
   },
 
   Comment: {
-    date: null,
-    down: null,
-    id: null,
-    individual: null,
-    parentid: null,
-    postid: null,
-    rank: null,
-    replies: null,
-    up: null,
+    date: {
+      validate: validate.date,
+      value: null,
+    },
+    down: {
+      validate: validate.number,
+      value: null,
+    },
+    id: {
+      validate: validate.commentid,
+      value: null,
+    },
+    individual: {
+      validate: validate.number,
+      value: null,
+    },
+    parentid: {
+      validate: validate.commentid,
+      value: null,
+    },
+    postid: {
+      validate: validate.postid,
+      value: null,
+    },
+    rank: {
+      validate: validate.number,
+      value: null,
+    },
+    replies: {
+      validate: validate.number,
+      value: null,
+    },
+    up: {
+      validate: validate.number,
+      value: null,
+    },
   },
   
   CommentData: {
-    creator: null,
-    date: null,
-    edited: null,
-    id: null,
-    text: null,
+    creator: {
+      validate: validate.username,
+      value: null,
+    },
+    date: {
+      validate: validate.date,
+      value: null,
+    },
+    edited: {
+      validate: validate.boolean,
+      value: null,
+    },
+    id: {
+      validate: validate.commentid,
+      value: null,
+    },
+    text: {
+      validate: {
+        params: [1, Constants.EntityLimits.commentText],
+        test: validate.range,
+      },
+      value: null,
+    },
   },
 
   Constant: {
-    data: null,
-    id: null,
+    data: {
+      validate: {
+        params: ['$$id'],
+        test: validate.wecoConstantValue,
+      },
+      value: null,
+    },
+    id: {
+      validate: validate.wecoConstantId,
+      value: null,
+    },
   },
   
   FlaggedPost: {
-    branch_rules_count: null,
-    branchid: null,
-    date: null,
-    id: null,
-    nsfw_count: null,
-    site_rules_count: null,
-    type: null,
-    wrong_type_count: null,
+    branch_rules_count: {
+      validate: validate.number,
+      value: null,
+    },
+    branchid: {
+      validate: validate.branchid,
+      value: null,
+    },
+    date: {
+      validate: validate.date,
+      value: null,
+    },
+    id: {
+      validate: validate.postid,
+      value: null,
+    },
+    nsfw_count: {
+      validate: validate.number,
+      value: null,
+    },
+    site_rules_count: {
+      validate: validate.number,
+      value: null,
+    },
+    type: {
+      validate: validate.postType,
+      value: null,
+    },
+    wrong_type_count: {
+      validate: validate.number,
+      value: null,
+    },
   },
 
   FollowedBranch: {
-    branchid: null,
-    username: null,
+    branchid: {
+      validate: validate.branchid,
+      value: null,
+    },
+    username: {
+      validate: validate.username,
+      value: null,
+    },
   },
 
   Logger: {
-    createdAt: null,
-    event: null,
-    extra: null,
+    createdAt: {
+      validate: null,
+      value: null,
+    },
+    event: {
+      validate: null,
+      value: null,
+    },
+    extra: {
+      validate: null,
+      value: null,
+    },
   },
 
   Mod: {
-    branchid: null,
-    date: null,
-    username: null,
+    branchid: {
+      validate: validate.branchid,
+      value: null,
+    },
+    date: {
+      validate: validate.date,
+      value: null,
+    },
+    username: {
+      validate: validate.username,
+      value: null,
+    },
   },
   
   ModLogEntry: {
-    action: null,
-    branchid: null,
-    data: null,
-    date: null,
-    username: null,
+    action: {
+      validate: validate.modLogAction,
+      value: null,
+    },
+    branchid: {
+      validate: validate.branchid,
+      value: null,
+    },
+    data: {
+      validate: validate.exists,
+      value: null,
+    },
+    date: {
+      validate: validate.date,
+      value: null,
+    },
+    username: {
+      validate: validate.username,
+      value: null,
+    },
   },
 
   Notification: {
-    data: null,
-    date: null,
-    id: null,
-    type: null,
-    unread: null,
-    user: null,
+    // TODO check data is a valid JSON for the given type
+    data: {
+      validate: null,
+      value: null,
+    },
+    date: {
+      validate: validate.date,
+      value: null,
+    },
+    id: {
+      validate: validate.notificationid,
+      value: null,
+    },
+    type: {
+      validate: validate.notificationType,
+      value: null,
+    },
+    unread: {
+      validate: validate.boolean,
+      value: null,
+    },
+    user: {
+      validate: validate.username,
+      value: null,
+    },
   },
 
   PollAnswer: {
-    creator: null,
-    date: null,
-    id: null,
-    postid: null,
-    text: null,
-    votes: null,
+    creator: {
+      validate: validate.username,
+      value: null,
+    },
+    date: {
+      validate: validate.date,
+      value: null,
+    },
+    id: {
+      validate: validate.pollanswerid,
+      value: null,
+    },
+    postid: {
+      validate: validate.postid,
+      value: null,
+    },
+    text: {
+      validate: {
+        params: [1, Constants.EntityLimits.pollAnswerText],
+        test: validate.range,
+      },
+      value: null,
+    },
+    votes: {
+      validate: validate.number,
+      value: null,
+    },
   },
   
   Post: {
-    branchid: null,
-    comment_count: null,
-    date: null,
-    down: null,
-    global: null,
-    id: null,
-    individual: null,
-    local: null,
-    locked: null,
-    nsfw: null,
-    type: null,
-    up: null,
+    branchid: {
+      validate: validate.branchid,
+      value: null,
+    },
+    comment_count: {
+      validate: validate.number,
+      value: null,
+    },
+    date: {
+      validate: validate.date,
+      value: null,
+    },
+    down: {
+      validate: validate.number,
+      value: null,
+    },
+    global: {
+      validate: validate.number,
+      value: null,
+    },
+    id: {
+      validate: validate.postid,
+      value: null,
+    },
+    individual: {
+      validate: validate.number,
+      value: null,
+    },
+    local: {
+      validate: validate.number,
+      value: null,
+    },
+    locked: {
+      validate: validate.boolean,
+      value: null,
+    },
+    nsfw: {
+      validate: validate.boolean,
+      value: null,
+    },
+    type: {
+      validate: validate.postType,
+      value: null,
+    },
+    up: {
+      validate: validate.number,
+      value: null,
+    },
   },
   
   PostData: {
-    creator: null,
-    id: null,
-    original_branches: null,
-    text: null,
-    title: null,
+    creator: {
+      validate: validate.username,
+      value: null,
+    },
+    id: {
+      validate: validate.postid,
+      value: null,
+    },
+    original_branches: {
+      validate: validate.originalBranches,
+      value: null,
+    },
+    text: {
+      validate: {
+        params: ['%0'],
+        test: validate.postText,
+      },
+      value: null,
+    },
+    title: {
+      validate: {
+        params: [1, Constants.EntityLimits.postTitle],
+        test: validate.range,
+      },
+      value: null,
+    },
   },
   
   PostImages: {
-    date: null,
-    extension: null,
-    id: null,
+    date: {
+      validate: validate.date,
+      value: null,
+    },
+    extension: {
+      validate: validate.extension,
+      value: null,
+    },
+    id: {
+      validate: validate.postImageId,
+      value: null,
+    },
   },
   
   SubBranchRequest: {
-    childid: null,
-    creator: null,
-    date: null,
-    parentid: null,
+    childid: {
+      validate: validate.branchid,
+      value: null,
+    },
+    creator: {
+      validate: validate.username,
+      value: null,
+    },
+    date: {
+      validate: validate.date,
+      value: null,
+    },
+    parentid: {
+      validate: validate.branchid,
+      value: null,
+    },
   },
   
   Tag: {
-    branchid: null,
-    tag: null,
+    branchid: {
+      validate: validate.branchid,
+      value: null,
+    },
+    tag: {
+      validate: validate.branchid,
+      value: null,
+    },
   },
   
   User: {
-    banned: null,
-    datejoined: null,
-    dob: null,
-    email: null,
-    name: null,
-    num_branches: null,
-    num_comments: null,
-    num_mod_positions: null,
-    num_posts: null,
-    password: null,
-    resetPasswordToken: null,
-    show_nsfw: null,
-    token: null,
-    username: null,
-    verified: null,
+    banned: {
+      validate: validate.boolean,
+      value: null,
+    },
+    datejoined: {
+      validate: validate.date,
+      value: null,
+    },
+    dob: {
+      validate: validate.age,
+      value: null,
+    },
+    email: {
+      validate: validate.email,
+      value: null,
+    },
+    name: {
+      validate: {
+        params: [
+          Constants.EntityLimits.userFullNameMin,
+          Constants.EntityLimits.userFullNameMax,
+        ],
+        test: validate.range,
+      },
+      value: null,
+    },
+    num_branches: {
+      validate: validate.number,
+      value: null,
+    },
+    num_comments: {
+      validate: validate.number,
+      value: null,
+    },
+    num_mod_positions: {
+      validate: validate.number,
+      value: null,
+    },
+    num_posts: {
+      validate: validate.number,
+      value: null,
+    },
+    password: {
+      validate: validate.password,
+      value: null,
+    },
+    resetPasswordToken: {
+      validate: null,
+      value: null,
+    },
+    show_nsfw: {
+      validate: validate.boolean,
+      value: null,
+    },
+    token: {
+      validate: null,
+      value: null,
+    },
+    username: {
+      validate: validate.username,
+      value: null,
+    },
+    verified: {
+      validate: validate.boolean,
+      value: null,
+    },
   },
   
   UserImages: {
-    extension: null,
-    date: null,
-    id: null,
+    extension: {
+      validate: validate.extension,
+      value: null,
+    },
+    date: {
+      validate: validate.date,
+      value: null,
+    },
+    id: {
+      validate: validate.userImageId,
+      value: null,
+    },
   },
   
   UserVote: {
-    direction: null,
-    itemid: null,
-    username: null,
+    direction: {
+      validate: validate.voteDirection,
+      value: null,
+    },
+    itemid: {
+      validate: null,
+      value: null,
+    },
+    username: {
+      validate: validate.username,
+      value: null,
+    },
   },
 };
 

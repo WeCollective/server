@@ -3,7 +3,6 @@ const reqlib = require('app-root-path').require;
 const aws = reqlib('config/aws');
 const db = reqlib('config/database');
 const Model = reqlib('models/model');
-const validate = reqlib('models/validate');
 
 class Constant extends Model {
   constructor(props) {
@@ -52,46 +51,6 @@ class Constant extends Model {
         return resolve(this.data);
       });
     });
-  }
-
-  validate(props) {
-    if (!Array.isArray(props) || !props.length) {
-      props = [
-        'data',
-        'id',
-      ];
-    }
-
-    let invalids = [];
-
-    props.forEach(key => {
-      const value = this.data[key];
-      let params = [];
-      let test;
-
-      switch (key) {
-        case 'data':
-          params = [this.data.id]
-          test = validate.wecoConstantValue;
-          break;
-
-        case 'id':
-          test = validate.wecoConstantId;
-          break;
-
-        default:
-          throw new Error(`Invalid validation key "${key}"`);
-      }
-
-      if (!test(value, ...params)) {
-        invalids = [
-          ...invalids,
-          `Invalid ${key} - ${value}.`,
-        ];
-      }
-    });
-
-    return invalids;
   }
 }
 

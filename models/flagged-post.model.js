@@ -3,7 +3,6 @@ const reqlib = require('app-root-path').require;
 const aws = reqlib('config/aws');
 const db = reqlib('config/database');
 const Model = reqlib('models/model');
-const validate = reqlib('models/validate');
 
 class FlaggedPost extends Model {
   constructor(props) {
@@ -184,52 +183,6 @@ class FlaggedPost extends Model {
         return resolve();
       });
     });
-  }
-
-  validate(props) {
-    let invalids = [];
-
-    props.forEach(key => {
-      const value = this.data[key];
-      let test;
-
-      switch (key) {
-        case 'branch_rules_count':
-        case 'nsfw_count':
-        case 'site_rules_count':
-        case 'wrong_type_count':
-          test = validate.number;
-          break;
-
-        case 'branchid':
-          test = validate.branchid;
-          break;
-
-        case 'date':
-          test = validate.date;
-          break;
-
-        case 'id':
-          test = validate.postid;
-          break;
-
-        case 'type':
-          test = validate.postType;
-          break;
-
-        default:
-          throw new Error(`Invalid validation key "${key}"`);
-      }
-
-      if (!test(value)) {
-        invalids = [
-          ...invalids,
-          `Invalid ${key} - ${value}.`,
-        ];
-      }
-    });
-
-    return invalids;
   }
 }
 

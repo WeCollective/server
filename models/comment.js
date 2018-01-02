@@ -3,7 +3,6 @@ const reqlib = require('app-root-path').require;
 const aws = reqlib('config/aws');
 const db = reqlib('config/database');
 const Model = reqlib('models/model');
-const validate = reqlib('models/validate');
 
 const formatCommentsToNewAPI = comments => {
   comments = comments || [];
@@ -118,65 +117,6 @@ class Comment extends Model {
         });
       });
     });
-  }
-
-  validate(props) {
-    if (!Array.isArray(props) || !props.length) {
-      props = [
-        'date',
-        'down',
-        'id',
-        'individual',
-        'parentid',
-        'postid',
-        'rank',
-        'replies',
-        'up',
-      ];
-    }
-
-    let invalids = [];
-
-    props.forEach(key => {
-      const value = this.data[key];
-      let params = [];
-      let test;
-
-      switch (key) {
-        case 'date':
-          test = validate.date;
-          break;
-
-        case 'down':
-        case 'individual':
-        case 'rank':
-        case 'replies':
-        case 'up':
-          test = validate.number;
-          break;
-
-        case 'id':
-        case 'parentid':
-          test = validate.commentid;
-          break;
-
-        case 'postid':
-          test = validate.postid;
-          break;
-
-        default:
-          throw new Error(`Invalid validation key "${key}"`);
-      }
-
-      if (!test(value, ...params)) {
-        invalids = [
-          ...invalids,
-          `Invalid ${key} - ${value}.`,
-        ];
-      }
-    });
-
-    return invalids;
   }
 }
 

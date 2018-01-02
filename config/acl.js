@@ -1,5 +1,6 @@
 const reqlib = require('app-root-path').require;
 
+const db = reqlib('config/database');
 const error = reqlib('responses/errors');
 const Mod = reqlib('models/mod.model');
 
@@ -34,41 +35,36 @@ ACL.Roles = {
 };
 
 ACL.Schema = (role, model) => {
-  if ('User' === model) {
+  const { User } = db.Schema;
+  let filter;
+  let schema;
+
+  if (model === 'User') {
     switch (role) {
       case ACL.Roles.Guest:
       case ACL.Roles.AuthenticatedUser:
-        return {
-          datejoined: null,
-          dob: null,
-          name: null,
-          num_branches: null,
-          num_comments: null,
-          num_mod_positions: null,
-          num_posts: null,
-          username: null,
-        };
+        filter = ['datejoined', 'dob', 'name', 'num_branches', 'num_comments',
+          'num_mod_positions', 'num_posts', 'username'];
+        break;
 
       case ACL.Roles.Self:
-        return {
-          datejoined: null,
-          dob: null,
-          email: null,
-          name: null,
-          num_branches: null,
-          num_comments: null,
-          num_mod_positions: null,
-          num_posts: null,
-          show_nsfw: null,
-          username: null,
-        };
+        filter = ['datejoined', 'dob', 'email', 'name', 'num_branches',
+          'num_comments', 'num_mod_positions', 'num_posts', 'show_nsfw',
+          'username'];
+        break;
 
       default:
-        return {};
+        // Do nothing.
+        break;
     }
   }
 
-  return {};
+  if (filter) {
+    schema = {};
+    filter.forEach(prop => schema[prop] = Object.assign({}, User[prop]));
+  }
+
+  return schema;
 };
 
 // Middleware to ensure a user is logged in

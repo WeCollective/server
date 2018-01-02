@@ -3,7 +3,6 @@ const reqlib = require('app-root-path').require;
 const aws = reqlib('config/aws');
 const db = reqlib('config/database');
 const Model = reqlib('models/model');
-const validate = reqlib('models/validate');
 
 class UserImage extends Model {
   constructor(props) {
@@ -41,47 +40,6 @@ class UserImage extends Model {
         return resolve();
       });
     });
-  }
-
-  validate() {
-    const props = [
-      'date',
-      'extension',
-      'id',
-    ];
-
-    let invalids = [];
-
-    props.forEach(key => {
-      const value = this.data[key];
-      let test;
-
-      switch (key) {
-        case 'date':
-          test = validate.date;
-          break;
-
-        case 'extension':
-          test = validate.extension;
-          break;
-
-        case 'id':
-          test = validate.userImageId;
-          break;
-
-        default:
-          throw new Error(`Invalid validation key "${key}"`);
-      }
-
-      if (!test(value)) {
-        invalids = [
-          ...invalids,
-          `Invalid ${key} - ${value}.`,
-        ];
-      }
-    });
-
-    return invalids;
   }
 }
 

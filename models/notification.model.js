@@ -3,7 +3,6 @@ const reqlib = require('app-root-path').require;
 const aws = reqlib('config/aws');
 const db = reqlib('config/database');
 const Model = reqlib('models/model');
-const validate = reqlib('models/validate');
 
 class Notification extends Model {
   constructor(props) {
@@ -145,65 +144,6 @@ class Notification extends Model {
         return resolve();
       });
     });
-  }
-
-  validate(props) {
-    if (!Array.isArray(props) || !props.length) {
-      props = [
-        'data',
-        'date',
-        'id',
-        'type',
-        'unread',
-        'user',
-      ];
-    }
-
-    let invalids = [];
-
-    props.forEach(key => {
-      const value = this.data[key];
-      let test;
-
-      switch (key) {
-        // TODO check data is a valid JSON for the given type
-        case 'data':
-          test = () => true;
-          break;
-
-        case 'date':
-          test = validate.date;
-          break;
-
-        case 'id':
-          test = validate.notificationid;
-          break;
-
-        case 'type':
-          test = validate.notificationType;
-          break;
-
-        case 'unread':
-          test = validate.boolean;
-          break;
-
-        case 'user':
-          test = validate.username;
-          break;
-
-        default:
-          throw new Error(`Invalid validation key "${key}"`);
-      }
-
-      if (!test(value)) {
-        invalids = [
-          ...invalids,
-          `Invalid ${key} - ${value}.`,
-        ];
-      }
-    });
-
-    return invalids;
   }
 }
 

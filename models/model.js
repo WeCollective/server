@@ -1,17 +1,16 @@
-const _ = require('lodash');
 const reqlib = require('app-root-path').require;
 
 const aws = reqlib('config/aws');
 
 class Model {
-  constructor(props, config) {
+  constructor(data, config) {
     if (new.target === Model) {
       throw new Error('Can\'t instantiate abstract class!');
     }
 
     // Includes table name, schema, and database keys.
     this.config = Object.assign({}, config || {});
-    this.data = this.sanitize(props);
+    this.data = this.sanitize(data);
     // Changed data properties.
     this.dirtys = [];
   }
@@ -44,7 +43,7 @@ class Model {
           return reject(err);
         }
 
-        this.data = this.sanitize({});
+        this.data = this.sanitize();
         return resolve();
       });
     });
@@ -55,10 +54,13 @@ class Model {
   }
 
   // Ensure data adheres to the schema.
-  sanitize(data, schema) {
-    data = data || {};
-    const defaultSchema = this.config.schema;
-    return _.pick(_.defaults(data, schema || defaultSchema), _.keys(schema || defaultSchema));
+  sanitize(data = {}, schema = this.config.schema) {
+    const schemaEmpty = {};
+    Object.keys(schema).forEach(key => schemaEmpty[key] = schema[key].value);
+    const schemaWithData = Object.assign({}, schemaEmpty, data);
+    const result = {};
+    Object.keys(schema).forEach(key => result[key] = schemaWithData[key]);
+    return result;
   }
 
   // Save a new database entry according to the model data.
@@ -139,6 +141,60 @@ class Model {
         return resolve();
       });
     });
+  }
+
+  validate(props, ...params) {
+    const { schema } = this.config;
+    let invalids = [];
+
+    // Check every attribute by default.
+    if (!Array.isArray(props) || !props.length) {
+      props = [...Object.keys(schema)];
+    }
+
+    props.forEach(prop => {
+      const validation = schema[prop].validate;
+      const value = this.data[prop];
+      let testParams = [];
+      let test;
+
+      // Find the test method.
+      if (typeof validation === 'function') {
+        test = validation;
+      }
+      else if (validation && typeof validation === 'object' &&
+        typeof validation.test === 'function') {
+        test = validation.test;
+
+        if (Array.isArray(validation.params)) {
+          // Transpile any parameter references.
+          testParams = validation.params.map(param => {
+            // Other key values.
+            if (typeof param === 'string' && param.substring(0, 2) === '$$') {
+              const key = param.substring(2);
+              param = this.data[key];
+            }
+
+            // Method parameter.
+            if (typeof param === 'string' && param.substring(0, 1) === '%') {
+              const index = Number.parseInt(param.substring(1), 10);
+              param = params[index];
+            }
+
+            return param;
+          });
+        }
+      }
+
+      if (test && !test(value, ...testParams)) {
+        invalids = [
+          ...invalids,
+          `Invalid ${prop} - ${value}.`,
+        ];
+      }
+    });
+
+    return invalids;
   }
 }
 

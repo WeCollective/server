@@ -1,10 +1,8 @@
 const reqlib = require('app-root-path').require;
 
 const aws = reqlib('config/aws');
-const Constants = reqlib('config/constants');
 const db = reqlib('config/database');
 const Model = reqlib('models/model');
-const validate = reqlib('models/validate');
 
 class Branch extends Model {
   constructor(props) {
@@ -119,79 +117,6 @@ class Branch extends Model {
         return resolve(slice);
       });
     });
-  }
-
-  validate(props) {
-    if (!Array.isArray(props) || !props.length) {
-      props = [
-        'creator',
-        'date',
-        'description',
-        'id',
-        'name',
-        'parentid',
-        'post_comments',
-        'post_count',
-        'post_points',
-        'rules',
-      ];
-    }
-
-    let invalids = [];
-
-    props.forEach(key => {
-      const value = this.data[key];
-      let params = [];
-      let test;
-
-      switch (key) {
-        case 'creator':
-          test = validate.username;
-          break;
-
-        case 'date':
-          test = validate.date;
-          break;
-
-        case 'description':
-          params = [1, Constants.EntityLimits.branchDescription];
-          test = validate.range;
-          break;
-
-        case 'id':
-        case 'parentid':
-          test = validate.branchid;
-          break;
-
-        case 'name':
-          params = [1, Constants.EntityLimits.branchName];
-          test = validate.range;
-          break;
-
-        case 'post_comments':
-        case 'post_count':
-        case 'post_points':
-          test = validate.number;
-          break;
-
-        case 'rules':
-          params = [null, Constants.EntityLimits.branchRules];
-          test = validate.range;
-          break;
-
-        default:
-          throw new Error(`Invalid validation key "${key}"`);
-      }
-
-      if (!test(value, ...params)) {
-        invalids = [
-          ...invalids,
-          `Invalid ${key} - ${value}.`,
-        ];
-      }
-    });
-
-    return invalids;
   }
 }
 

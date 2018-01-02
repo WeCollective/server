@@ -7,7 +7,6 @@ const Mod = reqlib('models/mod.model');
 const Model = reqlib('models/model');
 const Notification = reqlib('models/notification.model');
 const NotificationTypes = reqlib('config/notification-types');
-const validate = reqlib('models/validate');
 
 class SubBranchRequest extends Model {
   constructor(props) {
@@ -136,51 +135,6 @@ class SubBranchRequest extends Model {
           });
         });
     });
-  }
-
-  validate(props) {
-    if (!Array.isArray(props) || !props.length) {
-      props = [
-        'childid',
-        'creator',
-        'date',
-        'parentid',
-      ];
-    }
-
-    let invalids = [];
-
-    props.forEach(key => {
-      const value = this.data[key];
-      let test;
-
-      switch (key) {
-        case 'childid':
-        case 'parentid':
-          test = validate.branchid;
-          break;
-
-        case 'creator':
-          test = validate.username;
-          break;
-
-        case 'date':
-          test = validate.date;
-          break;
-
-        default:
-          throw new Error(`Invalid validation key "${key}"`);
-      }
-
-      if (!test(value)) {
-        invalids = [
-          ...invalids,
-          `Invalid ${key} - ${value}.`,
-        ];
-      }
-    });
-
-    return invalids;
   }
 }
 

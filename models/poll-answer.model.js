@@ -1,10 +1,8 @@
 const reqlib = require('app-root-path').require;
 
 const aws = reqlib('config/aws');
-const Constants = reqlib('config/constants');
 const db = reqlib('config/database');
 const Model = reqlib('models/model');
-const validate = reqlib('models/validate');
 
 class PollAnswer extends Model {
   constructor(props) {
@@ -79,55 +77,6 @@ class PollAnswer extends Model {
         return resolve(data.Items.slice(0, limit));
       });
     });
-  }
-
-  validate(props) {
-    let invalids = [];
-
-    props.forEach(key => {
-      const value = this.data[key];
-      let params = [];
-      let test;
-
-      switch (key) {
-        case 'creator':
-          test = validate.username;
-          break;
-
-        case 'date':
-          test = validate.date;
-          break;
-
-        case 'id':
-          test = validate.pollanswerid;
-          break;
-
-        case 'postid':
-          test = validate.postid;
-          break;
-
-        case 'text':
-          params = [1, Constants.EntityLimits.pollAnswerText];
-          test = validate.range;
-          break;
-
-        case 'votes':
-          test = validate.number;
-          break;
-
-        default:
-          throw new Error(`Invalid validation key "${key}"`);
-      }
-
-      if (!test(value, ...params)) {
-        invalids = [
-          ...invalids,
-          `Invalid ${key} - ${value}.`,
-        ];
-      }
-    });
-
-    return invalids;
   }
 }
 

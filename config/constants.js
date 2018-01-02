@@ -1,5 +1,4 @@
 // check each controller validations and entity limits checking
-// move validate switch cases into schema definition
 
 // BASE CONSTANTS.
 const DATE = 13; // We use 13-digit unix timestamps.

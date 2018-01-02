@@ -186,9 +186,7 @@ class Post extends Model {
           return reject();
         }
 
-        const posts = formatPostsToNewAPI(data.Items);
-
-        this.data = posts[0];
+        this.data = data.Items[0];
         return resolve(this.data);
       });
     });

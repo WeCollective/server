@@ -21,16 +21,13 @@ const helmet = require('helmet'); // protect against common web vulnerabilities
 const morgan = require('morgan');
 const reqlib = require('app-root-path').require;
 
-const clearConsole = reqlib('utils/clear-console');
-
-const app = express(); // define our app using express
+const app = express();
+module.exports = app;
 
 // DISABLE LOGGING IF IN TEST MODE
 if (process.env.NODE_ENV === 'test') {
   console.error = () => {};
 }
-
-const port = process.env.PORT || 8080;
 
 // MIDDLEWARE
 app.use(helmet());
@@ -82,36 +79,14 @@ app.use((req, res, next) => {
 
 // AUTHENTICATION AND JWT MANAGEMENT
 app.use(bearerToken());
-
 const auth = reqlib('config/passport')();
 app.use(auth.initialize());
 
-// INITIALISE SOCKET.IO FOR EACH NAMESPACE
-const server = require('http').Server(app);
-const io = reqlib('config/io')(server);
-
-io.notifications.on('connection', socket => {
-  // Give the client their socket id so they can subscribe to real time notifications
-  socket.emit('on_connect', { id: socket.id });
-
-  socket.on('disconnect', () => {
-    // Give the client their socket id so they can unsubscribe from real time notifications
-    socket.emit('on_disconnect', { id: socket.id });
-  });
-});
-
-// THE API ROUTES
-const apiRouter = reqlib('routers/router')(app);
-app.use('/', apiRouter);
-
-// SERVE THE DOCS ON THE BASE ROUTE
+// Render docs on this route.
 app.use('/docs', express.static(`${__dirname}/docs`));
 
-// START THE SERVER
-server.listen(port);
+// Import routes.
+reqlib('routers/');
 
-clearConsole();
-console.log(`🎩 Magic happens on port ${port}!`);
-
-// export app for testing
-module.exports = server;
+// Open the port to accept incoming requests.
+reqlib('listen');

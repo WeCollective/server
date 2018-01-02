@@ -1,8 +1,11 @@
 process.env.NODE_ENV = 'test';
 
-const app = require('../server.js');
+const reqlib = require('app-root-path').require;
 const supertest = require('supertest');
-const server = supertest.agent(app);
+
+const listen = reqlib('listen');
+
+const server = supertest.agent(listen);
 // const port = process.env.PORT || 8081;
 // const should = require('should');
 

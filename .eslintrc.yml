@@ -18,6 +18,7 @@ rules:
     - unix
   no-console: off
   no-control-regex: off
+  no-undef: 1
   quotes:
     - error
     - single

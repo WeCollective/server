@@ -1,12 +1,15 @@
 const reqlib = require('app-root-path').require;
 
 const aws = reqlib('config/aws');
+const db = reqlib('config/database');
 
 class Model {
   constructor(data, config) {
     if (new.target === Model) {
       throw new Error('Can\'t instantiate abstract class!');
     }
+
+    // console.log(new.target.name);
 
     // Includes table name, schema, and database keys.
     this.config = Object.assign({}, config || {});
@@ -49,42 +52,114 @@ class Model {
     });
   }
 
-  // Supports fetching multiple rows at once.
-  // this.validate() doesn't work in such cases, we should support multiple items in all
-  // models in the future though.
-  findById(ids) {
-    const { table } = this.config;
-
-    if (!Array.isArray(ids)) {
-      ids = [ids];
-    }
-
-    return new Promise((resolve, reject) => {
-      aws.dbClient.batchGet({
-        RequestItems: {
-          [table]: {
-            Keys: ids.map(id => ({ id })),
-          },
-        },
-      }, (err, data) => {
-        if (err) {
-          return reject(err);
-        }
-
-        if (!data || !data.Responses) {
-          return reject();
-        }
-
-        const Responses = data.Responses[table];
-
-        if (!Responses || !Responses.length) {
-          return reject();
-        }
-
-        this.data = ids.length === 1 ? Responses[0] : Responses;
-        return resolve(this.data);
-      });
+  findById(id) {
+    return this.findOne({
+      where: {
+        id,
+      },
     });
+  }
+
+  // todo validation for findAll()
+  findAll(config) {
+    const cfg = this.validateOperationConfig(config);
+    let Keys = [];
+
+    Object.keys(cfg.where).map(key => {
+      const value = cfg.where[key];
+      let arr = [];
+
+      if (Array.isArray(value)) {
+        arr = value.map(v => ({
+          [key]: v,
+        }));
+      }
+      else {
+        arr = [{
+          [key]: value,
+        }];
+      }
+
+      Keys = [
+        ...Keys,
+        ...arr,
+      ];
+    });
+
+    return new Promise((resolve, reject) => aws.dbClient.batchGet({
+      RequestItems: {
+        [cfg.table]: {
+          Keys,
+        },
+      },
+    }, (err, data) => {
+      if (err || !data) {
+        console.log('DynamoDB error occurred.');
+        console.log(err);
+        console.log('Passed configuration object.');
+        console.log(cfg);
+        return reject(err);
+      }
+
+      let results = data.Responses[cfg.table];
+      // let rows = [];
+
+      if (!Array.isArray(results)) {
+        results = [];
+      }
+
+      /*
+      results.forEach(data => {
+        // const instance = new Constant();
+
+        // Includes table name, schema, and database keys.
+        // this.config = Object.assign({}, config || {});
+        // this.data = this.sanitize(data);
+        // Changed data properties.
+        // this.dirtys = [];
+
+        // console.log(this.prototype);
+
+        // console.log(data);
+      });
+      */
+
+      // this.data = Responses;
+      // return resolve(Responses);
+
+      // return resolve(rows);
+      return resolve(results);
+    }));
+  }
+
+  findOne(config) {
+    const cfg = this.validateOperationConfig(config);
+
+    return new Promise((resolve, reject) => aws.dbClient.get({
+      Key: cfg.where,
+      TableName: cfg.table,
+    }, (err, data) => {
+      if (err || !data) {
+        console.log('DynamoDB error occurred.');
+        console.log(err);
+        console.log('Passed configuration object.');
+        console.log(cfg);
+        return reject(err);
+      }
+
+      // console.log('------');
+      // console.log(data);
+      // console.log('-------');
+
+      // The row was not found.
+      if (!Object.keys(data).length || !data.Item) {
+        return resolve(null);
+      }
+
+      this.data = data.Item;
+      // todo return the modified model, not just data.
+      return resolve(data.Item);
+    }));
   }
 
   get(name) {
@@ -235,6 +310,34 @@ class Model {
     });
 
     return invalids;
+  }
+
+  validateOperationConfig(config) {
+    const { table } = this.config;
+    const errorMessage = 'Invalid configuration passed to the DynamoDB operation.';
+
+    // In development our tables are prefixed, stripe that prefix for validation.
+    const rawTable = table.substring(0, 3) === 'dev' ? table.substring(3) : table;
+
+    if (!db.Table[rawTable]) {
+      throw new Error(`The specified table "${rawTable}" for model does not exist.`);
+    }
+
+    // Config must be an object.
+    if (typeof config !== 'object' || !config || Array.isArray(config)) {
+      throw new Error(errorMessage);
+    }
+
+    config.where = config.where || {};
+
+    if (!Object.keys(config.where).length) {
+      throw new Error(errorMessage);
+    }
+
+    // All is good in the hood.
+    return Object.assign({
+      table,
+    }, config);
   }
 }
 

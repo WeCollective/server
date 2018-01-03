@@ -35,8 +35,12 @@ module.exports.getAll = (req, res) => {
   const wecoConstant = new Constant();
   
   return wecoConstant
-    .findById(types)
-    .then(() => success.OK(res, wecoConstant.data))
+    .findAll({
+      where: {
+        id: types,
+      },
+    })
+    .then(constants => success.OK(res, constants))
     .catch(err => {
       if (err) {
         console.error('Error fetching constant:', err);

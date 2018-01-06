@@ -2,7 +2,6 @@ const express = require('express');
 const reqlib = require('app-root-path').require;
 
 const ACL = reqlib('config/acl');
-// const Constant = reqlib('models/constant');
 const Models = reqlib('models/');
 const passport = reqlib('config/passport')();
 const success = reqlib('responses/successes');
@@ -30,7 +29,7 @@ module.exports = () => {
    */
   router.route('/')
     // local-signup with override of done() method to access info object from passport strategy
-    .post((req, res, next) => passport.authenticate('LocalSignUp', (err, user, info) => {
+    .post(ACL.allow(ACL.Roles.Guest), (req, res, next) => passport.authenticate('LocalSignUp', (err, user, info) => {
       if (err) {
         return res.status(err.status || 403).json({ message: err.message });
       }
@@ -71,7 +70,7 @@ module.exports = () => {
    */
   router.route('/login')
     // local-login with override of done() method to access info object from passport strategy
-    .post((req, res, next) => passport.authenticate('LocalSignIn', (err, user, info) => {
+    .post(ACL.allow(ACL.Roles.Guest), (req, res, next) => passport.authenticate('LocalSignIn', (err, user, info) => {
       if (err) {
         return res.status(err.status).json({ message: err.message });
       }
@@ -95,7 +94,7 @@ module.exports = () => {
    * @apiUse InternalServerError
    */
   router.route('/logout')
-    .get(passport.authenticate('jwt'), (req, res) => success.OK(res));
+    .get(ACL.allow(ACL.Roles.Guest), (req, res) => success.OK(res));
 
   router.route('/me')
     /**
@@ -111,8 +110,7 @@ module.exports = () => {
      * @apiUse InternalServerError
      * @apiUse NotFound
      */
-    .delete(passport.authenticate('jwt'), ACL.validateRole(ACL.Roles.AuthenticatedUser),
-      ACL.attachRole(ACL.Roles.Self), controller.delete)
+    // .delete(ACL.allow(ACL.Roles.User), controller.delete)
     /**
      * @api {get} /user/me Get Self
      * @apiName Get Self
@@ -142,8 +140,7 @@ module.exports = () => {
      * @apiUse InternalServerError
      * @apiUse NotFound
      */
-    .get(passport.authenticate('jwt'), ACL.validateRole(ACL.Roles.AuthenticatedUser),
-      ACL.attachRole(ACL.Roles.Self), controller.get)
+    .get(ACL.allow(ACL.Roles.User), controller.get)
     /**
      * @api {put} /user/me Update Self
      * @apiName Update Self
@@ -160,12 +157,10 @@ module.exports = () => {
      * @apiUse BadRequest
      * @apiUse InternalServerError
      */
-    .put(passport.authenticate('jwt'), ACL.validateRole(ACL.Roles.AuthenticatedUser),
-      ACL.attachRole(ACL.Roles.Self), controller.put);
+    .put(ACL.allow(ACL.Roles.User), controller.put);
 
   router.route('/:username')
-    .delete(passport.authenticate('jwt'), ACL.validateRole(ACL.Roles.Admin),
-      ACL.attachRole(ACL.Roles.Admin), controller.ban)
+    .delete(ACL.allow(ACL.Roles.Weco), controller.ban)
     /**
      * @api {get} /user/:username Get User
      * @apiName Get User
@@ -198,22 +193,7 @@ module.exports = () => {
      * @apiUse InternalServerError
      * @apiUse NotFound
      */
-    .get(passport.authenticate('jwt'), (req, res) => {
-      if (req.isAuthenticated() && req.user) {
-        if (req.user.get('username') === req.params.username) {
-          ACL.attachRole(ACL.Roles.Self)(req, res);
-        }
-        else {
-          ACL.attachRole(ACL.Roles.AuthenticatedUser)(req, res);
-        }
-
-        controller.get(req, res);
-      }
-      else {
-        ACL.attachRole(ACL.Roles.Guest)(req, res);
-        controller.get(req, res);
-      }
-    });
+    .get(ACL.allow(ACL.Roles.Guest), controller.get);
 
   router.route('/me/picture-upload-url')
     /**
@@ -235,8 +215,7 @@ module.exports = () => {
      * @apiUse Forbidden
      * @apiUse InternalServerError
      */
-    .get(passport.authenticate('jwt'), ACL.validateRole(ACL.Roles.AuthenticatedUser),
-      ACL.attachRole(ACL.Roles.Self), (req, res) => controller.getPictureUploadUrl(req, res, 'picture'));
+    .get(ACL.allow(ACL.Roles.User), (req, res) => controller.getPictureUploadUrl(req, res, 'picture'));
 
   router.route('/me/cover-upload-url')
     /**
@@ -258,260 +237,7 @@ module.exports = () => {
      * @apiUse Forbidden
      * @apiUse InternalServerError
      */
-    .get(passport.authenticate('jwt'), ACL.validateRole(ACL.Roles.AuthenticatedUser),
-      ACL.attachRole(ACL.Roles.Self), (req, res) => controller.getPictureUploadUrl(req, res, 'cover'));
-
-  router.route('/me/picture')
-    /**
-     * @api {get} /me/picture Get Own Picture
-     * @apiName Get Own Picture
-     * @apiDescription Get a pre-signed URL where the authenticated user's profile picture can be accessed.
-     * @apiGroup User
-     * @apiPermission self
-     * @apiVersion 1.0.0
-     *
-     * @apiSuccess (Successes) {String} data The presigned URL.
-     * @apiSuccessExample {json} SuccessResponse:
-     *  HTTP/1.1 200
-     *  {
-     *    "message": "Success",
-     *    "data": "<url>"
-     *  }
-     *
-     * @apiUse Forbidden
-     * @apiUse InternalServerError
-     */
-    .get(passport.authenticate('jwt'), ACL.validateRole(ACL.Roles.AuthenticatedUser),
-      ACL.attachRole(ACL.Roles.Self), (req, res) => controller.getPicture(req, res, 'picture', false));
-
-  router.route('/me/picture-thumb')
-    /**
-     * @api {get} /me/picture-thumb Get Own Picture Thumbnail
-     * @apiName Get Own Picture Thumbnail
-     * @apiDescription Get a pre-signed URL where the thumbnail for the authenticated user's profile picture can be accessed.
-     * @apiGroup User
-     * @apiPermission self
-     * @apiVersion 1.0.0
-     *
-     * @apiSuccess (Successes) {String} data The presigned URL.
-     * @apiSuccessExample {json} SuccessResponse:
-     *  HTTP/1.1 200
-     *  {
-     *    "message": "Success",
-     *    "data": "<url>"
-     *  }
-     *
-     * @apiUse Forbidden
-     * @apiUse InternalServerError
-     */
-    .get(passport.authenticate('jwt'), ACL.validateRole(ACL.Roles.AuthenticatedUser),
-      ACL.attachRole(ACL.Roles.Self), (req, res) => controller.getPicture(req, res, 'picture', true));
-
-  router.route('/me/cover')
-    /**
-     * @api {get} /me/cover Get Own Cover
-     * @apiName Get Own Cover
-     * @apiDescription Get a pre-signed URL where the authenticated user's cover picture can be accessed.
-     * @apiGroup User
-     * @apiPermission self
-     * @apiVersion 1.0.0
-     *
-     * @apiSuccess (Successes) {String} data The presigned URL.
-     * @apiSuccessExample {json} SuccessResponse:
-     *  HTTP/1.1 200
-     *  {
-     *    "message": "Success",
-     *    "data": "<url>"
-     *  }
-     *
-     * @apiUse Forbidden
-     * @apiUse InternalServerError
-     */
-    .get(passport.authenticate('jwt'), ACL.validateRole(ACL.Roles.AuthenticatedUser),
-      ACL.attachRole(ACL.Roles.Self), (req, res) => controller.getPicture(req, res, 'cover', false));
-
-  router.route('/me/cover-thumb')
-    /**
-     * @api {get} /me/cover-thumb Get Own Cover Thumbnail
-     * @apiName Get Own Cover Thumbnail
-     * @apiDescription Get a pre-signed URL where the thumbnail for the authenticated user's cover picture can be accessed.
-     * @apiGroup User
-     * @apiPermission self
-     * @apiVersion 1.0.0
-     *
-     * @apiSuccess (Successes) {String} data The presigned URL.
-     * @apiSuccessExample {json} SuccessResponse:
-     *  HTTP/1.1 200
-     *  {
-     *    "message": "Success",
-     *    "data": "<url>"
-     *  }
-     *
-     * @apiUse Forbidden
-     * @apiUse InternalServerError
-     */
-    .get(passport.authenticate('jwt'), ACL.validateRole(ACL.Roles.AuthenticatedUser),
-      ACL.attachRole(ACL.Roles.Self), (req, res) => controller.getPicture(req, res, 'cover', true));
-
-  router.route('/:username/picture')
-    /**
-     * @api {get} /:username/picture Get User Picture
-     * @apiName Get User Picture
-     * @apiDescription Get a pre-signed URL where the specified user's profile picture can be accessed.
-     * @apiGroup User
-     * @apiPermission guest
-     * @apiPermission self
-     * @apiVersion 1.0.0
-     *
-     * @apiParam (URL Parameters) {String} username User's unique username.
-     *
-     * @apiSuccess (Successes) {String} data The presigned URL.
-     * @apiSuccessExample {json} SuccessResponse:
-     *  HTTP/1.1 200
-     *  {
-     *    "message": "Success",
-     *    "data": "<url>"
-     *  }
-     *
-     * @apiUse Forbidden
-     * @apiUse InternalServerError
-     */
-    .get(passport.authenticate('jwt'), (req, res) => {
-      if (req.isAuthenticated() && req.user) {
-        if (req.user.get('username') === req.params.username) {
-          ACL.attachRole(ACL.Roles.Self)(req, res);
-        }
-        else {
-          ACL.attachRole(ACL.Roles.AuthenticatedUser)(req, res);
-        }
-
-        controller.getPicture(req, res, 'picture', false);
-      }
-      else {
-        ACL.attachRole(ACL.Roles.Guest)(req, res);
-        controller.getPicture(req, res, 'picture', false);
-      }
-    });
-
-  router.route('/:username/picture-thumb')
-    /**
-     * @api {get} /:username/picture-thumb Get User Picture Thumbnail
-     * @apiName Get User Picture Thumbnail
-     * @apiDescription Get a pre-signed URL where the thumbnail for the specified user's profile picture can be accessed.
-     * @apiGroup User
-     * @apiPermission guest
-     * @apiPermission self
-     * @apiVersion 1.0.0
-     *
-     * @apiParam (URL Parameters) {String} username User's unique username.
-     *
-     * @apiSuccess (Successes) {String} data The presigned URL.
-     * @apiSuccessExample {json} SuccessResponse:
-     *  HTTP/1.1 200
-     *  {
-     *    "message": "Success",
-     *    "data": "<url>"
-     *  }
-     *
-     * @apiUse Forbidden
-     * @apiUse InternalServerError
-     */
-    .get(passport.authenticate('jwt'), (req, res) => {
-      if (req.isAuthenticated() && req.user) {
-        if (req.user.get('username') === req.params.username) {
-          ACL.attachRole(ACL.Roles.Self)(req, res);
-        }
-        else {
-          ACL.attachRole(ACL.Roles.AuthenticatedUser)(req, res);
-        }
-
-        controller.getPicture(req, res, 'picture', true);
-      }
-      else {
-        ACL.attachRole(ACL.Roles.Guest)(req, res);
-        controller.getPicture(req, res, 'picture', true);
-      }
-    });
-
-  router.route('/:username/cover')
-    /**
-     * @api {get} /:username/picture Get User Cover
-     * @apiName Get User Cover
-     * @apiDescription Get a pre-signed URL where the specified user's cover picture can be accessed.
-     * @apiGroup User
-     * @apiPermission guest
-     * @apiPermission self
-     * @apiVersion 1.0.0
-     *
-     * @apiParam (URL Parameters) {String} username User's unique username.
-     *
-     * @apiSuccess (Successes) {String} data The presigned URL.
-     * @apiSuccessExample {json} SuccessResponse:
-     *  HTTP/1.1 200
-     *  {
-     *    "message": "Success",
-     *    "data": "<url>"
-     *  }
-     *
-     * @apiUse Forbidden
-     * @apiUse InternalServerError
-     */
-    .get(passport.authenticate('jwt'), (req, res) => {
-      if (req.isAuthenticated() && req.user) {
-        if (req.user.get('username') === req.params.username) {
-          ACL.attachRole(ACL.Roles.Self)(req, res);
-        }
-        else {
-          ACL.attachRole(ACL.Roles.AuthenticatedUser)(req, res);
-        }
-
-        controller.getPicture(req, res, 'cover', false);
-      }
-      else {
-        ACL.attachRole(ACL.Roles.Guest)(req, res);
-        controller.getPicture(req, res, 'cover', false);
-      }
-    });
-
-  router.route('/:username/cover-thumb')
-    /**
-     * @api {get} /:username/cover-thumb Get User Cover Thumbnail
-     * @apiName Get User Cover Thumbnail
-     * @apiDescription Get a pre-signed URL where the thumbnail for the specified user's cover picture can be accessed.
-     * @apiGroup User
-     * @apiPermission guest
-     * @apiPermission self
-     * @apiVersion 1.0.0
-     *
-     * @apiParam (URL Parameters) {String} username User's unique username.
-     *
-     * @apiSuccess (Successes) {String} data The presigned URL.
-     * @apiSuccessExample {json} SuccessResponse:
-     *  HTTP/1.1 200
-     *  {
-     *    "message": "Success",
-     *    "data": "<url>"
-     *  }
-     *
-     * @apiUse Forbidden
-     * @apiUse InternalServerError
-     */
-    .get(passport.authenticate('jwt'), (req, res) => {
-      if (req.isAuthenticated() && req.user) {
-        if (req.user.get('username') === req.params.username) {
-          ACL.attachRole(ACL.Roles.Self)(req, res);
-        }
-        else {
-          ACL.attachRole(ACL.Roles.AuthenticatedUser)(req, res);
-        }
-
-        controller.getPicture(req, res, 'cover', true);
-      }
-      else {
-        ACL.attachRole(ACL.Roles.Guest)(req, res);
-        controller.getPicture(req, res, 'cover', true);
-      }
-    });
+    .get(ACL.allow(ACL.Roles.User), (req, res) => controller.getPictureUploadUrl(req, res, 'cover'));
 
   router.route('/:username/notifications')
     /**
@@ -538,9 +264,7 @@ module.exports = () => {
      * @apiUse InternalServerError
      * @apiUse NotFound
      */
-    .get(passport.authenticate('jwt'), ACL.validateRole(ACL.Roles.AuthenticatedUser),
-      (req, res, next) => ACL.validateRole(ACL.Roles.Self, req.params.username)(req, res, next),
-      controller.getNotifications)
+    .get(ACL.allow(ACL.Roles.User), controller.getNotifications)
 
     /**
      * @api {post} /:username/notifications Mark All Notifications As Read
@@ -557,9 +281,7 @@ module.exports = () => {
      * @apiUse InternalServerError
      * @apiUse NotFound
      */
-    .post(passport.authenticate('jwt'), ACL.validateRole(ACL.Roles.AuthenticatedUser),
-      (req, res, next) => ACL.validateRole(ACL.Roles.Self, req.params.username)(req, res, next),
-      controller.markAllNotificationsRead)
+    .post(ACL.allow(ACL.Roles.User), controller.markAllNotificationsRead)
 
     /**
      * @api {put} /:username/notifications Subscribe to Notifications
@@ -577,9 +299,7 @@ module.exports = () => {
      * @apiUse InternalServerError
      * @apiUse NotFound
      */
-    .put(passport.authenticate('jwt'), ACL.validateRole(ACL.Roles.AuthenticatedUser),
-      (req, res, next) => ACL.validateRole(ACL.Roles.Self, req.params.username)(req, res, next),
-      controller.subscribeToNotifications)
+    .put(ACL.allow(ACL.Roles.User), controller.subscribeToNotifications)
 
     /**
      * @api {delete} /:username/notifications Unsubscribe from Notifications
@@ -596,8 +316,7 @@ module.exports = () => {
      * @apiUse InternalServerError
      * @apiUse NotFound
      */
-    .delete(passport.authenticate('jwt'), ACL.validateRole(ACL.Roles.AuthenticatedUser),
-      ACL.attachRole(ACL.Roles.Self), controller.unsubscribeFromNotifications);
+    .delete(ACL.allow(ACL.Roles.User), controller.unsubscribeFromNotifications);
 
   router.route('/:username/notifications/:notificationid')
     /**
@@ -618,9 +337,7 @@ module.exports = () => {
      * @apiUse InternalServerError
      * @apiUse NotFound
      */
-    .put(passport.authenticate('jwt'), ACL.validateRole(ACL.Roles.AuthenticatedUser),
-      (req, res, next) => ACL.validateRole(ACL.Roles.Self, req.params.username)(req, res, next),
-      controller.putNotification);
+    .put(ACL.allow(ACL.Roles.User), controller.putNotification);
 
   router.route('/:username/reset-password')
     /**
@@ -637,7 +354,7 @@ module.exports = () => {
      * @apiUse InternalServerError
      * @apiUse NotFound
      */
-    .get(passport.authenticate('jwt'), ACL.attachRole(ACL.Roles.Guest), controller.sendResetPasswordLink);
+    .get(ACL.allow(ACL.Roles.Guest), controller.sendResetPasswordLink);
 
   router.route('/:username/reset-password/:token')
     /**
@@ -658,7 +375,7 @@ module.exports = () => {
      * @apiUse InternalServerError
      * @apiUse NotFound
      */
-    .post(passport.authenticate('jwt'), ACL.attachRole(ACL.Roles.Guest), controller.resetPassword);
+    .post(ACL.allow(ACL.Roles.Guest), controller.resetPassword);
 
   router.route('/:username/reverify')
     /**
@@ -676,7 +393,8 @@ module.exports = () => {
      * @apiUse InternalServerError
      * @apiUse NotFound
      */
-    .get(passport.authenticate('jwt'), ACL.attachRole(ACL.Roles.Guest), controller.resendVerification);
+    .get(ACL.allow(ACL.Roles.Guest), controller.resendVerification);
+
   router.route('/:username/verify/:token')
     /**
      * @api {get} /:username/verify/:token Verify a user
@@ -693,45 +411,9 @@ module.exports = () => {
      * @apiUse InternalServerError
      * @apiUse NotFound
      */
-    .get(passport.authenticate('jwt'), ACL.attachRole(ACL.Roles.Guest), controller.verify);
+    .get(ACL.allow(ACL.Roles.Guest), controller.verify);
 
   router.route('/:username/branches/followed')
-    /**
-     * @api {get} /:username/branches/followed Get followed branches
-     * @apiName Get followed branches
-     * @apiDescription Get the branches a user follows
-     * @apiGroup User
-     * @apiPermission guest
-     * @apiVersion 1.0.0
-     *
-     * @apiParam (URL Parameters) {String} username User's unique username.
-     *
-     * @apiUse OK
-     * @apiUse BadRequest
-     * @apiUse InternalServerError
-     * @apiUse NotFound
-     */
-    .get(passport.authenticate('jwt'), (req, res) => {
-      if (req.isAuthenticated() && req.user) {
-        const selfNameSpaces = [
-          req.user.get('username'),
-          'me',
-        ];
-
-        if (selfNameSpaces.includes(req.params.username)) {
-          ACL.attachRole(ACL.Roles.Self)(req, res);
-        }
-        else {
-          ACL.attachRole(ACL.Roles.AuthenticatedUser)(req, res);
-        }
-
-        controller.getFollowedBranches(req, res);
-      }
-      else {
-        ACL.attachRole(ACL.Roles.Guest)(req, res);
-        controller.getFollowedBranches(req, res);
-      }
-    })
     /**
      * @api {post} /:username/branches/followed Follow a branch
      * @apiName Follow a branch
@@ -749,9 +431,7 @@ module.exports = () => {
      * @apiUse InternalServerError
      * @apiUse NotFound
      */
-    .post(passport.authenticate('jwt'), ACL.validateRole(ACL.Roles.AuthenticatedUser),
-      (req, res, next) => ACL.validateRole(ACL.Roles.Self, req.params.username)(req, res, next),
-      controller.followBranch)
+    .post(ACL.allow(ACL.Roles.User), controller.followBranch)
     /**
      * @api {delete} /:username/branches/followed Unfollow a branch
      * @apiName Unfollow a branch
@@ -769,9 +449,7 @@ module.exports = () => {
      * @apiUse InternalServerError
      * @apiUse NotFound
      */
-    .delete(passport.authenticate('jwt'), ACL.validateRole(ACL.Roles.AuthenticatedUser),
-      (req, res, next) => ACL.validateRole(ACL.Roles.Self, req.params.username)(req, res, next),
-      controller.unfollowBranch);
+    .delete(ACL.allow(ACL.Roles.User), controller.unfollowBranch);
 
   return router;
 };

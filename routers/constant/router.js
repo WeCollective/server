@@ -2,7 +2,6 @@ const express = require('express');
 const reqlib = require('app-root-path').require;
 
 const ACL = reqlib('config/acl');
-const passport = reqlib('config/passport')();
 
 const router = express.Router();
 
@@ -21,7 +20,7 @@ module.exports = () => {
      * @apiUse NotFound
      * @apiUse InternalServerError
      */
-    .get(controller.getAll);
+    .get(ACL.allow(ACL.Roles.Guest), controller.getAll);
 
   router.route('/:id')
     /**
@@ -37,7 +36,7 @@ module.exports = () => {
      * @apiUse NotFound
      * @apiUse InternalServerError
      */
-    .get(controller.get)
+    .get(ACL.allow(ACL.Roles.Guest), controller.get)
     /**
      * @api {put} /constant/:id Update a global constant
      * @apiName Update a global constant
@@ -53,7 +52,7 @@ module.exports = () => {
      * @apiUse NotFound
      * @apiUse InternalServerError
      */
-    .put(passport.authenticate('jwt'), ACL.validateRole(ACL.Roles.Admin), controller.put);
+    .put(ACL.allow(ACL.Roles.Weco), controller.put);
 
   return router;
 };

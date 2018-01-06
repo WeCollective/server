@@ -2,7 +2,6 @@ const express = require('express');
 const reqlib = require('app-root-path').require;
 
 const ACL = reqlib('config/acl');
-const passport = reqlib('config/passport')();
 
 const router = express.Router({ mergeParams: true });
 
@@ -24,7 +23,7 @@ module.exports = () => {
      * @apiUse NotFound
      * @apiUse InternalServerError
      */
-    .get(passport.authenticate('jwt'), controller.get)
+    .get(ACL.allow(ACL.Roles.Guest), controller.get)
     /**
      * @api {post} /branch/:branchid/mods Add Branch Mod
      * @apiName Add Branch Mod
@@ -41,9 +40,7 @@ module.exports = () => {
      * @apiUse Forbidden
      * @apiUse InternalServerError
      */
-    .post(passport.authenticate('jwt'), (req, res, next) => {
-      ACL.validateRole(ACL.Roles.Moderator, req.params.branchid)(req, res, next);
-    }, controller.addModerator)
+    .post((req, res, next) => ACL.allow(ACL.Roles.Moderator, req.params.branchid)(req, res, next), controller.addModerator)
 
   router.route('/:username')
     /**
@@ -63,9 +60,7 @@ module.exports = () => {
      * @apiUse Forbidden
      * @apiUse InternalServerError
      */
-    .delete(passport.authenticate('jwt'), (req, res, next) => {
-      ACL.validateRole(ACL.Roles.Moderator, req.params.branchid)(req, res, next);
-    }, controller.removeModerator);
+    .delete((req, res, next) => ACL.allow(ACL.Roles.Moderator, req.params.branchid)(req, res, next), controller.removeModerator);
 
   return router;
-}
+};

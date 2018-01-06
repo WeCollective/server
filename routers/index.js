@@ -1,6 +1,6 @@
 const http = require('http');
 const reqlib = require('app-root-path').require;
-const url = require('url');
+const urlLib = require('url');
 
 const app = reqlib('/');
 const error = reqlib('responses/errors');
@@ -28,17 +28,19 @@ const getRouter = dir => reqlib(`routers/${dir}/router`)(app);
  * @apiUse InternalServerError
  */
 app.get(`${version}/proxy`, (req, res) => {
-  if (!req.query.url) {
+  const { url } = req.query;
+
+  if (!url) {
     return error.NotFound(res);
   }
 
-  const url_parts = url.parse(req.query.url, true);
+  const url_parts = urlLib.parse(url, true);
 
   if (url_parts.protocol !== 'http:') {
     return error.BadRequest(res, 'Only http resources can be proxied');
   }
   
-  http.get(req.query.url, response => {
+  http.get(url, response => {
     if (response.statusCode === 200) {
       res.writeHead(200, {
         'Content-Type': response.headers['content-type']
@@ -49,9 +51,7 @@ app.get(`${version}/proxy`, (req, res) => {
       return error.NotFound(res);
     }
   })
-    .on('error', () => {
-      return error.BadRequest(res, 'Invalid URL parameter');
-    });
+    .on('error', () => error.BadRequest(res, 'Invalid URL parameter'));
 });
 
 app.use(`${version}/branch`, getRouter('branch'));

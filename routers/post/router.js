@@ -3,7 +3,6 @@ const reqlib = require('app-root-path').require;
 
 const ACL = reqlib('config/acl');
 const error = reqlib('responses/errors');
-const passport = reqlib('config/passport')();
 
 const router = express.Router();
 
@@ -35,7 +34,7 @@ module.exports = () => {
      * @apiUse BadRequest
      * @apiUse InternalServerError
      */
-    .post(passport.authenticate('jwt'), ACL.validateRole(ACL.Roles.AuthenticatedUser), controller.post);
+    .post(ACL.allow(ACL.Roles.User), controller.post);
 
   router.route('/picture-suggestion')
     /**
@@ -59,7 +58,7 @@ module.exports = () => {
      * @apiUse NotFound
      * @apiUse InternalServerError
      */
-    .get(passport.authenticate('jwt'), controller.getPictureUrlSuggestion);
+    .get(ACL.allow(ACL.Roles.Guest), controller.getPictureUrlSuggestion);
 
   router.route('/:postid')
     /**
@@ -100,7 +99,7 @@ module.exports = () => {
      * @apiUse BadRequest
      * @apiUse InternalServerError
      */
-    .get(passport.authenticate('jwt'), controller.get)
+    .get(ACL.allow(ACL.Roles.Guest), controller.get)
     /**
      * @api {delete} /post/:postid Delete Post
      * @apiName Delete Post
@@ -115,7 +114,7 @@ module.exports = () => {
      * @apiUse BadRequest
      * @apiUse InternalServerError
      */
-    .delete(passport.authenticate('jwt'), ACL.validateRole(ACL.Roles.AuthenticatedUser), controller.delete);
+    .delete(ACL.allow(ACL.Roles.User), controller.delete);
 
   router.route('/:postid/picture-upload-url')
     /**
@@ -140,9 +139,7 @@ module.exports = () => {
      * @apiUse NotFound
      * @apiUse InternalServerError
      */
-    .get(passport.authenticate('jwt'), ACL.validateRole(ACL.Roles.AuthenticatedUser), (req, res) => {
-      controller.getPictureUploadUrl(req, res);
-    });
+    .get(ACL.allow(ACL.Roles.User), (req, res) => controller.getPictureUploadUrl(req, res));
 
   router.route('/:postid/picture')
     /**
@@ -166,9 +163,7 @@ module.exports = () => {
      * @apiUse NotFound
      * @apiUse InternalServerError
      */
-    .get(passport.authenticate('jwt'), (req, res) => {
-      controller.getPicture(req, res, false);
-    });
+    .get(ACL.allow(ACL.Roles.Guest), (req, res) => controller.getPicture(req, res, false));
 
   router.route('/:postid/picture-thumb')
     /**
@@ -192,9 +187,7 @@ module.exports = () => {
      * @apiUse NotFound
      * @apiUse InternalServerError
      */
-    .get(passport.authenticate('jwt'), (req, res) => {
-      controller.getPicture(req, res, true);
-    });
+    .get(ACL.allow(ACL.Roles.Guest), (req, res) => controller.getPicture(req, res, true));
 
   router.route('/:postid/flag')
     /**
@@ -214,8 +207,7 @@ module.exports = () => {
      * @apiUse NotFound
      * @apiUse InternalServerError
      */
-    .post(passport.authenticate('jwt'), ACL.validateRole(ACL.Roles.AuthenticatedUser), controller.flagPost);
-
+    .post(ACL.allow(ACL.Roles.User), controller.flagPost);
 
   router.route('/:postid/comments')
     /**
@@ -265,7 +257,7 @@ module.exports = () => {
      * @apiUse NotFound
      * @apiUse InternalServerError
      */
-    .get(passport.authenticate('jwt'), controller.getComments)
+    .get(ACL.allow(ACL.Roles.Guest), controller.getComments)
 
     /**
      * @api {post} /post/:postid/comments Create Comment
@@ -290,7 +282,7 @@ module.exports = () => {
      * @apiUse NotFound
      * @apiUse InternalServerError
      */
-    .post(passport.authenticate('jwt'), ACL.validateRole(ACL.Roles.AuthenticatedUser), controller.postComment);
+    .post(ACL.allow(ACL.Roles.User), controller.postComment);
 
   router.route('/:postid/comments/:commentid')
     /**
@@ -308,7 +300,7 @@ module.exports = () => {
      * @apiUse NotFound
      * @apiUse InternalServerError
      */
-    .delete(passport.authenticate('jwt'), ACL.validateRole(ACL.Roles.AuthenticatedUser), controller.deleteComment)
+    .delete(ACL.allow(ACL.Roles.User), controller.deleteComment)
 
     /**
      * @api {get} /post/:postid/comments/:commentid Get Comment
@@ -349,7 +341,7 @@ module.exports = () => {
      * @apiUse NotFound
      * @apiUse InternalServerError
      */
-    .get(passport.authenticate('jwt'), controller.getComment)
+    .get(ACL.allow(ACL.Roles.Guest), controller.getComment)
 
     /**
      * @api {put} /post/:postid/comments/:commentid Update/Vote Comment
@@ -368,17 +360,17 @@ module.exports = () => {
      * @apiUse NotFound
      * @apiUse InternalServerError
      */
-    .put(passport.authenticate('jwt'), ACL.validateRole(ACL.Roles.AuthenticatedUser), (req, res) => {
+    .put(ACL.allow(ACL.Roles.User), (req, res) => {
       if (req.body.vote) {
-        controller.voteComment(req, res);
+        return controller.voteComment(req, res);
       }
-      else if (req.body.text) {
-        controller.editComment(req, res);
+
+      if (req.body.text) {
+        return controller.editComment(req, res);
       }
-      else {
-        return error.BadRequest(res, 'Must specify either vote or text in body');
-      }
+
+      return error.BadRequest(res, 'Must specify either vote or text in body');
     });
 
   return router;
-}
+};

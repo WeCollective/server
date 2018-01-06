@@ -40,91 +40,27 @@ const getUsername = req => new Promise((resolve, reject) => {
 });
 */
 
-module.exports = {
-  delete(req, res) { // eslint-disable-line
-    throw new Error('Legacy method called!');
+/*
+// todo delete user account
+module.exports.delete = (req, res) => {
+  if (req.ACLRole !== ACL.Roles.Self || !req.user || !req.user.get('username')) {
+    return error.Forbidden(res);
+  }
 
-    /*
-    if (req.ACLRole !== ACL.Roles.Self || !req.user || !req.user.get('username')) {
-      return error.Forbidden(res);
-    }
-
-    return new User()
-      .delete({ username: req.user.get('username') })
-      .then(() => {
-        req.logout();
-        return success.OK(res);
-      })
-      .catch(() => {
-        console.error('Error deleting user from database.');
-        return error.InternalServerError(res);
-      });
-    */
-  },
-
-  // Legacy version.
-  getPicture(req, res, type, thumbnail) { // eslint-disable-line
-    throw new Error('Legacy method called!');
-
-    /*
-    let size;
-    let username;
-
-    if (req.ACLRole == ACL.Roles.Self) {
-      // ensure user object has been attached by passport
-      if (!req.user.get('username')) {
-        return error.InternalServerError(res);
-      }
-      
-      username = req.user.get('username');
-    }
-    else {
-      // ensure username is specified
-      if (!req.params.username) {
-        return error.BadRequest(res);
-      }
-
-      username = req.params.username;
-    }
-
-    if (type !== 'picture' && type !== 'cover') {
-      console.error('Invalid picture type.');
+  return new User()
+    .delete({ username: req.user.get('username') })
+    .then(() => {
+      req.logout();
+      return success.OK(res);
+    })
+    .catch(() => {
+      console.error('Error deleting user from database.');
       return error.InternalServerError(res);
-    }
+    });
+};
+*/
 
-    if (type === 'picture') {
-      size = thumbnail ? 200 : 640;
-    }
-    else {
-      size = thumbnail ? 800 : 1920;
-    }
-
-    const image = new UserImage();
-
-    image.findByUsername(username, type)
-      .then(() => {
-        Models.Dynamite.aws.s3Client.getSignedUrl('getObject', {
-          Bucket: fs.Bucket.UserImagesResized,
-          Key: `${image.data.id}-${size}.${image.data.extension}`
-        }, (err, url) => {
-          if (err) {
-            console.error('Error getting signed url:', err);
-            return error.InternalServerError(res);
-          }
-
-          return success.OK(res, url);
-        });
-      }, err => {
-        if (err) {
-          console.error('Error fetching user image:', err);
-          return error.InternalServerError(res);
-        }
-
-        return error.NotFound(res);
-      });
-    */
-  },
-
+module.exports = {
   subscribeToNotifications(req, res) { // eslint-disable-line
     throw new Error('Legacy method called!');
 
@@ -225,7 +161,7 @@ module.exports.followBranch = (req, res) => {
 };
 
 module.exports.get = (req, res) => {
-  const clientUsername = req.user.get('username');
+  const clientUsername = req.user ? req.user.get('username') : false;
   const { username = clientUsername } = req.params;
   const isSelf = clientUsername === username;
 
@@ -284,32 +220,6 @@ module.exports.get = (req, res) => {
       console.error('Error fetching user:', err);
       return error.InternalServerError(res);
     });
-};
-
-// Legacy version.
-module.exports.getFollowedBranches = (req, res) => { // eslint-disable-line
-  throw new Error('Legacy method called!');
-  /*
-  return getUsername(req)
-    .then(username => {
-      const branch = new FollowedBranch();
-
-      branch.findByUsername(username)
-        .then(branches => {
-          var branchIds = _.map(branches, 'branchid');
-          return success.OK(res, branchIds);
-        })
-        .catch(err => {
-          if (err) {
-            console.error('Error fetching followed branches:', err);
-            return error.InternalServerError(res);
-          }
-
-          return error.NotFound(res);
-        });
-    })
-    .catch(errorCb => errorCb(res));
-  */
 };
 
 module.exports.getNotifications = (req, res) => {

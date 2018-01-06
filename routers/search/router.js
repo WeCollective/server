@@ -1,9 +1,7 @@
 const express = require('express');
 const reqlib = require('app-root-path').require;
 
-// const ACL = reqlib('config/acl');
-// const error = reqlib('responses/errors');
-const passport = reqlib('config/passport')();
+const ACL = reqlib('config/acl');
 
 const router = express.Router();
 
@@ -34,7 +32,7 @@ module.exports = () => {
      * @apiUse BadRequest
      * @apiUse InternalServerError
      */
-    .get(passport.authenticate('jwt'), controller.search);
+    .get(ACL.allow(ACL.Roles.Guest), controller.search);
 
   return router;
-}
+};

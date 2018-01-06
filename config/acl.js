@@ -23,121 +23,78 @@ const Models = reqlib('models/');
  * @apiDefine admin Admin access
  * Only authenticated site administrators can access this route (moderators of the root branch).
  */
-const Roles = {
+const roles = {
   Guest: 0,
-  AuthenticatedUser: 1,
-  Self: 2,
-  Moderator: 3,
-  Admin: 4,
+  User: 1,
+  Moderator: 2,
+  Weco: 3,
 };
 
-// Forcibly attach a role to the request body without performing checks
-const attachRole = role => (req, res, next) => {
-  req.ACLRole = role;
-  if (next) next();
-};
-
-// Attach the specified role to the request body if the role's conditions are met
-const validateRole = (role, resourceId, customError) => (req, res, next) => {
-  switch(role) {
-    // Anyone can be a Guest
-    case Roles.Guest:
-      req.ACLRole = Roles.Guest;
-      return next();
-
-    // AuthenticatedUser must be logged in
-    case Roles.AuthenticatedUser: {
-      if (!req.user) return error.Forbidden(res);
-      req.ACLRole = Roles.AuthenticatedUser;
-      return next();
+const isMod = (username, branchid) => Models.Mod.findByBranch(branchid)
+  .then(mods => {
+    if (!mods.length) {
+      console.error('No mods object received.');
+      return Promise.reject({
+        message: `b/${branchid} has no moderators.`,
+        status: 403,
+      });
     }
 
-    // Self must be logged in with username matching the provided param
-    case Roles.Self: {
-      if (!req.user || req.user.get('username') !== resourceId) return error.Forbidden(res);
-      req.ACLRole = Roles.Self;
-      return next();
+    for (let i = 0; i < mods.length; i += 1) {
+      if (mods[i].get('username') === username) {
+        return Promise.resolve();
+      }
     }
 
-    // Moderator must be logged in
-    case Roles.Moderator:
-      if (!req.isAuthenticated()) {
-        return error.Forbidden(res);
-      }
+    return Promise.reject({
+      message: `You are not a moderator of b/${branchid}.`,
+      status: 403,
+    });
+  })
+  .catch(err => {
+    console.error(`Cannot authenticate u/${username} as a moderator of b/${branchid}.`, err);
+    return Promise.reject(err);
+  });
 
-      if (!resourceId) {
-        return error.InternalServerError(res);
-      }
-
-      // Moderator must be one of the mods of the specified branch
-      return Models.Mod.findByBranch(resourceId)
-        .then(instances => {
-          if (!instances.length) {
-            console.error('No mods object received.');
-            return error.InternalServerError(res);
-          }
-
-          for (let i = 0; i < instances.length; i += 1) {
-            if (instances[i].get('username') === req.user.get('username')) {
-              req.ACLRole = Roles.Moderator;
-              return next();
-            }
-          }
-
-          if (customError && typeof customError === 'object') {
-            return error.code(res, customError.code, customError.message);
-          }
-
-          return error.Forbidden(res);
-        })
-        .catch(err => {
-          if (err) {
-            console.error('Error fetching branch mods:', err);
-            return error.InternalServerError(res);
-          }
-
-          return error.NotFound(res);
-        });
-
-    case Roles.Admin:
-      // Admin must be logged in.
-      if (!req.isAuthenticated()) {
-        return error.Forbidden(res);
-      }
-
-      // Admin is a moderator of the root branch
-      return Models.Mod.findByBranch('root')
-        .then(instances => {
-          if (!instances) {
-            console.error('No mods object received.');
-            return error.InternalServerError(res);
-          }
-            
-          for (let i = 0; i < instances.length; i += 1) {
-            if (instances[i].get('username') == req.user.get('username')) {
-              req.ACLRole = Roles.Admin;
-              return next();
-            }
-          }
-
-          return error.Forbidden(res);
-        })
-        .catch(err => {
-          if (err) {
-            console.error('Error fetching branch mods:', err);
-            return error.InternalServerError(res);
-          }
-
-          return error.NotFound(res);
-        });
-
-    default:
-      throw new Error('Unknown ACL Role');
+// Middleware used to allow access to routes only to
+// the users satisfying the minimum role criteria.
+const allowAccess = (role, branchid) => (req, res, next) => {
+  // No checks for guests.
+  if (role === roles.Guest) {
+    req.ACLRole = role;
+    return next();
   }
+
+  // Regular users must be authenticated and have approved profile.
+  if (role === roles.User && req.user && req.user.get('verified')) {
+    req.ACLRole = role;
+    return next();
+  }
+
+  // Moderator must be one of the moderators of the specified branch.
+  if (role === roles.Moderator && req.user && branchid) {
+    return isMod(req.user.get('username'), branchid)
+      .then(() => {
+        req.ACLRole = role;
+        return next();
+      })
+      .catch(err => error.code(res, err.status, err.message));
+  }
+
+  // Global administratos must be authenticated and be mods of the root branch.
+  if (role === roles.Weco && req.user) {
+    return isMod(req.user.get('username'), 'root')
+      .then(() => {
+        req.ACLRole = role;
+        return next();
+      })
+      .catch(err => error.code(res, err.status, err.message));
+  }
+
+  return error.InternalServerError(res);
 };
 
 module.exports = {
-  attachRole,
-  Roles,
-  validateRole,
+  allow: allowAccess,
+  Roles: roles,
 };

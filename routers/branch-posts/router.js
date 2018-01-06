@@ -2,7 +2,6 @@ const express = require('express');
 const reqlib = require('app-root-path').require;
 
 const ACL = reqlib('config/acl');
-const passport = reqlib('config/passport')();
 
 const router = express.Router({ mergeParams: true });
 
@@ -59,7 +58,7 @@ module.exports = () => {
      * @apiUse BadRequest
      * @apiUse InternalServerError
      */
-    .get(passport.authenticate('jwt'), controller.get);
+    .get(ACL.allow(ACL.Roles.Guest), controller.get);
 
   router.route('/:postid')
     /**
@@ -97,7 +96,7 @@ module.exports = () => {
      * @apiUse BadRequest
      * @apiUse InternalServerError
      */
-    .get(passport.authenticate('jwt'), controller.getPost)
+    .get(ACL.allow(ACL.Roles.Guest), controller.getPost)
 
     /**
      * @api {put} /branch/:branchid/posts/:postid Vote on Post
@@ -115,7 +114,7 @@ module.exports = () => {
      * @apiUse BadRequest
      * @apiUse InternalServerError
      */
-    .put(passport.authenticate('jwt'), ACL.validateRole(ACL.Roles.AuthenticatedUser), controller.put);
+    .put(ACL.allow(ACL.Roles.User), controller.put);
 
   router.route('/:postid/resolve')
     /**
@@ -138,9 +137,7 @@ module.exports = () => {
      * @apiUse BadRequest
      * @apiUse InternalServerError
      */
-    .post(passport.authenticate('jwt'), (req, res, next) => {
-      ACL.validateRole(ACL.Roles.Moderator, req.params.branchid)(req, res, next);
-    }, controller.resolveFlag);
+    .post((req, res, next) => ACL.allow(ACL.Roles.Moderator, req.params.branchid)(req, res, next), controller.resolveFlag);
 
   return router;
-}
+};

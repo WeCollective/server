@@ -2,7 +2,6 @@ const express = require('express');
 const reqlib = require('app-root-path').require;
 
 const ACL = reqlib('config/acl');
-const passport = reqlib('config/passport')();
 
 const router = express.Router();
 
@@ -25,7 +24,7 @@ module.exports = () => {
      * @apiUse BadRequest
      * @apiUse InternalServerError
      */
-    .post(passport.authenticate('jwt'), ACL.validateRole(ACL.Roles.AuthenticatedUser), controller.createBranch);
+    .post(ACL.allow(ACL.Roles.User), controller.createBranch);
 
   router.route('/:branchid')
     /**
@@ -43,12 +42,7 @@ module.exports = () => {
      * @apiUse BadRequest
      * @apiUse InternalServerError
      */
-    .delete(passport.authenticate('jwt'), (req, res, next) => {
-      ACL.validateRole(ACL.Roles.Moderator, req.params.branchid, {
-        code: 403,
-        message: `You need to be an admin of b/${req.params.branchid}`,
-      })(req, res, next);
-    }, controller.delete)
+    .delete((req, res, next) => ACL.allow(ACL.Roles.Moderator, req.params.branchid)(req, res, next), controller.delete)
     /**
      * @api {get} /:branchid Get Branch
      * @apiName Get Branch
@@ -62,7 +56,7 @@ module.exports = () => {
      * @apiUse NotFound
      * @apiUse InternalServerError
      */
-    .get(passport.authenticate('jwt'), controller.get)
+    .get(ACL.allow(ACL.Roles.Guest), controller.get)
     /**
      * @api {put} /:branchid Update Branch
      * @apiName Update Branch
@@ -80,9 +74,7 @@ module.exports = () => {
      * @apiUse BadRequest
      * @apiUse InternalServerError
      */
-    .put(passport.authenticate('jwt'), (req, res, next) => {
-      ACL.validateRole(ACL.Roles.Moderator, req.params.branchid)(req, res, next);
-    }, controller.put);
+    .put((req, res, next) => ACL.allow(ACL.Roles.Moderator, req.params.branchid)(req, res, next), controller.put);
 
   router.route('/:branchid/picture-upload-url')
     /**
@@ -107,11 +99,7 @@ module.exports = () => {
      * @apiUse NotFound
      * @apiUse InternalServerError
      */
-    .get(passport.authenticate('jwt'), (req, res, next) => {
-      ACL.validateRole(ACL.Roles.Moderator, req.params.branchid)(req, res, next);
-    }, (req, res) => {
-      controller.getPictureUploadUrl(req, res, 'picture');
-    });
+    .get((req, res, next) => ACL.allow(ACL.Roles.Moderator, req.params.branchid)(req, res, next), (req, res) => controller.getPictureUploadUrl(req, res, 'picture'));
 
   router.route('/:branchid/cover-upload-url')
     /**
@@ -136,11 +124,7 @@ module.exports = () => {
      * @apiUse NotFound
      * @apiUse InternalServerError
      */
-    .get(passport.authenticate('jwt'), (req, res, next) => {
-      ACL.validateRole(ACL.Roles.Moderator, req.params.branchid)(req, res, next);
-    }, (req, res) => {
-      controller.getPictureUploadUrl(req, res, 'cover');
-    });
+    .get((req, res, next) => ACL.allow(ACL.Roles.Moderator, req.params.branchid)(req, res, next), (req, res) => controller.getPictureUploadUrl(req, res, 'cover'));
 
   router.route('/:branchid/picture')
     /**
@@ -164,9 +148,7 @@ module.exports = () => {
      * @apiUse NotFound
      * @apiUse InternalServerError
      */
-    .get(passport.authenticate('jwt'), (req, res) => {
-      controller.getPicture(req, res, 'picture', false);
-    });
+    .get(ACL.allow(ACL.Roles.Guest), (req, res) => controller.getPicture(req, res, 'picture', false));
 
   router.route('/:branchid/picture-thumb')
     /**
@@ -190,9 +172,7 @@ module.exports = () => {
      * @apiUse NotFound
      * @apiUse InternalServerError
      */
-    .get(passport.authenticate('jwt'), (req, res) => {
-      controller.getPicture(req, res, 'picture', true);
-    });
+    .get(ACL.allow(ACL.Roles.Guest), (req, res) => controller.getPicture(req, res, 'picture', true));
 
   router.route('/:branchid/cover')
     /**
@@ -216,9 +196,7 @@ module.exports = () => {
      * @apiUse NotFound
      * @apiUse InternalServerError
      */
-    .get(passport.authenticate('jwt'), (req, res) => {
-      controller.getPicture(req, res, 'cover', false);
-    });
+    .get(ACL.allow(ACL.Roles.Guest), (req, res) => controller.getPicture(req, res, 'cover', false));
 
   router.route('/:branchid/cover-thumb')
     /**
@@ -242,9 +220,7 @@ module.exports = () => {
      * @apiUse NotFound
      * @apiUse InternalServerError
      */
-    .get(passport.authenticate('jwt'), (req, res) => {
-      controller.getPicture(req, res, 'cover', true);
-    });
+    .get(ACL.allow(ACL.Roles.Guest), (req, res) => controller.getPicture(req, res, 'cover', true));
 
   router.route('/:branchid/subbranches')
     /**
@@ -292,7 +268,7 @@ module.exports = () => {
      * @apiUse NotFound
      * @apiUse InternalServerError
      */
-    .get(passport.authenticate('jwt'), controller.getSubbranches);
+    .get(ACL.allow(ACL.Roles.Guest), controller.getSubbranches);
 
   router.route('/:branchid/modlog')
     /**
@@ -338,9 +314,7 @@ module.exports = () => {
      * @apiUse NotFound
      * @apiUse InternalServerError
      */
-    .get(passport.authenticate('jwt'), (req, res, next) => {
-      ACL.validateRole(ACL.Roles.Moderator, req.params.branchid)(req, res, next);
-    }, controller.getModLog);
+    .get((req, res, next) => ACL.allow(ACL.Roles.Moderator, req.params.branchid)(req, res, next), controller.getModLog);
 
   return router;
-}
+};

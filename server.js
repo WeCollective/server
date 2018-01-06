@@ -1,39 +1,29 @@
-/*
-  Copyright (c) 2017 WE COLLECTIVE
-
-  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-  SOFTWARE.
-*/
-
-// REQUIRE MODULES
-require('dotenv').config(); // load any environment variables from the .env file
+// Loads environment variables from the .env file.
+require('dotenv').config();
 
 const bearerToken = require('express-bearer-token');
 const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser'); // reading cookies
+const cors = require('cors');
 const express = require('express');
 const helmet = require('helmet'); // protect against common web vulnerabilities
 const morgan = require('morgan');
 const reqlib = require('app-root-path').require;
 
+const corsOptions = reqlib('config/cors')();
+const passport = reqlib('config/passport')();
+
 const app = express();
 module.exports = app;
 
-// DISABLE LOGGING IF IN TEST MODE
-if (process.env.NODE_ENV === 'test') {
-  console.error = () => {};
-}
+// Disable logging in test mode.
+if (process.env.NODE_ENV === 'test') console.error = () => {};
 
 // MIDDLEWARE
 app.use(helmet());
 app.use(cookieParser());
-app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
 
 // REDIRECT TRAFFIC ON HTTP TO HTTPS
 if (process.env.NODE_ENV === 'production') {
@@ -50,37 +40,13 @@ if (process.env.NODE_ENV === 'production') {
 // Request logging.
 app.use(morgan(process.env.NODE_ENV === 'production' ? 'common' : 'dev'));
 
-// CROSS ORIGIN RESOURCE SHARING
-app.use((req, res, next) => {
-  const allowedOrigins = [
-    'http://localhost:8081',
-    'https://localhost:8081',
-    'http://webapp-dev.eu9ntpt33z.eu-west-1.elasticbeanstalk.com',
-    'https://webapp-dev.eu9ntpt33z.eu-west-1.elasticbeanstalk.com',
-    'http://webapp-prod.eu-west-1.elasticbeanstalk.com',
-    'https://webapp-prod.eu-west-1.elasticbeanstalk.com',
-    'http://www.weco.io',
-    'https://www.weco.io',
-    'http://weco.io',
-    'https://weco.io',
-  ];
-  const { origin } = req.headers;
+// Cross-origin requests policy.
+app.use(cors(corsOptions));
 
-  if (allowedOrigins.includes(origin)) {
-    res.header('Access-Control-Allow-Origin', origin);
-  }
-
-  res.header('Access-Control-Allow-Credentials', 'true');
-  res.header('Access-Control-Allow-Methods', 'GET, PUT, POST, DELETE, PATCH, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Authorization, Accept');
-
-  next();
-});
-
-// AUTHENTICATION AND JWT MANAGEMENT
+// User authentication and token management.
 app.use(bearerToken());
-const auth = reqlib('config/passport')();
-app.use(auth.initialize());
+app.use(passport.initialize());
+app.use(passport.authenticate('jwt'));
 
 // Render docs on this route.
 app.use('/docs', express.static(`${__dirname}/docs`));

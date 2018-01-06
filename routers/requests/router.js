@@ -2,7 +2,6 @@ const express = require('express');
 const reqlib = require('app-root-path').require;
 
 const ACL = reqlib('config/acl');
-const passport = reqlib('config/passport')();
 
 const router = express.Router({ mergeParams: true });
 
@@ -38,9 +37,7 @@ module.exports = () => {
      * @apiUse NotFound
      * @apiUse InternalServerError
      */
-    .get(passport.authenticate('jwt'), (req, res, next) => {
-      ACL.validateRole(ACL.Roles.Moderator, req.params.branchid)(req, res, next);
-    }, controller.get);
+    .get((req, res, next) => ACL.allow(ACL.Roles.Moderator, req.params.branchid)(req, res, next), controller.get);
 
   router.route('/:childid')
     /**
@@ -58,9 +55,7 @@ module.exports = () => {
      * @apiUse NotFound
      * @apiUse InternalServerError
      */
-    .post(passport.authenticate('jwt'), (req, res, next) => {
-      ACL.validateRole(ACL.Roles.Moderator, req.params.childid)(req, res, next);
-    }, controller.post)
+    .post((req, res, next) => ACL.allow(ACL.Roles.Moderator, req.params.childid)(req, res, next), controller.post)
     /**
      * @api {put} /branch/:branchid/requests/subbranches/:childid Answer Child Branch Request
      * @apiName Answer Child Branch Request
@@ -77,9 +72,7 @@ module.exports = () => {
      * @apiUse NotFound
      * @apiUse InternalServerError
      */
-    .put(passport.authenticate('jwt'), (req, res, next) => {
-      ACL.validateRole(ACL.Roles.Moderator, req.params.branchid)(req, res, next);
-    }, controller.put);
+    .put((req, res, next) => ACL.allow(ACL.Roles.Moderator, req.params.branchid)(req, res, next), controller.put);
 
   return router;
-}
+};

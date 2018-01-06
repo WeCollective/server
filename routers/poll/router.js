@@ -2,7 +2,6 @@ const express = require('express');
 const reqlib = require('app-root-path').require;
 
 const ACL = reqlib('config/acl');
-const passport = reqlib('config/passport')();
 
 const router = express.Router();
 
@@ -25,7 +24,7 @@ module.exports = () => {
      * @apiUse BadRequest
      * @apiUse InternalServerError
      */
-    .post(passport.authenticate('jwt'), ACL.validateRole(ACL.Roles.AuthenticatedUser), controller.addAnswer)
+    .post(ACL.allow(ACL.Roles.User), controller.addAnswer)
     /**
      * @api {poll} /:postid/answer Get the answers for a particular poll
      * @apiName Get Poll Answers
@@ -41,7 +40,7 @@ module.exports = () => {
      * @apiUse BadRequest
      * @apiUse InternalServerError
      */
-    .get(passport.authenticate('jwt'), controller.getAnswers);
+    .get(ACL.allow(ACL.Roles.Guest), controller.getAnswers);
 
   router.route('/:postid/answer/:answerid/vote')
     /**
@@ -60,7 +59,7 @@ module.exports = () => {
      * @apiUse NotFound
      * @apiUse InternalServerError
      */
-    .put(passport.authenticate('jwt'), ACL.validateRole(ACL.Roles.AuthenticatedUser), controller.vote);
+    .put(ACL.allow(ACL.Roles.User), controller.vote);
 
   return router;
-}
+};

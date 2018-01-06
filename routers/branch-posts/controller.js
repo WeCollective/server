@@ -409,7 +409,7 @@ module.exports.get = (req, res) => {
         }
 
         // User must be a mod.
-        return ACL.validateRole(ACL.Roles.Moderator, branchid)(req, res, resolve);
+        return ACL.allow(ACL.Roles.Moderator, branchid)(req, res, resolve);
       }
       
       return resolve();

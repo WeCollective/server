@@ -7,6 +7,22 @@ class Model {
     this.config = Object.assign({}, config || {});
   }
 
+  _save(data) {
+    return new Promise((resolve, reject) => AWS.dbClient.put({
+      Item: data,
+      TableName: this.config.table,
+    }, err => {
+      if (err) {
+        console.log('DynamoDB error occurred.');
+        console.log(err);
+        return reject(err);
+      }
+
+      const instance = this.createInstance(data);
+      return resolve(instance);
+    }));
+  }
+
   create(data) {
     const { schema } = this.config;
     const defaultValues = {};
@@ -29,7 +45,7 @@ class Model {
         });
       }
 
-      return this.save(defaultValues)
+      return this._save(defaultValues)
         .then(instance => resolve(instance))
         .catch(err => reject(err));
     });
@@ -274,10 +290,6 @@ class Model {
     }));
   }
 
-  isInstance(data) {
-    return !this.isObject(data);
-  }
-
   isObject(obj) {
     return obj && typeof obj === 'object' && !Array.isArray(obj);
   }
@@ -324,28 +336,6 @@ class Model {
     const result = {};
     Object.keys(schema).forEach(key => result[key] = schemaWithData[key]);
     return result;
-  }
-
-  save(data) {
-    const isInstance = this.isInstance(data);
-
-    if (isInstance) {
-      throw new Error('Instance does not support saving for now...');
-    }
-
-    return new Promise((resolve, reject) => AWS.dbClient.put({
-      Item: data,
-      TableName: this.config.table,
-    }, err => {
-      if (err) {
-        console.log('DynamoDB error occurred.');
-        console.log(err);
-        return reject(err);
-      }
-
-      const instance = this.createInstance(data);
-      return resolve(instance);
-    }));
   }
 
   update(config, data) {
@@ -419,13 +409,6 @@ class Model {
    * Example:
    * params: ['$$id']
    * We will use the id value as a parameter.
-   *
-   * %int = Validation function parameter, indexed from 0.
-   *
-   * Example:
-   * params: ['%0']
-   * validate(props, param1, param2)
-   * We will grab param1.
    *
    */
   validate(data, skipAttributes = []) {

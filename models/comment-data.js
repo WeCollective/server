@@ -8,6 +8,10 @@ module.exports = (Dynamite, validate) => {
       defaultValue: null,
       validate: validate.date,
     },
+    deleted: {
+      defaultValue: false,
+      validate: validate.boolean,
+    },
     edited: {
       defaultValue: null,
       validate: validate.boolean,

@@ -282,13 +282,12 @@ module.exports.deleteComment = (req, res) => {
       }
 
       // Removing the comment would cut off the replies, we don't want that.
-      return Models.Commentdata.update({
+      return Models.CommentData.update({
         where: {
           id: comment.get('id'),
         },
       }, {
-        creator: 'N/A',
-        text: '[Comment removed by user]',
+        deleted: true,
       });
     })
     // Update counters.
@@ -729,6 +728,9 @@ module.exports.getOneComment = (id, req) => {
       // todo
       const data = {};
       Object.keys(instance.dataValues).forEach(key => data[key] = instance.get(key));
+      if (data.deleted) {
+        delete data.text;
+      }
       comment.set('data', data);
       return Promise.resolve();
     })
@@ -1232,24 +1234,24 @@ module.exports.postComment = (req, res) => {
         }
       }
 
-      return Models.Comment.create({
+      return Models.CommentData.create({
+        creator: username,
         date,
-        down: 0,
+        edited: false,
         id,
-        individual: 1,
-        parentid,
-        postid,
-        rank: 0,
-        replies: 0,
-        up: 1,
+        text,
       });
     })
-    .then(() => Models.CommentData.create({
-      creator: username,
+    .then(() => Models.Comment.create({
       date,
-      edited: false,
+      down: 0,
       id,
-      text,
+      individual: 1,
+      parentid,
+      postid,
+      rank: 0,
+      replies: 0,
+      up: 1,
     }))
     .then(() => {
       if (parentid === 'none') {

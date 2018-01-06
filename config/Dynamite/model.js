@@ -8,14 +8,19 @@ class Model {
   }
 
   create(data) {
+    const { schema } = this.config;
+    const defaultValues = {};
+
+    Object.keys(schema).forEach(key => defaultValues[key] = schema[key].defaultValue);
+
     if (!this.isObject(data)) {
       data = {};
     }
 
+    Object.keys(data).forEach(key => defaultValues[key] = data[key]);
+
     return new Promise((resolve, reject) => {
-      const invalidArr = this.validate(data, [
-        'dob',
-      ]);
+      const invalidArr = this.validate(defaultValues);
 
       if (invalidArr.length) {
         return reject({
@@ -24,7 +29,7 @@ class Model {
         });
       }
 
-      return this.save(data)
+      return this.save(defaultValues)
         .then(instance => resolve(instance))
         .catch(err => reject(err));
     });

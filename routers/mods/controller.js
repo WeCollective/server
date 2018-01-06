@@ -1,246 +1,302 @@
 const reqlib = require('app-root-path').require;
 
-const mailer = reqlib('config/mailer');
-const NotificationTypes = reqlib('config/notification-types');
-
-const Mod = reqlib('models/mod.model');
-const ModLogEntry = reqlib('models/mod-log-entry.model');
-const Notification = reqlib('models/notification.model');
-const User = reqlib('models/user.model');
-
+const Constants = reqlib('config/constants');
 const error = reqlib('responses/errors');
+const mailer = reqlib('config/mailer');
+const Models = reqlib('models/');
+const NotificationTypes = reqlib('config/notification-types');
 const success = reqlib('responses/successes');
 
-function postModLogEntry(req, res, action, data) {
-  return new Promise(function(resolve, reject) {
-    var entry = new ModLogEntry({
-      branchid: req.params.branchid,
-      username: req.user.username,
-      date: new Date().getTime(),
-      action: action,
-      data: data
-    });
+const { createNotificationId } = Constants.Helpers;
 
-    var propertiesToCheck = ['branchid', 'username', 'date', 'action', 'data'];
-    var invalids = entry.validate(propertiesToCheck);
-    if(invalids.length > 0) {
-      return reject();
-    }
-    entry.save().then(resolve, reject);
-  });
-}
+module.exports.addModerator = (req, res) => {
+  const { branchid } = req.params;
+  const { username } = req.body;
+  const date = new Date().getTime();
+  const userUsername = req.user.get('username');
+  let branchMods = [];
+  let user;
 
-module.exports = {
-  post: function(req, res) {
-    if(!req.params.branchid) {
-      return error.BadRequest(res, 'Missing branchid');
-    }
+  if (!branchid) {
+    return error.BadRequest(res, 'Invalid branchid.');
+  }
 
-    // create new mod object
-    var mod = new Mod({
-      branchid: req.params.branchid,
-      date: new Date().getTime(),
-      username: req.body.username
-    });
+  if (!username) {
+    return error.BadRequest(res, 'Invalid username.');
+  }
 
-    // validate new mod
-    var propertiesToCheck = ['branchid', 'date', 'username'];
-    var invalids = mod.validate(propertiesToCheck);
-    if(invalids.length > 0) {
-      return error.BadRequest(res, 'Invalid ' + invalids[0]);
-    }
-
-    // check username is a real user
-    var user = new User();
-    var branchMods;
-    user.findByUsername(req.body.username).then(function() {
-      // check user is not already a mod on this branch
-      var checkMod = new Mod();
-      checkMod.findByBranch(req.params.branchid).then(function(mods) {
-        if(!mods) {
-          console.error('Error fetching mods.');
-          return error.InternalServerError(res);
-        }
-        branchMods = mods;
-        // check if the specified user is in the branch's mod list
-        for(var i = 0; i < branchMods.length; i++) {
-          if(branchMods[i].username == req.body.username) {
-            return error.BadRequest(res, 'User is already a moderator');
-          }
-        }
-        // safe to add this user as a new mod
-        mod.save().then(function() {
-          return postModLogEntry(req, res, 'addmod', mod.data.username);
-        }).then(function () {
-          // notify mods of the branch that a mod was added
-          var promises = [];
-          var time = new Date().getTime();
-          branchMods.push(mod.data);  // add the new mod to the notification recipient list
-          // do not notify self that you added a moderator
-          for(var i = 0; i < branchMods.length; i++) {
-            if(branchMods[i].username == req.user.username) {
-              branchMods.splice(i, 1);
-            }
-          }
-          for(var j = 0; j < branchMods.length; j++) {
-            var notification = new Notification({
-              id: branchMods[j].username + '-' + time,
-              user: branchMods[j].username,
-              date: time,
-              unread: true,
-              type: NotificationTypes.MODERATOR,
-              data: {
-                action: 'add',
-                branchid: req.params.branchid,
-                username: req.user.username,
-                mod: req.body.username
-              }
-            });
-
-            var propertiesToCheck = ['id', 'user', 'date', 'unread', 'type', 'data'];
-            var invalids = notification.validate(propertiesToCheck);
-            if(invalids.length > 0) {
-              console.error('Error creating notification.');
-              return error.InternalServerError(res);
-            }
-            promises.push(notification.save());
-          }
-          return Promise.all(promises);
-        }).then(function () {
-          // increment the user's mod count
-          user.set('num_mod_positions', user.data.num_mod_positions + 1);
-          return user.update();
-        }).then(function () {
-          // update the SendGrid contact list with the new user data
-          return mailer.addContact(user.data, true);
-        }).then(function() {
-          return success.OK(res);
-        }).catch(function(err) {
-          console.error('Error saving new moderator:', err);
-          return error.InternalServerError(res);
+  // The added user must be a real user and cannot be a moderator
+  // on this branch already.
+  return Models.User.findOne({
+    where: {
+      username,
+    },
+  })
+    .then(instance => {
+      if (instance === null) {
+        return Promise.reject({
+          message: 'User does not exist.',
+          status: 403,
         });
-      }, function() {
-        // either an error, or no mods found; should be at least one!
-        console.error('Error fetching mods.');
-        return error.InternalServerError(res);
-      });
-    }, function(err) {
-      if(err) {
-        console.error('Error fetching user.');
-        return error.InternalServerError(res);
       }
-      // user doesn't exist
-      return error.NotFound(res);
-    });
-  },
-  get: function(req, res) {
-    if(!req.params.branchid) {
-      return error.BadRequest(res, 'Missing branchid');
-    }
 
-    var mods = new Mod();
-    mods.findByBranch(req.params.branchid).then(function(response) {
-      return success.OK(res, response);
-    }, function(err) {
-      if(err) {
-        console.error('Error fetching mods.');
-        return error.InternalServerError(res);
+      user = instance;
+
+      return Models.Branch.findById(branchid);
+    })
+    .then(instance => {
+      if (instance === null) {
+        return Promise.reject({
+          message: 'Branch does not exist.',
+          status: 403,
+        });
       }
-      return error.NotFound(res);
-    });
-  },
-  delete: function(req, res) {
-    if(!req.params.branchid) {
-      return error.BadRequest(res, 'Missing branchid');
-    }
+      return Models.Mod.findByBranch(branchid);
+    })
+    .then(mods => {
+      if (!mods.length) {
+        return Promise.reject({
+          message: `Branch ${branchid} has no moderators.`,
+          status: 403,
+        });
+      }
 
-    if(!req.params.username) {
-      return error.BadRequest(res, 'Missing username');
-    }
-
-    // create new mod object
-    var mod = new Mod();
-    var branchMods;
-    var deleter = {}; // user performing the delete
-    var deletee = {}; // mod to be deleted
-    var deleteeUser = new User();
-    mod.findByBranch(req.params.branchid).then(function(mods) {
       branchMods = mods;
-      for(var i = 0; i < branchMods.length; i++) {
-        if(branchMods[i].username == req.user.username) {
-          deleter = branchMods[i];
-        }
-        if(branchMods[i].username == req.params.username) {
-          deletee = branchMods[i];
+
+      // check if the specified user is in the branch's mod list
+      for (let i = 0; i < branchMods.length; i += 1) {
+        if (branchMods[i].get('username') === username) {
+          return Promise.reject({
+            message: `${username} is already a moderator of ${branchid}.`,
+            status: 403,
+          });
         }
       }
 
-      // deletee must have become a mod after the deleter did
-      if(Number(deleter.date) > Number(deletee.date)) {
-        return error.Forbidden(res);
-      }
+      // Add the new moderator.
+      return Models.Mod.create({
+        branchid,
+        date,
+        username,
+      });
+    })
+    .then(instance => {
+      // Append user to the moderators list so he receives a notification.
+      branchMods = [
+        ...branchMods,
+        instance,
+      ];
 
-      deletee = new Mod(deletee);
-      deletee.delete({
-        branchid: deletee.data.branchid,
-        date: Number(deletee.data.date)
-      }).then(function () {
-        return postModLogEntry(req, res, 'removemod', req.params.username);
-      }).then(function () {
-        // notify mods of the branch that a mod was removed
-        var promises = [];
-        var time = new Date().getTime();
-        // add the deleted mod to the notification recipient list
-        branchMods.push({ username: req.params.username });
-        // do not notify self that you added a moderator
-        for(var i = 0; i < branchMods.length; i++) {
-          if(branchMods[i].username == req.user.username) {
-            branchMods.splice(i, 1);
-          }
-        }
-        for(var j = 0; j < branchMods.length; j++) {
-          var notification = new Notification({
-            id: branchMods[j].username + '-' + time,
-            user: branchMods[j].username,
-            date: time,
-            unread: true,
-            type: NotificationTypes.MODERATOR,
+      return Models.ModLog.create({
+        action: 'addmod',
+        branchid,
+        data: username,
+        date,
+        username: userUsername,
+      });
+    })
+    // Notify branch moderators there is a new moderator.
+    .then(() => {    
+      let promises = [];
+
+      // Notify everyone but ourselves.
+      for (let i = 0; i < branchMods.length; i += 1) {
+        const modUsername = branchMods[i].get('username');
+        if (modUsername !== userUsername) {
+          const promise = Models.Notification.create({
             data: {
-              action: 'remove',
-              branchid: req.params.branchid,
-              username: req.user.username,
-              mod: req.params.username
-            }
+              action: 'add',
+              branchid,
+              mod: username,
+              username: userUsername,
+            },
+            date,
+            id: createNotificationId(modUsername, date),
+            type: NotificationTypes.MODERATOR,
+            unread: true,
+            user: modUsername,
           });
 
-          var propertiesToCheck = ['id', 'user', 'date', 'unread', 'type', 'data'];
-          var invalids = notification.validate(propertiesToCheck);
-          if(invalids.length > 0) {
-            console.error('Error creating notification: invalid ' + invalids[0]);
-            return error.InternalServerError(res);
-          }
-          promises.push(notification.save());
+          promises = [
+            ...promises,
+            promise,
+          ];
         }
-        return Promise.all(promises);
-      }).then(function () {
-        // get the deleted mod user
-        return deleteeUser.findByUsername(req.params.username);
-      }).then(function () {
-        // decrement the deleted mod's mod count
-        deleteeUser.set('num_mod_positions', deleteeUser.data.num_mod_positions - 1);
-        return deleteeUser.update();
-      }).then(function () {
-        // update the SendGrid contact list with the new user data
-        return mailer.addContact(deleteeUser.data, true);
-      }).then(function() {
-        return success.OK(res);
-      }).catch(function(err) {
-        console.error('Error deleting mod:', err);
-        return error.InternalServerError(res);
-      });
-    }, function(err) {
-      console.error('Error fetching mods:', err);
-      return error.InternalServerError(res);
+      }
+
+      return Promise.all(promises);
+    })
+    // Increment the added user's moderator count.
+    .then(() => {
+      user.set('num_mod_positions', user.get('num_mod_positions') + 1);
+      return user.update();
+    })
+    // update the SendGrid contact list with the new user data
+    // todo
+    .then(() => mailer.addContact(user.dataValues, true))
+    .then(() => success.OK(res))
+    .catch(err => {
+      console.error('Error adding a moderator:', err);
+      return error.code(res, err.status, err.message);
     });
+};
+
+module.exports.get = (req, res) => {
+  const { branchid } = req.params;
+
+  if (!branchid) {
+    return error.BadRequest(res, 'Missing branchid');
   }
+
+  return Models.Mod.findByBranch(branchid)
+    .then(mods => success.OK(res, mods.map(instance => ({
+      branchid: instance.get('branchid'),
+      date: instance.get('date'),
+      username: instance.get('username'),
+    }))))
+    .catch(err => {
+      if (err) {
+        console.error('Error fetching mods.');
+        return error.InternalServerError(res);
+      }
+      return error.NotFound(res);
+    });
+};
+
+module.exports.removeModerator = (req, res) => {
+  const {
+    branchid,
+    username,
+  } = req.params;
+  const date = new Date().getTime();
+  const userUsername = req.user.get('username');
+  let branchMods = [];
+  let mod;
+  let user;
+  let userMod;
+
+  if (!branchid) {
+    return error.BadRequest(res, 'Invalid branchid.');
+  }
+
+  if (!username) {
+    return error.BadRequest(res, 'Invalid username.');
+  }
+
+  return Models.Mod.findByBranch(branchid)
+    .then(mods => {
+      if (!mods.length) {
+        return Promise.reject({
+          message: `Branch ${branchid} has no moderators.`,
+          status: 404,
+        });
+      }
+
+      branchMods = mods;
+
+      for (let i = 0; i < branchMods.length; i += 1) {
+        const modUsername = branchMods[i].get('username');
+
+        if (modUsername == userUsername) {
+          userMod = branchMods[i];
+          if (mod) break;
+        }
+
+        if (modUsername == username) {
+          mod = branchMods[i];
+          if (userMod) break;
+        }
+      }
+
+      if (!userMod) {
+        return Promise.reject({
+          message: `You are not a moderator of ${branchid}.`,
+          status: 403,
+        });
+      }
+
+      if (!mod) {
+        return Promise.reject({
+          message: `${username} is not a moderator of ${branchid}.`,
+          status: 403,
+        });
+      }
+
+      // We cannot delete moderators who held this position before us.
+      if (Number.parseInt(mod.get('date'), 10) < Number.parseInt(userMod.get('date'), 10)) {
+        return Promise.reject({
+          message: 'You cannot remove moderators who became moderators before you.',
+          status: 403,
+        });
+      }
+
+      // Create the log entry first because destroying the instance would
+      // remove the entry from the array too. We cannot copy the object since
+      // the instance methods are non-enumerable.
+      return Models.ModLog.create({
+        action: 'removemod',
+        branchid,
+        data: username,
+        date,
+        username: userUsername,
+      });
+    })
+    // Notify other branch moderators that a moderator was removed.
+    .then(() => {
+      let promises = [];
+
+      // Notify everyone but ourselves.
+      for (let i = 0; i < branchMods.length; i += 1) {
+        const modUsername = branchMods[i].get('username');
+        if (modUsername !== userUsername) {
+          const promise = Models.Notification.create({
+            data: {
+              action: 'remove',
+              branchid,
+              mod: username,
+              username: userUsername,
+            },
+            date,
+            id: createNotificationId(modUsername, date),
+            type: NotificationTypes.MODERATOR,
+            unread: true,
+            user: modUsername,
+          });
+
+          promises = [
+            ...promises,
+            promise,
+          ];
+        }
+      }
+
+      return Promise.all(promises);
+    })
+    .then(() => mod.destroy())
+    // Decrement the removed user's moderator count.
+    .then(() => Models.User.findOne({
+      where: {
+        username,
+      },
+    }))
+    .then(instance => {
+      if (instance === null) {
+        return Promise.reject({
+          message: 'User does not exist.',
+          status: 404,
+        });
+      }
+
+      user = instance;
+      user.set('num_mod_positions', user.get('num_mod_positions') - 1);
+      return user.update();
+    })
+    // update the SendGrid contact list with the new user data
+    // todo
+    .then(() => mailer.addContact(user.dataValues, true))
+    .then(() => success.OK(res))
+    .catch(err => {
+      console.error('Error removing a moderator:', err);
+      return error.code(res, err.status, err.message);
+    });
 };

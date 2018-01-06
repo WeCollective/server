@@ -1,97 +1,81 @@
 const reqlib = require('app-root-path').require;
 
-const Constant = reqlib('models/constant');
+const Constants = reqlib('config/constants');
 const error = reqlib('responses/errors');
+const Models = reqlib('models/');
 const success = reqlib('responses/successes');
 
+const { WecoConstants } = Constants.AllowedValues;
+
 module.exports.get = (req, res) => {
-  const id = req.params.id;
-  const wecoConstant = new Constant();
+  const { id } = req.params;
 
-  if (!id) {
-    return error.BadRequest(res, 'Missing id parameter');
-  }
-  
-  return wecoConstant
-    .findById(id)
-    .then(() => success.OK(res, wecoConstant.data))
-    .catch(err => {
-      if (err) {
-        console.error('Error fetching constant:', err);
-        return error.InternalServerError(res);
-      }
-
-      return error.NotFound(res);
-    });
-};
-
-module.exports.getAll = (req, res) => {
-  const types = [
-    'branch_count',
-    'donation_total',
-    'raised_total',
-    'user_count',
-  ];
-  const wecoConstant = new Constant();
-  
-  return wecoConstant
-    .findAll({
-      where: {
-        id: types,
-      },
-    })
-    .then(constants => success.OK(res, constants))
-    .catch(err => {
-      if (err) {
-        console.error('Error fetching constant:', err);
-        return error.InternalServerError(res);
-      }
-
-      return error.NotFound(res);
-    });
-};
-
-module.exports.put = (req, res) => {
-  const data = req.body.data;
-  const id = req.params.id;
-  const wecoConstant = new Constant();
-
-  if (!id) {
-    return error.BadRequest(res, 'Missing id parameter');
+  if (!WecoConstants.includes(id)) {
+    return error.BadRequest(res, 'Invalid id parameter.');
   }
 
-  if (!data && data !== 0) {
-    return error.BadRequest(res, 'Missing data parameter');
-  }
-
-  return wecoConstant
-    .findById(id)
-    .then(() => {
-      let integer;
-
-      if (['branch_count', 'donation_total', 'raised_total', 'user_count'].includes(id)) {
-        integer = Number(data);
-      }
-
-      wecoConstant.set('data', integer);
-
-      const invalids = wecoConstant.validate();
-      if (invalids.length > 0) {
+  return Models.Constant.findById(id)
+    .then(instance => {
+      if (instance === null) {
         return Promise.reject({
-          code: 400,
-          message: `Invalid ${invalids[0]}`,
+          message: 'Constant not found.',
+          status: 404,
         });
       }
 
-      return wecoConstant.update();
+      return success.OK(res, {
+        data: instance.get('data'),
+        id: instance.get('id'),
+      });
+    })
+    .catch(err => {
+      console.error('Error fetching constant:', err);
+      return error.InternalServerError(res, err);
+    });
+};
+
+module.exports.getAll = (req, res) => Models.Constant.findAll({
+  where: {
+    id: WecoConstants,
+  },
+})
+  .then(constants => success.OK(res, constants.map(instance => ({
+    data: instance.get('data'),
+    id: instance.get('id'),
+  }))))
+  .catch(err => {
+    console.error('Error fetching constant:', err);
+    return error.InternalServerError(res, err);
+  });
+
+module.exports.put = (req, res) => {
+  const { data } = req.body;
+  const { id } = req.params;
+  const int = Number.parseInt(data, 10);
+
+  if (!WecoConstants.includes(id)) {
+    return error.BadRequest(res, 'Invalid id parameter.');
+  }
+
+  if (Number.isNaN(int)) {
+    return error.BadRequest(res, 'Missing data parameter');
+  }
+
+  return Models.Constant.findById(id)
+    .then(instance => {
+      if (instance === null) {
+        return Promise.reject({
+          message: 'Constant not found.',
+          status: 404,
+        });
+      }
+
+      instance.set('data', int);
+      return instance.update();
     })
     .then(() => success.OK(res))
     .catch(err => {
-      if (err) {
-        console.error('Error fetching constant:', err);
-        return error.InternalServerError(res);
-      }
-
-      return error.NotFound(res);
+      console.error('Error fetching constant:', err);
+      return error.InternalServerError(res, err);
     });
 };

@@ -1,20 +1,68 @@
 const _ = require('lodash');
 const reqlib = require('app-root-path').require;
 
-const Branch = reqlib('models/branch.model');
-const Mod = reqlib('models/mod.model');
-const ModLogEntry = reqlib('models/mod-log-entry.model');
-const Notification = reqlib('models/notification.model');
+const Models = reqlib('models/');
 const NotificationTypes = reqlib('config/notification-types');
-const SubBranchRequest = reqlib('models/subbranch-request.model');
-const Tag = reqlib('models/tag.model');
 
 const error = reqlib('responses/errors');
 const success = reqlib('responses/successes');
 
+const save = (parentBranchId, childBranchId, creator) => {
+  const date = new Date().getTime();
+  let uniqueMods;
+
+  return Models.Mod.findByBranch(parentBranchId)
+    .then(instances => {
+      uniqueMods = instances;
+      return Models.Mod.findByBranch(childBranchId);
+    })
+    .then(instances => {
+      let alreadyInsertedUsernames = uniqueMods.map(instance => instance.get('username'));
+      let promises = [];
+
+      instances.forEach(instance => {
+        const username = instance.get('username');
+        if (!alreadyInsertedUsernames.includes(username)) {
+          alreadyInsertedUsernames = [
+            ...alreadyInsertedUsernames,
+            username,
+          ];
+          uniqueMods = [
+            ...uniqueMods,
+            instance,
+          ];
+        }
+      });
+
+      // send notification of the new child branch request to these mods
+      for (let i = 0; i < uniqueMods.length; i += 1) {
+        const username = uniqueMods[i].get('username');
+
+        promises = [
+          ...promises,
+          Models.Notification.create({
+            data: {
+              childid: childBranchId,
+              parentid: parentBranchId,
+              username: creator,
+            },
+            date,
+            id: `${username}-${date}`,
+            unread: true,
+            user: username,
+            type: NotificationTypes.NEW_CHILD_BRANCH_REQUEST,
+          }),
+        ];
+      }
+
+      return Promise.all(promises);
+    })
+    .catch(err => Promise.reject(err));
+};
+
 const put = {
   createNotification(type, creator, data, date) {
-    const notification = new Notification({
+    return Models.Notification.create({
       data,
       date,
       id: `${creator}-${date}`,
@@ -22,15 +70,6 @@ const put = {
       unread: true,
       user: creator,
     });
-
-    const invalids = notification.validate();
-
-    if (invalids.length > 0) {
-      console.error('Error creating notification.');
-      return Promise.reject({ code: 500 });
-    }
-
-    return notification.save();
   },
 
   verifyParams(req) {
@@ -39,7 +78,7 @@ const put = {
       'reject',
     ];
 
-    if (!req.user.username) {
+    if (!req.user.get('username')) {
       console.error('No username found in session.');
       return Promise.reject({ code: 500 });
     }
@@ -63,66 +102,62 @@ const put = {
 };
 
 module.exports.get = (req, res) => {
-  if (!req.user.username) {
-    console.error('No username found in session.');
-    return error.InternalServerError(res);
-  }
-
-  return new SubBranchRequest()
-    .findByBranch(req.params.branchid)
-    .then(data => success.OK(res, data))
+  const { branchid } = req.params;
+  return Models.SubBranchRequest.findByBranch(branchid)
+    // todo
+    .then(requests => success.OK(res, requests.map(instance => instance.dataValues)))
     .catch(err => {
-      if (err) {
-        if (typeof err === 'object' && err.code) {
-          return error.code(res, err.code, err.message);
-        }
-
-        return error.InternalServerError(res);
+      console.log(err);
+      if (typeof err === 'object' && err.code) {
+        return error.code(res, err.code, err.message);
       }
 
-      return error.NotFound(res);
+      return error.InternalServerError(res);
     });
 };
 
 module.exports.post = (req, res) => {
-  const childBranch = new Branch();
-  const childBranchId = req.params.childid;
-  const date = new Date().getTime();
-  const parentBranch = new Branch();
-  const parentBranchId = req.params.branchid;
-  const username = req.user.username;
-
-  if (!username) {
-    console.error('No username found in session.');
-    return error.InternalServerError(res);
-  }
-
-  const request = new SubBranchRequest({
+  const {
     childid: childBranchId,
-    creator: username,
-    date,
-    parentid: parentBranchId,
-  });
+    branchid: parentBranchId,
+  } = req.params;
+  const date = new Date().getTime();
+  const username = req.user.get('username');
+  let childBranch;
+  let parentBranch;
 
-  const invalids = request.validate();
-  if (invalids.length > 0) {
-    return error.BadRequest(res, invalids[0]);
-  }
-
-  return parentBranch
-    // Grab data for both branches. If it fails, we return not found error.
-    .findById(parentBranchId)
-    .then(() => childBranch.findById(childBranchId))
-    // Exit if there already exists parent - child relationship between branches.
-    .then(() => {
-      if (parentBranch.data.id === childBranch.data.parentid) {
+  // Grab data for both branches. If it fails, we return not found error.
+  return Models.Branch.findById(parentBranchId)
+    .then(instance => {
+      if (instance === null) {
         return Promise.reject({
           code: 400,
-          message: `${parentBranch.data.id} is already a parent of ${childBranch.data.id}`,
+          message: `Branch ${parentBranchId} does not exist.`,
         });
       }
 
-      return new Tag().findByBranch(parentBranchId);
+      parentBranch = instance;
+      return Models.Branch.findById(childBranchId);
+    })
+    // Exit if there already exists parent - child relationship between branches.
+    .then(instance => {
+      if (instance === null) {
+        return Promise.reject({
+          code: 400,
+          message: `Branch ${childBranchId} does not exist.`,
+        });
+      }
+
+      childBranch = instance;
+
+      if (parentBranch.get('id') === childBranch.get('parentid')) {
+        return Promise.reject({
+          code: 400,
+          message: `${parentBranch.get('id')} is already a parent of ${childBranch.get('id')}`,
+        });
+      }
+
+      return Models.Tag.findByBranch(parentBranchId);
     })
     // Check if the child branch we are asking to move is not a parent branch
     // of the requested parent branch.
@@ -131,8 +166,8 @@ module.exports.post = (req, res) => {
     //
     // In this case, moving the child branch would discontinue the chain, hence
     // it is forbidden.
-    .then(tagsParentBranch => {
-      tagsParentBranch = tagsParentBranch.map(obj => obj.tag);
+    .then(instances => {
+      const tagsParentBranch = instances.map(instance => instance.get('tag'));
 
       if (tagsParentBranch.includes(childBranchId)) {
         return Promise.reject({
@@ -144,38 +179,32 @@ module.exports.post = (req, res) => {
       return Promise.resolve();
     })
     // Don't create a duplicate request.
-    .then(() => new SubBranchRequest().find(parentBranchId, childBranchId))
-    .then(existingRequests => {
-      if (existingRequests.length > 0) {
+    .then(() => Models.SubBranchRequest.find(parentBranchId, childBranchId))
+    .then(instances => {
+      if (instances.length) {
         return Promise.reject({
           code: 400,
           message: 'This request already exists',
         });
       }
 
-      return request.save();
-    })
-    // Create a mod log entry about the event.
-    .then(() => {
-      const modLogEntry = new ModLogEntry({
-        action: 'make-subbranch-request',
-        branchid: childBranchId,
-        data: parentBranchId,
+      return Models.SubBranchRequest.create({
+        childid: childBranchId,
+        creator: username,
         date,
-        username,
+        parentid: parentBranchId,
       });
-
-      const invalids = modLogEntry.validate();
-      if (invalids.length > 0) {
-        console.error('Error saving mod log entry.');
-        return Promise.reject({
-          code: 500,
-          message: invalids[0],
-        });
-      }
-
-      return modLogEntry.save();
     })
+    // todo
+    .then(() => save(parentBranchId, childBranchId, username))
+    // Create a mod log entry about the event.
+    .then(() => Models.ModLog.create({
+      action: 'make-subbranch-request',
+      branchid: childBranchId,
+      data: parentBranchId,
+      date,
+      username,
+    }))
     // If we are moving to root, we don't need anyone to approve
     // our request - move the branch immediately.
     .then(() => {
@@ -189,33 +218,26 @@ module.exports.post = (req, res) => {
       return success.OK(res);
     })
     .catch(err => {
-      if (err) {
-        console.error('Error creating subbranch request:', err);
-        if (typeof err === 'object' && err.code) {
-          return error.code(res, err.code, err.message);
-        }
-
-        return error.InternalServerError(res);
+      console.error('Error creating subbranch request:', err);
+      if (typeof err === 'object' && err.code) {
+        return error.code(res, err.code, err.message);
       }
 
-      return error.NotFound(res, `b/${parentBranchId} doesn't exist`);
+      return error.InternalServerError(res);
     });
 };
 
 module.exports.put = (req, res) => {
+  const {
+    branchid: parentBranchId,
+    childid: childBranchId,
+  } = req.params;
+  const { action } = req.body;
   const date = new Date().getTime();
-  const request = new SubBranchRequest();
-  const tag = new Tag();
+  const username = req.user.get('username');
+  let requestInstance;
 
-  const action = req.body.action;
-  const childBranchId = req.params.childid;
-  const parentBranchId = req.params.branchid;
-  const username = req.user.username;
-
-  let modLogEntryChildBranch;
-  let modLogEntryParentBranch;
   let modsParentBranch;
-  let requestData;
   let tagsChildBranch;
   let tagsParentBranch;
   let treeBranchIds;
@@ -226,19 +248,21 @@ module.exports.put = (req, res) => {
       parentid: parentBranchId,
     };
     const type = NotificationTypes.BRANCH_MOVED;
-
-    const promises = [];
+    let promises = [];
 
     for (let i = 0; i < mods.length; i += 1) {
-      const creator = mods[i].username;
-      promises.push(put.createNotification(type, creator, data, date));
+      const creator = mods[i].get('username');
+      promises = [
+        ...promises,
+        put.createNotification(type, creator, data, date),
+      ];
     }
 
     return Promise.all(promises);
   };
 
   const createSubbranchRequestCreatorNotification = () => {
-    const creator = requestData.creator;
+    const creator = requestInstance.get('creator');
     const data = {
       action,
       childid: childBranchId,
@@ -246,55 +270,21 @@ module.exports.put = (req, res) => {
       username,
     };
     const type = NotificationTypes.CHILD_BRANCH_REQUEST_ANSWERED;
-
     return put.createNotification(type, creator, data, date);
   };
 
   return put.verifyParams(req)
     // The request must exist.
-    .then(() => request.find(parentBranchId, childBranchId))
-    .then(data => {
-      if (!data || data.length === 0) {
+    .then(() => Models.SubBranchRequest.find(parentBranchId, childBranchId))
+    .then(instances => {
+      if (!instances.length) {
         return Promise.reject({
           code: 404,
           message: 'The subbranch request does not exist.',
         });
       }
 
-      requestData = data[0];
-
-      return Promise.resolve();
-    })
-    // Create mod log entries.
-    .then(() => {
-      const createModLogEntry = branchid => {
-        const modLogEntry = new ModLogEntry({
-          action: 'answer-subbranch-request',
-          branchid,
-          data: JSON.stringify({
-            childid: childBranchId,
-            childmod: requestData.creator,
-            parentid: parentBranchId,
-            response: action,
-          }),
-          date,
-          username,
-        });
-
-        const invalids = modLogEntry.validate();
-        return invalids.length === 0 ? modLogEntry : false;
-      };
-
-      modLogEntryParentBranch = createModLogEntry(parentBranchId);
-      modLogEntryChildBranch = createModLogEntry(childBranchId);
-
-      if (!modLogEntryParentBranch || !modLogEntryChildBranch) {
-        return Promise.reject({
-          code: 500,
-          message: 'Error creating mod log entry.',
-        });
-      }
-
+      requestInstance = instances[0];
       return Promise.resolve();
     })
     // Accept the request.
@@ -303,13 +293,12 @@ module.exports.put = (req, res) => {
         return Promise.resolve();
       }
 
-      return tag
-        // Get all parent branch tags.
-        // 
-        // Example: root - a - b - parent
-        // 
-        // This will return [root, a, b, parent]
-        .findByBranch(parentBranchId)
+      // Get all parent branch tags.
+      // 
+      // Example: root - a - b - parent
+      // 
+      // This will return [root, a, b, parent]
+      return Models.Tag.findByBranch(parentBranchId)
         // Check if the child branch we are asking to move is not a parent branch
         // of the requested parent branch.
         //
@@ -318,7 +307,7 @@ module.exports.put = (req, res) => {
         // In this case, moving the child branch would discontinue the chain, hence
         // it is forbidden.
         .then(tags => {
-          tagsParentBranch = tags.map(obj => obj.tag);
+          tagsParentBranch = tags.map(instance => instance.get('tag'));
 
           if (tagsParentBranch.includes(childBranchId)) {
             return Promise.reject({
@@ -327,16 +316,15 @@ module.exports.put = (req, res) => {
             });
           }
 
-          return Promise.resolve();
+          // Get all child branch tags.
+          // 
+          // Example: root - a - b - child
+          // 
+          // This will return [root, a, b, child]
+          return Models.Tag.findByBranch(childBranchId);
         })
-        // Get all child branch tags.
-        // 
-        // Example: root - a - b - child
-        // 
-        // This will return [root, a, b, child]
-        .then(() => tag.findByBranch(childBranchId))
         .then(tags => {
-          tagsChildBranch = tags.map(obj => obj.tag);
+          tagsChildBranch = tags.map(instance => instance.get('tag'));
           return Promise.resolve();
         })
         // Sanitise both tag arrays before we perform the move.
@@ -352,60 +340,65 @@ module.exports.put = (req, res) => {
           // Child branch id stays the same, so it is not needed here.
           tagsChildBranch.splice(tagsChildBranch.indexOf(childBranchId), 1);
 
-          return Promise.resolve();
+          // Get the tree that will be relocated to the new parent branch.
+          //
+          // Example: root - a - b - child - c - d
+          //                               - e - f
+          //               - parent
+          //
+          // We will be moving [child, c, d, e, f] under parent. That's our tree.
+          return Models.Tag.findByTag(childBranchId);
         })
-        // Get the tree that will be relocated to the new parent branch.
-        //
-        // Example: root - a - b - child - c - d
-        //                               - e - f
-        //               - parent
-        //
-        // We will be moving [child, c, d, e, f] under parent. That's our tree.
-        .then(() => tag.findByTag(childBranchId))
         .then(tags => {
-          treeBranchIds = tags.map(obj => obj.branchid);
-          return Promise.resolve();
-        })
-        // Figure out how many operations we will have to carry out.
-        // If we are about to delete 4 tags and add 2 tags, we will
-        // be performing only 4 operations to be efficient - we will
-        // update 2 rows and delete the other 2.
-        .then(() => {
+          treeBranchIds = tags.map(instance => instance.get('branchid'));
+
+          // Figure out how many operations we will have to carry out.
+          // If we are about to delete 4 tags and add 2 tags, we will
+          // be performing only 4 operations to be efficient - we will
+          // update 2 rows and delete the other 2.
           const TCBLength = tagsChildBranch.length;
           const TPBLength = tagsParentBranch.length;
           const branchOperationsLength = TCBLength > TPBLength ? TCBLength : TPBLength;
-          const branchOperationsArr = [];
+          let branchOperationsArr = [];
 
           for (let i = 0; i < branchOperationsLength; i += 1) {
             treeBranchIds.forEach(branchId => {
-              const operationTag = new Tag();
+              // const operationTag = new Tag();
               if (i < TCBLength) {
                 // Delete row in either case. We cannot update the tag directly because it is a
                 // part of the primary key. See http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_AttributeValueUpdate.html.
                 // Instead, we delete it and then insert a new tag with the updated attributes.
-                branchOperationsArr.push(operationTag.findByBranchAndTag(branchId, tagsChildBranch[i])
-                  .then(() => operationTag.delete())
-                  .then(() => {
-                    if (i < TPBLength) {
-                      return new Tag({
-                        branchid: branchId,
-                        tag: tagsParentBranch[i],
-                      })
-                        .save();
-                    }
+                branchOperationsArr = [
+                  ...branchOperationsArr,
+                  Models.Tag.findByBranchAndTag(branchId, tagsChildBranch[i])
+                    .then(instance => {
+                      if (instance === null) {
+                        return Promise.reject('Tag does not exist.');
+                      }
+                      return instance.destroy();
+                    })
+                    .then(() => {
+                      if (i < TPBLength) {
+                        return Models.Tag.create({
+                          branchid: branchId,
+                          tag: tagsParentBranch[i],
+                        });
+                      }
 
-                    return Promise.resolve();
-                  })
-                );
+                      return Promise.resolve();
+                    })
+                    .catch(err => Promise.reject(err)),
+                ];
               }
               // Insert row.
               else {
-                branchOperationsArr.push(new Tag({
-                  branchid: branchId,
-                  tag: tagsParentBranch[i],
-                })
-                  .save()
-                );
+                branchOperationsArr = [
+                  ...branchOperationsArr,
+                  Models.Tag.create({
+                    branchid: branchId,
+                    tag: tagsParentBranch[i],
+                  }),
+                ];
               }
             });
           }
@@ -413,22 +406,40 @@ module.exports.put = (req, res) => {
           return Promise.all(branchOperationsArr);
         })
         // Update child branch parentid.
-        .then(() => {
-          const updatedBranch = new Branch({ id: childBranchId });
-          updatedBranch.set('parentid', parentBranchId);
-          return updatedBranch.update();
-        })
+        .then(() => Models.Branch.update({
+          where: {
+            id: childBranchId,
+          },
+        }, {
+          parentid: parentBranchId,
+        }))
         // Send notifications to both branch mods that the child branch has moved.
-        .then(() => new Mod().findByBranch(parentBranchId))
+        .then(() => Models.Mod.findByBranch(parentBranchId))
         .then(mods => {
           modsParentBranch = mods;
-          return new Mod().findByBranch(childBranchId);
+          return Models.Mod.findByBranch(childBranchId);
         })
         // Remove all duplicates i.e. users who are mods of both branches.
         // Send notifications.
-        .then(modsChildBranch => {
-          const modsChildAndParentBranch = _.uniqBy(modsParentBranch.concat(modsChildBranch), 'username');
-          return createModBranchMovedNotifications(modsChildAndParentBranch);
+        .then(instances => {
+          let uniqueMods = modsParentBranch;
+          let alreadyInsertedUsernames = uniqueMods.map(instance => instance.get('username'));
+
+          instances.forEach(instance => {
+            const username = instance.get('username');
+            if (!alreadyInsertedUsernames.includes(username)) {
+              alreadyInsertedUsernames = [
+                ...alreadyInsertedUsernames,
+                username,
+              ];
+              uniqueMods = [
+                ...uniqueMods,
+                instance,
+              ];
+            }
+          });
+
+          return createModBranchMovedNotifications(uniqueMods);
         })
         .catch(err => {
           console.log(err);
@@ -436,13 +447,35 @@ module.exports.put = (req, res) => {
         });
     })
     // Remove the subbranch request.
-    .then(() => request.delete({
+    .then(() => Models.SubBranchRequest.destroy({
       childid: childBranchId,
       parentid: parentBranchId,
     }))
     // Add records to both branches about the decision.
-    .then(() => modLogEntryChildBranch.save())
-    .then(() => modLogEntryParentBranch.save())
+    .then(() => Models.ModLog.create({
+      action: 'answer-subbranch-request',
+      branchid: parentBranchId,
+      data: JSON.stringify({
+        childid: childBranchId,
+        childmod: requestInstance.get('creator'),
+        parentid: parentBranchId,
+        response: action,
+      }),
+      date,
+      username,
+    }))
+    .then(() => Models.ModLog.create({
+      action: 'answer-subbranch-request',
+      branchid: childBranchId,
+      data: JSON.stringify({
+        childid: childBranchId,
+        childmod: requestInstance.get('creator'),
+        parentid: parentBranchId,
+        response: action,
+      }),
+      date,
+      username,
+    }))
     // Inform the request creator about the decision.
     .then(() => createSubbranchRequestCreatorNotification())
     .then(() => success.OK(res))

@@ -3,25 +3,28 @@ const reqlib = require('app-root-path').require;
 const request = require('request');
 
 const algolia = reqlib('config/algolia');
-const aws = reqlib('config/aws');
-const Branch = reqlib('models/branch.model');
-const Comment = reqlib('models/comment');
-const CommentData = reqlib('models/comment-data.model');
+const Constants = reqlib('config/constants');
 const error = reqlib('responses/errors');
-const FlaggedPost = reqlib('models/flagged-post.model');
 const fs = reqlib('config/filestorage');
-const Logger = reqlib('models/logger.model');
 const mailer = reqlib('config/mailer');
-const Mod = reqlib('models/mod.model');
-const Notification = reqlib('models/notification.model');
+const Models = reqlib('models/');
 const NotificationTypes = reqlib('config/notification-types');
-const Post = reqlib('models/post.model');
-const PostData = reqlib('models/post-data.model');
-const PostImage = reqlib('models/post-image.model');
 const success = reqlib('responses/successes');
-const Tag = reqlib('models/tag.model');
-const User = reqlib('models/user.model');
-const Vote = reqlib('models/user-vote.model');
+
+const {
+  createCommentId,
+  createNotificationId,
+  createPostId,
+  createPostImageId,
+  createUserVoteItemId,
+} = Constants.Helpers;
+
+const {
+  PostFlagTypes,
+  VoteDirections,
+} = Constants.AllowedValues;
+
+const { postTitle } = Constants.EntityLimits;
 
 const ensureHost = (url, host) => {
   const protocol = 'https';
@@ -36,56 +39,6 @@ const ensureHost = (url, host) => {
   }
 
   return url;
-};
-
-const post = {
-  verifyParams(req) {
-    if (!req.user.username) {
-      console.error('No username found in session.');
-      return Promise.reject({ code: 500 });
-    }
-
-    if (!req.body.title || req.body.title.length === 0) {
-      return Promise.reject({
-        code: 400,
-        message: 'Invalid title.',
-      });
-    }
-    else if (req.body.title.length > 200) {
-      return Promise.reject({
-        code: 400,
-        message: 'Title cannot be more than 200 characters long.',
-      });
-    }
-
-    try {
-      req.body.branchids = JSON.parse(req.body.branchids);
-    }
-    catch (err) {
-      return Promise.reject({
-        code: 400,
-        message: 'Malformed branchids.',
-      });
-    }
-
-    if (!req.body.branchids) {
-      return Promise.reject({
-        code: 400,
-        message: 'Invalid branchids.',
-      });
-    }
-    else if (req.body.branchids.length === 0) {
-      req.body.branchids.push('root');
-    }
-    else if (req.body.branchids.length > 5) {
-      return Promise.reject({
-        code: 400,
-        message: 'Max 5 tags allowed.',
-      });
-    }
-
-    return Promise.resolve(req);
-  },
 };
 
 const shouldAddImage = attrs => {
@@ -177,259 +130,249 @@ const searchImages = node => {
   return resultsArr;
 };
 
-const voteComment = {
-  verifyParams(req) {
-    const {
-      commentid,
-      postid,
-    } = req.params;
-    const { username } = req.user;
-    const { vote } = req.body;
-
-    if (!postid) {
-      return Promise.reject({
-        code: 400,
-        message: 'Missing postid',
-      });
-    }
-
-    if (!commentid) {
-      return Promise.reject({
-        code: 400,
-        message: 'Missing commentid',
-      });
-    }
-
-    if (!username) {
-      console.error('No username found in session.');
-      return Promise.reject({ code: 500 });
-    }
-
-    if (!vote || !['down', 'up'].includes(vote)) {
-      return Promise.reject({
-        code: 400,
-        message: 'Missing or malformed vote parameter.',
-      });
-    }
-
-    return Promise.resolve(req);
-  },
-};
-
 module.exports.delete = (req, res) => {
-  const postid = req.params.postid;
-
-  if (!req.user || !req.user.username) {
-    return error.Forbidden(res);
-  }
+  const { postid } = req.params;
+  const username = req.user.get('username');
+  let branchesToUpdate = [];
+  let postComments = null;
+  let postGlobalPoints = null;
 
   if (!postid) {
     return error.BadRequest(res, 'Missing postid');
   }
 
-  const branchesToUpdate = [];
+  return Models.PostData.findById(postid)
+    .then(instance => {
+      if (instance === null) {
+        return Promise.reject({
+          message: 'Post does not exist.',
+          status: 404,
+        });
+      }
 
-  let postComments = null;
-  let postGlobalPoints = null;
+      if (instance.get('creator') !== username) {
+        return Promise.reject({
+          message: 'You can delete only your own posts.',
+          status: 403,
+        });
+      }
 
-  // Delete all post entries on all branches where it was included.
-  // NB: Do not remove post data and post images for now - may want to reinstate posts.
-  new Post()
-    .findById(postid)
+      // Delete all post entries on all branches where it was included.
+      // NB: Do not remove post data and post images for now - may want to reinstate posts.
+      return Models.Post.findById(postid);
+    })
     .then(posts => {
-      const promises = [];
+      let promises = [];
 
       for (let i = 0; i < posts.length; i += 1) {
         const post = posts[i];
-        const branchid = post.branchid;
+        const branchid = post.get('branchid');
 
-        branchesToUpdate.push(branchid);
-
-        if (postComments === null) {
-          postComments = post.comment_count;
-        }
-
-        if (postGlobalPoints === null) {
-          postGlobalPoints = post.global;
-        }
-
-        promises.push(new Post().delete({
+        branchesToUpdate = [
+          ...branchesToUpdate,
           branchid,
-          id: post.id,
-        }));
+        ];
+
+        if (postComments === null) postComments = post.get('comment_count');
+        if (postGlobalPoints === null) postGlobalPoints = post.get('global');
+
+        const promise = post.destroy();
+        promises = [
+          ...promises,
+          promise,
+        ];
       }
 
       return Promise.all(promises);
     })
     // Delete all flagged post instances.
-    .then(() => new FlaggedPost().findById(postid))
+    .then(() => Models.FlaggedPost.findById(postid))
     .then(posts => {
-      const promises = [];
+      let promises = [];
 
       for (let i = 0; i < posts.length; i += 1) {
-        const post = posts[i];
-        promises.push(new FlaggedPost().delete({
-          branchid: post.branchid,
-          id: post.id,
-        }));
+        const promise = posts[i].destroy();
+        promises = [
+          ...promises,
+          promise,
+        ];
       }
 
       return Promise.all(promises);
     })
     // Update branch stats.
     .then(() => {
-      const promises = [];
+      let promises = [];
 
       for (let i = 0; i < branchesToUpdate.length; i += 1) {
-        const branchid = branchesToUpdate[i];
-        promises.push(new Promise((resolve, reject) => {
-          const branch = new Branch();
-          return branch
-            .findById(branchid)
-            .then(() => resolve(branch))
-            .catch(err => reject(err));
-        }));
+        const promise = Models.Branch.findById(branchesToUpdate[i]);
+        promises = [
+          ...promises,
+          promise,
+        ];
       }
 
       return Promise.all(promises);
     })
     .then(branches => {
-      const promises = [];
+      let promises = [];
 
       for (let i = 0; i < branches.length; i += 1) {
         const branch = branches[i];
-        promises.push(new Promise((resolve, reject) => {
-          branch.set('post_count', branch.data.post_count - 1);
-          branch.set('post_comments', branch.data.post_comments - postComments);
-          branch.set('post_points', branch.data.post_points - postGlobalPoints);
-          return branch.update()
-            .then(() => algolia.updateObjects(branch.data, 'branch'))
-            .then(() => resolve())
-            .then(err => reject(err));
-        }));
+        branch.set('post_count', branch.get('post_count') - 1);
+        branch.set('post_comments', branch.get('post_comments') - postComments);
+        branch.set('post_points', branch.get('post_points') - postGlobalPoints);
+
+        const promise = branch.update()
+          // todo
+          .then(() => algolia.updateObjects(branch.dataValues, 'branch'))
+          .catch(err => Promise.reject(err));
+
+        promises = [
+          ...promises,
+          promise,
+        ];
       }
 
       return Promise.all(promises);
     })
     .then(() => success.OK(res))
     .catch(err => {
-      if (err) {
-        console.error('Error deleting posts: ', err);
-        return error.InternalServerError(res);
-      }
-      return error.NotFound(res);
+      console.error('Error deleting post: ', err);
+      return error.InternalServerError(res, err);
     });
 };
 
 module.exports.deleteComment = (req, res) => {
-  const commentid = req.params.commentid;
-  const parentComment = new Comment();
-  const postid = req.params.postid;
-  const user = new User();
+  const {
+    commentid,
+    postid,
+  } = req.params;
+  const username = req.user.get('username');
   let comment;
 
   if (!commentid) {
-    return error.BadRequest(res, 'Missing commentid');
+    return error.BadRequest(res, 'Invalid commentid.');
   }
 
   if (!postid) {
-    return error.BadRequest(res, 'Missing postid');
+    return error.BadRequest(res, 'Invalid postid.');
   }
 
   return module.exports.getOneComment(commentid, req)
-    .then(foundComment => {
-      comment = foundComment;
-
-      if (comment.data.creator !== req.user.username) {
+    .then(instance => {
+      if (instance === null) {
         return Promise.reject({
-          code: 403,
-          message: 'You cannot delete other user\'s comments!',
+          message: 'Comment does not exist.',
+          status: 404,
         });
       }
 
-      const commentdata = new CommentData({ id: comment.id });
+      comment = instance;
 
-      if (comment.replies === 0) {
-        return commentdata
-          .delete()
-          .then(() => new Comment().delete({ id: comment.id }))
-          .catch(err => Promise.reject(err));
+      if (comment.get('data').creator !== username) {
+        return Promise.reject({
+          message: 'You can delete only your own comments.',
+          status: 403,
+        });
+      }
+
+      if (!comment.get('replies')) {
+        return Models.CommentData.destroy({ id: comment.get('id') });
       }
 
       // Removing the comment would cut off the replies, we don't want that.
-      commentdata.set('creator', 'N/A');
-      commentdata.set('text', '[Comment removed by user]');
-      return commentdata.update();
+      return Models.Commentdata.update({
+        where: {
+          id: comment.get('id'),
+        },
+      }, {
+        creator: 'N/A',
+        text: '[Comment removed by user]',
+      });
     })
     // Update counters.
     // Decrease total user comments.
-    .then(() => user.findByUsername(req.user.username))
     .then(() => {
-      user.set('num_comments', user.data.num_comments - 1);
-      return user.update();
+      req.user.set('num_comments', req.user.get('num_comments') - 1);
+      return req.user.update();
     })
     // Find all post entries where the comment appears and decrease their comment count.
-    .then(() => new Post().findById(postid))
+    .then(() => Models.Post.findById(postid))
     .then(posts => {
-      const promises = [];
+      let promises = [];
 
       for (let i = 0; i < posts.length; i += 1) {
-        const post = new Post(posts[i]);
-        post.set('comment_count', posts[i].comment_count - 1);
-        promises.push(post.update());
+        const post = posts[i];
+        post.set('comment_count', post.get('comment_count') - 1);
+        const promise = post.update();
+
+        promises = [
+          ...promises,
+          promise,
+        ];
       }
 
       return Promise.all(promises);
     })
     .then(() => {
-      if (comment.parentid === 'none') {
+      if (comment.get('parentid') === 'none') {
         return Promise.resolve();
       }
 
-      return parentComment.findById(comment.parentid);
+      return Models.Comment.findById(comment.get('parentid'));
     })
     // Decrease the parent comment replies counter if a parent comment exists.
-    .then(() => {
-      if (comment.parentid === 'none') {
+    .then(instance => {
+      if (!instance) {
         return Promise.resolve();
       }
 
-      parentComment.set('replies', parentComment.data.replies - 1);
-      return parentComment.update();
+      instance.set('replies', instance.get('replies') - 1);
+      return instance.update();
+    })
+    .then(() => {
+      if (!comment.get('replies')) {
+        return comment.destroy();
+      }
+      return Promise.resolve();
     })
     // Find all post entries to get the list of branches it is tagged to.
-    .then(() => new Post().findById(postid))
+    .then(() => Models.Post.findById(postid))
     // Decrease post comments totals for each branch.
     .then(posts => {
-      const promises = [];
+      let promises = [];
 
       for (let i = 0; i < posts.length; i += 1) {
-        promises.push(new Promise((resolve, reject) => {
-          const branch = new Branch();
-          return branch
-            .findById(posts[i].branchid)
-            .then(() => {
-              branch.set('post_comments', branch.data.post_comments - 1);
-              return branch.update();
-            })
-            .then(resolve)
-            .catch(reject);
-        }));
+        const promise = Models.Branch.findById(posts[i].get('branchid'))
+          .then(instance => {
+            if (instance === null) {
+              return Promise.reject({
+                message: 'Branch does not exist.',
+                status: 404,
+              });
+            }
+
+            instance.set('post_comments', instance.get('post_comments') - 1);
+            return instance.update();
+          })
+          .catch(err => Promise.reject(err));
+
+        promises = [
+          ...promises,
+          promise,
+        ];
       }
 
       return Promise.all(promises);
     })
     .then(() => success.OK(res))
     .catch(err => {
-      if (err) {
-        if (typeof err === 'object' && err.code) {
-          return error.code(res, err.code, err.message);
-        }
-
-        return error.InternalServerError(res);
+      if (typeof err === 'object' && err.status) {
+        return error.code(res, err.status, err.message);
       }
 
-      return error.NotFound(res);
+      return error.InternalServerError(res, err);
     });
 };
 
@@ -438,10 +381,231 @@ module.exports.editComment = (req, res) => {
     commentid,
     postid,
   } = req.params;
-  const { username } = req.user;
+  const username = req.user.get('username');
   const { text } = req.body;
-  const comment = new Comment();
-  const commentData = new CommentData();
+  // const comment = new Comment();
+  // const commentData = new CommentData();
+
+  if (!postid) {
+    return error.BadRequest(res, 'Invalid postid.');
+  }
+
+  if (!commentid) {
+    return error.BadRequest(res, 'Invalid commentid.');
+  }
+
+  if (!text) {
+    return error.BadRequest(res, 'Invalid text.');
+  }
+
+  // Check if the comment belongs to this post.
+  return Models.Comment.findById(commentid)
+    .then(instance => {
+      if (instance === null || instance.get('postid') !== postid) {
+        return Promise.reject({
+          message: 'Comment does not exist.',
+          status: 404,
+        });
+      }
+
+      return Models.CommentData.findById(commentid);
+    })
+    // Check if user is the author fo the comment.
+    // Otherwise, they cannot edit it.
+    .then(instance => {
+      if (instance === null) {
+        return Promise.reject({
+          message: 'Comment does not exist.',
+          status: 404,
+        });
+      }
+
+      if (instance.get('creator') !== username) {
+        return Promise.reject({
+          message: 'You can edit only your own comments.',
+          status: 403,
+        });
+      }
+
+      instance.set('edited', true);
+      instance.set('text', text);
+      return instance.update();
+    })
+    .then(() => success.OK(res))
+    .catch(err => {
+      console.error('Error editing comment:', err);
+      if (typeof err === 'object' && err.status) {
+        return error.code(res, err.status, err.message);
+      }
+      return error.InternalServerError(res, err);
+    });
+};
+
+module.exports.flagPost = (req, res) => {
+  const {
+    branchid,
+    flag_type,
+  } = req.body;
+  const { postid } = req.params;
+  const date = new Date().getTime();
+  const username = req.user.get('username');
+  let flag;
+
+  if (!postid) {
+    return error.BadRequest(res, 'Missing postid');
+  }
+
+  if (!PostFlagTypes.includes(flag_type)) {
+    return error.BadRequest(res, 'Invalid flag_type');
+  }
+
+  if (!branchid) {
+    return error.BadRequest(res, 'Missing branchid');
+  }
+
+  // This post might have been flagged already.
+  return Models.FlaggedPost.findByPostAndBranchIds(postid, branchid)
+    .then(instance => {
+      // Oh, seems like no one flagged it yet, we are the first. Let's
+      // grab the post data then so we can create a flag.
+      if (instance === null) {
+        return Models.Post.findByPostAndBranchIds(postid, branchid);
+      }
+
+      // Yes, flag exists, update our instance.
+      flag = instance;
+      return Promise.resolve([]);
+    })
+    .then(instance => {
+      const count = `${flag_type}_count`;
+
+      // We grabbed the post on our way to create the flag, so let's draw
+      // the first blood now.
+      if (instance) {
+        const data = {
+          branch_rules_count: 0,
+          branchid: instance.get('branchid'),
+          date,
+          id: instance.get('id'),
+          nsfw_count: 0,
+          site_rules_count: 0,
+          type: instance.get('type'),
+          wrong_type_count: 0,
+        };
+        data[count] = 1;
+        return Models.FlaggedPost.create(data);
+      }
+
+      // The post has been already flagged, update only the respective key.
+      if (flag) {
+        flag.set(count, flag.get(count) + 1);
+        return flag.update();
+      }
+
+      // No flag and no post found? Something is fishy!
+      return Promise.reject({
+        message: 'The post does not exist.',
+        status: 404,
+      });
+    })
+    // Let's gather the branch mods to let them know something is up on their watch.
+    .then(() => Models.Mod.findByBranch(branchid))
+    .then(mods => {
+      let promises = [];
+
+      for (let i = 0; i < mods.length; i += 1) {
+        const modUsername = mods[i].get('username');
+        const promise = Models.Notification.create({
+          data: {
+            branchid,
+            postid,
+            reason: flag_type,
+            username,
+          },
+          date,
+          id: createNotificationId(modUsername, date),
+          type: NotificationTypes.POST_FLAGGED,
+          unread: true,
+          user: username,
+        });
+
+        promises = [
+          ...promises,
+          promise,
+        ];
+      }
+
+      return Promise.all(promises);
+    })
+    .then(() => success.OK(res))
+    .catch(err => {
+      if (err) {
+        console.error('Error flagging post:', err);
+        return error.InternalServerError(res);
+      }
+
+      return error.NotFound(res);
+    });
+};
+
+module.exports.get = (req, res) => {
+  const { postid } = req.params;
+  const { branchid } = req.query;
+
+  if (!postid) {
+    return error.BadRequest(res, 'Missing postid.');
+  }
+
+  if (!branchid) {
+    return error.BadRequest(res, 'Missing branchid.');
+  }
+
+  return Models.Post.findByPostAndBranchIds(postid, branchid)
+    .then(instance => {
+      if (instance === null) {
+        return Promise.reject({
+          message: 'Post does not exist.',
+          status: 404,
+        });
+      }
+
+      // Returns richer response, we should probably merge those somehow
+      // to save time.
+      return module.exports.getOnePost(postid, req);
+    })
+    .then(instance => success.OK(res, {
+      branchid: instance.get('branchid'),
+      comment_count: instance.get('comment_count'),
+      date: instance.get('date'),
+      global: instance.get('global'),
+      id: instance.get('id'),
+      individual: instance.get('individual'),
+      local: instance.get('local'),
+      locked: instance.get('locked'),
+      nsfw: instance.get('nsfw'),
+      type: instance.get('type'),
+      up: instance.get('up'),
+      creator: instance.get('creator'),
+      original_branches: instance.get('original_branches'),
+      text: instance.get('text'),
+      title: instance.get('title'),
+      profileUrl: instance.get('profileUrl'),
+      profileUrlThumb: instance.get('profileUrlThumb'),
+    }))
+    .catch(err => {
+      if (typeof err === 'object' && err.status) {
+        return error.code(res, err.status, err.message);
+      }
+
+      return error.InternalServerError(res);
+    });
+};
+
+module.exports.getComment = (req, res) => {
+  const {
+    commentid,
+    postid,
+  } = req.params;
 
   if (!postid) {
     return error.BadRequest(res, 'Missing postid');
@@ -451,258 +615,158 @@ module.exports.editComment = (req, res) => {
     return error.BadRequest(res, 'Missing commentid');
   }
 
-  if (!username) {
-    console.error('No username found in session.');
-    return error.InternalServerError(res);
-  }
-
-  if (!text) {
-    return error.BadRequest(res, 'Missing text');
-  }
-
-  return comment.findById(commentid)
-    // Check if the comment belongs to this post.
-    .then(() => {
-      if (comment.data.postid !== postid) {
-        return Promise.reject({ code: 404 });
-      }
-
-      return commentData.findById(commentid);
-    })
-    // Check if user is the author fo the comment.
-    // Otherwise, they cannot edit it.
-    .then(() => {
-      const { data } = commentData;
-
-      if (data.creator !== username) {
-        return Promise.reject({
-          code: 403,
-          message: 'You can edit only your own comments.',
-        });
-      }
-
-      commentData.set('edited', true);
-      commentData.set('text', text);
-
-      const checkProps = ['text'];
-      const invalids = commentData.validate(checkProps);
-      if (invalids.length) {
-        return Promise.reject({
-          code: 400,
-          message: `Invalid ${invalids[0]}`,
-        });
-      }
-
-      return commentData.update();
-    })
-    .then(() => success.OK(res))
+  // todo use that post id ...
+  return module.exports.getOneComment(commentid, req)
+    .then(comment => success.OK(res, comment))
     .catch(err => {
-      console.error('Error editing comment:', err);
-
-      if (err) {
-        if (typeof err === 'object' && err.code) {
-          return error.code(res, err.code, err.message);
-        }
+      if (typeof err === 'object' && err.status) {
+        return error.code(res, err.status, err.message);
       }
 
       return error.InternalServerError(res);
     });
 };
 
-module.exports.get = (req, res) => {
-  const postid = req.params.postid;
-
-  if (!postid) {
-    return error.BadRequest(res, 'Missing postid');
-  }
-
-  return module.exports.getOnePost(postid, req)
-    .then(post => success.OK(res, post))
-    .catch(err => {
-      if (err) {
-        if (typeof err === 'object' && err.code) {
-          return error.code(res, err.code, err.message);
-        }
-
-        return error.InternalServerError(res);
-      }
-
-      return error.NotFound(res);
-    });
-};
-
-module.exports.getComment = (req, res) => {
-  const commentId = req.params.commentid;
-  const postId = req.params.postid;
-
-  if (!postId) {
-    return error.BadRequest(res, 'Missing postid');
-  }
-
-  if (!commentId) {
-    return error.BadRequest(res, 'Missing commentid');
-  }
-
-  return module.exports.getOneComment(commentId, req)
-    .then(comment => success.OK(res, comment))
-    .catch(err => {
-      if (err) {
-        if (typeof err === 'object' && err.code) {
-          return error.code(res, err.code, err.message);
-        }
-
-        return error.InternalServerError(res);
-      }
-
-      return error.NotFound(res);
-    });
-};
-
 module.exports.getComments = (req, res) => {
-  const postId = req.params.postid;
-  let parentId = req.query.parentid;
-  let sortBy = req.query.sort;
+  const {
+    lastCommentId,
+    // Get root comments by default.
+    parentid: parentId = 'none',
+    // Order comments by points by default.
+    sort: sortBy = 'points',
+  } = req.query;
+  const { postid: postId } = req.params;
+  let comments = [];
+  let lastInstance = null;
 
   if (!postId) {
     return error.BadRequest(res, 'Missing postid');
   }
 
-  // Get root comments by default.
-  if (!parentId) {
-    parentId = 'none';
-  }
-
-  // Order comments by points by default.
-  if (!sortBy) {
-    sortBy = 'points';
-  }
-
-  let comments = [];
-  let hasMoreComments = false;
-  let lastComment = null;
-
-  new Promise((resolve, reject) => {
+  return new Promise((resolve, reject) => {
     // Client wants only results that appear after this comment (pagination).
-    if (req.query.lastCommentId) {
-      const comment = new Comment();
-
-      return comment
-        .findById(req.query.lastCommentId)
-        .then(() => {
-          // create lastComment object
-          lastComment = comment.data;
-          return resolve();
-        })
-        .catch(err => {
-          if (err) {
-            return reject();
+    if (lastCommentId) {
+      return Models.Comment.findById(lastCommentId)
+        .then(instance => {
+          if (instance === null) {
+            return Promise.reject({
+              message: 'Comment does not exist.',
+              status: 404,
+            });
           }
 
-          // Invalid lastCommentId.
-          return Promise.reject({ code: 404 });
-        });
+          lastInstance = instance;
+          return resolve();
+        })
+        .catch(err => reject(err));
     }
-    else {
-      // No last comment specified, continue...
-      return resolve();
-    }
+
+    // No last comment specified, continue...
+    return resolve();
   })
-    .then(() => new Comment().findByParent(postId, parentId, sortBy, lastComment))
-    .then(foundComments => {
-      comments = foundComments.comments;
-      hasMoreComments = foundComments.hasMoreComments;
+    .then(() => Models.Comment.findByParent(postId, parentId, sortBy, lastInstance))
+    .then(instances => {
+      comments = instances;
+      let promises = [];
 
-      const promises = [];
+      comments.forEach(instance => {
+        const promise = module.exports.getOneComment(instance.get('id'), req)
+          .then(comment => {
+            // todo
+            Object.keys(comment.dataValues).forEach(key => instance.set(key, comment.get(key)));
+            return Promise.resolve();
+          })
+          .catch(err => Promise.reject(err));
 
-      comments.forEach((comment, index) => {
-        promises.push(new Promise((resolve, reject) => {
-          module.exports
-            .getOneComment(comment.id, req)
-            .then(comment => {
-              comments[index] = comment;
-              return resolve();
-            })
-            .catch(reject);
-        }));
+        promises = [
+          ...promises,
+          promise,
+        ];
       });
 
       return Promise.all(promises);
     })
-    .then(() => success.OK(res, { comments, hasMoreComments }))
+    .then(() => {
+      // todo
+      const arr = comments.map(instance => instance.dataValues);
+      return success.OK(res, { comments: arr });
+    })
     .catch(err => {
-      if (err) {
-        console.error('Error fetching comments:', err);
-
-        if (typeof err === 'object' && err.code) {
-          return error.code(res, err.code, err.message);
-        }
-
-        return error.InternalServerError(res);
+      console.error('Error fetching comments:', err);
+      if (typeof err === 'object' && err.status) {
+        return error.code(res, err.status, err.message);
       }
 
-      return error.NotFound(res);
+      return error.InternalServerError(res);
     });
 };
 
 // todo Check the specfied comment actually belongs to this post.
 module.exports.getOneComment = (id, req) => {
+  const username = req && req.user ? req.user.get('username') : false;
   let comment;
 
-  return new Promise((resolve, reject) => new Comment()
-    .findById(id)
-    .then(newComment => {
-      comment = newComment;
+  return Models.Comment.findById(id)
+    .then(instance => {
+      if (instance === null) {
+        return Promise.reject({
+          message: 'Comment does not exist.',
+          status: 404,
+        });
+      }
 
-      return new CommentData()
-        .findById(id)
-        .then(data => {
-          comment.data = data;
-          return Promise.resolve();
-        })
-        .catch(reject);
+      comment = instance;
+      return Models.CommentData.findById(id);
+    })
+    .then(instance => {
+      if (instance === null) {
+        return Promise.reject({
+          message: 'Comment does not exist.',
+          status: 404,
+        });
+      }
+
+      // todo
+      const data = {};
+      Object.keys(instance.dataValues).forEach(key => data[key] = instance.get(key));
+      comment.set('data', data);
+      return Promise.resolve();
     })
     // Extend the comment with information about user vote.
     .then(() => {
-      if (req && req.user && req.user.username) {
-        return new Promise((resolve, reject) => {
-          new Vote()
-            .findByUsernameAndItemId(req.user.username, `comment-${id}`)
-            .then(existingVoteData => {
-              if (existingVoteData) {
-                comment.userVoted = existingVoteData.direction;
-              }
+      if (username) {
+        return Models.UserVote.findByUsernameAndItemId(username, `comment-${id}`)
+          .then(instance => {
+            if (instance !== null) {
+              comment.set('userVoted', instance.get('direction'));
+            }
 
-              return resolve();
-            })
-            .catch(reject);
-        });
+            return Promise.resolve();
+          })
+          .catch(err => Promise.reject(err));
       }
 
       return Promise.resolve();
     })
-    .then(() => resolve(comment))
+    .then(() => Promise.resolve(comment))
     .catch(err => {
-      if (err) {
-        console.error('Error fetching comment data:', err);
-      }
-
-      return reject(err);
-    }));
+      console.error('Error fetching comment data:', err);
+      return Promise.reject(err);
+    });
 };
 
 module.exports.getOnePost = (id, req, branchid) => {
   let post;
-
-  return new Promise((resolve, reject) => new Post().findById(id)
-    .then(posts => {
-      if (!posts || posts.length === 0) {
-        return Promise.reject({ code: 404 });
+  return Models.Post.findById(id)
+    .then(instances => {
+      if (!instances.length) {
+        return Promise.reject({ status: 404 });
       }
 
       let idx = 0;
 
-      for (let i = 0; i < posts.length; i++) {
-        const postBranchId = posts[i].branchid;
+      for (let i = 0; i < instances.length; i++) {
+        const postBranchId = instances[i].get('branchid');
         // We can request which instance of the post we want.
         // By default, the root instance will be returned.
         if ((branchid && postBranchId === branchid) ||
@@ -712,57 +776,134 @@ module.exports.getOnePost = (id, req, branchid) => {
         }
       }
 
-      post = posts[idx];
-
-      return new PostData()
-        .findById(id)
-        .then(data => {
-          post.data = data;
-          return Promise.resolve();
-        })
-        .catch(reject);
+      post = instances[idx];
+      return Models.PostData.findById(id);
     })
-    // attach post image url to each post
-    .then(() => Promise.resolve(new Promise(resolve => {
-      module.exports.getPostPicture(id, false)
-        .then(url => {
-          post.profileUrl = url;
-          return resolve();
-        })
-    })))
-    // Attach post image thumbnail url to each post.
-    .then(() => Promise.resolve(new Promise(resolve => {
-      module.exports.getPostPicture(id, true)
-        .then(url => {
-          post.profileUrlThumb = url;
-          return resolve();
-        })
-    })))
-    // Extend the posts with information about user vote.
-    .then(() => {
-      if (req && req.user && req.user.username) {
-        return new Promise((resolve, reject) => new Vote()
-          .findByUsernameAndItemId(req.user.username, `post-${post.id}`)
-          .then(existingVoteData => {
-            if (existingVoteData) {
-              post.userVoted = existingVoteData.direction;
-            }
-
-            return resolve();
-          })
-          .catch(reject));
-      }
-
+    .then(instance => {
+      post.set('creator', instance.get('creator'));
+      post.set('id', instance.get('id'));
+      post.set('original_branches', instance.get('original_branches'));
+      post.set('text', instance.get('text'));
+      post.set('title', instance.get('title'));
       return Promise.resolve();
     })
-    .then(() => resolve(post))
-    .catch(err => {
-      if (err) {
-        console.error('Error fetching post data:', err);
+    // Attach post image url to the post.
+    .then(() => {
+      const p1 = module.exports.getPostPicture(id, false);
+      const p2 = module.exports.getPostPicture(id, true);
+      return Promise.all([p1, p2]);
+    })
+    .then(values => {
+      post.set('profileUrl', values[0]);
+      post.set('profileUrlThumb', values[1]);
+      return Promise.resolve();
+    })
+    // Extend the posts with information about user vote.
+    .then(() => {
+      if (req && req.user) {
+        const username = req.user.get('username');
+        const postId = post.get('id');
+        const userVoteItemId = createUserVoteItemId(postId, 'post');
+        return Models.UserVote.findByUsernameAndItemId(username, userVoteItemId);
       }
 
-      return reject(err);
-    }));
+      return Promise.resolve(null);
+    })
+    .then(instance => {
+      if (instance !== null) {
+        post.set('userVoted', instance.get('direction'));
+      }
+
+      return Promise.resolve(post);
+    })
+    .catch(err => {
+      console.error('Error fetching post data:', err);
+      return Promise.reject(err);
+    });
+};
+
+module.exports.getPicture = (req, res, thumbnail) => {
+  const { postid } = req.params;
+  const size = thumbnail ? 200 : 640;
+
+  if (!postid) {
+    return error.BadRequest(res, 'Invalid postid.');
+  }
+
+  return Models.PostImage.findById(postid)
+    .then(instance => {
+      if (instance === null) {
+        return Promise.reject({
+          message: 'Post does not exist.',
+          status: 404,
+        });
+      }
+
+      const ext = instance.get('extension');
+      const id = instance.get('id');
+
+      return new Promise((resolve, reject) => Models.Dynamite.aws.s3Client.getSignedUrl('getObject', {
+        Bucket: fs.Bucket.PostImagesResized,
+        Key: `${id}-${size}.${ext}`,
+      }, (err, url) => {
+        if (err) {
+          return reject(err);
+        }
+        return resolve(url);
+      }));
+    })
+    .then(url => success.OK(res, url))
+    .catch(err => {
+      console.error('Error fetching post image:', err);
+      return error.InternalServerError(res, err);
+    });
+};
+
+module.exports.getPictureUploadUrl = (req, res) => {
+  const { postid } = req.params;
+  const username = req.user.get('username');
+
+  if (!postid) {
+    return error.BadRequest(res, 'Invalid postid.');
+  }
+
+  // ensure this user is the creator of the specified post
+  return Models.PostData.findById(postid)
+    .then(instance => {
+      if (instance === null) {
+        return Promise.reject({
+          message: 'Post does not exist.',
+          status: 404,
+        });
+      }
+
+      if (instance.get('creator') !== username) {
+        // user did not create this post
+        return Promise.reject({
+          message: 'You are not the author of the post.',
+          status: 403,
+        });
+      }
+
+      const filename = `${postid}-picture-orig.jpg`;
+      const params = {
+        Bucket: fs.Bucket.PostImages,
+        Key: filename,
+        ContentType: 'image/*',
+      };
+
+      return new Promise((resolve, reject) => Models.Dynamite.aws.s3Client.getSignedUrl('putObject', params, (err, url) => {
+        if (err) {
+          return reject(err);
+        }
+        return resolve(url);
+      }));
+    })
+    .then(url => success.OK(res, url))
+    .catch(err => {
+      console.error('Error fetching post data:', err);
+      return error.InternalServerError(res, err);
+    });
 };
 
 module.exports.getPictureUrlSuggestion = (req, res) => {
@@ -821,58 +962,51 @@ module.exports.getPictureUrlSuggestion = (req, res) => {
 };
 
 module.exports.getPostPicture = (postid, thumbnail = false) => {
-  return new Promise(resolve => {
-    if (!postid) return resolve('');
+  const size = thumbnail ? 200 : 640;
+  return Models.PostImage.findById(createPostImageId(postid))
+    .then(instance => {
+      if (instance === null) {
+        return Promise.resolve('');
+      }
 
-    const image = new PostImage();
-    const size = thumbnail ? 200 : 640;
+      const extension = instance.get('extension');
+      const id = instance.get('id');
 
-    image.findById(postid)
-      .then(() => {
-        const Bucket = fs.Bucket.PostImagesResized;
-        const Key = `${image.data.id}-${size}.${image.data.extension}`;
-        return resolve(`https://${Bucket}.s3-eu-west-1.amazonaws.com/${Key}`);
-      })
-      .catch(err => {
-        if (err) {
-          console.error('Error fetching post image:', err);
-          return resolve('');
-        }
-
-        return resolve('');
-      });
-  });
+      const Bucket = fs.Bucket.PostImagesResized;
+      const Key = `${id}-${size}.${extension}`;
+      return Promise.resolve(`https://${Bucket}.s3-eu-west-1.amazonaws.com/${Key}`);
+    })
+    .catch(err => {
+      console.error('Error fetching post image:', err);
+      return Promise.reject(err);
+    });
 };
 
 module.exports.post = (req, res) => {
   let {
     branchids,
-    captcha,
     locked,
     nsfw,
+  } = req.body;
+  const {
+    captcha,
     text,
     title,
     type,
   } = req.body;
-  const { username } = req.user;
+  const username = req.user.get('username');
+  const date = new Date().getTime();
+  const id = createPostId(username, date);
   // fetch the tags of each specfied branch. The union of these is the list of
   // the branches the post should be tagged to.
-  const branchidsArr = [];
-  const date = new Date().getTime();
-  const id = `${username}-${date}`;
-  const logger = new Logger();
-  const user = new User();
-  const vote = new Vote({
-    direction: 'up',
-    itemid: `post-${id}`,
-    username,
-  });
+  let branchidsArr = [];
+  let searchIndexData = {};
 
   locked = !!locked;
   nsfw = !!nsfw;
 
   if (captcha !== '') {
-    logger.record('HoneyPot', JSON.stringify({
+    Models.Logger.record('HoneyPot', JSON.stringify({
       branchids,
       captcha,
       id,
@@ -886,43 +1020,57 @@ module.exports.post = (req, res) => {
     return error.Forbidden(res);
   }
 
-  let searchIndexData = {};
+  if (!title || title.length > postTitle) {
+    return error.BadRequest(res, 'Invalid title.');
+  }
 
-  return post.verifyParams(req)
-    .then(req => {
-      // Overwrite the variables after parsing.
-      ({
-        branchids,
-        captcha,
-        locked,
-        nsfw,
-        text,
-        title,
-        type,
-      } = req.body);
+  try {
+    branchids = JSON.parse(branchids);
+  }
+  catch (err) {
+    return error.BadRequest(res, 'Malformed branchids.');
+  }
 
-      const tagPromises = [];
+  if (!branchids) {
+    return error.BadRequest(res, 'Invalid branchids.');
+  }
+  else if (!branchids.length) {
+    branchids = [
+      ...branchids,
+      'root',
+    ];
+  }
+  else if (branchids.length > 5) {
+    return error.BadRequest(res, 'Max 5 tags allowed.');
+  }
 
-      for (let i = 0; i < branchids.length; i += 1) {
-        const branchid = branchids[i];
-        tagPromises.push(new Tag()
-          .findByBranch(branchid)
-          .then(tags => {
-            // All tags are collected, these are the branchids to tag the post to.
-            for (let j = 0; j < tags.length; j += 1) {
-              if (!branchidsArr.includes(tags[j].tag)) {
-                branchidsArr.push(tags[j].tag);
-              }
-            }
+  let promises = [];
 
-            return Promise.resolve();
-          })
-          .catch(err => Promise.reject(err))
-        );
-      }
+  for (let i = 0; i < branchids.length; i += 1) {
+    const promise = Models.Tag.findByBranch(branchids[i])
+      .then(tags => {
+        // All tags are collected, these are the branchids to tag the post to.
+        for (let j = 0; j < tags.length; j += 1) {
+          const tag = tags[j].get('tag');
+          if (!branchidsArr.includes(tag)) {
+            branchidsArr = [
+              ...branchidsArr,
+              tag,
+            ];
+          }
+        }
 
-      return Promise.all(tagPromises);
-    })
+        return Promise.resolve();
+      })
+      .catch(err => Promise.reject(err));
+
+    promises = [
+      ...promises,
+      promise,
+    ];
+  }
+
+  return Promise.all(promises)
     // Validate the post data first, so this method doesn't fail halfway through.
     .then(() => {
       const data = {
@@ -931,28 +1079,19 @@ module.exports.post = (req, res) => {
         original_branches: JSON.stringify(branchids),
         text,
         title,
+        type,
       };
-      const newPostData = new PostData(data);
+
       searchIndexData = data;
-
-      const invalids = newPostData.validate(undefined, type);
-      if (invalids.length) {
-        return Promise.reject({
-          code: 400,
-          message: `Invalid ${invalids[0]}.`,
-        });
-      }
-
-      return newPostData.save();
+      return Models.PostData.create(data);
     })
     // Now create the branch ids.
     .then(() => {
-      const promises = [];
+      let promises = [];
 
       for (let i = 0; i < branchidsArr.length; i += 1) {
         const branchid = branchidsArr[i];
-
-        const newPost = new Post({
+        const promise = Models.Post.create({
           branchid,
           comment_count: 0,
           date,
@@ -969,15 +1108,10 @@ module.exports.post = (req, res) => {
 
         searchIndexData.global = 0;
 
-        const invalids = newPost.validate();
-        if (invalids.length) {
-          return Promise.reject({
-            code: 400,
-            message: `Invalid ${invalids[0]}.`,
-          });
-        }
-
-        promises.push(newPost.save());
+        promises = [
+          ...promises,
+          promise,
+        ];
       }
 
       return Promise.all(promises);
@@ -986,116 +1120,89 @@ module.exports.post = (req, res) => {
     .then(() => algolia.addObjects(searchIndexData, 'post'))
     // Increment the post counters on the branch objects
     .then(() => {
-      const promises = [];
+      let promises = [];
 
       for (let i = 0; i < branchidsArr.length; i += 1) {
-        promises.push(new Promise((resolve, reject) => {
-          const branch = new Branch();
+        const promise = Models.Branch.findById(branchidsArr[i])
+          .then(instance => {
+            if (instance === null) {
+              return Promise.reject({
+                message: 'Branch does not exist.',
+                status: 404,
+              });
+            }
 
-          branch
-            .findById(branchidsArr[i])
-            .then(() => {
-              branch.set('post_count', branch.data.post_count + 1);
-              branch.set('post_points', branch.data.post_points + 1);
-              return branch.update();
-            })
-            .then(resolve)
-            .catch(reject);
-        }));
+            instance.set('post_count', instance.get('post_count') + 1);
+            instance.set('post_points', instance.get('post_points') + 1);
+            return instance.update();
+          })
+          .catch(err => Promise.reject(err));
+
+        promises = [
+          ...promises,
+          promise,
+        ];
       }
 
       return Promise.all(promises);
     })
-    .then(() => user.findByUsername(username))
+    // Increment user's post count.
     .then(() => {
-      // increment user's post count
-      user.set('num_posts', user.data.num_posts + 1);
-      return user.update();
+      req.user.set('num_posts', req.user.get('num_posts') + 1);
+      return req.user.update();
     })
     // update the SendGrid contact list with the new user data
-    .then(() => mailer.addContact(user.data, true))
+    // todo
+    .then(() => mailer.addContact(req.user.dataValues, true))
     // Self-upvote the post.
-    .then(() => vote.save())
+    .then(() => Models.UserVote.create({
+      direction: 'up',
+      itemid: createUserVoteItemId(id, 'post'),
+      username,
+    }))
     .then(() => success.OK(res, id))
     .catch(err => {
-      if (err) {
-        console.error('Error creating post:', err);
+      console.error('Error creating post:', err);
 
-        if (typeof err === 'object' && err.code) {
-          return error.code(res, err.code, err.message);
-        }
-
-        return error.InternalServerError(res);
+      if (typeof err === 'object' && err.status) {
+        return error.code(res, err.status, err.message);
       }
 
-      return error.BadRequest(res, 'Invalid branchid.');
+      return error.InternalServerError(res);
     });
 };
 
 module.exports.postComment = (req, res) => {
-  const parentid = req.body.parentid;
-  const postid = req.params.postid;
-  const username = req.user ? req.user.username : false;
+  const {
+    parentid,
+    text,
+  } = req.body;
+  const { postid } = req.params;
+  const date = new Date().getTime();
+  const username = req.user.get('username');
+  const id = createCommentId(username, date);
+  let parent;
+  let posts = [];
 
-  if (!username) {
-    return error.Forbidden(res);
+  if (!parentid) {
+    return error.BadRequest(res, 'Invalid parentid.');
   }
 
   if (!postid) {
-    return error.BadRequest(res, 'Missing postid');
+    return error.BadRequest(res, 'Invalid postid.');
   }
 
-  const date = new Date().getTime();
-  const id = `${username}-${date}`;
-  const comment = new Comment({
-    date,
-    down: 0,
-    id,
-    individual: 1,
-    parentid,
-    postid,
-    rank: 0,
-    replies: 0,
-    up: 1,
-  });
-  const vote = new Vote({
-    direction: 'up',
-    itemid: `comment-${id}`,
-    username,
-  });
-
-  const commentdata = new CommentData({
-    creator: username,
-    date,
-    edited: false,
-    id,
-    text: req.body.text,
-  });
-
-  let invalids = comment.validate();
-  if (invalids.length) {
-    return error.BadRequest(res, `Invalid ${invalids[0]}`);
-  }
-
-  invalids = commentdata.validate();
-  if (invalids.length) {
-    return error.BadRequest(res, `Invalid ${invalids[0]}`);
-  }
-
-  // ensure the specified post exists
-  const parent = new Comment();
-  const user = new User();
-  // the post entries (one for each branch) this comment belongs to
-  let commentPosts;
-
-  return new Post()
-    .findById(postid, 0)
-    .then(posts => {
-      if (!posts || posts.length === 0) {
-        return Promise.reject();
+  // Post must exist.
+  return Models.Post.findById(postid)
+    .then(instances => {
+      if (!instances.length || instances[0] === null) {
+        return Promise.reject({
+          message: 'Post does not exist.',
+          status: 404,
+        });
       }
 
-      commentPosts = posts;
+      posts = instances;
 
       // if this is a root comment, continue
       if (parentid === 'none') {
@@ -1103,59 +1210,96 @@ module.exports.postComment = (req, res) => {
       }
 
       // otherwise, ensure the specified parent comment exists
-      return parent.findById(parentid);
+      return Models.Comment.findById(parentid);
     })
-    .then(() => {
-      // Parent comment must belong to this post.
-      if (parentid !== 'none' && parent.data.postid !== postid) {
-        return Promise.reject({
-          code: 400,
-          message: 'Parent comment does not belong to the same post',
-        });
+    .then(instance => {
+      if (parentid !== 'none') {
+        if (instance === null) {
+          return Promise.reject({
+            message: 'Parent comment does not exist.',
+            status: 400,
+          });
+        }
+
+        parent = instance;
+
+        // Parent comment must belong to this post.
+        if (instance.get('postid') !== postid) {
+          return Promise.reject({
+            message: 'Parent comment does not belong to the same post.',
+            status: 400,
+          });
+        }
       }
 
-      return comment.save();
+      return Models.Comment.create({
+        date,
+        down: 0,
+        id,
+        individual: 1,
+        parentid,
+        postid,
+        rank: 0,
+        replies: 0,
+        up: 1,
+      });
     })
-    .then(() => commentdata.save())
+    .then(() => Models.CommentData.create({
+      creator: username,
+      date,
+      edited: false,
+      id,
+      text,
+    }))
     .then(() => {
       if (parentid === 'none') {
         return Promise.resolve();
       }
 
-      parent.set('replies', parent.data.replies + 1);
+      parent.set('replies', parent.get('replies') + 1);
       return parent.update();
     })
+    // increment the number of comments on the post
     .then(() => {
-      // increment the number of comments on the post
-      const promises = [];
+      let promises = [];
 
-      for (let i = 0; i < commentPosts.length; i += 1) {
-        const post = new Post(commentPosts[i]);
-        post.set('comment_count', commentPosts[i].comment_count + 1);
-        promises.push(post.update());
+      for (let i = 0; i < posts.length; i += 1) {
+        const post = posts[i];
+        post.set('comment_count', post.get('comment_count') + 1);
+        const promise = post.update();
+
+        promises = [
+          ...promises,
+          promise,
+        ];
       }
 
       return Promise.all(promises);
     })
-    // find all post entries to get the list of branches it is tagged to
-    .then(() => new Post().findById(postid))
-    .then(posts => {
-      // increment the post comments count on each branch object
-      // the post appears in
-      const promises = [];
+    // increment the post comments count on each branch object
+    // the post appears in
+    .then(() => {
+      let promises = [];
 
       for (let i = 0; i < posts.length; i += 1) {
-        promises.push(new Promise(function(resolve, reject) {
-          const branch = new Branch();
-          return branch
-            .findById(posts[i].branchid)
-            .then(() => {
-              branch.set('post_comments', branch.data.post_comments + 1);
-              return branch.update();
-            })
-            .then(resolve)
-            .catch(reject);
-        }));
+        const promise = Models.Branch.findById(posts[i].get('branchid'))
+          .then(instance => {
+            if (instance === null) {
+              return Promise.reject({
+                message: 'Branch does not exist',
+                status: 404,
+              });
+            }
+
+            instance.set('post_comments', instance.get('post_comments') + 1);
+            return instance.update();
+          })
+          .catch(err => Promise.reject(err));
+
+        promises = [
+          ...promises,
+          promise,
+        ];
       }
 
       return Promise.all(promises);
@@ -1164,23 +1308,26 @@ module.exports.postComment = (req, res) => {
     // on their content. If the comment is a reply to someone, we will
     // notify the comment author. Otherwise, the comment is a root comment
     // and we will notify the post author.
-    .then(() => new Post()
-      .findById(postid)
+    .then(() => {
+      const model = parentid === 'none' ? Models.PostData : Models.CommentData;
+      return model.findById(parentid === 'none' ? postid : parentid);
+    })
+    .then(instance => {
+      if (instance === null) {
+        return Promise.reject({
+          message: `${parentid === 'none' ? 'Post' : 'Comment'} does not exist.`,
+          status: 404,
+        });
+      }
+
       // Get the id of a branch where the post appears. Take the first branch
       // this post appears in (there are many) for the purposes of viewing the
       // notification. (todo WHY?)
-      .then(posts => {
-        const branchid = posts[0].branchid;
-        const model = parentid === 'none' ? new PostData() : new CommentData();
-        return model
-          .findById(parentid === 'none' ? postid : parentid)
-          .then(() => Promise.resolve({
-            author: model.data.creator,
-            branchid,
-          }));
-      })
-      .catch(err => Promise.reject(err))
-    )
+      return Promise.resolve({
+        author: instance.get('creator'),
+        branchid: posts[0].get('branchid'),
+      });
+    })
     // Notify the author that their content has been interacted with.
     .then(data => {
       // Skip if interacting with our own content or if we are replying
@@ -1189,7 +1336,7 @@ module.exports.postComment = (req, res) => {
         return Promise.resolve();
       }
 
-      const notification = new Notification({
+      return Models.Notification.create({
         data: {
           branchid: data.branchid,
           commentid: id,
@@ -1198,32 +1345,25 @@ module.exports.postComment = (req, res) => {
           username,
         },
         date,
-        id: `${data.author}-${date}`,
+        id: createNotificationId(data.author, date),
         type: NotificationTypes.COMMENT,
         unread: true,
         user: data.author,
       });
-
-      const invalids = notification.validate();
-      if (invalids.length) {
-        console.error('Error creating notification. Invalids: ', invalids);
-        return Promise.reject({
-          code: 500,
-          message: `Invalid ${invalids[0]}`,
-        });
-      }
-
-      return notification.save();
     })
-    .then(() => user.findByUsername(username))
     .then(() => {
-      user.set('num_comments', user.data.num_comments + 1);
-      return user.update();
+      req.user.set('num_comments', req.user.get('num_comments') + 1);
+      return req.user.update();
     })
     // update the SendGrid contact list with the new user data
-    .then(() => mailer.addContact(user.data, true))
+    // todo
+    .then(() => mailer.addContact(req.user.dataValues, true))
     // Self-upvote the comment.
-    .then(() => vote.save())
+    .then(() => Models.UserVote.create({
+      direction: 'up',
+      itemid: createUserVoteItemId(id, 'comment'),
+      username,
+    }))
     .then(() => success.OK(res, id))
     .catch(err => {
       if (err) {
@@ -1240,295 +1380,96 @@ module.exports.voteComment = (req, res) => {
     commentid,
     postid,
   } = req.params;
-  const { username } = req.user;
-  const vote = new Vote();
+  const { vote } = req.body;
+  const username = req.user.get('username');
+  const itemid = createUserVoteItemId(commentid, 'comment');
 
   let comment;
   let resData = { delta: 0 };
-  let userAlreadyVoted = false;
-  const voteDirection = 'up';
-  let voteOppositeDirection;
+  let voteInstance;
 
-  voteComment.verifyParams(req)
-    .then(() => {
-      comment = new Comment({
-        id: commentid,
-        postid,
-      });
+  if (!postid) {
+    return error.BadRequest(res, 'Invalid postid.');
+  }
 
-      const checkProps = [
-        'id',
-        'postid',
-      ];
+  if (!commentid) {
+    return error.BadRequest(res, 'Invalid commentid.');
+  }
 
-      const invalids = comment.validate(checkProps);
-      if (invalids.length) {
+  if (!VoteDirections.includes(vote)) {
+    return error.BadRequest(res, 'Invalid vote parameter.');
+  }
+
+  return Models.Comment.findById(commentid)
+    .then(instance => {
+      if (instance === null) {
         return Promise.reject({
-          code: 400,
-          message: `Invalid ${invalids[0]}`,
+          message: 'Comment does not exist.',
+          status: 404,
         });
       }
 
-      // voteDirection = req.body.vote;
-
-      return comment.findById(commentid);
+      comment = instance;
+      return Models.CommentData.findById(commentid);
     })
-    .then(() => new CommentData().findById(commentid))
-    .then(commentData => {
-      if (commentData.creator === 'N/A') {
+    .then(instance => {
+      if (instance === null) {
         return Promise.reject({
-          code: 403,
-          message: 'You cannot vote on deleted comments!',
+          message: 'Comment does not exist.',
+          status: 404,
         });
       }
 
-      return vote.findByUsernameAndItemId(username, `comment-${commentid}`);
-    })
-    .then(existingVoteData => {
-      if (existingVoteData) {
-        userAlreadyVoted = true;
+      if (instance.get('creator') === 'N/A') {
+        return Promise.reject({
+          message: 'You cannot vote on deleted comments.',
+          status: 403,
+        });
+      }
 
-        if (existingVoteData.direction !== voteDirection) {
-          voteOppositeDirection = voteDirection === 'up' ? 'down' : 'up';
-        }
+      return Models.UserVote.findByUsernameAndItemId(username, itemid);
+    })
+    .then(instance => {
+      if (instance) {
+        voteInstance = instance;
       }
 
       return Promise.resolve();
     })
-    // Update the comment 'up' and 'down' attributes.
+    // Update the comment 'up' attribute.
     .then(() => {
       // Check the specfied comment actually belongs to this post.
-      if (comment.data.postid !== postid) {
-        return Promise.reject({ code: 404 });
+      if (comment.get('postid') !== postid) {
+        return Promise.reject({
+          message: 'Comment does not exist.',
+          status: 404,
+        });
       }
 
-      let delta = 0;
-
-      if (userAlreadyVoted) {
-        // Undo the last vote and add the new vote.
-        if (voteOppositeDirection) {
-          comment.set(voteOppositeDirection, comment.data[voteOppositeDirection] - 1);
-          comment.set(voteDirection, comment.data[voteDirection] + 1);
-          delta = (voteOppositeDirection === 'up') ? 2 : -2;
-        }
-        // Undo the last vote.
-        else {
-          comment.set(voteDirection, comment.data[voteDirection] - 1);
-          delta = (voteDirection === 'up') ? -1 : 1;
-        }
-      }
-      else {
-        comment.set(voteDirection, comment.data[voteDirection] + 1);
-        delta = (voteDirection === 'up') ? 1 : -1;
-      }
-
-      resData.delta = delta;
-
+      resData.delta = voteInstance ? -1 : 1;
+      comment.set(vote, comment.get(vote) + resData.delta);
       return comment.update();
     })
     // Create, update, or delete the vote record in the database.
     .then(() => {
-      if (userAlreadyVoted) {
-        if (voteOppositeDirection) {
-          vote.set('direction', voteDirection);
-          return vote.update();
-        }
-
-        return vote.delete();
+      if (voteInstance) {
+        return voteInstance.destroy();
       }
 
-      const newVote = new Vote({
-        direction: voteDirection,
-        itemid: `comment-${commentid}`,
+      return Models.UserVote.create({
+        direction: vote,
+        itemid,
         username,
       });
-
-      const checkProps = [
-        'itemid',
-        'username',
-      ];
-
-      const invalids = newVote.validate(checkProps);
-
-      if (invalids.length) {
-        console.error(`Error creating Vote: invalid ${invalids[0]}`);
-        return Promise.reject({ code: 500 });
-      }
-
-      return newVote.save();
     })
     .then(() => success.OK(res, resData))
     .catch(err => {
-      if (err) {
-        console.error('Error updating comment:', err);
+      console.error('Error updating comment:', err);
 
-        if (typeof err === 'object' && err.code) {
-          return error.code(res, err.code, err.message);
-        }
-
-        return error.InternalServerError(res);
+      if (typeof err === 'object' && err.status) {
+        return error.code(res, err.status, err.message);
       }
 
-      return error.NotFound(res);
+      return error.InternalServerError(res, err);
     });
-};
-
-
-
-
-
-
-module.exports.getPictureUploadUrl = (req, res) => {
-  if(!req.user || !req.user.username) {
-    return error.Forbidden(res);
-  }
-
-  if(!req.params.postid) {
-    return error.BadRequest(res, 'Missing postid');
-  }
-
-  // ensure this user is the creator of the specified post
-  var post = new PostData();
-  post.findById(req.params.postid).then(function() {
-    if(post.data.creator != req.user.username) {
-      // user did not create this post
-      return error.Forbidden(res);
-    }
-
-    var filename = req.params.postid + '-picture-orig.jpg';
-    var params = {
-      Bucket: fs.Bucket.PostImages,
-      Key: filename,
-      ContentType: 'image/*'
-    }
-
-    aws.s3Client.getSignedUrl('putObject', params, function(err, url) {
-      return success.OK(res, url);
-    });
-  }, function(err) {
-    if(err) {
-      console.error('Error fetching post data:', err);
-      return error.InternalServerError(res);
-    }
-    return error.NotFound(res);
-  });
-};
-
-module.exports.getPicture = (req, res, thumbnail) => {
-  if(!req.params.postid) {
-    return error.BadRequest(res, 'Missing postid');
-  }
-
-  var size = thumbnail ? 200 : 640;
-
-  var image = new PostImage();
-  image.findById(req.params.postid).then(function() {
-    aws.s3Client.getSignedUrl('getObject', {
-      Bucket: fs.Bucket.PostImagesResized,
-      Key: image.data.id + '-' + size + '.' + image.data.extension
-    }, function(err, url) {
-      if(err) {
-        console.error('Error getting signed url:', err);
-        return error.InternalServerError(res);
-      }
-      return success.OK(res, url);
-    });
-  }, function(err) {
-    if(err) {
-      console.error('Error fetching post image:', err);
-      return error.InternalServerError(res);
-    }
-    return error.NotFound(res);
-  });
-};
-
-module.exports.flagPost = (req, res) => {
-  if(!req.user || !req.user.username) {
-    return error.Forbidden(res);
-  }
-
-  if(!req.params.postid) {
-    return error.BadRequest(res, 'Missing postid');
-  }
-
-  if(!req.body.flag_type || (req.body.flag_type !== 'branch_rules' && req.body.flag_type !== 'site_rules'
-     && req.body.flag_type !== 'wrong_type' && req.body.flag_type !== 'nsfw')) {
-    return error.BadRequest(res, 'Missing/invalid flag_type');
-  }
-
-  if(!req.body.branchid) {
-    return error.BadRequest(res, 'Missing branchid');
-  }
-
-  var flaggedpost = new FlaggedPost();
-  var origpost = new Post();
-  new Promise(function(resolve, reject) {
-    // check if post has already been flagged
-    flaggedpost.findByPostAndBranchIds(req.params.postid, req.body.branchid).then(function() {
-      resolve();
-    }, function(err) {
-      if(err) {
-        console.error('Error fetching flagged post:', err);
-        return error.InternalServerError(res);
-      }
-      // no flagged post exists: create one.
-      // first fetch the original post object
-      return origpost.findByPostAndBranchIds(req.params.postid, req.body.branchid);
-    }).then(function() {
-      // now create a flagged post
-      flaggedpost = new FlaggedPost({
-        id: origpost.data.id,
-        branchid: origpost.data.branchid,
-        type: origpost.data.type,
-        date: new Date().getTime(),
-        branch_rules_count: 0,
-        site_rules_count: 0,
-        wrong_type_count: 0,
-        nsfw_count: 0
-      });
-      return flaggedpost.save();
-    }).then(resolve, reject);
-  }).then(function () {
-    // flagged post instatiated - now update counts
-    flaggedpost.set(req.body.flag_type + '_count', flaggedpost.data[req.body.flag_type + '_count'] + 1);
-    return flaggedpost.update();
-  }).then(function() {
-    // get branch mods
-    return new Mod().findByBranch(req.body.branchid);
-  }).then(function(mods) {
-    // notify branch mods that post was flagged
-    var promises = [];
-    var time = new Date().getTime();
-    for(var i = 0; i < mods.length; i++) {
-      var notification = new Notification({
-        id: mods[i].username + '-' + time,
-        user: mods[i].username,
-        date: time,
-        unread: true,
-        type: NotificationTypes.POST_FLAGGED,
-        data: {
-          branchid: req.body.branchid,
-          username: req.user.username,
-          postid: req.params.postid,
-          reason: req.body.flag_type
-        }
-      });
-      var checkProps = ['id', 'user', 'date', 'unread', 'type', 'data'];
-      var invalids = notification.validate(checkProps);
-      if(invalids.length) {
-        console.error('Error creating notification.');
-        return error.InternalServerError(res);
-      }
-      promises.push(notification.save());
-    }
-    return Promise.all(promises);
-  }).then(function() {
-    return success.OK(res);
-  }).catch(function(err) {
-    if(err) {
-      console.error('Error flagging post:', err);
-      return error.InternalServerError(res);
-    }
-    return error.NotFound(res);
-  });
 };

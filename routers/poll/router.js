@@ -25,7 +25,7 @@ module.exports = () => {
      * @apiUse BadRequest
      * @apiUse InternalServerError
      */
-    .post(passport.authenticate('jwt'), ACL.validateRole(ACL.Roles.AuthenticatedUser), controller.post)
+    .post(passport.authenticate('jwt'), ACL.validateRole(ACL.Roles.AuthenticatedUser), controller.addAnswer)
     /**
      * @api {poll} /:postid/answer Get the answers for a particular poll
      * @apiName Get Poll Answers
@@ -41,7 +41,7 @@ module.exports = () => {
      * @apiUse BadRequest
      * @apiUse InternalServerError
      */
-    .get(passport.authenticate('jwt'), controller.get);
+    .get(passport.authenticate('jwt'), controller.getAnswers);
 
   router.route('/:postid/answer/:answerid/vote')
     /**
@@ -60,7 +60,7 @@ module.exports = () => {
      * @apiUse NotFound
      * @apiUse InternalServerError
      */
-    .put(passport.authenticate('jwt'), ACL.validateRole(ACL.Roles.AuthenticatedUser), controller.votePoll);
+    .put(passport.authenticate('jwt'), ACL.validateRole(ACL.Roles.AuthenticatedUser), controller.vote);
 
   return router;
 }

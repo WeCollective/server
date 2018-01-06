@@ -15,19 +15,31 @@ const auth = reqlib('config/auth');
 const error = reqlib('responses/errors');
 const JwtConfig = reqlib('config/jwt');
 const mailer = reqlib('config/mailer');
-const User = reqlib('models/user.model');
+const Models = reqlib('models/');
 
 module.exports = () => {
   /* Potentially legacy */
   passport.serializeUser((user, done) => done(null, user.username));
 
-  passport.deserializeUser((username, done) => {
-    const user = new User();
-    
-    return user.findByUsername(username)
-      .then(() => done(null, user.data))
-      .catch(() => done(true));
-  });
+  passport.deserializeUser((username, done) => Models.User.findOne({
+    where: {
+      username,
+    },
+  })
+    .then(instance => {
+      if (instance === null) {
+        return Promise.reject();
+      }
+
+      const data = {};
+      // todo
+      Object.keys(instance.dataValues).forEach(key => {
+        data[key] = instance.get(key);
+      });
+
+      return done(null, data);
+    })
+    .catch(() => done(true)));
   /* END Potentially legacy */
 
   // audience
@@ -42,18 +54,27 @@ module.exports = () => {
     req.isAuthenticated = () => isAuthenticated;
 
     if (typeof payload === 'object' && payload.username) {
-      const user = new User();
+      return Models.User.findOne({
+        where: {
+          username: payload.username,
+        },
+      })
+        .then(instance => {
+          if (instance === null) {
+            return Promise.reject({
+              message: 'The user does not exist.',
+              status: 404,
+            });
+          }
 
-      return user.findByUsername(payload.username)
-        .then(() => {
-          if (!user.data.verified) {
+          if (!instance.get('verified')) {
             return Promise.reject({
               message: 'User account not verified',
               status: 403,
             });
           }
 
-          if (user.data.banned === true) {
+          if (instance.get('banned')) {
             return Promise.reject({
               message: 'Your account has been permanently banned from Weco.',
               status: 401,
@@ -61,13 +82,19 @@ module.exports = () => {
           }
 
           isAuthenticated = true;
-          req.user = user.data;
 
-          return done(null, user.data);
+          // todo pass the instance from here to the done method too
+          req.user = instance;
+
+          const data = {};
+          // todo
+          Object.keys(instance.dataValues).forEach(key => {
+            data[key] = instance.get(key);
+          });
+
+          return done(null, data);
         })
-        .catch(err => {
-          return done(null, false, err);
-        });
+        .catch(err => done(null, false, err));
     }
 
     if (req.token) {
@@ -81,129 +108,133 @@ module.exports = () => {
   }));
 
   passport.use('LocalSignIn', new LocalStrategy((username, password, done) => process.nextTick(() => {
-    const user = new User();
-
-    return user.findByUsername(username)
-      .then(() => {
-        if (!user.data.verified) {
-          return Promise.reject(null, 'Your account has not been verified', 403);
+    let user;
+    return Models.User.findOne({
+      where: {
+        username,
+      },
+    })
+      .then(instance => {
+        if (instance === null) {
+          return Promise.reject({
+            message: 'The username does not exist.',
+            status: 404,
+          });
         }
 
-        if (user.data.banned === true) {
+        user = instance;
+
+        if (!user.get('verified')) {
+          return Promise.reject({
+            message: 'Your account has not been verified',
+            status: 403,
+          });
+        }
+
+        if (user.get('banned')) {
           return Promise.reject({
             message: 'Your account has been permanently banned from Weco.',
             status: 401,
           });
         }
 
-        return auth.compare(password, user.data.password);
+        return auth.compare(password, user.get('password'));
       })
       .then(() => {
         const payload = {
-          username: user.data.username,
+          username,
         };
-        user.data.jwt = jwt.encode(payload, JwtConfig.jwtSecret);
-        return done(null, user.data);
+        user.set('jwt', jwt.encode(payload, JwtConfig.jwtSecret));
+        // todo
+        return done(null, user.dataValues);
       })
-      .catch((err, message, status) => {
-        if (err) {
-          console.error('Error logging in:', err);
-          return done(null, false, err);
-        }
-
-        return done(null, false, {
-          message: message || 'User doesn\'t exist',
-          status: status || 400,
-        });
+      .catch(err => {
+        console.error('Error logging in:', err);
+        return done(null, false, err);
       });
   })));
 
   passport.use('LocalSignUp', new LocalStrategy({
     passReqToCallback: true,
   }, (req, username, password, done) => process.nextTick(() => {
-    const user = new User();
     username = username.toLowerCase();
 
-    let newUser;
+    const {
+      email,
+      name,
+    } = req.body;
+
     let token;
+    let user;
 
-    return user.findByUsername(username)
-      .then(() => Promise.reject({
-        message: 'Username already exists.',
-        status: 400,
-      }))
-      .catch(err => {
-        if (err) {
-          return Promise.reject(err);
-        }
-
-        return Promise.resolve();
-      })
-      .then(() => new User().findByEmail(req.body.email))
-      .then(() => Promise.reject({
-        message: 'Email already exists.',
-        status: 400,
-      }))
-      .catch(err => {
-        if (err) {
-          return Promise.reject(err);
-        }
-
-        return Promise.resolve();
-      })
-      .then(() => {
-        token = auth.generateToken();
-
-        newUser = new User({
-          banned: false,
-          datejoined: new Date().getTime(),
-          email: req.body.email,
-          name: req.body.name,
-          num_branches: 0,
-          num_comments: 0,
-          num_mod_positions: 0,
-          num_posts: 0,
-          password,
-          show_nsfw: false,
-          token,
-          username,
-          verified: false,
-        });
-
-        const propertiesToCheck = [
-          'datejoined',
-          'email',
-          'name',
-          'num_branches',
-          'num_comments',
-          'num_mod_positions',
-          'num_posts',
-          'password',
-          'username',
-          'verified',
-        ];
-
-        const invalids = newUser.validate(propertiesToCheck);
-        
-        if (invalids.length) {
+    return Models.User.findOne({
+      where: {
+        username,
+      },
+    })
+      .then(instance => {
+        if (instance !== null) {
           return Promise.reject({
-            message: invalids[0],
+            message: 'Username already exists.',
             status: 400,
           });
         }
 
-        return Promise.resolve();
+        return Models.User.findByEmail(email);
       })
-      .then(() => mailer.sendVerification(newUser.data, token))
-      .then(() => auth.generateSalt(10))
+      .then(instance => {
+        if (instance !== null) {
+          return Promise.reject({
+            message: 'Email already exists.',
+            status: 400,
+          });
+        }
+
+        const isValidPassword = Models.Dynamite.validator.password(password);
+
+        if (!isValidPassword) {
+          return Promise.reject({
+            message: 'Invalid password.',
+            status: 400,
+          });
+        }
+
+        token = auth.generateToken();
+
+        return auth.generateSalt();
+      })
       .then(salt => auth.hash(password, salt))
-      // Save new user to database using hashed password
       .then(hash => {
-        newUser.set('password', hash);
-        return newUser.save();
+        try {
+          return Models.User.create({
+            banned: false,
+            datejoined: new Date().getTime(),
+            email,
+            name,
+            num_branches: 0,
+            num_comments: 0,
+            num_mod_positions: 0,
+            num_posts: 0,
+            password: hash,
+            show_nsfw: false,
+            token,
+            username,
+            verified: false,
+          });
+        }
+        catch (err) {
+          console.log(err);
+          return Promise.reject(err);
+        }
+      })
+      .then(instance => {
+        user = instance;
+        // todo
+        return mailer.sendVerification(user.dataValues, token);
       })
       // Add new user to the search index.
-      .then(() => algolia.addObjects(newUser.data, 'user'))
+      // todo
+      .then(() => algolia.addObjects(user.dataValues, 'user'))
       .then(() => done(null, { username }))
       .catch(err => {
         console.error('Error signing up:', err);

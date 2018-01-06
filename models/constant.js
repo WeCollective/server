@@ -1,16 +1,18 @@
-const reqlib = require('app-root-path').require;
+module.exports = (Dynamite, validate) => {
+  const Constant = Dynamite.define('Constant', {
+    data: {
+      defaultValue: null,
+      validate: {
+        params: ['$$id'],
+        test: validate.wecoConstantValue,
+      },
+    },
+    id: {
+      defaultValue: null,
+      primary: true,
+      validate: validate.wecoConstantId,
+    },
+  });
 
-const db = reqlib('config/database');
-const Model = reqlib('models/model');
-
-class Constant extends Model {
-  constructor(props) {
-    super(props, {
-      keys: db.Keys.Constants,
-      schema: db.Schema.Constant,
-      table: db.Table.Constants,
-    });
-  }
-}
-
-module.exports = Constant;
+  return Constant;
+};

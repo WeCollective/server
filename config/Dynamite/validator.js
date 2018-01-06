@@ -10,7 +10,6 @@ const {
   ImageExtensions,
   ModLogActionTypes,
   PostTypes,
-  PostTypesHasText,
   VoteDirections,
   WecoConstants,
 } = Constants.AllowedValues;
@@ -58,13 +57,29 @@ const checkId = (type, str) => {
 const age = int => date(int) && moment().diff(moment(int), 'years') >= userAgeMin;
 const array = (arr, minEntries = 0) => Array.isArray(arr) && arr.length >= minEntries;
 const boolean = value => typeof value === 'boolean';
-const branchid = str => checkId('branch', str) && banStr(str, BranchIds);
+const branchid = (str, branchid) => {
+  const isValid = checkId('branch', str);
+
+  if (!isValid) return false;
+
+  const hasInvalidValue = !banStr(str, BranchIds);
+
+  // We are verifying branch id or parent id for branch other than root.
+  if (!branchid || branchid !== 'root') {
+    return !hasInvalidValue;
+  }
+
+  // Parent id for root is 'none' which is an invalid value.
+  // This is the only exception.
+  return true;
+};
 const branchImageId = str => checkId('branchImage', str) && allowExt(str, BranchImageTypes);
 const commentid = str => checkId('comment', str);
 const date = int => int && Number(int) > 0 && int.toString().length === timestamp;
 const exists = str => !!str;
 const extension = str => allowStr(str.toLowerCase(), ImageExtensions);
 const isEmail = str => email.test(str);
+const length = (str, len) => str && typeof str === 'string' && str.length === len;
 const modLogAction = str => allowStr(str, ModLogActionTypes);
 const notificationid = str => checkId('notification', str);
 const notificationType = int => exists(NotificationTypes[int]);
@@ -86,12 +101,7 @@ const range = (str, min, max) => str && (min === null || str.length >= min) && (
 const userImageId = str => checkId('userImage', str) && allowExt(str, BranchImageTypes);
 const username = str => checkId('username', str) && !Number(str) && banStr(str, Usernames);
 const validateEmail = str => exists(str) && isEmail(str);
-const validatePostText = (str, type) => {
-  if (banStr(type, PostTypesHasText)) {
-    return !exists(str);
-  }
-  return range(str, null, postText);
-};
+const validatePostText = str => range(str, null, postText);
 const voteDirection = str => allowStr(str, VoteDirections);
 const wecoConstantId = str => allowStr(str, WecoConstants);
 const wecoConstantValue = (int, str) => allowStr(str, WecoConstants) && typeof int === 'number';
@@ -105,10 +115,12 @@ module.exports = {
   branchid,
   branchImageId,
   commentid,
+  Constants,
   date,
   email: validateEmail,
   exists,
   extension,
+  length,
   modLogAction,
   notificationid,
   notificationType,

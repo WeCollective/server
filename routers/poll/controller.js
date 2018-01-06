@@ -1,190 +1,190 @@
 const reqlib = require('app-root-path').require;
 
+const Constants = reqlib('config/constants');
 const error = reqlib('responses/errors');
-const PollAnswer = reqlib('models/poll-answer.model');
-const Post = reqlib('models/post.model');
-const PostData = reqlib('models/post-data.model');
+const Models = reqlib('models/');
 const success = reqlib('responses/successes');
-const Vote = reqlib('models/user-vote.model');
 
-module.exports = {
-  get(req, res) {
-    if(!req.params.postid) {
-      return error.BadRequest(res, 'Missing postid');
-    }
+const {
+  createPollAnswerId,
+  createUserVoteItemId,
+} = Constants.Helpers;
 
-    const sortBy = req.query.sortBy || 'date';
+const { VoteDirections } = Constants.AllowedValues;
 
-    // if lastAnswerId is specified, client wants results which appear _after_ this answer (pagination)
-    let lastAnswer;
-    new Promise((resolve, reject) => {
-      if (req.query.lastAnswerId) {
-        const answer = new PollAnswer();
-        // get the post
-        answer.findById(req.query.lastAnswerId)
-          .then(() => {
-            // create lastAnswer object
-            lastAnswer = answer.data;
-            return resolve();
-          })
-          .catch(err => {
-            if (err) {
-              return reject();
-            }
+module.exports.addAnswer = (req, res) => {
+  const { postid } = req.params;
+  const { text } = req.body;
+  const date = new Date().getTime();
+  const username = req.user.get('username');
+  let post;
+  let postData;
 
-            return error.NotFound(res); // lastAnswerId is invalid
-          });
+  // Post must exist.
+  return Models.Post.findById(postid)
+    .then(posts => {
+      if (!posts.length || posts[0] === null) {
+        return Promise.reject({
+          message: 'Post does not exist.',
+          status: 403,
+        });
       }
-      else {
-        // no last answer specified, continue
-        resolve();
-      }
+
+      post = posts[0];
+
+      return Models.PostData.findById(postid);
     })
-      .then(() => new PollAnswer().findByPost(req.params.postid, sortBy, lastAnswer))
-      .then(answers => {
-        if (!answers || !answers.length) {
-          return error.NotFound(res);
-        }
+    .then(instance => {
+      if (instance === null) {
+        return Promise.reject({
+          message: 'Post does not exist.',
+          status: 403,
+        });
+      }
 
-        return success.OK(res, answers);
-      })
-      .catch(err => {
-        if (err) {
-          console.error('Error fetching post data:', err);
-          return error.InternalServerError(res);
-        }
+      postData = instance;
 
-        return error.NotFound(res);
+      if (post.get('locked') && username !== postData.get('creator')) {
+        return Promise.reject({
+          message: 'Only the post authors can add answers to this poll.',
+          status: 403,
+        });
+      }
+
+      return Promise.resolve();
+    })
+    // Add the new poll answer.
+    .then(() => Models.PollAnswer.create({
+      creator: username,
+      date,
+      id: createPollAnswerId(postid, date),
+      postid,
+      text,
+      votes: 0,
+    }))
+    .then(() => success.OK(res))
+    .catch(err => {
+      console.log('Error adding a new poll answer:', err);
+      return error.code(res, err.status, err.message);
+    });
+};
+
+module.exports.getAnswers = (req, res) => {
+  const { postid } = req.params;
+  const {
+    // Used for pagination.
+    lastAnswerId,
+    sortBy = 'date',
+  } = req.query;
+  let lastInstance;
+
+  if (!postid) {
+    return error.BadRequest(res, 'Invalid postid.');
+  }
+
+  return new Promise((resolve, reject) => {
+    if (lastAnswerId) {
+      return Models.PollAnswer.findById(lastAnswerId)
+        .then(instance => {
+          if (instance === null) {
+            return Promise.reject({
+              message: 'Poll answer does not exist.',
+              status: 403,
+            });
+          }
+
+          lastInstance = instance;
+          return resolve();
+        })
+        .catch(err => reject(err));
+    }
+
+    // No last answer specified, continue...
+    return resolve();
+  })
+    .then(() => Models.PollAnswer.findByPost(postid, sortBy, lastInstance))
+    // todo do not return votes if we want to only view them before voting
+    .then(answers => success.OK(res, answers.map(instance => ({
+      creator: instance.get('creator'),
+      date: instance.get('date'),
+      id: instance.get('id'),
+      postid: instance.get('postid'),
+      text: instance.get('text'),
+      votes: instance.get('votes'),
+    }))))
+    .catch(err => {
+      console.error('Error fetching poll answers:', err);
+      return error.code(res, err.status, err.message);
+    });
+};
+
+module.exports.vote = (req, res) => {
+  const {
+    answerid,
+    postid,
+  } = req.params;
+  const { vote } = req.body;
+  const itemid = createUserVoteItemId(postid, 'poll');
+  const username = req.user.get('username');
+  let answer;
+
+  if (!postid) {
+    return error.BadRequest(res, 'Invalid postid.');
+  }
+
+  if (!answerid) {
+    return error.BadRequest(res, 'Invalid answerid.');
+  }
+
+  if (!VoteDirections.includes(vote)) {
+    return error.BadRequest(res, 'Invalid vote parameter.');
+  }
+  
+  return Models.PollAnswer.findById(answerid)
+    .then(instance => {
+      if (instance === null) {
+        return Promise.reject({
+          message: 'Poll answer does not exist.',
+          status: 404,
+        });
+      }
+
+      answer = instance;
+
+      if (answer.get('postid') !== postid) {
+        return Promise.reject({
+          message: 'Poll answer does not exist.',
+          status: 404,
+        });
+      }
+
+      return Models.UserVote.findByUsernameAndItemId(username, itemid);
+    })
+    .then(instance => {
+      if (instance !== null) {
+        return Promise.reject({
+          code: 400,
+          message: 'You have already voted on this poll.',
+        });
+      }
+
+      return Models.UserVote.create({
+        direction: vote,
+        itemid,
+        username,
       });
-  },
+    })
+    .then(() => {
+      answer.set('votes', answer.get('votes') + 1);
+      return answer.update();
+    })
+    .then(() => success.OK(res))
+    .catch(err => {
+      console.error('Error voting on poll answer:', err);
 
-  post(req, res) {
-    if (!req.user.username) {
-      console.error('No username found in session.');
+      if (typeof err === 'object' && err.code) {
+        return error.code(res, err.code, err.message);
+      }
       return error.InternalServerError(res);
-    }
-
-    // ensure postid exists
-    const postdata = new PostData();
-    new Post()
-      .findById(req.params.postid)
-      .then(posts => {
-        if (!posts.length) {
-          return error.NotFound(res);
-        }
-
-        return new Promise(resolve => {
-          if (posts[0].locked) {
-            postdata.findById(req.params.postid)
-              .then(() => {
-                if (req.user.username !== postdata.data.creator) {
-                  return error.Forbidden(res, 'Post is locked, only the creator can submit answers');
-                }
-                else {
-                  return resolve();
-                }
-              })
-              .catch(() => error.InternalServerError(res));
-          }
-          else {
-            return resolve();
-          }
-        });
-      })
-      .then(() => {
-        const date = new Date().getTime();
-
-        // create new poll answer
-        const answer = new PollAnswer({
-          creator: req.user.username,
-          date,
-          id: `${req.params.postid}-${date}`,
-          postid: req.params.postid,
-          text: req.body.text,
-          votes: 0,
-        });
-
-        // validate request properties
-        const propertiesToCheck = ['id', 'postid', 'votes', 'text', 'creator', 'date'];
-        const invalids = answer.validate(propertiesToCheck);
-        
-        if (invalids.length > 0) {
-          return error.BadRequest(res, `Invalid ${invalids[0]}`);
-        }
-
-        answer
-          .save()
-          .then(() => success.OK(res))
-          .catch(() => error.InternalServerError(res));
-      })
-      .catch(() => error.NotFound(res));
-  },
-
-  votePoll(req, res) {
-    const answer = new PollAnswer();
-    const answerId = req.params.answerid;
-    const newVoteDirection = req.body.vote;
-    const postId = req.params.postid;
-    const username = req.user.username;
-
-    const itemId = `poll-${postId}`;
-
-    if (!postId) {
-      return error.BadRequest(res, 'Missing postid');
-    }
-
-    if (!answerId) {
-      return error.BadRequest(res, 'Missing answerid');
-    }
-
-    // Poll votes are "up" by default. This has no effect at the moment, just
-    // to fit the item into the database structure.
-    if (newVoteDirection !== 'up') {
-      return error.BadRequest(res, 'Missing or malformed vote parameter');
-    }
-    
-    answer
-      .findById(answerId)
-      .then(() => {
-        if (answer.data.postid !== postId) {
-          return Promise.reject({ code: 404 });
-        }
-
-        return new Vote().findByUsernameAndItemId(username, itemId);
-      })
-      .then(existingVoteData => {
-        if (existingVoteData) {
-          return Promise.reject({
-            code: 400,
-            message: 'You have already voted on this poll!',
-          });
-        }
-
-        const vote = new Vote({
-          direction: newVoteDirection,
-          itemid: itemId,
-          username,
-        });
-
-        return vote.save();
-      })
-      .then(() => {
-        answer.set('votes', answer.data.votes + 1);
-        return answer.update();
-      })
-      .then(() => success.OK(res))
-      .catch(err => {
-        if (err) {
-          console.error('Error voting on poll answer:', err);
-
-          if (typeof err === 'object' && err.code) {
-            return error.code(res, err.code, err.message);
-          }
-
-          return error.InternalServerError(res);
-        }
-
-        return error.NotFound(res);
-      });
-  },
+    });
 };

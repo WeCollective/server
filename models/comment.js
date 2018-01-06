@@ -1,83 +1,99 @@
-const reqlib = require('app-root-path').require;
+module.exports = (Dynamite, validate) => {
+  const Comment = Dynamite.define('Comment', {
+    date: {
+      defaultValue: null,
+      validate: validate.date,
+    },
+    down: {
+      defaultValue: null,
+      validate: validate.number,
+    },
+    id: {
+      defaultValue: null,
+      primary: true,
+      validate: validate.commentid,
+    },
+    individual: {
+      defaultValue: null,
+      validate: validate.number,
+    },
+    parentid: {
+      defaultValue: null,
+      validate: validate.commentid,
+    },
+    postid: {
+      defaultValue: null,
+      validate: validate.postid,
+    },
+    rank: {
+      defaultValue: null,
+      validate: validate.number,
+    },
+    replies: {
+      defaultValue: null,
+      validate: validate.number,
+    },
+    up: {
+      defaultValue: null,
+      validate: validate.number,
+    },
+  }, {
+    TableIndexes: [
+      'postid-individual-index',
+      'postid-date-index',
+      'postid-replies-index',
+    ],
+  });
 
-const aws = reqlib('config/aws');
-const db = reqlib('config/database');
-const Model = reqlib('models/model');
-
-class Comment extends Model {
-  constructor(props) {
-    super(props, {
-      keys: db.Keys.Comments,
-      schema: db.Schema.Comment,
-      table: db.Table.Comments,
-    });
-  }
-
-  findByParent(postid, parentid, sortBy, last) {
+  Comment.findByParent = (postid, parentid, sortBy, lastInstance) => {
+    const { TableIndexes } = Comment.config.keys;
     const limit = 20;
     let IndexName;
 
     switch(sortBy) {
       case 'date':
-        IndexName = this.config.keys.globalIndexes[1];
+        IndexName = TableIndexes[1];
         break;
 
       case 'replies':
-        IndexName = this.config.keys.globalIndexes[2];
+        IndexName = TableIndexes[2];
         break;
 
       case 'points':
       default:
-        IndexName = this.config.keys.globalIndexes[0];
+        IndexName = TableIndexes[0];
         break;
     }
 
-    if (last) {
+    if (lastInstance) {
       const tmp = {
-        id: last.id,
-        postid: last.postid,
+        id: lastInstance.get('id'),
+        postid: lastInstance.get('postid'),
       };
 
       if (sortBy === 'points') {
-        tmp.individual = last.individual;
+        tmp.individual = lastInstance.get('individual');
       }
       else {
-        tmp[sortBy] = last[sortBy];
+        tmp[sortBy] = lastInstance.get(sortBy);
       }
 
-      last = tmp;
+      lastInstance = tmp;
     }
 
-    return new Promise((resolve, reject) => {
-      aws.dbClient.query({
-        ExclusiveStartKey: last || null, // fetch results which come _after_ this
-        ExpressionAttributeValues: {
-          ':parentid': parentid,
-          ':postid': postid,
-        },
-        FilterExpression: 'parentid = :parentid',
-        IndexName,
-        KeyConditionExpression: 'postid = :postid',
-        ScanIndexForward: false, // return results highest first
-        Select: 'ALL_PROJECTED_ATTRIBUTES',
-        TableName: this.config.table,
-      }, (err, data) => {
-        if (err) {
-          return reject(err);
-        }
+    return Dynamite.query({
+      ExclusiveStartKey: lastInstance || null, // fetch results which come _after_ this
+      ExpressionAttributeValues: {
+        ':parentid': parentid,
+        ':postid': postid,
+      },
+      FilterExpression: 'parentid = :parentid',
+      IndexName,
+      KeyConditionExpression: 'postid = :postid',
+      ScanIndexForward: false, // return results highest first
+      Select: 'ALL_PROJECTED_ATTRIBUTES',
+    }, limit, Comment, 'slice');
+  };
 
-        if (!data || !data.Items) {
-          return reject();
-        }
-
-        const comments = data.Items.slice(0, limit);
-        return resolve({
-          comments,
-          hasMoreComments: data.Items.length !== comments.length,
-        });
-      });
-    });
-  }
-}
-
-module.exports = Comment;
+  return Comment;
+};

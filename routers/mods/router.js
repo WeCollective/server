@@ -43,7 +43,7 @@ module.exports = () => {
      */
     .post(passport.authenticate('jwt'), (req, res, next) => {
       ACL.validateRole(ACL.Roles.Moderator, req.params.branchid)(req, res, next);
-    }, controller.post)
+    }, controller.addModerator)
 
   router.route('/:username')
     /**
@@ -65,7 +65,7 @@ module.exports = () => {
      */
     .delete(passport.authenticate('jwt'), (req, res, next) => {
       ACL.validateRole(ACL.Roles.Moderator, req.params.branchid)(req, res, next);
-    }, controller.delete);
+    }, controller.removeModerator);
 
   return router;
 }

@@ -33,10 +33,11 @@ const BranchIds = [
   'p',
 ];
 
+const BranchCoverType = 'cover';
 const BranchThumbnailType = 'picture';
 
 const BranchImageTypes = [
-  'cover',
+  BranchCoverType,
   BranchThumbnailType,
 ];
 const MAX_BRANCH_IMAGE_TYPE = BranchImageTypes.reduce((a, b) => a.length > b.length ? a : b).length;
@@ -85,21 +86,37 @@ const ModLogActionTypes = [
   'removemod',
 ];
 
-const PostTypesHasText = [
-  'poll',
-  'text',
+const PostFlagPostHasWrongTypeTag = 'wrong_type';
+const PostFlagPostIsNSFW = 'nsfw';
+const PostFlagPostViolatesBranchRules = 'branch_rules';
+const PostFlagPostViolatesSiteRules = 'site_rules';
+
+const PostFlagTypes = [
+  PostFlagPostHasWrongTypeTag,
+  PostFlagPostIsNSFW,
+  PostFlagPostViolatesBranchRules,
+  PostFlagPostViolatesSiteRules,
 ];
 
-const PostTypesNoText = [
-  'audio',
-  'image',
-  'page',
-  'video',
+const PostFlagResponseChangePostType = 'change_type';
+const PostFlagResponseDeletePost = 'remove';
+const PostFlagResponseKeepPost = 'approve';
+const PostFlagResponseMarkPostNSFW = 'mark_nsfw';
+
+const PostFlagResponseTypes = [
+  PostFlagResponseChangePostType,
+  PostFlagResponseDeletePost,
+  PostFlagResponseKeepPost,
+  PostFlagResponseMarkPostNSFW,
 ];
 
 const PostTypes = [
-  ...PostTypesHasText,
-  ...PostTypesNoText,
+  'audio',
+  'image',
+  'page',
+  'poll',
+  'text',
+  'video',
 ];
 
 // These are used in user image urls and routes.
@@ -109,9 +126,10 @@ const Usernames = [
   ...BranchImageTypes,
 ];
 
+const VoteUp = 'up';
+
 const VoteDirections = [
-  'down',
-  'up',
+  VoteUp,
 ];
 
 const WecoConstants = [
@@ -121,14 +139,30 @@ const WecoConstants = [
   'user_count',
 ];
 
+const createBranchImageId = (branchId, pictureType) => `${branchId}-${pictureType}`;
+const createCommentId = (username, timestamp) => `${username}-${timestamp}`;
+const createNotificationId = (username, timestamp) => `${username}-${timestamp}`;
+const createPollAnswerId = (postId, timestamp) => `${postId}-${timestamp}`;
+const createPostId = (username, timestamp) => `${username}-${timestamp}`;
+const createPostImageId = postId => `${postId}-${BranchThumbnailType}`;
+const createUserImageId = (username, type) => `${username}-${type}`;
+const createUserVoteItemId = (postId, type) => `${type}-${postId}`;
+const getUserVoteOtherDirection = dir => {
+  if (!VoteDirections.includes(dir)) {
+    throw new Error('Invalid vote direction.');
+  }
+
+  return dir === 'up' ? 'down' : 'up';
+};
+
 module.exports = {
   AllowedValues: {
     BranchImageTypes,
     ImageExtensions,
     ModLogActionTypes,
+    PostFlagTypes,
+    PostFlagResponseTypes,
     PostTypes,
-    PostTypesHasText,
-    PostTypesNoText,
     VoteDirections,
     WecoConstants,
   },
@@ -136,11 +170,31 @@ module.exports = {
     BranchIds,
     Usernames,
   },
+  BranchCoverType,
   BranchThumbnailType,
   EntityLimits,
+  Helpers: {
+    createBranchImageId,
+    createCommentId,
+    createNotificationId,
+    createPollAnswerId,
+    createPostId,
+    createPostImageId,
+    createUserImageId,
+    createUserVoteItemId,
+    getUserVoteOtherDirection,
+  },
   Policy: {
     email: POLICY_EMAIL,
     id: POLICY_ID,
     whitespace: POLICY_WHITESPACE,
   },
+  PostFlagPostHasWrongTypeTag,
+  PostFlagPostIsNSFW,
+  PostFlagPostViolatesBranchRules,
+  PostFlagPostViolatesSiteRules,
+  PostFlagResponseChangePostType,
+  PostFlagResponseDeletePost,
+  PostFlagResponseKeepPost,
+  PostFlagResponseMarkPostNSFW,
 };

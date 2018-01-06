@@ -1,31 +1,33 @@
-const _ = require('lodash');
+// const _ = require('lodash');
 const reqlib = require('app-root-path').require;
 
-const ACL = reqlib('config/acl');
+// const ACL = reqlib('config/acl');
 const algolia = reqlib('config/algolia');
 const auth = reqlib('config/auth');
-const aws = reqlib('config/aws');
+const Constants = reqlib('config/constants');
 const error = reqlib('responses/errors');
 const fs = reqlib('config/filestorage');
 const mailer = reqlib('config/mailer');
+const Models = reqlib('models/');
 const success = reqlib('responses/successes');
 
-// Models
-const Branch = reqlib('models/branch.model');
-const FollowedBranch = reqlib('models/followed-branch.model');
-const Notification = reqlib('models/notification.model');
-const User = reqlib('models/user.model');
-const UserImage = reqlib('models/user-image.model');
+const {
+  BranchCoverType,
+  BranchThumbnailType,
+} = Constants;
+const { BranchImageTypes } = Constants.AllowedValues;
+const { createUserImageId } = Constants.Helpers;
 
+/*
 const getUsername = req => new Promise((resolve, reject) => {
   if (req.ACLRole === ACL.Roles.Self) {
     // ensure user object has been attached by passport
-    if (!req.user.username) {
+    if (!req.user.get('username')) {
       console.error('No username found in session.');
       return reject(error.InternalServerError);
     }
 
-    return resolve(req.user.username);
+    return resolve(req.user.get('username'));
   }
   else {
     // ensure username is specified
@@ -36,51 +38,19 @@ const getUsername = req => new Promise((resolve, reject) => {
     return resolve(req.params.username);
   }
 });
+*/
 
 module.exports = {
-  ban(req, res) {
-    const bannedUser = new User();
-    const username = req.params.username;
+  delete(req, res) { // eslint-disable-line
+    throw new Error('Legacy method called!');
 
-    if (!req.user.username) {
-      return error.InternalServerError(res);
-    }
-
-    if (!username) {
-      return error.BadRequest(res, 'Missing username');
-    }
-
-    return bannedUser.findByUsername(username)
-      .then(() => {
-        if (bannedUser.data.banned === true) {
-          return Promise.reject({
-            code: 400,
-            message: `${username} is already banned`,
-          });
-        }
-
-        bannedUser.set('banned', true);
-        return bannedUser.update();
-      })
-      .then(() => success.OK(res))
-      .catch(err => {
-        console.error('Error fetching posts:', err);
-
-        if (typeof err === 'object' && err.code) {
-          return error.code(res, err.code, err.message);
-        }
-
-        return error.code(res, 404, `User "${username}" does not exist`);
-      });
-  },
-
-  delete(req, res) {
-    if (req.ACLRole !== ACL.Roles.Self || !req.user || !req.user.username) {
+    /*
+    if (req.ACLRole !== ACL.Roles.Self || !req.user || !req.user.get('username')) {
       return error.Forbidden(res);
     }
 
     return new User()
-      .delete({ username: req.user.username })
+      .delete({ username: req.user.get('username') })
       .then(() => {
         req.logout();
         return success.OK(res);
@@ -89,85 +59,24 @@ module.exports = {
         console.error('Error deleting user from database.');
         return error.InternalServerError(res);
       });
-  },
-
-  followBranch(req, res) {
-    if (!req.user.username) {
-      return error.InternalServerError(res);
-    }
-
-    if (!req.body.branchid) {
-      return error.BadRequest(res, 'Missing branchid');
-    }
-
-    if (req.body.branchid === 'root') {
-      return error.BadRequest(res, 'Invalid branchid');
-    }
-
-    const follow = new FollowedBranch({
-      username: req.user.username,
-      branchid: req.body.branchid
-    });
-
-    // Check new parameters are valid, ignoring username and password validity
-    const propertiesToCheck = ['username', 'branchid'];
-    const invalids = follow.validate(propertiesToCheck);
-    
-    if (invalids.length) {
-      return error.BadRequest(res, `Invalid ${invalids[0]}`);
-    }
-
-    // ensure specified branchid exists
-    const branch = new Branch();
-
-    return branch.findById(req.body.branchid)
-      .then(() => follow.save())
-      .then(() => success.OK(res))
-      .catch(err => {
-        if (err) {
-          console.error('Error following branch:', err);
-          return error.InternalServerError(res);
-        }
-
-        return error.NotFound(res);
-      });
+    */
   },
 
   // Legacy version.
-  getFollowedBranches(req, res) {
-    getUsername(req)
-      .then(username => {
-        const branch = new FollowedBranch();
+  getPicture(req, res, type, thumbnail) { // eslint-disable-line
+    throw new Error('Legacy method called!');
 
-        branch.findByUsername(username)
-          .then(branches => {
-            var branchIds = _.map(branches, 'branchid');
-            return success.OK(res, branchIds);
-          })
-          .catch(err => {
-            if (err) {
-              console.error('Error fetching followed branches:', err);
-              return error.InternalServerError(res);
-            }
-
-            return error.NotFound(res);
-          });
-      })
-      .catch(errorCb => errorCb(res));
-  },
-
-  // Legacy version.
-  getPicture(req, res, type, thumbnail) {
-    let size,
-      username;
+    /*
+    let size;
+    let username;
 
     if (req.ACLRole == ACL.Roles.Self) {
       // ensure user object has been attached by passport
-      if (!req.user.username) {
+      if (!req.user.get('username')) {
         return error.InternalServerError(res);
       }
       
-      username = req.user.username;
+      username = req.user.get('username');
     }
     else {
       // ensure username is specified
@@ -194,7 +103,7 @@ module.exports = {
 
     image.findByUsername(username, type)
       .then(() => {
-        aws.s3Client.getSignedUrl('getObject', {
+        Models.Dynamite.aws.s3Client.getSignedUrl('getObject', {
           Bucket: fs.Bucket.UserImagesResized,
           Key: `${image.data.id}-${size}.${image.data.extension}`
         }, (err, url) => {
@@ -213,362 +122,194 @@ module.exports = {
 
         return error.NotFound(res);
       });
+    */
   },
 
-  // Legacy version.
-  getPictureUploadUrl(req, res, type) {
-    if (!req.user || !req.user.username) {
-      return error.Forbidden(res);
-    }
+  subscribeToNotifications(req, res) { // eslint-disable-line
+    throw new Error('Legacy method called!');
 
-    if ('picture' !== type && 'cover' !== type) {
-      console.error('Invalid picture type.');
-      return error.InternalServerError(res);
-    }
-
-    const params = {
-      Bucket: fs.Bucket.UserImages,
-      ContentType: 'image/*',
-      Key: `${req.user.username}-${type}-orig.jpg`
-    }
-
-    aws.s3Client.getSignedUrl('putObject', params, (err, url) => success.OK(res, url));
-  },
-
-  getUserFollowedBranches (username) {
-    return new Promise(resolve => {
-      let branches = [];
-
-      if (!username) return resolve(branches);
-
-      const branch = new FollowedBranch();
-
-      branch.findByUsername(username)
-        .then(branches => {
-          branches = _.map(branches, 'branchid');
-          return resolve(branches);
-        })
-        .catch( err => {
-          if (err) {
-            console.error('Error fetching followed branches:', err);
-          }
-
-          return resolve(branches);
-        });
-    });
-  },
-
-  getUserPicture(username, type, thumbnail = false) {
-    return new Promise(resolve => {
-      if (!username || ('picture' !== type && 'cover' !== type)) return resolve('');
-
-      let size;
-
-      if ('picture' === type) {
-        size = thumbnail ? 200 : 640;
-      }
-      else if ('cover' === type) {
-        size = thumbnail ? 800 : 1920;
-      }
-
-      const image = new UserImage();
-
-      image.findByUsername(username, type)
-        .then(() => {
-          const Bucket = fs.Bucket.UserImagesResized;
-          const Key = `${image.data.id}-${size}.${image.data.extension}`;
-          return resolve(`https://${Bucket}.s3-eu-west-1.amazonaws.com/${Key}`);
-        })
-        .catch(err => {
-          if (err) {
-            console.error('Error fetching user image:', err);
-            return resolve('');
-          }
-
-          return resolve('');
-        });
-    });
-  },
-
-  markAllNotificationsRead(req, res) {
-    const username = req.user.username;
-
-    if (!username) {
-      return error.InternalServerError(res);
-    }
-
-    return new Notification()
-      .findByUsername(username, false, null, true)
-      .then(notifications => {
-        const promises = [];
-
-        notifications.forEach(notification => {
-          const row = new Notification();
-          promises.push(row
-            .findById(notification.id)
-            .then(() => {
-              row.set('unread', false);
-              return row.save();
-            })
-            .catch(err => Promise.reject(err))
-          );
-        })
-
-        return Promise.all(promises);
-      })
-      .then(() => success.OK(res))
-      .catch(err => {
-        if (err) {
-          console.error('Error marking user notifications as read:', err);
-          return error.InternalServerError(res);
-        }
-
-        return error.NotFound(res);
-      });
-  },
-
-  putNotification(req, res) {
-    if (!req.user.username) {
-      return error.InternalServerError(res);
-    }
-
-    if (!req.params.notificationid) {
-      return error.BadRequest(res, 'Missing notificationid parameter');
-    }
-
-    if (!req.body.unread) {
-      return error.BadRequest(res, 'Missing unread parameter');
-    }
-
-    const notification = new Notification();
-
-    notification.findById(req.params.notificationid)
-      .then(() => {
-        // check notification actually belongs to user
-        if (notification.data.user !== req.user.username) {
-          return error.Forbidden(res);
-        }
-
-        req.body.unread = (req.body.unread === 'true');
-        notification.set('unread', Boolean(req.body.unread));
-        return notification.save();
-      })
-      .then(() => success.OK(res))
-      .catch(err => {
-        if (err) {
-          console.error('Error updating notification unread:', err);
-          return error.InternalServerError(res);
-        }
-
-        return error.NotFound(res);
-      });
-  },
-
-  resendVerification(req, res) {
-    if (!req.params.username) {
-      return error.BadRequest(res, 'Missing username parameter');
-    }
-
-    const user = new User();
-
-    user.findByUsername(req.params.username)
-      .then(() => {
-        // return error if already verified
-        if (user.data.verified) {
-          return error.BadRequest(res, 'Account is already verified');
-        }
-
-        return mailer.sendVerification(user.data, user.data.token);
-      })
-      .then(() => success.OK(res))
-      .catch(err => {
-        if (err) {
-          console.error('Error resending verification email:', err);
-          return error.InternalServerError(res);
-        }
-
-        return error.NotFound(res);
-      });
-  },
-
-  resetPassword(req, res) {
-    if (!req.params.username || !req.params.token) {
-      return error.BadRequest(res, 'Missing username or token parameter');
-    }
-
-    if (!req.body.password) {
-      return error.BadRequest(res, 'Missing password parameter');
-    }
-
-    const user = new User();
-    
-    user.findByUsername(req.params.username)
-      .then(() => {
-        const token = JSON.parse(user.data.resetPasswordToken);
-        
-        // check token matches
-        if (token.token !== req.params.token) {
-          return error.BadRequest(res, 'Invalid token');
-        }
-        
-        // check token hasnt expired
-        if (token.expires < new Date().getTime()) {
-          return error.BadRequest(res, 'Token expired');
-        }
-
-        // validate new password
-        user.set('password', req.body.password);
-        
-        const propertiesToCheck = ['password'];
-        const invalids = user.validate(propertiesToCheck);
-        
-        if (invalids.length) {
-          return Promise.reject({
-            message: invalids[0],
-            status: 400,
-          });
-        }
-
-        auth.generateSalt(10)
-          .then( salt => {
-            return auth.hash(req.body.password, salt);
-          })
-          .then( hash => {
-            user.set('password', hash);
-            user.set('resetPasswordToken', null);
-            return user.update();
-          })
-          .then(() => success.OK(res))
-          .catch(() => error.InternalServerError(res));
-      })
-      .catch(err => {
-        if (err) {
-          console.error('Error changing password:', err);
-          return error.InternalServerError(res);
-        }
-
-        return error.NotFound(res);
-      });
-  },
-
-  sendResetPasswordLink(req, res) {
-    if (!req.params.username) {
-      return error.BadRequest(res, 'Missing username parameter');
-    }
-
-    const user = new User();
-    let token;
-
-    user.findByUsername(req.params.username)
-      .then(() => {
-        let expires = new Date();
-        expires.setHours(expires.getHours() + 1);
-        token = {
-          token: auth.generateToken(),
-          expires: expires.getTime()
-        };
-        user.set('resetPasswordToken', JSON.stringify(token));
-        return user.update();
-      }, err => {
-        if (err) {
-          console.error('Error sending password reset:', err);
-          return error.InternalServerError(res);
-        }
-
-        return error.NotFound(res);
-      })
-      .then(() => mailer.sendResetPasswordLink(user.data, token.token))
-      .then(() => success.OK(res))
-      .catch(() => error.InternalServerError(res));
-  },
-
-  subscribeToNotifications(req, res) {
-    if (!req.user.username) {
+    /*
+    if (!req.user.get('username')) {
       return error.InternalServerError(res);
     }
 
     if (!req.body.socketID) {
       return error.BadRequest(res, 'Missing socketID');
     }
+    */
   },
 
-  unfollowBranch(req, res) {
-    if (!req.user.username) {
+  unsubscribeFromNotifications(req, res) { // eslint-disable-line
+    throw new Error('Legacy method called!');
+
+    /*
+    if (!req.user.get('username')) {
       return error.InternalServerError(res);
     }
-
-    if (!req.query.branchid) {
-      return error.BadRequest(res, 'Missing branchid');
-    }
-
-    if (req.query.branchid === 'root') {
-      return error.BadRequest(res, 'Invalid branchid');
-    }
-
-    // ensure specified branchid exists
-    const branch = new Branch();
-
-    return branch.findById(req.query.branchid)
-      .then(() => new FollowedBranch().delete({
-        branchid: req.query.branchid,
-        username: req.user.username,
-      }))
-      .then(() => success.OK(res))
-      .catch(err => {
-        if (err) {
-          console.error('Error unfollowing branch:', err);
-          return error.InternalServerError(res);
-        }
-        
-        return error.NotFound(res);
-      });
-  },
-
-  unsubscribeFromNotifications(req, res) {
-    if (!req.user.username) {
-      return error.InternalServerError(res);
-    }
+    */
   },
 };
 
-module.exports.get = (req, res) => {
-  const user = new User();
-  let username;
+module.exports.ban = (req, res) => {
+  const { username } = req.params;
 
-  return getUsername(req)
-    .then(uName => {
-      username = uName;
-      return user.findByUsername(username);
+  if (!username) {
+    return error.BadRequest(res, 'Missing username');
+  }
+
+  return Models.User.findOne({
+    where: {
+      username,
+    },
+  })
+    .then(instance => {
+      if (instance === null) {
+        return Promise.reject('User does not exist.');
+      }
+
+      if (instance.get('banned')) {
+        return Promise.reject({
+          code: 400,
+          message: `${username} is already banned`,
+        });
+      }
+
+      instance.set('banned', true);
+      return instance.update();
     })
-    .then(() => {
-      const p1 = module.exports.getUserPicture(username, 'picture', false);
-      const p2 = module.exports.getUserPicture(username, 'picture', true);
-      const p3 = module.exports.getUserPicture(username, 'cover', false);
-      const p4 = module.exports.getUserPicture(username, 'cover', true);
-      const p5 = module.exports.getUserFollowedBranches(username);
-      return Promise.all([p1, p2, p3, p4, p5]);
+    .then(() => success.OK(res))
+    .catch(err => {
+      console.error('Error fetching posts:', err);
+
+      if (typeof err === 'object' && err.code) {
+        return error.code(res, err.code, err.message);
+      }
+
+      return error.code(res, 404, `User "${username}" does not exist`);
+    });
+};
+
+module.exports.followBranch = (req, res) => {
+  const { branchid } = req.body;
+  const username = req.user.get('username');
+
+  if (!branchid) {
+    return error.BadRequest(res, 'Missing branchid');
+  }
+
+  if (branchid === 'root') {
+    return error.BadRequest(res, 'Invalid branchid');
+  }
+
+  // The branch must exist.
+  return Models.Branch.findById(branchid)
+    .then(instance => {
+      if (instance === null) {
+        return Promise.reject();
+      }
+
+      return Models.FollowedBranch.create({
+        branchid,
+        username,
+      });
     })
+    .then(() => success.OK(res))
+    .catch(err => {
+      if (err) {
+        console.error('Error following branch:', err);
+        return error.InternalServerError(res);
+      }
+
+      return error.NotFound(res);
+    });
+};
+
+module.exports.get = (req, res) => {
+  const clientUsername = req.user.get('username');
+  const { username = clientUsername } = req.params;
+  const isSelf = clientUsername === username;
+
+  const p1 = module.exports.getUserPicture(username, BranchThumbnailType, false);
+  const p2 = module.exports.getUserPicture(username, BranchThumbnailType, true);
+  const p3 = module.exports.getUserPicture(username, BranchCoverType, false);
+  const p4 = module.exports.getUserPicture(username, BranchCoverType, true);
+  const p5 = isSelf ? module.exports.getUserFollowedBranches(username) : null;
+  const p6 = isSelf ? null : Models.User.findOne({
+    where: {
+      username,
+    },
+  });
+
+  return Promise.all([p1, p2, p3, p4, p5, p6])
     .then(values => {
-      let sanitized = user.sanitize(user.data, ACL.Schema(req.ACLRole, 'User'));
-      sanitized.profileUrl = values[0];
-      sanitized.profileUrlThumb = values[1];
-      sanitized.coverUrl = values[2];
-      sanitized.coverUrlThumb = values[3];
-      sanitized.followed_branches = values[4];
-      return success.OK(res, sanitized);
+      const user = isSelf ? req.user : values[5];
+
+      if (user === null) {
+        return Promise.reject({
+          message: 'User does not exist.',
+          status: 404,
+        });
+      }
+
+      const data = {
+        datejoined: user.get('datejoined'),
+        name: user.get('name'),
+        num_branches: user.get('num_branches'),
+        num_comments: user.get('num_comments'),
+        num_mod_positions: user.get('num_mod_positions'),
+        num_posts: user.get('num_posts'),
+        username: user.get('username'),
+        verified: user.get('verified'),
+        profileUrl: values[0],
+        profileUrlThumb: values[1],
+        coverUrl: values[2],
+        coverUrlThumb: values[3],
+      };
+
+      if (isSelf) {
+        data.dob = user.get('dob');
+        data.email = user.get('email');
+        data.followed_branches = values[4];
+        data.show_nsfw = user.get('show_nsfw');
+        data.token = user.get('token');
+      }
+
+      return success.OK(res, data);
     })
     .catch(err => {
       if (typeof err === 'function') {
         return err(res);
       }
 
-      if (err) {
-        console.error('Error fetching user:', err);
-        return error.InternalServerError(res);
-      }
-      
-      return error.NotFound(res);
+      console.error('Error fetching user:', err);
+      return error.InternalServerError(res);
     });
+};
+
+// Legacy version.
+module.exports.getFollowedBranches = (req, res) => { // eslint-disable-line
+  throw new Error('Legacy method called!');
+  /*
+  return getUsername(req)
+    .then(username => {
+      const branch = new FollowedBranch();
+
+      branch.findByUsername(username)
+        .then(branches => {
+          var branchIds = _.map(branches, 'branchid');
+          return success.OK(res, branchIds);
+        })
+        .catch(err => {
+          if (err) {
+            console.error('Error fetching followed branches:', err);
+            return error.InternalServerError(res);
+          }
+
+          return error.NotFound(res);
+        });
+    })
+    .catch(errorCb => errorCb(res));
+  */
 };
 
 module.exports.getNotifications = (req, res) => {
@@ -576,45 +317,124 @@ module.exports.getNotifications = (req, res) => {
     lastNotificationId,
     unreadCount,
   } = req.query;
-  const { username } = req.user;
-
-  if (!username) {
-    return error.InternalServerError(res);
-  }
-
   const isUnread = unreadCount === 'true';
-
+  const username = req.user.get('username');
   // if lastNotificationId is specified, client wants results which appear _after_ this notification (pagination)
-  let lastNotification = null;
+  let lastInstance = null;
   
   return new Promise((resolve, reject) => {
     if (lastNotificationId) {
-      const notification = new Notification();
-
-      // get the post
-      return notification.findById(lastNotificationId)
-        .then(() => {
-          // create lastNotification object
-          lastNotification = notification.data;
-          return resolve();
-        })
-        .catch(err => {
-          if (err) {
-            return reject();
+      return Models.Notification.findById(lastNotificationId)
+        .then(instance => {
+          if (instance === null) {
+            return Promise.reject();
           }
 
-          return error.NotFound(res); // lastNotificationId is invalid
-        });
+          lastInstance = instance;
+          return resolve();
+        })
+        // lastNotificationId is invalid
+        .catch(err => reject(err));
     }
 
     // no last notification specified, continue
     return resolve();
   })
-    .then(() => new Notification().findByUsername(username, isUnread, lastNotification))
-    .then(notifications => success.OK(res, notifications))
+    .then(() => Models.Notification.findByUsername(username, isUnread, lastInstance))
+    .then(instancesOrCount => {
+      let result = instancesOrCount;
+      if (!isUnread) {
+        // todo
+        result = instancesOrCount.map(instance => instance.dataValues);
+      }
+      return success.OK(res, result);
+    })
+    .catch(err => {
+      console.error('Error fetching user notifications:', err);
+      return error.InternalServerError(res);
+    });
+};
+
+// Legacy method, still used to upload cover photo. That functinality
+// should work the same way profile photo uploads work.
+module.exports.getPictureUploadUrl = (req, res, type) => {
+  const username = req.user.get('username');
+
+  if (!BranchImageTypes.includes(type)) {
+    console.error('Invalid picture type.');
+    return error.InternalServerError(res);
+  }
+
+  const params = {
+    Bucket: fs.Bucket.UserImages,
+    ContentType: 'image/*',
+    Key: `${username}-${type}-orig.jpg`,
+  };
+
+  Models.Dynamite.aws.s3Client.getSignedUrl('putObject', params, (err, url) => success.OK(res, url));
+};
+
+module.exports.getUserFollowedBranches = username => Models.FollowedBranch
+  .findByUsername(username)
+  .then(branches => Promise.resolve(branches.map(instance => instance.get('branchid'))))
+  .catch(err => {
+    console.error('Error fetching followed branches:', err);
+    return Promise.reject(err);
+  });
+
+module.exports.getUserPicture = (username, type, thumbnail = false) => {
+  const { BranchImageTypes } = Constants.AllowedValues;
+
+  if (!username || !BranchImageTypes.includes(type)) return Promise.resolve('');
+
+  let size;
+  if (type === BranchThumbnailType) {
+    size = thumbnail ? 200 : 640;
+  }
+  else if (type === BranchCoverType) {
+    size = thumbnail ? 800 : 1920;
+  }
+
+  return Models.UserImage.findById(createUserImageId(username, type))
+    .then(instance => {
+      if (instance === null) {
+        return Promise.resolve('');
+      }
+
+      const extension = instance.get('extension');
+      const id = instance.get('id');
+
+      const Bucket = fs.Bucket.UserImagesResized;
+      const Key = `${id}-${size}.${extension}`;
+      return Promise.resolve(`https://${Bucket}.s3-eu-west-1.amazonaws.com/${Key}`);
+    })
+    .catch(err => {
+      console.error('Error fetching user image:', err);
+      return Promise.resolve('');
+    });
+};
+
+module.exports.markAllNotificationsRead = (req, res) => {
+  const username = req.user.get('username');
+  return Models.Notification.findByUsername(username, false, null, true)
+    .then(instances => {
+      console.log(instances);
+      let promises = [];
+
+      instances.forEach(instance => {
+        instance.set('unread', false);
+        promises = [
+          ...promises,
+          instance.update(),
+        ];
+      })
+
+      return Promise.all(promises);
+    })
+    .then(() => success.OK(res))
     .catch(err => {
       if (err) {
-        console.error('Error fetching user notifications:', err);
+        console.error('Error marking user notifications as read:', err);
         return error.InternalServerError(res);
       }
 
@@ -623,63 +443,242 @@ module.exports.getNotifications = (req, res) => {
 };
 
 module.exports.put = (req, res) => {
-  if (req.ACLRole !== ACL.Roles.Self || !req.user || !req.user.username) {
-    return error.Forbidden(res);
+  const {
+    dob,
+    email,
+    name,
+    show_nsfw,
+  } = req.body;
+
+  const { user } = req;
+
+  if (dob !== undefined) user.set('dob', Number(dob));
+  if (email !== undefined) user.set('email', email);
+  if (name !== undefined) user.set('name', name);
+  if (show_nsfw !== undefined) user.set('show_nsfw', show_nsfw === 'true');
+
+  return user.update()
+    // Update the SendGrid contact list with the new user data
+    // todo
+    .then(() => mailer.addContact(user.dataValues, true))
+    // todo
+    .then(() => algolia.updateObjects(user.dataValues, 'user'))
+    .then(() => success.OK(res))
+    .catch(err => {
+      console.error('Error updating user.', err);
+      return error.code(res, err.code, err.message);
+    });
+};
+
+module.exports.putNotification = (req, res) => {
+  const { notificationid } = req.params;
+  const { unread } = req.body;
+  const username = req.user.get('username');
+
+  if (!notificationid) {
+    return error.BadRequest(res, 'Missing notificationid parameter');
   }
 
-  const user = new User(req.user);
-  let propertiesToCheck = [];
-
-  if (req.body.dob) {
-    if (!Number(req.body.dob)) {
-      return error.BadRequest(res, 'Invalid dob');
-    }
-
-    user.set('dob', Number(req.body.dob));
-    propertiesToCheck = [
-      ...propertiesToCheck,
-      'dob',
-    ];
+  if (!unread) {
+    return error.BadRequest(res, 'Missing unread parameter');
   }
 
-  if (req.body.email) {
-    user.set('email', req.body.email);
-    propertiesToCheck = [
-      ...propertiesToCheck,
-      'email',
-    ];
+  return Models.Notification.findById(notificationid)
+    .then(instance => {
+      if (instance === null) {
+        return Promise.reject('Notification does not exist.');
+      }
+
+      // check notification actually belongs to user
+      if (instance.get('user') !== username) {
+        return error.Forbidden(res);
+      }
+
+      instance.set('unread', unread === 'true');
+      return instance.update();
+    })
+    .then(() => success.OK(res))
+    .catch(err => {
+      console.error('Error updating notification unread:', err);
+      return error.InternalServerError(res);
+    });
+};
+
+module.exports.resetPassword = (req, res) => {
+  const {
+    token,
+    username,
+  } = req.params;
+  const { password } = req.body;
+  let user;
+
+  if (!username) {
+    return error.BadRequest(res, 'Missing username parameter');
   }
 
-  if (req.body.name) {
-    user.set('name', req.body.name);
-    propertiesToCheck = [
-      ...propertiesToCheck,
-      'name',
-    ];
+  if (!token) {
+    return error.BadRequest(res, 'Missing token parameter');
+  }
+
+  if (!password) {
+    return error.BadRequest(res, 'Missing password parameter');
   }
   
-  if (req.body.show_nsfw) {
-    user.set('show_nsfw', req.body.show_nsfw === 'true');
-    propertiesToCheck = [
-      ...propertiesToCheck,
-      'show_nsfw',
-    ];
-  }
+  return Models.User.findOne({
+    where: {
+      username,
+    },
+  })
+    .then(instance => {
+      if (instance === null) {
+        return Promise.reject('User does not exist.');
+      }
 
-  // Check new parameters are valid, ignoring username and password validity
-  const invalids = user.validate(propertiesToCheck);
-  if (invalids.length) {
-    return error.BadRequest(res, invalids[0]);
-  }
+      user = instance;
 
-  user.update()
-    // update the SendGrid contact list with the new user data
-    .then(() => mailer.addContact(user.data, true))
-    .then(() => algolia.updateObjects(user.data, 'user'))
+      const uToken = JSON.parse(user.get('resetPasswordToken'));
+      
+      // check token matches
+      if (uToken.token !== token) {
+        return error.BadRequest(res, 'Invalid token.');
+      }
+      
+      // check token hasnt expired
+      if (uToken.expires < new Date().getTime()) {
+        return error.BadRequest(res, 'Token expired');
+      }
+
+      const isValidPassword = Models.Dynamite.validator.password(password);
+
+      if (!isValidPassword) {
+        return Promise.reject({
+          message: 'Invalid password.',
+          status: 400,
+        });
+      }
+
+      return auth.generateSalt(10);
+    })
+    .then(salt => auth.hash(password, salt))
+    .then(hash => {
+      user.set('password', hash);
+      user.set('resetPasswordToken', null);
+      return user.update();
+    })
     .then(() => success.OK(res))
-    .catch(() => {
-      console.error('Error updating user.');
+    .catch(err => {
+      console.error('Error changing password:', err);
+      return error.InternalServerError(res, err);
+    });
+};
+
+module.exports.resendVerification = (req, res) => {
+  const { username } = req.params;
+
+  if (!username) {
+    return error.BadRequest(res, 'Missing username parameter');
+  }
+
+  return Models.User.findOne({
+    where: {
+      username,
+    },
+  })
+    .then(instance => {
+      if (instance === null) {
+        return Promise.reject('User does not exist.');
+      }
+
+      if (instance.get('verified')) {
+        return error.BadRequest(res, 'Account is already verified');
+      }
+
+      // todo
+      return mailer.sendVerification(instance.dataValues, instance.get('token'));
+    })
+    .then(() => success.OK(res))
+    .catch(err => {
+      console.error('Error resending verification email:', err);
       return error.InternalServerError(res);
+    });
+};
+
+module.exports.sendResetPasswordLink = (req, res) => {
+  const { username } = req.params;
+  let token;
+  let user;
+
+  if (!username) {
+    return error.BadRequest(res, 'Missing username parameter');
+  }
+
+  return Models.User.findOne({
+    where: {
+      username,
+    },
+  })
+    .then(instance => {
+      if (instance) {
+        user = instance;
+
+        const expires = new Date();
+        expires.setHours(expires.getHours() + 1);
+        token = {
+          expires: expires.getTime(),
+          token: auth.generateToken(),
+        };
+        user.set('resetPasswordToken', JSON.stringify(token));
+        return user.update();
+      }
+
+      return Promise.resolve();
+    })
+    // todo
+    .then(() => {
+      if (user) {
+        return mailer.sendResetPasswordLink(user.dataValues, token.token);
+      }
+      return Promise.resolve();
+    })
+    .then(() => success.OK(res))
+    .catch(err => {
+      console.error('Error sending password reset:', err);
+      return error.InternalServerError(res);
+    });
+};
+
+module.exports.unfollowBranch = (req, res) => {
+  const { branchid } = req.query;
+  const username = req.user.get('username');
+
+  if (!branchid) {
+    return error.BadRequest(res, 'Missing branchid');
+  }
+
+  if (branchid === 'root') {
+    return error.BadRequest(res, 'Invalid branchid');
+  }
+
+  // The branch must exist.
+  return Models.Branch.findById(branchid)
+    .then(instance => {
+      if (instance === null) {
+        return Promise.reject();
+      }
+
+      return Models.FollowedBranch.destroy({
+        branchid,
+        username,
+      });
+    })
+    .then(() => success.OK(res))
+    .catch(err => {
+      if (err) {
+        console.error('Error unfollowing branch:', err);
+        return error.InternalServerError(res);
+      }
+
+      return error.NotFound(res);
     });
 };
 
@@ -688,7 +687,7 @@ module.exports.verify = (req, res) => {
     token,
     username,
   } = req.params;
-  const user = new User();
+  let user;
 
   if (!username) {
     return error.BadRequest(res, 'Missing username.');
@@ -698,15 +697,25 @@ module.exports.verify = (req, res) => {
     return error.BadRequest(res, 'Missing token.');
   }
 
-  user.findByUsername(username)
-    .then(() => {
+  return Models.User.findOne({
+    where: {
+      username,
+    },
+  })
+    .then(instance => {
+      if (instance === null) {
+        return Promise.reject();
+      }
+
+      user = instance;
+
       // Skip if already verified.
-      if (user.data.verified) {
+      if (user.get('verified')) {
         return Promise.reject('verified');
       }
 
       // Token must be valid.
-      if (user.data.token !== token) {
+      if (user.get('token') !== token) {
         return Promise.reject({
           code: 400,
           message: 'Invalid token.',
@@ -717,12 +726,11 @@ module.exports.verify = (req, res) => {
       return user.update();
     })
     // Save the user's contact info in SendGrid contact list for email marketing.
-    .then(() => {
-      const sanitized = user.sanitize(user.data, ACL.Schema(ACL.Roles.Self, 'User'));
-      return mailer.addContact(sanitized);
-    })
+    // todo
+    .then(() => mailer.addContact(user.dataValues))
     // Send the user a welcome email.
-    .then(() => mailer.sendWelcome(user.data))
+    // todo
+    .then(() => mailer.sendWelcome(user.dataValues))
     .catch(err => {
       if (err === 'verified') {
         return Promise.resolve();

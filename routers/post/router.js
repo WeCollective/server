@@ -69,6 +69,7 @@ module.exports = () => {
      * @apiPermission guest
      * @apiVersion 1.0.0
      *
+     * @apiParam (URL Parameters) {String} branch The unique branch id.
      * @apiParam (URL Parameters) {String} postid The unique id of the post
      *
      * @apiSuccess (Successes) {String} data The generated id for the new post
@@ -114,7 +115,7 @@ module.exports = () => {
      * @apiUse BadRequest
      * @apiUse InternalServerError
      */
-    .delete(passport.authenticate('jwt'), controller.delete);
+    .delete(passport.authenticate('jwt'), ACL.validateRole(ACL.Roles.AuthenticatedUser), controller.delete);
 
   router.route('/:postid/picture-upload-url')
     /**

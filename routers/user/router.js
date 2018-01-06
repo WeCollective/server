@@ -2,7 +2,8 @@ const express = require('express');
 const reqlib = require('app-root-path').require;
 
 const ACL = reqlib('config/acl');
-const Constant = reqlib('models/constant');
+// const Constant = reqlib('models/constant');
+const Models = reqlib('models/');
 const passport = reqlib('config/passport')();
 const success = reqlib('responses/successes');
 
@@ -39,12 +40,13 @@ module.exports = () => {
         return res.status(info.status || 403).json({ message: info.message });
       }
 
-      const userCount = new Constant();
-      
-      return userCount.findById('user_count')
-        .then(() => {
-          userCount.set('data', userCount.data.data + 1);
-          return userCount.update();
+      return Models.Constant.findById('user_count')
+        .then(instance => {
+          if (instance === null) {
+            return Promise.reject('The constant does not exist.');
+          }
+          instance.set('data', instance.get('data') + 1);
+          return instance.update();
         })
         .then(() => success.OK(res))
         .catch(err => {
@@ -198,7 +200,7 @@ module.exports = () => {
      */
     .get(passport.authenticate('jwt'), (req, res) => {
       if (req.isAuthenticated() && req.user) {
-        if (req.user.username === req.params.username) {
+        if (req.user.get('username') === req.params.username) {
           ACL.attachRole(ACL.Roles.Self)(req, res);
         }
         else {
@@ -376,7 +378,7 @@ module.exports = () => {
      */
     .get(passport.authenticate('jwt'), (req, res) => {
       if (req.isAuthenticated() && req.user) {
-        if (req.user.username === req.params.username) {
+        if (req.user.get('username') === req.params.username) {
           ACL.attachRole(ACL.Roles.Self)(req, res);
         }
         else {
@@ -416,7 +418,7 @@ module.exports = () => {
      */
     .get(passport.authenticate('jwt'), (req, res) => {
       if (req.isAuthenticated() && req.user) {
-        if (req.user.username === req.params.username) {
+        if (req.user.get('username') === req.params.username) {
           ACL.attachRole(ACL.Roles.Self)(req, res);
         }
         else {
@@ -456,7 +458,7 @@ module.exports = () => {
      */
     .get(passport.authenticate('jwt'), (req, res) => {
       if (req.isAuthenticated() && req.user) {
-        if (req.user.username === req.params.username) {
+        if (req.user.get('username') === req.params.username) {
           ACL.attachRole(ACL.Roles.Self)(req, res);
         }
         else {
@@ -496,7 +498,7 @@ module.exports = () => {
      */
     .get(passport.authenticate('jwt'), (req, res) => {
       if (req.isAuthenticated() && req.user) {
-        if (req.user.username === req.params.username) {
+        if (req.user.get('username') === req.params.username) {
           ACL.attachRole(ACL.Roles.Self)(req, res);
         }
         else {
@@ -711,7 +713,12 @@ module.exports = () => {
      */
     .get(passport.authenticate('jwt'), (req, res) => {
       if (req.isAuthenticated() && req.user) {
-        if (req.user.username === req.params.username || req.params.username === 'me') {
+        const selfNameSpaces = [
+          req.user.get('username'),
+          'me',
+        ];
+
+        if (selfNameSpaces.includes(req.params.username)) {
           ACL.attachRole(ACL.Roles.Self)(req, res);
         }
         else {

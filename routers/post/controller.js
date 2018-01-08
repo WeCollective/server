@@ -588,6 +588,7 @@ module.exports.get = (req, res) => {
       original_branches: instance.get('original_branches'),
       text: instance.get('text'),
       title: instance.get('title'),
+      userVoted: instance.get('userVoted'),
       profileUrl: instance.get('profileUrl'),
       profileUrlThumb: instance.get('profileUrlThumb'),
     }))

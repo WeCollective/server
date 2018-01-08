@@ -605,6 +605,8 @@ module.exports.getComment = (req, res) => {
     commentid,
     postid,
   } = req.params;
+  let comments;
+  let parent;
 
   if (!postid) {
     return error.BadRequest(res, 'Missing postid');
@@ -614,10 +616,49 @@ module.exports.getComment = (req, res) => {
     return error.BadRequest(res, 'Missing commentid');
   }
 
-  // todo use that post id ...
   return module.exports.getOneComment(commentid, req)
-    .then(comment => success.OK(res, comment))
+    .then(comment => {
+      if (comment === null) {
+        return Promise.reject({
+          message: 'Comment does not exist.',
+          status: 404,
+        });
+      }
+
+      parent = comment;
+
+      return Models.Comment.findByParent(postid, parent.get('id'), 'points', null);
+    })
+    .then(instances => {
+      comments = instances;
+      let promises = [];
+
+      comments.forEach(instance => {
+        const promise = module.exports.getOneComment(instance.get('id'), req)
+          .then(comment => {
+            // todo
+            Object.keys(comment.dataValues).forEach(key => instance.set(key, comment.get(key)));
+            return Promise.resolve();
+          })
+          .catch(err => Promise.reject(err));
+
+        promises = [
+          ...promises,
+          promise,
+        ];
+      });
+
+      return Promise.all(promises);
+    })
+    .then(() => {
+      // todo
+      const data = parent.dataValues;
+      const arr = comments.map(instance => instance.dataValues);
+      data.comments = arr;
+      return success.OK(res, data);
+    })
     .catch(err => {
+      console.error('Error fetching comments:', err);
       if (typeof err === 'object' && err.status) {
         return error.code(res, err.status, err.message);
       }

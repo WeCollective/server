@@ -373,7 +373,7 @@ module.exports.createBranch = (req, res) => {
       // nothing to move as we are already under root,
       // so we can end it here.
       if (parentBranchId === 'root') {
-        return success.OK(res);
+        return Promise.resolve();
       }
 
       mods = mods.map(obj => obj.get('username'));
@@ -388,9 +388,15 @@ module.exports.createBranch = (req, res) => {
         return RequestsController.put(req, res);
       }
 
-      // We need a permission, end it here.
-      return success.OK(res);
+      // We need a permission.
+      return Promise.resolve();
     })
+    // Auto-follow the created branch.
+    .then(() => Models.FollowedBranch.create({
+      branchid: childBranchId,
+      username: creator,
+    }))
+    .then(() => success.OK(res))
     .catch(err => {
       if (typeof err === 'object' && err.status) {
         return error.code(res, err.status, err.message);

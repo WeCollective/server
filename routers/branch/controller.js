@@ -647,7 +647,7 @@ module.exports.getPictureUploadUrl = (req, res, type) => {
     }
     return resolve(url);
   }))
-    .then(url => success(res, url))
+    .then(url => success.OK(res, url))
     .catch(err => {
       console.log('Error getting picture:', err);
       return error.code(res, err.status, err.message);

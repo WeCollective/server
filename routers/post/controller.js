@@ -21,6 +21,7 @@ const {
 
 const {
   PostFlagTypes,
+  PostTypes,
   VoteDirections,
 } = Constants.AllowedValues;
 
@@ -588,6 +589,7 @@ module.exports.get = (req, res) => {
       original_branches: instance.get('original_branches'),
       text: instance.get('text'),
       title: instance.get('title'),
+      url: instance.get('url'),
       userVoted: instance.get('userVoted'),
       profileUrl: instance.get('profileUrl'),
       profileUrlThumb: instance.get('profileUrlThumb'),
@@ -829,6 +831,7 @@ module.exports.getOnePost = (id, req, branchid) => {
       post.set('original_branches', instance.get('original_branches'));
       post.set('text', instance.get('text'));
       post.set('title', instance.get('title'));
+      post.set('url', instance.get('url'));
       return Promise.resolve();
     })
     // Attach post image url to the post.
@@ -1037,6 +1040,7 @@ module.exports.post = (req, res) => {
     text,
     title,
     type,
+    url,
   } = req.body;
   const username = req.user.get('username');
   const date = new Date().getTime();
@@ -1059,6 +1063,7 @@ module.exports.post = (req, res) => {
       text,
       title,
       type,
+      url,
     }))
       .catch(err => console.log(err));
     return error.Forbidden(res);
@@ -1086,6 +1091,14 @@ module.exports.post = (req, res) => {
   }
   else if (branchids.length > 5) {
     return error.BadRequest(res, 'Max 5 tags allowed.');
+  }
+
+  if (!PostTypes.includes(type)) {
+    return error.BadRequest(res, 'Invalid type.');
+  }
+
+  if (url && (!Models.Dynamite.validator.url(url) || ['text', 'poll'].includes(type))) {
+    return error.BadRequest(res, 'Invalid url.');
   }
 
   let promises = [];
@@ -1124,6 +1137,7 @@ module.exports.post = (req, res) => {
         text,
         title,
         type,
+        url,
       };
 
       searchIndexData = data;

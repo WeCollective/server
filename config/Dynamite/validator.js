@@ -27,6 +27,7 @@ const {
 const {
   email,
   id,
+  url,
   whitespace,
 } = Constants.Policy;
 
@@ -98,6 +99,7 @@ const postid = str => checkId('post', str);
 const postImageId = str => checkId('postImage', str) && allowExt(str, [Constants.BranchThumbnailType]);
 const postType = str => allowStr(str, PostTypes);
 const range = (str, min, max) => str && (min === null || str.length >= min) && (max === null || str.length <= max);
+const validateUrl = str => exists(str) && url.test(str);
 const userImageId = str => checkId('userImage', str) && allowExt(str, BranchImageTypes);
 const username = str => checkId('username', str) && !Number(str) && banStr(str, Usernames);
 const validateEmail = str => exists(str) && isEmail(str);
@@ -133,6 +135,7 @@ module.exports = {
   postText: validatePostText,
   postType,
   range,
+  url: validateUrl,
   userImageId,
   username,
   voteDirection,

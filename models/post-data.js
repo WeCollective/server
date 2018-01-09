@@ -14,6 +14,7 @@ module.exports = (Dynamite, validate) => {
       validate: validate.originalBranches,
     },
     text: {
+      allowNull: true,
       defaultValue: null,
       validate: validate.postText,
     },
@@ -27,6 +28,11 @@ module.exports = (Dynamite, validate) => {
     type: {
       defaultValue: null,
       validate: validate.postType,
+    },
+    url: {
+      allowNull: true,
+      defaultValue: null,
+      validate: validate.url,
     },
   });
 

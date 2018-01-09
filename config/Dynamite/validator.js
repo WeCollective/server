@@ -54,6 +54,7 @@ const checkId = (type, str) => {
 };
 
 // EXPORTS.
+const date = int => int && Number.parseInt(int, 10) > 0 && int.toString().length <= timestamp;
 const age = int => date(int) && moment().diff(moment(int), 'years') >= userAgeMin;
 const array = (arr, minEntries = 0) => Array.isArray(arr) && arr.length >= minEntries;
 const boolean = value => typeof value === 'boolean';
@@ -75,7 +76,6 @@ const branchid = (str, branchid) => {
 };
 const branchImageId = str => checkId('branchImage', str) && allowExt(str, BranchImageTypes);
 const commentid = str => checkId('comment', str);
-const date = int => int && Number(int) > 0 && int.toString().length === timestamp;
 const exists = str => !!str;
 const extension = str => allowStr(str.toLowerCase(), ImageExtensions);
 const isEmail = str => email.test(str);

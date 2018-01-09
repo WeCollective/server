@@ -362,7 +362,7 @@ module.exports.put = (req, res) => {
 
   const { user } = req;
 
-  if (dob !== undefined) user.set('dob', Number(dob));
+  if (dob !== undefined) user.set('dob', Number.parseInt(dob, 10));
   if (email !== undefined) user.set('email', email);
   if (name !== undefined) user.set('name', name);
   if (show_nsfw !== undefined) user.set('show_nsfw', show_nsfw === 'true');

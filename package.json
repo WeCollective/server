@@ -4,13 +4,14 @@
   "description": "The RESTful API for WECO.",
   "main": "server.js",
   "scripts": {
+    "build-api": "apidoc -e node_modules/ -o docs/ --private true",
     "deploy:dev": "eb deploy api-dev --profile weco-iam",
     "deploy:production": "eb deploy api-prod --profile weco-iam",
     "deploy:test": "eb deploy api-prod-test --profile weco-iam",
-    "lint": "eslint . .js",
-    "precommit": "npm run lint",
-    "start": "grunt --force",
-    "start-node": "node server.js",
+    "lint": "eslint . .js --ignore-pattern node_modules/ --ignore-pattern docs/",
+    "precommit": "npm-run-all lint build-api",
+    "start": "nodemon --watch",
+    "start:dev": "npm-run-all lint build-api start",
     "test": "mocha tests/test.js"
   },
   "repository": {
@@ -21,6 +22,7 @@
   "license": "ISC",
   "dependencies": {
     "algoliasearch": "^3.24.6",
+    "apidoc": "^0.17.6",
     "app-root-path": "^2.0.1",
     "aws-sdk": "^2.4.0",
     "bcrypt-nodejs": "0.0.3",
@@ -37,6 +39,8 @@
     "lodash": "^4.13.1",
     "morgan": "^1.9.0",
     "node-gyp": "^3.3.1",
+    "nodemon": "^1.14.10",
+    "npm-run-all": "^4.1.2",
     "passport": "^0.3.2",
     "passport-jwt": "^3.0.0",
     "passport-local": "^1.0.0",
@@ -45,16 +49,7 @@
     "socket.io": "^1.4.8"
   },
   "devDependencies": {
-    "apidoc": "^0.16.1",
     "eslint": "^4.11.0",
-    "grunt": "^1.0.1",
-    "grunt-apidoc": "^0.11.0",
-    "grunt-concurrent": "^2.3.0",
-    "grunt-contrib-watch": "^1.0.0",
-    "grunt-exec": "^1.0.0",
-    "grunt-mocha-test": "^0.12.7",
-    "grunt-nodemon": "^0.4.2",
-    "grunt-preprocess": "^5.1.0",
     "husky": "^0.14.3",
     "mocha": "^2.5.3",
     "should": "^9.0.2",
@@ -63,6 +58,10 @@
     "supertest-session": "^2.0.1"
   },
   "apidoc": {
-    "title": "WECO API Documentation"
+    "name": "WECO API",
+    "title": "WECO API Docs",
+    "description": "Documentation for the WE Collective RESTful API.",
+    "version": "1.0.0",
+    "url" : ""
   }
 }

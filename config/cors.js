@@ -32,7 +32,7 @@ module.exports = () => ({
     ];
 
     // Development can access everything, use whitelist otherwise.
-    if (whitelist.includes(origin)) {
+    if (whitelist.includes(origin) || process.env.NODE_ENV !== 'production') {
       callback(null, true);
     }
     else {

@@ -34,7 +34,6 @@ module.exports = (Dynamite, validate) => {
 
   Notification.findByUsername = (username, unreadCount, lastInstance, getAllUnread) => {
     const { TableIndexes } = Notification.config.keys;
-    const limit = getAllUnread !== undefined ? 0 : 20;
 
     if (lastInstance) {
       const tmp = {
@@ -86,7 +85,7 @@ module.exports = (Dynamite, validate) => {
           arr = [];
         }
 
-        const slice = limit ? arr.slice(0, limit) : arr;
+        const slice = getAllUnread ? arr : arr.slice(0, Dynamite.getPaginationLimit(Notification));
         let instances = [];
 
         slice.forEach(data => {

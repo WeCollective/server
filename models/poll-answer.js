@@ -38,7 +38,6 @@ module.exports = (Dynamite, validate) => {
 
   PollAnswer.findByPost = (postid, sortBy, lastInstance) => {
     const { TableIndexes } = PollAnswer.config.keys;
-    const limit = 30;
     let IndexName;
 
     switch (sortBy) {
@@ -66,7 +65,7 @@ module.exports = (Dynamite, validate) => {
       KeyConditionExpression: 'postid = :postid',
       ScanIndexForward: false, // return results highest first
       Select: 'ALL_PROJECTED_ATTRIBUTES',
-    }, limit, PollAnswer, 'slice');
+    }, PollAnswer, 'slice');
   };
 
   return PollAnswer;

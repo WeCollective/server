@@ -47,7 +47,6 @@ module.exports = (Dynamite, validate) => {
 
   Comment.findByParent = (postid, parentid, sortBy, lastInstance) => {
     const { TableIndexes } = Comment.config.keys;
-    const limit = 20;
     let IndexName;
 
     switch(sortBy) {
@@ -92,7 +91,7 @@ module.exports = (Dynamite, validate) => {
       KeyConditionExpression: 'postid = :postid',
       ScanIndexForward: false, // return results highest first
       Select: 'ALL_PROJECTED_ATTRIBUTES',
-    }, limit, Comment, 'slice');
+    }, Comment, 'slice');
   };
 
   return Comment;

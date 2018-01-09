@@ -68,7 +68,6 @@ module.exports = (Dynamite, validate) => {
     if (timeafter === undefined) timeafter = 0;
 
     const { TableIndexes } = Post.config.keys;
-    const limit = 30;
 
     let indexName = TableIndexes[0];
     let params = {};
@@ -157,7 +156,7 @@ module.exports = (Dynamite, validate) => {
       params.ExpressionAttributeValues[':nsfw'] = false;
     }
 
-    return Dynamite.query(params, limit, Post, 'slice');
+    return Dynamite.query(params, Post, 'slice');
   };
 
   Post.findById = id => Dynamite.query({

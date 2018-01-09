@@ -2,6 +2,7 @@ const pluralize = require('pluralize');
 const reqlib = require('app-root-path').require;
 
 const AWS = reqlib('config/Dynamite/aws');
+const Limits = reqlib('config/Dynamite/limits');
 const Model = reqlib('config/Dynamite/model');
 const validator = reqlib('config/Dynamite/validator');
 
@@ -55,6 +56,27 @@ const Dynamite = {
     return keys;
   },
 
+  getPaginationLimit(model) {
+    const { models } = this;
+    switch (model) {
+      case models.Comment:
+        return Limits.comments;
+
+      case models.FlaggedPost:
+      case models.Post:
+        return Limits.posts;
+
+      case models.Notification:
+        return Limits.notifications;
+
+      case models.PollAnswer:
+        return Limits.pollAnswers;
+
+      default:
+        return 0;
+    }
+  },
+
   import(path) {
     const name = require(path)(this, validator).name;
     return this.models[name];
@@ -74,10 +96,9 @@ const Dynamite = {
       queryParams.TableName = caller.config.table;
     }
 
-    const limit = caller && handler && params.length > 3 ? params[params.length - 3] : null;
-
     return new Promise((resolve, reject) => this.aws.dbClient.query(queryParams, (err, data) => {
       if (caller && handler) {
+        const limit = caller && handler === 'slice' ? this.getPaginationLimit(caller) : 0;
         return caller
           .responseHandler(handler, err, data, queryParams, limit)
           .then(res => resolve(res))

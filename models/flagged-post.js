@@ -47,7 +47,6 @@ module.exports = (Dynamite, validate) => {
   // Fetch the flagged posts on a specific branch
   FlaggedPost.findByBranch = (branchid, timeafter, nsfw, sortBy, stat, postType, lastInstance) => {
     const { TableIndexes } = FlaggedPost.config.keys;
-    const limit = 30;
     let index;
 
     switch (sortBy) {
@@ -123,7 +122,7 @@ module.exports = (Dynamite, validate) => {
       }
     }
 
-    return Dynamite.query(params, limit, FlaggedPost, 'slice');
+    return Dynamite.query(params, FlaggedPost, 'slice');
   };
 
   FlaggedPost.findById = id => Dynamite.query({

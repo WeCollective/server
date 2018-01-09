@@ -39,7 +39,7 @@ app.get(`${version}/proxy`, (req, res) => {
   if (url_parts.protocol !== 'http:') {
     return error.BadRequest(res, 'Only http resources can be proxied');
   }
-  
+
   http.get(url, response => {
     if (response.statusCode === 200) {
       res.writeHead(200, {

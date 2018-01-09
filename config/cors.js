@@ -32,7 +32,8 @@ module.exports = () => ({
     ];
 
     // Development can access everything, use whitelist otherwise.
-    if (whitelist.includes(origin) || process.env.NODE_ENV !== 'production') {
+    // We allow undefined so the proxy requests get through as well.
+    if (whitelist.includes(origin) || origin === undefined || process.env.NODE_ENV !== 'production') {
       callback(null, true);
     }
     else {

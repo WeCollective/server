@@ -35,6 +35,7 @@ module.exports = (Dynamite, validate) => {
       validate: validate.number,
     },
     locked: {
+      allowNull: true,
       defaultValue: null,
       validate: validate.boolean,
     },

@@ -111,13 +111,20 @@ const PostFlagResponseTypes = [
   PostFlagResponseMarkPostNSFW,
 ];
 
+const PostTypeAudio = 'audio';
+const PostTypeImage = 'image';
+const PostTypePage = 'page';
+const PostTypePoll = 'poll';
+const PostTypeText = 'text';
+const PostTypeVideo = 'video';
+
 const PostTypes = [
-  'audio',
-  'image',
-  'page',
-  'poll',
-  'text',
-  'video',
+  PostTypeAudio,
+  PostTypeImage,
+  PostTypePage,
+  PostTypePoll,
+  PostTypeText,
+  PostTypeVideo,
 ];
 
 // These are used in user image urls and routes.
@@ -199,4 +206,6 @@ module.exports = {
   PostFlagResponseDeletePost,
   PostFlagResponseKeepPost,
   PostFlagResponseMarkPostNSFW,
+  PostTypePoll,
+  PostTypeText,
 };

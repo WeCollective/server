@@ -32,6 +32,7 @@ const {
 } = Constants.Policy;
 
 // HELPERS.
+const exists = str => str !== undefined;
 const allowExt = (str, allowArr) => {
   for (let i = 0; i < allowArr.length; i += 1) {
     if (str.endsWith(`-${allowArr[i]}`)) {
@@ -40,8 +41,8 @@ const allowExt = (str, allowArr) => {
   }
   return false;
 };
-const allowStr = (str, allowArr) => str && typeof str === 'string' && allowArr.includes(str);
-const banStr = (str, banArr) => str && typeof str === 'string' && !banArr.includes(str);
+const allowStr = (str, allowArr) => exists(str) && typeof str === 'string' && allowArr.includes(str);
+const banStr = (str, banArr) => exists(str) && typeof str === 'string' && !banArr.includes(str);
 const checkId = (type, str) => {
   const maxLen = Constants.EntityLimits[type];
 
@@ -49,7 +50,7 @@ const checkId = (type, str) => {
     throw new Error(`Id type "${type}" is missing maximum length definition.`);
   }
 
-  return !!(str && typeof str === 'string' &&
+  return !!(exists(str) && typeof str === 'string' &&
     str.length > 0 && str.length <= maxLen &&
     !whitespace.test(str) && id.test(str));
 };
@@ -77,10 +78,9 @@ const branchid = (str, branchid) => {
 };
 const branchImageId = str => checkId('branchImage', str) && allowExt(str, BranchImageTypes);
 const commentid = str => checkId('comment', str);
-const exists = str => !!str;
 const extension = str => allowStr(str.toLowerCase(), ImageExtensions);
 const isEmail = str => email.test(str);
-const length = (str, len) => str && typeof str === 'string' && str.length === len;
+const length = (str, len) => exists(str) && typeof str === 'string' && str.length === len;
 const modLogAction = str => allowStr(str, ModLogActionTypes);
 const notificationid = str => checkId('notification', str);
 const notificationType = int => exists(NotificationTypes[int]);
@@ -98,7 +98,7 @@ const pollanswerid = str => checkId('pollAnswer', str);
 const postid = str => checkId('post', str);
 const postImageId = str => checkId('postImage', str) && allowExt(str, [Constants.BranchThumbnailType]);
 const postType = str => allowStr(str, PostTypes);
-const range = (str, min, max) => str && (min === null || str.length >= min) && (max === null || str.length <= max);
+const range = (str, min, max) => exists(str) && typeof str === 'string' && (min === null || str.length >= min) && (max === null || str.length <= max);
 const validateUrl = str => exists(str) && url.test(str);
 const userImageId = str => checkId('userImage', str) && allowExt(str, BranchImageTypes);
 const username = str => checkId('username', str) && !Number(str) && banStr(str, Usernames);

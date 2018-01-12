@@ -11,6 +11,13 @@ const Models = reqlib('models/');
 const NotificationTypes = reqlib('config/notification-types');
 const success = reqlib('responses/successes');
 
+const { validator } = Models.Dynamite;
+
+const {
+  PostTypePoll,
+  PostTypeText,
+} = Constants;
+
 const {
   createCommentId,
   createNotificationId,
@@ -21,7 +28,6 @@ const {
 
 const {
   PostFlagTypes,
-  PostTypes,
   VoteDirections,
 } = Constants.AllowedValues;
 
@@ -1069,6 +1075,14 @@ module.exports.post = (req, res) => {
     return error.Forbidden(res);
   }
 
+  if (!validator.postType(type)) {
+    return error.BadRequest(res, 'Invalid type.');
+  }
+
+  if (!validator.postText(text) || (type === PostTypeText && !text.length)) {
+    return error.BadRequest(res, 'Invalid text.');
+  }
+
   if (!title || title.length > postTitle) {
     return error.BadRequest(res, 'Invalid title.');
   }
@@ -1093,12 +1107,12 @@ module.exports.post = (req, res) => {
     return error.BadRequest(res, 'Max 5 tags allowed.');
   }
 
-  if (!PostTypes.includes(type)) {
-    return error.BadRequest(res, 'Invalid type.');
+  if (url && (!validator.url(url) || [PostTypeText, PostTypePoll].includes(type))) {
+    return error.BadRequest(res, 'Invalid url.');
   }
 
-  if (url && (!Models.Dynamite.validator.url(url) || ['text', 'poll'].includes(type))) {
-    return error.BadRequest(res, 'Invalid url.');
+  if (type !== PostTypePoll) {
+    locked = false;
   }
 
   let promises = [];

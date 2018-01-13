@@ -1,6 +1,5 @@
 const reqlib = require('app-root-path').require;
 
-const error = reqlib('responses/errors');
 const Models = reqlib('models/');
 
 /**
@@ -78,7 +77,10 @@ const allowAccess = (role, branchid) => (req, res, next) => {
         req.ACLRole = role;
         return next();
       })
-      .catch(err => error.code(res, err.status, err.message));
+      .catch(err => {
+        req.error = err;
+        return next(JSON.stringify(req.error));
+      });
   }
 
   // Global administratos must be authenticated and be mods of the root branch.
@@ -88,10 +90,13 @@ const allowAccess = (role, branchid) => (req, res, next) => {
         req.ACLRole = role;
         return next();
       })
-      .catch(err => error.code(res, err.status, err.message));
+      .catch(err => {
+        req.error = err;
+        return next(JSON.stringify(req.error));
+      });
   }
 
-  return error.InternalServerError(res);
+  return next(JSON.stringify(req.error));
 };
 
 module.exports = {

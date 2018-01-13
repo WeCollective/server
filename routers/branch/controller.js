@@ -2,12 +2,10 @@ const reqlib = require('app-root-path').require;
 
 const algolia = reqlib('config/algolia');
 const Constants = reqlib('config/constants');
-const error = reqlib('responses/errors');
 const fs = reqlib('config/filestorage');
 const mailer = reqlib('config/mailer');
 const Models = reqlib('models/');
 const RequestsController = reqlib('routers/requests/controller');
-const success = reqlib('responses/successes');
 
 const {
   BranchCoverType,
@@ -259,7 +257,7 @@ const detachBranch = branch => {
     });
 };
 
-module.exports.createBranch = (req, res) => {
+module.exports.createBranch = (req, res, next) => {
   const {
     id: childBranchId,
     name,
@@ -396,16 +394,21 @@ module.exports.createBranch = (req, res) => {
       branchid: childBranchId,
       username: creator,
     }))
-    .then(() => success.OK(res))
+    .then(() => next())
     .catch(err => {
       if (typeof err === 'object' && err.status) {
-        return error.code(res, err.status, err.message);
+        req.error = err;
+        return next(JSON.stringify(req.error));
       }
-      return error.InternalServerError(res, err);
+
+      req.error = {
+        message: err,
+      };
+      return next(JSON.stringify(req.error));
     });
 };
 
-module.exports.delete = (req, res) => {
+module.exports.delete = (req, res, next) => {
   const { child: childBranch } = req.query;
   const { branchid: parentBranch } = req.params;
 
@@ -447,7 +450,7 @@ module.exports.delete = (req, res) => {
         }
 
         return Promise.reject({
-          code: 403,
+          status: 403,
           message: 'You cannot delete the root branch.',
         });
       }
@@ -459,7 +462,7 @@ module.exports.delete = (req, res) => {
         }
 
         return Promise.reject({
-          code: 403,
+          status: 403,
           message: `b/${childBranch} is not a direct child branch of b/${parentBranch}.`,
         });
       }
@@ -467,22 +470,27 @@ module.exports.delete = (req, res) => {
       // Delete this branch.
       return deleteBranch(branch);
     })
-    .then(() => success.OK(res))
+    .then(() => next(res))
     .catch(err => {
       if (typeof err === 'object' && err.status) {
-        return error.code(res, err.status, err.message);
+        req.error = err;
+        return next(JSON.stringify(req.error));
       }
 
-      return error.InternalServerError(res);
+      return next(JSON.stringify(req.error));
     });
 };
 
-module.exports.get = (req, res) => {
+module.exports.get = (req, res, next) => {
   const { branchid } = req.params;
   let branch;
 
   if (!branchid) {
-    return error.BadRequest(res, 'Missing branchid');
+    req.error = {
+      message: 'Missing branchid.',
+      status: 400,
+    };
+    return next(JSON.stringify(req.error));
   }
 
   return Models.Branch.findById(branchid)
@@ -521,15 +529,23 @@ module.exports.get = (req, res) => {
       branch.set('coverUrl', values[2]);
       branch.set('coverUrlThumb', values[3]);
       // todo
-      return success.OK(res, branch.dataValues);
+      res.locals.data = branch.dataValues;
+      return next();
     })
     .catch(err => {
       if (err) {
         console.error('Error fetching branch:', err);
-        return error.InternalServerError(res);
+        req.error = {
+          message: err,
+          status: 400,
+        };
+        return next(JSON.stringify(req.error));
       }
 
-      return error.NotFound(res);
+      req.error = {
+        status: 404,
+      };
+      return next(JSON.stringify(req.error));
     });
 };
 
@@ -570,31 +586,49 @@ module.exports.getBranchPicture = (branchid, type, thumbnail = false) => {
     });
 };
 
-module.exports.getModLog = (req, res) => {
+module.exports.getModLog = (req, res, next) => {
   const { branchid } = req.params; 
 
   if (!branchid) {
-    return error.BadRequest(res, 'Missing branchid');
+    req.error = {
+      message: 'Missing branchid.',
+      status: 400,
+    };
+    return next(JSON.stringify(req.error));
   }
 
   return Models.ModLog.findByBranch(branchid)
     // todo
-    .then(logs => success.OK(res, logs.map(instance => instance.dataValues)))
+    .then(logs => {
+      res.locals.data = logs.map(instance => instance.dataValues);
+      return next();
+    })
     .catch(err => {
       console.error('Error fetching mod log:', err);
-      return error.InternalServerError(res);
+      req.error = {
+        message: err,
+      };
+      return next(JSON.stringify(req.error));
     });
 };
 
-module.exports.getPicture = (req, res, type, thumbnail) => {
+module.exports.getPicture = (req, res, next, type, thumbnail) => {
   const { branchid } = req.params;
 
   if (!branchid) {
-    return error.BadRequest(res, 'Invalid branchid.');
+    req.error = {
+      message: 'Invalid branchid.',
+      status: 400,
+    };
+    return next(JSON.stringify(req.error));
   }
 
   if (!BranchImageTypes.includes(type)) {
-    return error.BadRequest(res, 'Invalid picture type.');
+    req.error = {
+      message: 'Invalid picture type.',
+      status: 400,
+    };
+    return next(JSON.stringify(req.error));
   }
 
   let size;
@@ -625,22 +659,34 @@ module.exports.getPicture = (req, res, type, thumbnail) => {
         return resolve(url);
       }));
     })
-    .then(url => success.OK(res, url))
+    .then(url => {
+      res.locals.data = url;
+      return next();
+    })
     .catch(err => {
       console.log('Error getting picture:', err);
-      return error.code(res, err.status, err.message);
+      req.error = err;
+      return next(JSON.stringify(req.error));
     });
 };
 
-module.exports.getPictureUploadUrl = (req, res, type) => {
+module.exports.getPictureUploadUrl = (req, res, next, type) => {
   const { branchid } = req.params;
 
   if (!branchid) {
-    return error.BadRequest(res, 'Invalid branchid.');
+    req.error = {
+      message: 'Invalid branchid.',
+      status: 400,
+    };
+    return next(JSON.stringify(req.error));
   }
 
   if (!BranchImageTypes.includes(type)) {
-    return error.BadRequest(res, 'Invalid picture type.');
+    req.error = {
+      message: 'Invalid picture type.',
+      status: 400,
+    };
+    return next(JSON.stringify(req.error));
   }
 
   return new Promise((resolve, reject) => Models.Dynamite.aws.s3Client.getSignedUrl('putObject', {
@@ -653,14 +699,18 @@ module.exports.getPictureUploadUrl = (req, res, type) => {
     }
     return resolve(url);
   }))
-    .then(url => success.OK(res, url))
+    .then(url => {
+      res.locals.data = url;
+      return next();
+    })
     .catch(err => {
       console.log('Error getting picture:', err);
-      return error.code(res, err.status, err.message);
+      req.error = err;
+      return next(JSON.stringify(req.error));
     });
 };
 
-module.exports.getSubbranches = (req, res) => {
+module.exports.getSubbranches = (req, res, next) => {
   const { branchid } = req.params;
   const {
     lastBranchId,
@@ -668,11 +718,19 @@ module.exports.getSubbranches = (req, res) => {
   } = req.query;
 
   if (!branchid) {
-    return error.BadRequest(res, 'Missing branchid');
+    req.error = {
+      message: 'Mising branchid.',
+      status: 400,
+    };
+    return next(JSON.stringify(req.error));
   }
 
   if (!timeafter) {
-    return error.BadRequest(res, 'Missing timeafter');
+    req.error = {
+      message: 'Missing timeafter.',
+      status: 400,
+    };
+    return next(JSON.stringify(req.error));
   }
 
   // const branch = new Branch();
@@ -687,7 +745,7 @@ module.exports.getSubbranches = (req, res) => {
       return Models.Branch.findById(lastBranchId)
         .then(instance => {
           if (instance === null) {
-            return Promise.reject({ code: 404 });
+            return Promise.reject({ status: 404 });
           }
 
           lastBranch = instance;
@@ -743,25 +801,31 @@ module.exports.getSubbranches = (req, res) => {
 
       return Promise.all(promises);
     })
-    .then(() => success.OK(res, branches.map(instance => ({
-      creator: instance.get('creator'),
-      date: instance.get('date'),
-      id: instance.get('id'),
-      name: instance.get('name'),
-      parentid: instance.get('parentid'),
-      post_comments: instance.get('post_comments'),
-      post_count: instance.get('post_count'),
-      post_points: instance.get('post_points'),
-      profileUrl: instance.get('profileUrl'),
-      profileUrlThumb: instance.get('profileUrlThumb'),
-    }))))
+    .then(() => {
+      res.locals.data = branches.map(instance => ({
+        creator: instance.get('creator'),
+        date: instance.get('date'),
+        id: instance.get('id'),
+        name: instance.get('name'),
+        parentid: instance.get('parentid'),
+        post_comments: instance.get('post_comments'),
+        post_count: instance.get('post_count'),
+        post_points: instance.get('post_points'),
+        profileUrl: instance.get('profileUrl'),
+        profileUrlThumb: instance.get('profileUrlThumb'),
+      }));
+      return next();
+    })
     .catch(err => {
       console.error('Error fetching subbranches:', err);
-      return error.InternalServerError(res);
+      req.error = {
+        message: err,
+      };
+      return next(JSON.stringify(req.error));
     });
 };
 
-module.exports.put = (req, res) => {
+module.exports.put = (req, res, next) => {
   const {
     description,
     name,
@@ -771,7 +835,11 @@ module.exports.put = (req, res) => {
   let branch;
 
   if (!branchid) {
-    return error.BadRequest(res, 'Invalid branchid.');
+    req.error = {
+      message: 'Invalid branchid.',
+      status: 400,
+    };
+    return next(JSON.stringify(req.error));
   }
 
   return Models.Branch.findById(branchid)
@@ -792,6 +860,11 @@ module.exports.put = (req, res) => {
     // Update branch in the search index.
     // todo
     .then(() => algolia.updateObjects(branch.dataValues, 'branch'))
-    .then(() => success.OK(res))
-    .catch(() => error.InternalServerError(res));
+    .then(() => next())
+    .catch(err => {
+      req.error = {
+        message: err,
+      };
+      return next(JSON.stringify(req.error));
+    });
 };

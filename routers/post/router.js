@@ -2,7 +2,6 @@ const express = require('express');
 const reqlib = require('app-root-path').require;
 
 const ACL = reqlib('config/acl');
-const error = reqlib('responses/errors');
 
 const router = express.Router();
 
@@ -163,7 +162,7 @@ module.exports = () => {
      * @apiUse NotFound
      * @apiUse InternalServerError
      */
-    .get(ACL.allow(ACL.Roles.Guest), (req, res) => controller.getPicture(req, res, false));
+    .get(ACL.allow(ACL.Roles.Guest), (req, res, next) => controller.getPicture(req, res, next, false));
 
   router.route('/:postid/picture-thumb')
     /**
@@ -187,7 +186,7 @@ module.exports = () => {
      * @apiUse NotFound
      * @apiUse InternalServerError
      */
-    .get(ACL.allow(ACL.Roles.Guest), (req, res) => controller.getPicture(req, res, true));
+    .get(ACL.allow(ACL.Roles.Guest), (req, res, next) => controller.getPicture(req, res, next, true));
 
   router.route('/:postid/flag')
     /**
@@ -360,7 +359,7 @@ module.exports = () => {
      * @apiUse NotFound
      * @apiUse InternalServerError
      */
-    .put(ACL.allow(ACL.Roles.User), (req, res) => {
+    .put(ACL.allow(ACL.Roles.User), (req, res, next) => {
       if (req.body.vote) {
         return controller.voteComment(req, res);
       }
@@ -369,7 +368,11 @@ module.exports = () => {
         return controller.editComment(req, res);
       }
 
-      return error.BadRequest(res, 'Must specify either vote or text in body');
+      req.error = {
+        message: 'Must specify either vote or text in body.',
+        status: 400,
+      };
+      return next(JSON.stringify(req.error));
     });
 
   return router;

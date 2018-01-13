@@ -4,9 +4,6 @@ const reqlib = require('app-root-path').require;
 const Models = reqlib('models/');
 const NotificationTypes = reqlib('config/notification-types');
 
-const error = reqlib('responses/errors');
-const success = reqlib('responses/successes');
-
 const save = (parentBranchId, childBranchId, creator) => {
   const date = new Date().getTime();
   let uniqueMods;
@@ -80,19 +77,19 @@ const put = {
 
     if (!req.user.get('username')) {
       console.error('No username found in session.');
-      return Promise.reject({ code: 500 });
+      return Promise.reject({ status: 500 });
     }
 
     if (!req.body.action) {
       return Promise.reject({
-        code: 400,
+        status: 400,
         message: 'Missing action parameter.',
       });
     }
 
     if (!allowedActions.includes(req.body.action)) {
       return Promise.reject({
-        code: 400,
+        status: 400,
         message: 'Invalid action parameter.',
       });
     }
@@ -101,22 +98,29 @@ const put = {
   },
 };
 
-module.exports.get = (req, res) => {
+module.exports.get = (req, res, next) => {
   const { branchid } = req.params;
   return Models.SubBranchRequest.findByBranch(branchid)
     // todo
-    .then(requests => success.OK(res, requests.map(instance => instance.dataValues)))
+    .then(requests => {
+      res.locals.data = requests.map(instance => instance.dataValues);
+      return next();
+    })
     .catch(err => {
       console.log(err);
       if (typeof err === 'object' && err.code) {
-        return error.code(res, err.code, err.message);
+        req.error = err;
+        return next(JSON.stringify(req.error));
       }
 
-      return error.InternalServerError(res);
+      req.error = {
+        message: err,
+      };
+      return next(JSON.stringify(req.error));
     });
 };
 
-module.exports.post = (req, res) => {
+module.exports.post = (req, res, next) => {
   const {
     childid: childBranchId,
     branchid: parentBranchId,
@@ -131,7 +135,7 @@ module.exports.post = (req, res) => {
     .then(instance => {
       if (instance === null) {
         return Promise.reject({
-          code: 400,
+          status: 400,
           message: `Branch ${parentBranchId} does not exist.`,
         });
       }
@@ -143,7 +147,7 @@ module.exports.post = (req, res) => {
     .then(instance => {
       if (instance === null) {
         return Promise.reject({
-          code: 400,
+          status: 400,
           message: `Branch ${childBranchId} does not exist.`,
         });
       }
@@ -152,7 +156,7 @@ module.exports.post = (req, res) => {
 
       if (parentBranch.get('id') === childBranch.get('parentid')) {
         return Promise.reject({
-          code: 400,
+          status: 400,
           message: `${parentBranch.get('id')} is already a parent of ${childBranch.get('id')}`,
         });
       }
@@ -171,7 +175,7 @@ module.exports.post = (req, res) => {
 
       if (tagsParentBranch.includes(childBranchId)) {
         return Promise.reject({
-          code: 400,
+          status: 400,
           message: `Cannot submit request: ${parentBranchId} is a child branch of ${childBranchId}`,
         });
       }
@@ -183,7 +187,7 @@ module.exports.post = (req, res) => {
     .then(instances => {
       if (instances.length) {
         return Promise.reject({
-          code: 400,
+          status: 400,
           message: 'This request already exists',
         });
       }
@@ -215,19 +219,23 @@ module.exports.post = (req, res) => {
         return module.exports.put(req, res);
       }
 
-      return success.OK(res);
+      return next();
     })
     .catch(err => {
       console.error('Error creating subbranch request:', err);
       if (typeof err === 'object' && err.code) {
-        return error.code(res, err.code, err.message);
+        req.error = err;
+        return next(JSON.stringify(req.error));
       }
 
-      return error.InternalServerError(res);
+      req.error = {
+        message: err,
+      };
+      return next(JSON.stringify(req.error));
     });
 };
 
-module.exports.put = (req, res) => {
+module.exports.put = (req, res, next) => {
   const {
     branchid: parentBranchId,
     childid: childBranchId,
@@ -279,7 +287,7 @@ module.exports.put = (req, res) => {
     .then(instances => {
       if (!instances.length) {
         return Promise.reject({
-          code: 404,
+          status: 404,
           message: 'The subbranch request does not exist.',
         });
       }
@@ -311,7 +319,7 @@ module.exports.put = (req, res) => {
 
           if (tagsParentBranch.includes(childBranchId)) {
             return Promise.reject({
-              code: 400,
+              status: 400,
               message: `Cannot accept request: ${parentBranchId} is a child branch of ${childBranchId}`,
             });
           }
@@ -478,16 +486,23 @@ module.exports.put = (req, res) => {
     }))
     // Inform the request creator about the decision.
     .then(() => createSubbranchRequestCreatorNotification())
-    .then(() => success.OK(res))
+    .then(() => next())
     .catch(err => {
       if (err) {
         if (typeof err === 'object' && err.code) {
-          return error.code(res, err.code, err.message);
+          req.error = err;
+          return next(JSON.stringify(req.error));
         }
 
-        return error.InternalServerError(res);
+        req.error = {
+          message: err,
+        };
+        return next(JSON.stringify(req.error));
       }
 
-      return error.NotFound(res);
+      req.error = {
+        status: 404,
+      };
+      return next(JSON.stringify(req.error));
     });
 };

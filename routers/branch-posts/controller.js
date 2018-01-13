@@ -3,11 +3,9 @@ const reqlib = require('app-root-path').require;
 const algolia = reqlib('config/algolia');
 const ACL = reqlib('config/acl');
 const Constants = reqlib('config/constants');
-const error  = reqlib('responses/errors');
 const Models = reqlib('models/');
 const NotificationTypes = reqlib('config/notification-types');
 const PostCtrl = reqlib('routers/post/controller');
-const success = reqlib('responses/successes');
 
 const {
   PostFlagPostViolatesSiteRules,
@@ -47,7 +45,7 @@ const VALID_SORT_BY_USER_VALUES = [
 // Authenticated users can choose to see nsfw posts.
 const userCanDisplayNSFWPosts = req => req.user ? !!req.user.get('show_nsfw') : false;
 
-module.exports.resolveFlag = (req, res) => {
+module.exports.resolveFlag = (req, res, next) => {
   const {
     action,
     message,
@@ -62,23 +60,43 @@ module.exports.resolveFlag = (req, res) => {
   const username = req.user.get('username');
 
   if (!branchid) {
-    return error.BadRequest(res, 'Invalid branchid.');
+    req.error = {
+      message: 'Invalid branchid.',
+      status: 400,
+    };
+    return next(JSON.stringify(req.error));
   }
 
   if (!postid) {
-    return error.BadRequest(res, 'Invalid postid.');
+    req.error = {
+      message: 'Invalid postid.',
+      status: 400,
+    };
+    return next(JSON.stringify(req.error));
   }
 
   if (!PostFlagResponseTypes.includes(action)) {
-    return error.BadRequest(res, 'Invalid action parameter.');
+    req.error = {
+      message: 'Invalid action parameter.',
+      status: 400,
+    };
+    return next(JSON.stringify(req.error));
   }
 
   if (action === PostFlagResponseChangePostType && !type) {
-    return error.BadRequest(res, 'Missing type parameter.');
+    req.error = {
+      message: 'Missing type parameter.',
+      status: 400,
+    };
+    return next(JSON.stringify(req.error));
   }
 
   if (action === PostFlagResponseDeletePost && !reason) {
-    return error.BadRequest(res, 'Missing reason parameter.');
+    req.error = {
+      message: 'Missing reason parameter.',
+      status: 400,
+    };
+    return next(JSON.stringify(req.error));
   }
 
   switch (action) {
@@ -88,13 +106,20 @@ module.exports.resolveFlag = (req, res) => {
         branchid,
         id: postid,
       })
-        .then(() => success.OK(res))
+        .then(() => next())
         .catch(err => {
           if (err) {
             console.error('Error fetching post on branch:', err);
-            return error.InternalServerError(res);
+            req.error = {
+              message: err,
+            };
+            return next(JSON.stringify(req.error));
           }
-          return error.NotFound(res);
+
+          req.error = {
+            status: 404,
+          };
+          return next(JSON.stringify(req.error));
         });
     }
 
@@ -196,10 +221,11 @@ module.exports.resolveFlag = (req, res) => {
             user,
           });
         })
-        .then(() => success.OK(res))
+        .then(() => next())
         .catch(err => {
           console.error('Error resolving flag:', err);
-          return error.code(res, err.status, err.message);
+          req.error = err;
+          return next(JSON.stringify(req.error));
         });
     }
 
@@ -320,19 +346,26 @@ module.exports.resolveFlag = (req, res) => {
 
           return Promise.resolve();
         })
-        .then(() => success.OK(res))
+        .then(() => next())
         .catch(err => {
           console.error('Error resolving flag:', err);
-          return error.InternalServerError(res);
+          req.error = {
+            message: err,
+          };
+          return next(JSON.stringify(req.error));
         });
     }
 
     default:
-      return error.BadRequest(res, 'Invalid action parameter');
+      req.error = {
+        message: 'Invalid action parameter.',
+        status: 400,
+      };
+      return next(JSON.stringify(req.error));
   }
 };
 
-module.exports.get = (req, res) => {
+module.exports.get = (req, res, next) => {
   const {
     flag,
     lastPostId,
@@ -357,15 +390,27 @@ module.exports.get = (req, res) => {
   let posts = [];
 
   if (!branchid) {
-    return error.BadRequest(res, 'Missing branchid parameter');
+    req.error = {
+      message: 'Missing branchid parameter.',
+      status: 400,
+    };
+    return next(JSON.stringify(req.error));
   }
   
   if (!VALID_POST_TYPE_VALUES.includes(opts.postType)) {
-    return error.BadRequest(res, 'Invalid postType parameter');
+    req.error = {
+      message: 'Invalid postType parameter.',
+      status: 400,
+    };
+    return next(JSON.stringify(req.error));
   }
 
   if (!validSortByValues.includes(opts.sortBy)) {
-    return error.BadRequest(res, 'Invalid sortBy parameter');
+    req.error = {
+      message: 'Invalid sortBy parameter.',
+      status: 400,
+    };
+    return next(JSON.stringify(req.error));
   }
   
   return new Promise((resolve, reject) => {
@@ -394,7 +439,7 @@ module.exports.get = (req, res) => {
             return reject(err);
           }
 
-          return reject({ code: 404 });
+          return reject({ status: 404 });
         });
     }
     
@@ -405,7 +450,7 @@ module.exports.get = (req, res) => {
     .then(() => new Promise((resolve, reject) => {
       if (getFlaggedPosts) {
         if (!req.user) {
-          return reject({ code: 403 });
+          return reject({ status: 403 });
         }
 
         // User must be a mod.
@@ -453,31 +498,45 @@ module.exports.get = (req, res) => {
           Object.assign({}, instance.dataValues),
         ];
       });
-      return success.OK(res, results);
+
+      res.locals.data = results;
+      return next();
     })
     .catch(err => {
       console.error('Error fetching posts:', err);
 
-      if (typeof err === 'object' && err.code) {
-        return error.code(res, err.code, err.message);
+      if (typeof err === 'object' && err.status) {
+        req.error = err;
+        return next(JSON.stringify(req.error));
       }
 
-      return error.InternalServerError(res);
+      req.error = {
+        message: err,
+      };
+      return next(JSON.stringify(req.error));
     });
 };
 
-module.exports.getPost = (req, res) => {
+module.exports.getPost = (req, res, next) => {
   const {
     branchid,
     postid,
   } = req.params;
 
   if (!branchid) {
-    return error.BadRequest(res, 'Missing branchid');
+    req.error = {
+      message: 'Missing branchid.',
+      status: 400,
+    };
+    return next(JSON.stringify(req.error));
   }
 
   if (!postid) {
-    return error.BadRequest(res, 'Missing postid');
+    req.error = {
+      message: 'Missing postid.',
+      status: 400,
+    };
+    return next(JSON.stringify(req.error));
   }
 
   return Models.Post.findByPostAndBranchIds(postid, branchid)
@@ -486,20 +545,28 @@ module.exports.getPost = (req, res) => {
         return Promise.reject();
       }
 
-      return success.OK(res, instance.dataValues);
+      // todo
+      res.locals.data = instance.dataValues;
+      return next();
     })
     .catch(err => {
       console.error('Error fetching post on branch:', err);
 
       if (err) {
-        return error.InternalServerError(res);
+        req.error = {
+          message: err,
+        };
+        return next(JSON.stringify(req.error));
       }
 
-      return error.NotFound(res);
+      req.error = {
+        status: 404,
+      };
+      return next(JSON.stringify(req.error));
     });
 };
 
-module.exports.put = (req, res) => {
+module.exports.put = (req, res, next) => {
   const {
     branchid,
     postid,
@@ -512,15 +579,27 @@ module.exports.put = (req, res) => {
   let voteInstance;
 
   if (!branchid) {
-    return error.BadRequest(res, 'Invalid branchid.');
+    req.error = {
+      message: 'Invalid branchid.',
+      status: 400,
+    };
+    return next(JSON.stringify(req.error));
   }
 
   if (!postid) {
-    return error.BadRequest(res, 'Invalid postid.');
+    req.error = {
+      message: 'Invalid postid.',
+      status: 400,
+    };
+    return next(JSON.stringify(req.error));
   }
 
   if (!VoteDirections.includes(vote)) {
-    return error.BadRequest(res, 'Invalid vote.');
+    req.error = {
+      message: 'Invalid vote.',
+      status: 400,
+    };
+    return next(JSON.stringify(req.error));
   }
 
   return Models.UserVote.findByUsernameAndItemId(username, itemid)
@@ -558,7 +637,7 @@ module.exports.put = (req, res) => {
 
       if (!promise) {
         return Promise.reject({
-          code: 400,
+          status: 400,
           message: 'Invalid branchid.',
         });
       }
@@ -607,18 +686,29 @@ module.exports.put = (req, res) => {
         username,
       });
     })
-    .then(() => success.OK(res, resData))
+    .then(() => {
+      res.locals.data = resData;
+      return next();
+    })
     .catch(err => {
       if (err) {
         console.error('Error voting on a post:', err);
 
-        if (typeof err === 'object' && err.code) {
-          return error.code(res, err.code, err.message);
+        if (typeof err === 'object' && err.status) {
+          req.error = err;
+          return next(JSON.stringify(req.error));
         }
 
-        return error.InternalServerError(res);
+        
+        req.error = {
+          message: err,
+        };
+        return next(JSON.stringify(req.error));
       }
 
-      return error.NotFound(res);
+      req.error = {
+        status: 404,
+      };
+      return next(JSON.stringify(req.error));
     });
 };

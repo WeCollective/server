@@ -4,12 +4,10 @@ const request = require('request');
 
 const algolia = reqlib('config/algolia');
 const Constants = reqlib('config/constants');
-const error = reqlib('responses/errors');
 const fs = reqlib('config/filestorage');
 const mailer = reqlib('config/mailer');
 const Models = reqlib('models/');
 const NotificationTypes = reqlib('config/notification-types');
-const success = reqlib('responses/successes');
 
 const { validator } = Models.Dynamite;
 
@@ -137,7 +135,7 @@ const searchImages = node => {
   return resultsArr;
 };
 
-module.exports.delete = (req, res) => {
+module.exports.delete = (req, res, next) => {
   const { postid } = req.params;
   const username = req.user.get('username');
   let branchesToUpdate = [];
@@ -145,7 +143,11 @@ module.exports.delete = (req, res) => {
   let postGlobalPoints = null;
 
   if (!postid) {
-    return error.BadRequest(res, 'Missing postid');
+    req.error = {
+      message: 'Missing postid.',
+      status: 400,
+    };
+    return next(JSON.stringify(req.error));
   }
 
   return Models.PostData.findById(postid)
@@ -243,14 +245,17 @@ module.exports.delete = (req, res) => {
 
       return Promise.all(promises);
     })
-    .then(() => success.OK(res))
+    .then(() => next())
     .catch(err => {
       console.error('Error deleting post: ', err);
-      return error.InternalServerError(res, err);
+      req.error = {
+        message: err,
+      };
+      return next(JSON.stringify(req.error));
     });
 };
 
-module.exports.deleteComment = (req, res) => {
+module.exports.deleteComment = (req, res, next) => {
   const {
     commentid,
     postid,
@@ -259,11 +264,19 @@ module.exports.deleteComment = (req, res) => {
   let comment;
 
   if (!commentid) {
-    return error.BadRequest(res, 'Invalid commentid.');
+    req.error = {
+      message: 'Invalid commentid.',
+      status: 400,
+    };
+    return next(JSON.stringify(req.error));
   }
 
   if (!postid) {
-    return error.BadRequest(res, 'Invalid postid.');
+    req.error = {
+      message: 'Invalid postid.',
+      status: 400,
+    };
+    return next(JSON.stringify(req.error));
   }
 
   return module.exports.getOneComment(commentid, req)
@@ -372,17 +385,21 @@ module.exports.deleteComment = (req, res) => {
 
       return Promise.all(promises);
     })
-    .then(() => success.OK(res))
+    .then(() => next())
     .catch(err => {
       if (typeof err === 'object' && err.status) {
-        return error.code(res, err.status, err.message);
+        req.error = err;
+        return next(JSON.stringify(req.error));
       }
 
-      return error.InternalServerError(res, err);
+      req.error = {
+        message: err,
+      };
+      return next(JSON.stringify(req.error));
     });
 };
 
-module.exports.editComment = (req, res) => {
+module.exports.editComment = (req, res, next) => {
   const {
     commentid,
     postid,
@@ -393,15 +410,27 @@ module.exports.editComment = (req, res) => {
   // const commentData = new CommentData();
 
   if (!postid) {
-    return error.BadRequest(res, 'Invalid postid.');
+    req.error = {
+      message: 'Invalid postid.',
+      status: 400,
+    };
+    return next(JSON.stringify(req.error));
   }
 
   if (!commentid) {
-    return error.BadRequest(res, 'Invalid commentid.');
+    req.error = {
+      message: 'Invalid commentid.',
+      status: 400,
+    };
+    return next(JSON.stringify(req.error));
   }
 
   if (!text) {
-    return error.BadRequest(res, 'Invalid text.');
+    req.error = {
+      message: 'Invalid text.',
+      status: 400,
+    };
+    return next(JSON.stringify(req.error));
   }
 
   // Check if the comment belongs to this post.
@@ -437,17 +466,22 @@ module.exports.editComment = (req, res) => {
       instance.set('text', text);
       return instance.update();
     })
-    .then(() => success.OK(res))
+    .then(() => next())
     .catch(err => {
       console.error('Error editing comment:', err);
       if (typeof err === 'object' && err.status) {
-        return error.code(res, err.status, err.message);
+        req.error = err;
+        return next(JSON.stringify(req.error));
       }
-      return error.InternalServerError(res, err);
+
+      req.error = {
+        message: err,
+      };
+      return next(JSON.stringify(req.error));
     });
 };
 
-module.exports.flagPost = (req, res) => {
+module.exports.flagPost = (req, res, next) => {
   const {
     branchid,
     flag_type,
@@ -458,15 +492,27 @@ module.exports.flagPost = (req, res) => {
   let flag;
 
   if (!postid) {
-    return error.BadRequest(res, 'Missing postid');
+    req.error = {
+      message: 'Missing postid.',
+      status: 400,
+    };
+    return next(JSON.stringify(req.error));
   }
 
   if (!PostFlagTypes.includes(flag_type)) {
-    return error.BadRequest(res, 'Invalid flag_type');
+    req.error = {
+      message: 'Invalid flag_type.',
+      status: 400,
+    };
+    return next(JSON.stringify(req.error));
   }
 
   if (!branchid) {
-    return error.BadRequest(res, 'Missing branchid');
+    req.error = {
+      message: 'Missing branchid.',
+      status: 400,
+    };
+    return next(JSON.stringify(req.error));
   }
 
   // This post might have been flagged already.
@@ -543,27 +589,38 @@ module.exports.flagPost = (req, res) => {
 
       return Promise.all(promises);
     })
-    .then(() => success.OK(res))
+    .then(() => next())
     .catch(err => {
       if (err) {
         console.error('Error flagging post:', err);
-        return error.InternalServerError(res);
+        return next(JSON.stringify(req.error));
       }
 
-      return error.NotFound(res);
+      req.error = {
+        status: 404,
+      };
+      return next(JSON.stringify(req.error));
     });
 };
 
-module.exports.get = (req, res) => {
+module.exports.get = (req, res, next) => {
   const { postid } = req.params;
   const { branchid } = req.query;
 
   if (!postid) {
-    return error.BadRequest(res, 'Missing postid.');
+    req.error = {
+      message: 'Missing postid.',
+      status: 400,
+    };
+    return next(JSON.stringify(req.error));
   }
 
   if (!branchid) {
-    return error.BadRequest(res, 'Missing branchid.');
+    req.error = {
+      message: 'Missing branchid.',
+      status: 400,
+    };
+    return next(JSON.stringify(req.error));
   }
 
   return Models.Post.findByPostAndBranchIds(postid, branchid)
@@ -579,37 +636,41 @@ module.exports.get = (req, res) => {
       // to save time.
       return module.exports.getOnePost(postid, req);
     })
-    .then(instance => success.OK(res, {
-      branchid: instance.get('branchid'),
-      comment_count: instance.get('comment_count'),
-      date: instance.get('date'),
-      global: instance.get('global'),
-      id: instance.get('id'),
-      individual: instance.get('individual'),
-      local: instance.get('local'),
-      locked: instance.get('locked'),
-      nsfw: instance.get('nsfw'),
-      type: instance.get('type'),
-      up: instance.get('up'),
-      creator: instance.get('creator'),
-      original_branches: instance.get('original_branches'),
-      text: instance.get('text'),
-      title: instance.get('title'),
-      url: instance.get('url'),
-      userVoted: instance.get('userVoted'),
-      profileUrl: instance.get('profileUrl'),
-      profileUrlThumb: instance.get('profileUrlThumb'),
-    }))
+    .then(instance => {
+      res.locals.data = {
+        branchid: instance.get('branchid'),
+        comment_count: instance.get('comment_count'),
+        date: instance.get('date'),
+        global: instance.get('global'),
+        id: instance.get('id'),
+        individual: instance.get('individual'),
+        local: instance.get('local'),
+        locked: instance.get('locked'),
+        nsfw: instance.get('nsfw'),
+        type: instance.get('type'),
+        up: instance.get('up'),
+        creator: instance.get('creator'),
+        original_branches: instance.get('original_branches'),
+        text: instance.get('text'),
+        title: instance.get('title'),
+        url: instance.get('url'),
+        userVoted: instance.get('userVoted'),
+        profileUrl: instance.get('profileUrl'),
+        profileUrlThumb: instance.get('profileUrlThumb'),
+      };
+      return next();
+    })
     .catch(err => {
       if (typeof err === 'object' && err.status) {
-        return error.code(res, err.status, err.message);
+        req.error = err;
+        return next(JSON.stringify(req.error));
       }
 
-      return error.InternalServerError(res);
+      return next(JSON.stringify(req.error));
     });
 };
 
-module.exports.getComment = (req, res) => {
+module.exports.getComment = (req, res, next) => {
   const {
     commentid,
     postid,
@@ -618,11 +679,19 @@ module.exports.getComment = (req, res) => {
   let parent;
 
   if (!postid) {
-    return error.BadRequest(res, 'Missing postid');
+    req.error = {
+      message: 'Missing postid.',
+      status: 400,
+    };
+    return next(JSON.stringify(req.error));
   }
 
   if (!commentid) {
-    return error.BadRequest(res, 'Missing commentid');
+    req.error = {
+      message: 'Missing commentid.',
+      status: 400,
+    };
+    return next(JSON.stringify(req.error));
   }
 
   return module.exports.getOneComment(commentid, req)
@@ -664,19 +733,22 @@ module.exports.getComment = (req, res) => {
       const data = parent.dataValues;
       const arr = comments.map(instance => instance.dataValues);
       data.comments = arr;
-      return success.OK(res, data);
+
+      res.locals.data = data;
+      return next();
     })
     .catch(err => {
       console.error('Error fetching comments:', err);
       if (typeof err === 'object' && err.status) {
-        return error.code(res, err.status, err.message);
+        req.error = err;
+        return next(JSON.stringify(req.error));
       }
 
-      return error.InternalServerError(res);
+      return next(JSON.stringify(req.error));
     });
 };
 
-module.exports.getComments = (req, res) => {
+module.exports.getComments = (req, res, next) => {
   const {
     lastCommentId,
     // Get root comments by default.
@@ -689,7 +761,11 @@ module.exports.getComments = (req, res) => {
   let lastInstance = null;
 
   if (!postId) {
-    return error.BadRequest(res, 'Missing postid');
+    req.error = {
+      message: 'Missing postid.',
+      status: 400,
+    };
+    return next(JSON.stringify(req.error));
   }
 
   return new Promise((resolve, reject) => {
@@ -738,15 +814,17 @@ module.exports.getComments = (req, res) => {
     .then(() => {
       // todo
       const arr = comments.map(instance => instance.dataValues);
-      return success.OK(res, { comments: arr });
+      res.locals.data = { comments: arr };
+      return next();
     })
     .catch(err => {
       console.error('Error fetching comments:', err);
       if (typeof err === 'object' && err.status) {
-        return error.code(res, err.status, err.message);
+        req.error = err;
+        return next(JSON.stringify(req.error));
       }
 
-      return error.InternalServerError(res);
+      return next(JSON.stringify(req.error));
     });
 };
 
@@ -875,12 +953,16 @@ module.exports.getOnePost = (id, req, branchid) => {
     });
 };
 
-module.exports.getPicture = (req, res, thumbnail) => {
+module.exports.getPicture = (req, res, next, thumbnail) => {
   const { postid } = req.params;
   const size = thumbnail ? 200 : 640;
 
   if (!postid) {
-    return error.BadRequest(res, 'Invalid postid.');
+    req.error = {
+      message: 'Invalid postid.',
+      status: 400,
+    };
+    return next(JSON.stringify(req.error));
   }
 
   return Models.PostImage.findById(postid)
@@ -905,19 +987,26 @@ module.exports.getPicture = (req, res, thumbnail) => {
         return resolve(url);
       }));
     })
-    .then(url => success.OK(res, url))
+    .then(url => {
+      res.locals.data = url;
+      return next();
+    })
     .catch(err => {
       console.error('Error fetching post image:', err);
-      return error.InternalServerError(res, err);
+      return next(JSON.stringify(req.error));
     });
 };
 
-module.exports.getPictureUploadUrl = (req, res) => {
+module.exports.getPictureUploadUrl = (req, res, next) => {
   const { postid } = req.params;
   const username = req.user.get('username');
 
   if (!postid) {
-    return error.BadRequest(res, 'Invalid postid.');
+    req.error = {
+      message: 'Invalid postid.',
+      status: 400,
+    };
+    return next(JSON.stringify(req.error));
   }
 
   // ensure this user is the creator of the specified post
@@ -952,25 +1041,36 @@ module.exports.getPictureUploadUrl = (req, res) => {
         return resolve(url);
       }));
     })
-    .then(url => success.OK(res, url))
+    .then(url => {
+      res.locals.data = url;
+      return next();
+    })
     .catch(err => {
       console.error('Error fetching post data:', err);
-      return error.InternalServerError(res, err);
+      return next(JSON.stringify(req.error));
     });
 };
 
-module.exports.getPictureUrlSuggestion = (req, res) => {
+module.exports.getPictureUrlSuggestion = (req, res, next) => {
   const { url } = req.query;
   let result = '';
 
   if (!url) {
-    return error.BadRequest(res, 'Missing url.');
+    req.error = {
+      message: 'Missing url.',
+      status: 400,
+    };
+    return next(JSON.stringify(req.error));
   }
 
   const path = url.includes('http') ? url : `https://${url}`;
 
   if (path.length <= 'http://'.length) {
-    return error.BadRequest(res, 'Invalid url.');
+    req.error = {
+      message: 'Missing url.',
+      status: 400,
+    };
+    return next(JSON.stringify(req.error));
   }
 
   return new Promise((resolve, reject) => request(path, (err, res, body) => {
@@ -1010,8 +1110,16 @@ module.exports.getPictureUrlSuggestion = (req, res) => {
     console.log(`Found suggested image at ${result}`);
     return resolve(result);
   }))
-    .then(data => success.OK(res, data))
-    .catch(err => error.InternalServerError(res, err));
+    .then(data => {
+      res.locals.data = data;
+      return next();
+    })
+    .catch(err => {
+      req.error = {
+        message: err,
+      };
+      return next(JSON.stringify(req.error));
+    });
 };
 
 module.exports.getPostPicture = (postid, thumbnail = false) => {
@@ -1035,7 +1143,7 @@ module.exports.getPostPicture = (postid, thumbnail = false) => {
     });
 };
 
-module.exports.post = (req, res) => {
+module.exports.post = (req, res, next) => {
   let {
     branchids,
     locked,
@@ -1072,30 +1180,54 @@ module.exports.post = (req, res) => {
       url,
     }))
       .catch(err => console.log(err));
-    return error.Forbidden(res);
+
+    req.error = {
+      status: 403,
+    };
+    return next(JSON.stringify(req.error));
   }
 
   if (!validator.postType(type)) {
-    return error.BadRequest(res, 'Invalid type.');
+    req.error = {
+      message: 'Invalid type.',
+      status: 400,
+    };
+    return next(JSON.stringify(req.error));
   }
 
   if (!validator.postText(text) || (type === PostTypeText && !text.length)) {
-    return error.BadRequest(res, 'Invalid text.');
+    req.error = {
+      message: 'Invalid text.',
+      status: 400,
+    };
+    return next(JSON.stringify(req.error));
   }
 
   if (!title || title.length > postTitle) {
-    return error.BadRequest(res, 'Invalid title.');
+    req.error = {
+      message: 'Invalid title.',
+      status: 400,
+    };
+    return next(JSON.stringify(req.error));
   }
 
   try {
     branchids = JSON.parse(branchids);
   }
   catch (err) {
-    return error.BadRequest(res, 'Malformed branchids.');
+    req.error = {
+      message: 'Malformed branchids.',
+      status: 400,
+    };
+    return next(JSON.stringify(req.error));
   }
 
   if (!branchids) {
-    return error.BadRequest(res, 'Invalid branchids.');
+    req.error = {
+      message: 'Invalid branchids.',
+      status: 400,
+    };
+    return next(JSON.stringify(req.error));
   }
   else if (!branchids.length) {
     branchids = [
@@ -1104,11 +1236,19 @@ module.exports.post = (req, res) => {
     ];
   }
   else if (branchids.length > 5) {
-    return error.BadRequest(res, 'Max 5 tags allowed.');
+    req.error = {
+      message: 'Max 5 tags allowed.',
+      status: 400,
+    };
+    return next(JSON.stringify(req.error));
   }
 
   if (url && (!validator.url(url) || [PostTypeText, PostTypePoll].includes(type))) {
-    return error.BadRequest(res, 'Invalid url.');
+    req.error = {
+      message: 'Invalid url.',
+      status: 400,
+    };
+    return next(JSON.stringify(req.error));
   }
 
   if (type !== PostTypePoll) {
@@ -1232,19 +1372,22 @@ module.exports.post = (req, res) => {
       itemid: createUserVoteItemId(id, 'post'),
       username,
     }))
-    .then(() => success.OK(res, id))
+    .then(() => {
+      res.locals.data = id;
+      return next();
+    })
     .catch(err => {
       console.error('Error creating post:', err);
 
       if (typeof err === 'object' && err.status) {
-        return error.code(res, err.status, err.message);
+        req.error = err;
       }
 
-      return error.InternalServerError(res);
+      return next(JSON.stringify(req.error));
     });
 };
 
-module.exports.postComment = (req, res) => {
+module.exports.postComment = (req, res, next) => {
   const {
     parentid,
     text,
@@ -1257,11 +1400,19 @@ module.exports.postComment = (req, res) => {
   let posts = [];
 
   if (!parentid) {
-    return error.BadRequest(res, 'Invalid parentid.');
+    req.error = {
+      message: 'Invalid parentid.',
+      status: 400,
+    };
+    return next(JSON.stringify(req.error));
   }
 
   if (!postid) {
-    return error.BadRequest(res, 'Invalid postid.');
+    req.error = {
+      message: 'Invalid postid.',
+      status: 400,
+    };
+    return next(JSON.stringify(req.error));
   }
 
   // Post must exist.
@@ -1436,18 +1587,24 @@ module.exports.postComment = (req, res) => {
       itemid: createUserVoteItemId(id, 'comment'),
       username,
     }))
-    .then(() => success.OK(res, id))
+    .then(() => {
+      res.locals.data = id;
+      return next();
+    })
     .catch(err => {
       if (err) {
         console.error('Error posting comment:', err);
-        return error.InternalServerError(res);
+        return next(JSON.stringify(req.error));
       }
 
-      return error.NotFound(res);
+      req.error = {
+        status: 404,
+      };
+      return next(JSON.stringify(req.error));
     });
 };
 
-module.exports.voteComment = (req, res) => {
+module.exports.voteComment = (req, res, next) => {
   const {
     commentid,
     postid,
@@ -1461,15 +1618,27 @@ module.exports.voteComment = (req, res) => {
   let voteInstance;
 
   if (!postid) {
-    return error.BadRequest(res, 'Invalid postid.');
+    req.error = {
+      message: 'Invalid postid.',
+      status: 400,
+    };
+    return next(JSON.stringify(req.error));
   }
 
   if (!commentid) {
-    return error.BadRequest(res, 'Invalid commentid.');
+    req.error = {
+      message: 'Invalid commentid.',
+      status: 400,
+    };
+    return next(JSON.stringify(req.error));
   }
 
   if (!VoteDirections.includes(vote)) {
-    return error.BadRequest(res, 'Invalid vote parameter.');
+    req.error = {
+      message: 'Invalid vote parameter.',
+      status: 400,
+    };
+    return next(JSON.stringify(req.error));
   }
 
   return Models.Comment.findById(commentid)
@@ -1534,14 +1703,21 @@ module.exports.voteComment = (req, res) => {
         username,
       });
     })
-    .then(() => success.OK(res, resData))
+    .then(() => {
+      res.locals.data = resData;
+      return next();
+    })
     .catch(err => {
       console.error('Error updating comment:', err);
 
       if (typeof err === 'object' && err.status) {
-        return error.code(res, err.status, err.message);
+        req.error = err;
+        return next(JSON.stringify(req.error));
       }
 
-      return error.InternalServerError(res, err);
+      req.error = {
+        message: err,
+      };
+      return next(JSON.stringify(req.error));
     });
 };

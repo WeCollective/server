@@ -1,9 +1,7 @@
 const reqlib = require('app-root-path').require;
 
 const Constants = reqlib('config/constants');
-const error = reqlib('responses/errors');
 const Models = reqlib('models/');
-const success = reqlib('responses/successes');
 
 const {
   createPollAnswerId,
@@ -12,7 +10,7 @@ const {
 
 const { VoteDirections } = Constants.AllowedValues;
 
-module.exports.addAnswer = (req, res) => {
+module.exports.addAnswer = (req, res, next) => {
   const { postid } = req.params;
   const { text } = req.body;
   const date = new Date().getTime();
@@ -62,14 +60,15 @@ module.exports.addAnswer = (req, res) => {
       text,
       votes: 0,
     }))
-    .then(() => success.OK(res))
+    .then(() => next())
     .catch(err => {
       console.log('Error adding a new poll answer:', err);
-      return error.code(res, err.status, err.message);
+      req.error = err;
+      return next(JSON.stringify(req.error));
     });
 };
 
-module.exports.getAnswers = (req, res) => {
+module.exports.getAnswers = (req, res, next) => {
   const { postid } = req.params;
   const {
     // Used for pagination.
@@ -79,7 +78,11 @@ module.exports.getAnswers = (req, res) => {
   let lastInstance;
 
   if (!postid) {
-    return error.BadRequest(res, 'Invalid postid.');
+    req.error = {
+      message: 'Invalid postid.',
+      status: 400,
+    };
+    return next(JSON.stringify(req.error));
   }
 
   return new Promise((resolve, reject) => {
@@ -104,21 +107,25 @@ module.exports.getAnswers = (req, res) => {
   })
     .then(() => Models.PollAnswer.findByPost(postid, sortBy, lastInstance))
     // todo do not return votes if we want to only view them before voting
-    .then(answers => success.OK(res, answers.map(instance => ({
-      creator: instance.get('creator'),
-      date: instance.get('date'),
-      id: instance.get('id'),
-      postid: instance.get('postid'),
-      text: instance.get('text'),
-      votes: instance.get('votes'),
-    }))))
+    .then(answers => {
+      res.locals.data = answers.map(instance => ({
+        creator: instance.get('creator'),
+        date: instance.get('date'),
+        id: instance.get('id'),
+        postid: instance.get('postid'),
+        text: instance.get('text'),
+        votes: instance.get('votes'),
+      }));
+      return next();
+    })
     .catch(err => {
       console.error('Error fetching poll answers:', err);
-      return error.code(res, err.status, err.message);
+      req.error = err;
+      return next(JSON.stringify(req.error));
     });
 };
 
-module.exports.vote = (req, res) => {
+module.exports.vote = (req, res, next) => {
   const {
     answerid,
     postid,
@@ -129,15 +136,27 @@ module.exports.vote = (req, res) => {
   let answer;
 
   if (!postid) {
-    return error.BadRequest(res, 'Invalid postid.');
+    req.error = {
+      message: 'Invalid postid.',
+      status: 400,
+    };
+    return next(JSON.stringify(req.error));
   }
 
   if (!answerid) {
-    return error.BadRequest(res, 'Invalid answerid.');
+    req.error = {
+      message: 'Invalid answerid.',
+      status: 400,
+    };
+    return next(JSON.stringify(req.error));
   }
 
   if (!VoteDirections.includes(vote)) {
-    return error.BadRequest(res, 'Invalid vote parameter.');
+    req.error = {
+      message: 'Invalid vote parameter.',
+      status: 400,
+    };
+    return next(JSON.stringify(req.error));
   }
   
   return Models.PollAnswer.findById(answerid)
@@ -163,7 +182,7 @@ module.exports.vote = (req, res) => {
     .then(instance => {
       if (instance !== null) {
         return Promise.reject({
-          code: 400,
+          status: 400,
           message: 'You have already voted on this poll.',
         });
       }
@@ -178,13 +197,18 @@ module.exports.vote = (req, res) => {
       answer.set('votes', answer.get('votes') + 1);
       return answer.update();
     })
-    .then(() => success.OK(res))
+    .then(() => next())
     .catch(err => {
       console.error('Error voting on poll answer:', err);
 
       if (typeof err === 'object' && err.code) {
-        return error.code(res, err.code, err.message);
+        req.error = err;
+        return next(JSON.stringify(req.error));
       }
-      return error.InternalServerError(res);
+
+      req.error = {
+        message: err,
+      };
+      return next(JSON.stringify(req.error));
     });
 };

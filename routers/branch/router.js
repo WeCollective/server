@@ -99,7 +99,7 @@ module.exports = () => {
      * @apiUse NotFound
      * @apiUse InternalServerError
      */
-    .get((req, res, next) => ACL.allow(ACL.Roles.Moderator, req.params.branchid)(req, res, next), (req, res) => controller.getPictureUploadUrl(req, res, 'picture'));
+    .get((req, res, next) => ACL.allow(ACL.Roles.Moderator, req.params.branchid)(req, res, next), (req, res, next) => controller.getPictureUploadUrl(req, res, next, 'picture'));
 
   router.route('/:branchid/cover-upload-url')
     /**
@@ -124,7 +124,7 @@ module.exports = () => {
      * @apiUse NotFound
      * @apiUse InternalServerError
      */
-    .get((req, res, next) => ACL.allow(ACL.Roles.Moderator, req.params.branchid)(req, res, next), (req, res) => controller.getPictureUploadUrl(req, res, 'cover'));
+    .get((req, res, next) => ACL.allow(ACL.Roles.Moderator, req.params.branchid)(req, res, next), (req, res, next) => controller.getPictureUploadUrl(req, res, next, 'cover'));
 
   router.route('/:branchid/picture')
     /**
@@ -148,7 +148,7 @@ module.exports = () => {
      * @apiUse NotFound
      * @apiUse InternalServerError
      */
-    .get(ACL.allow(ACL.Roles.Guest), (req, res) => controller.getPicture(req, res, 'picture', false));
+    .get(ACL.allow(ACL.Roles.Guest), (req, res, next) => controller.getPicture(req, res, next, 'picture', false));
 
   router.route('/:branchid/picture-thumb')
     /**
@@ -172,7 +172,7 @@ module.exports = () => {
      * @apiUse NotFound
      * @apiUse InternalServerError
      */
-    .get(ACL.allow(ACL.Roles.Guest), (req, res) => controller.getPicture(req, res, 'picture', true));
+    .get(ACL.allow(ACL.Roles.Guest), (req, res, next) => controller.getPicture(req, res, next, 'picture', true));
 
   router.route('/:branchid/cover')
     /**
@@ -196,7 +196,7 @@ module.exports = () => {
      * @apiUse NotFound
      * @apiUse InternalServerError
      */
-    .get(ACL.allow(ACL.Roles.Guest), (req, res) => controller.getPicture(req, res, 'cover', false));
+    .get(ACL.allow(ACL.Roles.Guest), (req, res, next) => controller.getPicture(req, res, next, 'cover', false));
 
   router.route('/:branchid/cover-thumb')
     /**
@@ -220,7 +220,7 @@ module.exports = () => {
      * @apiUse NotFound
      * @apiUse InternalServerError
      */
-    .get(ACL.allow(ACL.Roles.Guest), (req, res) => controller.getPicture(req, res, 'cover', true));
+    .get(ACL.allow(ACL.Roles.Guest), (req, res, next) => controller.getPicture(req, res, next, 'cover', true));
 
   router.route('/:branchid/subbranches')
     /**

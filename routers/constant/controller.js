@@ -1,17 +1,19 @@
 const reqlib = require('app-root-path').require;
 
 const Constants = reqlib('config/constants');
-const error = reqlib('responses/errors');
 const Models = reqlib('models/');
-const success = reqlib('responses/successes');
 
 const { WecoConstants } = Constants.AllowedValues;
 
-module.exports.get = (req, res) => {
+module.exports.get = (req, res, next) => {
   const { id } = req.params;
 
   if (!WecoConstants.includes(id)) {
-    return error.BadRequest(res, 'Invalid id parameter.');
+    req.error = {
+      message: 'Invalid id parameter.',
+      status: 400,
+    };
+    return next(JSON.stringify(req.error));
   }
 
   return Models.Constant.findById(id)
@@ -23,42 +25,60 @@ module.exports.get = (req, res) => {
         });
       }
 
-      return success.OK(res, {
+      res.locals.data = {
         data: instance.get('data'),
         id: instance.get('id'),
-      });
+      };
+      return next();
     })
     .catch(err => {
       console.error('Error fetching constant:', err);
-      return error.InternalServerError(res, err);
+      req.error = {
+        message: err,
+      };
+      return next(JSON.stringify(req.error));
     });
 };
 
-module.exports.getAll = (req, res) => Models.Constant.findAll({
+module.exports.getAll = (req, res, next) => Models.Constant.findAll({
   where: {
     id: WecoConstants,
   },
 })
-  .then(constants => success.OK(res, constants.map(instance => ({
-    data: instance.get('data'),
-    id: instance.get('id'),
-  }))))
+  .then(constants => {
+    res.locals.data = constants.map(instance => ({
+      data: instance.get('data'),
+      id: instance.get('id'),
+    }));
+    return next();
+  })
   .catch(err => {
     console.error('Error fetching constant:', err);
-    return error.InternalServerError(res, err);
+    req.error = {
+      message: err,
+    };
+    return next(JSON.stringify(req.error));
   });
 
-module.exports.put = (req, res) => {
+module.exports.put = (req, res, next) => {
   const { data } = req.body;
   const { id } = req.params;
   const int = Number.parseInt(data, 10);
 
   if (!WecoConstants.includes(id)) {
-    return error.BadRequest(res, 'Invalid id parameter.');
+    req.error = {
+      message: 'Invalid id parameter.',
+      status: 400,
+    };
+    return next(JSON.stringify(req.error));
   }
 
   if (Number.isNaN(int)) {
-    return error.BadRequest(res, 'Missing data parameter');
+    req.error = {
+      message: 'Missing data parameter.',
+      status: 400,
+    };
+    return next(JSON.stringify(req.error));
   }
 
   return Models.Constant.findById(id)
@@ -73,9 +93,12 @@ module.exports.put = (req, res) => {
       instance.set('data', int);
       return instance.update();
     })
-    .then(() => success.OK(res))
+    .then(() => next())
     .catch(err => {
       console.error('Error fetching constant:', err);
-      return error.InternalServerError(res, err);
+      req.error = {
+        message: err,
+      };
+      return next(JSON.stringify(req.error));
     });
 };

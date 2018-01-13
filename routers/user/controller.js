@@ -5,11 +5,9 @@ const reqlib = require('app-root-path').require;
 const algolia = reqlib('config/algolia');
 const auth = reqlib('config/auth');
 const Constants = reqlib('config/constants');
-const error = reqlib('responses/errors');
 const fs = reqlib('config/filestorage');
 const mailer = reqlib('config/mailer');
 const Models = reqlib('models/');
-const success = reqlib('responses/successes');
 
 const {
   BranchCoverType,
@@ -51,7 +49,7 @@ module.exports.delete = (req, res) => {
     .delete({ username: req.user.get('username') })
     .then(() => {
       req.logout();
-      return success.OK(res);
+      return next();
     })
     .catch(() => {
       console.error('Error deleting user from database.');
@@ -86,11 +84,15 @@ module.exports = {
   },
 };
 
-module.exports.ban = (req, res) => {
+module.exports.ban = (req, res, next) => {
   const { username } = req.params;
 
   if (!username) {
-    return error.BadRequest(res, 'Missing username');
+    req.error = {
+      message: 'Missing username.',
+      status: 400,
+    };
+    return next(JSON.stringify(req.error));
   }
 
   return Models.User.findOne({
@@ -105,7 +107,7 @@ module.exports.ban = (req, res) => {
 
       if (instance.get('banned')) {
         return Promise.reject({
-          code: 400,
+          status: 400,
           message: `${username} is already banned`,
         });
       }
@@ -113,28 +115,41 @@ module.exports.ban = (req, res) => {
       instance.set('banned', true);
       return instance.update();
     })
-    .then(() => success.OK(res))
+    .then(() => next())
     .catch(err => {
       console.error('Error fetching posts:', err);
 
-      if (typeof err === 'object' && err.code) {
-        return error.code(res, err.code, err.message);
+      if (typeof err === 'object' && err.status) {
+        req.error = err;
+        return next(JSON.stringify(req.error));
       }
 
-      return error.code(res, 404, `User "${username}" does not exist`);
+      req.error = {
+        message: `User "${username}" does not exist.`,
+        status: 404,
+      };
+      return next(JSON.stringify(req.error));
     });
 };
 
-module.exports.followBranch = (req, res) => {
+module.exports.followBranch = (req, res, next) => {
   const { branchid } = req.body;
   const username = req.user.get('username');
 
   if (!branchid) {
-    return error.BadRequest(res, 'Missing branchid');
+    req.error = {
+      message: 'Missing branchid.',
+      status: 400,
+    };
+    return next(JSON.stringify(req.error));
   }
 
   if (branchid === 'root') {
-    return error.BadRequest(res, 'Invalid branchid');
+    req.error = {
+      message: 'Invalid branchid.',
+      status: 400,
+    };
+    return next(JSON.stringify(req.error));
   }
 
   // The branch must exist.
@@ -149,20 +164,32 @@ module.exports.followBranch = (req, res) => {
         username,
       });
     })
-    .then(() => success.OK(res))
+    .then(() => next())
     .catch(err => {
       if (err) {
         console.error('Error following branch:', err);
-        return error.InternalServerError(res);
+        req.error = {
+          message: err,
+        };
+        return next(JSON.stringify(req.error));
       }
 
-      return error.NotFound(res);
+      req.error = {
+        status: 404,
+      };
+      return next(JSON.stringify(req.error));
     });
 };
 
-module.exports.get = (req, res) => {
+module.exports.get = (req, res, next) => {
   const clientUsername = req.user ? req.user.get('username') : false;
-  const { username = clientUsername } = req.params;
+  let { username = clientUsername } = req.params;
+
+  // Do not ask questions. Logout() was falling through for some reason.
+  if (['logout', 'me'].includes(username) && clientUsername) {
+    username = clientUsername;
+  }
+
   const isSelf = clientUsername === username;
 
   const p1 = module.exports.getUserPicture(username, BranchThumbnailType, false);
@@ -210,7 +237,8 @@ module.exports.get = (req, res) => {
         data.token = user.get('token');
       }
 
-      return success.OK(res, data);
+      res.locals.data = data;
+      return next();
     })
     .catch(err => {
       if (typeof err === 'function') {
@@ -218,11 +246,14 @@ module.exports.get = (req, res) => {
       }
 
       console.error('Error fetching user:', err);
-      return error.InternalServerError(res);
+      req.error = {
+        message: err,
+      };
+      return next(JSON.stringify(req.error));
     });
 };
 
-module.exports.getNotifications = (req, res) => {
+module.exports.getNotifications = (req, res, next) => {
   const {
     lastNotificationId,
     unreadCount,
@@ -257,22 +288,26 @@ module.exports.getNotifications = (req, res) => {
         // todo
         result = instancesOrCount.map(instance => instance.dataValues);
       }
-      return success.OK(res, result);
+      res.locals.data = result;
+      return next();
     })
     .catch(err => {
       console.error('Error fetching user notifications:', err);
-      return error.InternalServerError(res);
+      req.error = {
+        message: err,
+      };
+      return next(JSON.stringify(req.error));
     });
 };
 
 // Legacy method, still used to upload cover photo. That functinality
 // should work the same way profile photo uploads work.
-module.exports.getPictureUploadUrl = (req, res, type) => {
+module.exports.getPictureUploadUrl = (req, res, next, type) => {
   const username = req.user.get('username');
 
   if (!BranchImageTypes.includes(type)) {
     console.error('Invalid picture type.');
-    return error.InternalServerError(res);
+    return next(JSON.stringify(req.error));
   }
 
   const params = {
@@ -281,7 +316,10 @@ module.exports.getPictureUploadUrl = (req, res, type) => {
     Key: `${username}-${type}-orig.jpg`,
   };
 
-  Models.Dynamite.aws.s3Client.getSignedUrl('putObject', params, (err, url) => success.OK(res, url));
+  Models.Dynamite.aws.s3Client.getSignedUrl('putObject', params, (err, url) => {
+    res.locals.data = url;
+    return next();
+  });
 };
 
 module.exports.getUserFollowedBranches = username => Models.FollowedBranch
@@ -324,7 +362,7 @@ module.exports.getUserPicture = (username, type, thumbnail = false) => {
     });
 };
 
-module.exports.markAllNotificationsRead = (req, res) => {
+module.exports.markAllNotificationsRead = (req, res, next) => {
   const username = req.user.get('username');
   return Models.Notification.findByUsername(username, false, null, true)
     .then(instances => {
@@ -341,18 +379,24 @@ module.exports.markAllNotificationsRead = (req, res) => {
 
       return Promise.all(promises);
     })
-    .then(() => success.OK(res))
+    .then(() => next())
     .catch(err => {
       if (err) {
         console.error('Error marking user notifications as read:', err);
-        return error.InternalServerError(res);
+        req.error = {
+          message: err,
+        };
+        return next(JSON.stringify(req.error));
       }
 
-      return error.NotFound(res);
+      req.error = {
+        status: 404,
+      };
+      return next(JSON.stringify(req.error));
     });
 };
 
-module.exports.put = (req, res) => {
+module.exports.put = (req, res, next) => {
   const {
     dob,
     email,
@@ -373,24 +417,33 @@ module.exports.put = (req, res) => {
     .then(() => mailer.addContact(user.dataValues, true))
     // todo
     .then(() => algolia.updateObjects(user.dataValues, 'user'))
-    .then(() => success.OK(res))
+    .then(() => next())
     .catch(err => {
       console.error('Error updating user.', err);
-      return error.code(res, err.code, err.message);
+      req.error = err;
+      return next(JSON.stringify(req.error));
     });
 };
 
-module.exports.putNotification = (req, res) => {
+module.exports.putNotification = (req, res, next) => {
   const { notificationid } = req.params;
   const { unread } = req.body;
   const username = req.user.get('username');
 
   if (!notificationid) {
-    return error.BadRequest(res, 'Missing notificationid parameter');
+    req.error = {
+      message: 'Missing notificationid parameter.',
+      status: 400,
+    };
+    return next(JSON.stringify(req.error));
   }
 
   if (!unread) {
-    return error.BadRequest(res, 'Missing unread parameter');
+    req.error = {
+      message: 'Missing unread parameter.',
+      status: 400,
+    };
+    return next(JSON.stringify(req.error));
   }
 
   return Models.Notification.findById(notificationid)
@@ -401,20 +454,23 @@ module.exports.putNotification = (req, res) => {
 
       // check notification actually belongs to user
       if (instance.get('user') !== username) {
-        return error.Forbidden(res);
+        return Promise.reject({
+          status: 403,
+        });
       }
 
       instance.set('unread', unread === 'true');
       return instance.update();
     })
-    .then(() => success.OK(res))
+    .then(() => next())
     .catch(err => {
       console.error('Error updating notification unread:', err);
-      return error.InternalServerError(res);
+      req.error = err;
+      return next(JSON.stringify(req.error));
     });
 };
 
-module.exports.resetPassword = (req, res) => {
+module.exports.resetPassword = (req, res, next) => {
   const {
     token,
     username,
@@ -423,15 +479,27 @@ module.exports.resetPassword = (req, res) => {
   let user;
 
   if (!username) {
-    return error.BadRequest(res, 'Missing username parameter');
+    req.error = {
+      message: 'Missing username parameter.',
+      status: 400,
+    };
+    return next(JSON.stringify(req.error));
   }
 
   if (!token) {
-    return error.BadRequest(res, 'Missing token parameter');
+    req.error = {
+      message: 'Missing token parameter.',
+      status: 400,
+    };
+    return next(JSON.stringify(req.error));
   }
 
   if (!password) {
-    return error.BadRequest(res, 'Missing password parameter');
+    req.error = {
+      message: 'Missing password parameter.',
+      status: 400,
+    };
+    return next(JSON.stringify(req.error));
   }
   
   return Models.User.findOne({
@@ -450,12 +518,18 @@ module.exports.resetPassword = (req, res) => {
       
       // check token matches
       if (uToken.token !== token) {
-        return error.BadRequest(res, 'Invalid token.');
+        return Promise.reject({
+          message: 'Invalid token.',
+          status: 400,
+        });
       }
       
       // check token hasnt expired
       if (uToken.expires < new Date().getTime()) {
-        return error.BadRequest(res, 'Token expired');
+        return Promise.reject({
+          message: 'Token expired.',
+          status: 400,
+        });
       }
 
       const isValidPassword = Models.Dynamite.validator.password(password);
@@ -475,18 +549,23 @@ module.exports.resetPassword = (req, res) => {
       user.set('resetPasswordToken', null);
       return user.update();
     })
-    .then(() => success.OK(res))
+    .then(() => next())
     .catch(err => {
       console.error('Error changing password:', err);
-      return error.InternalServerError(res, err);
+      req.error = err;
+      return next(JSON.stringify(req.error));
     });
 };
 
-module.exports.resendVerification = (req, res) => {
+module.exports.resendVerification = (req, res, next) => {
   const { username } = req.params;
 
   if (!username) {
-    return error.BadRequest(res, 'Missing username parameter');
+    req.error = {
+      message: 'Missing username parameter.',
+      status: 400,
+    };
+    return next(JSON.stringify(req.error));
   }
 
   return Models.User.findOne({
@@ -500,26 +579,34 @@ module.exports.resendVerification = (req, res) => {
       }
 
       if (instance.get('verified')) {
-        return error.BadRequest(res, 'Account is already verified');
+        return Promise.reject({
+          message: 'Account is already verified.',
+          status: 400,
+        });
       }
 
       // todo
       return mailer.sendVerification(instance.dataValues, instance.get('token'));
     })
-    .then(() => success.OK(res))
+    .then(() => next())
     .catch(err => {
       console.error('Error resending verification email:', err);
-      return error.InternalServerError(res);
+      req.error = err;
+      return next(JSON.stringify(req.error));
     });
 };
 
-module.exports.sendResetPasswordLink = (req, res) => {
+module.exports.sendResetPasswordLink = (req, res, next) => {
   const { username } = req.params;
   let token;
   let user;
 
   if (!username) {
-    return error.BadRequest(res, 'Missing username parameter');
+    req.error = {
+      message: 'Missing username parameter.',
+      status: 400,
+    };
+    return next(JSON.stringify(req.error));
   }
 
   return Models.User.findOne({
@@ -550,23 +637,32 @@ module.exports.sendResetPasswordLink = (req, res) => {
       }
       return Promise.resolve();
     })
-    .then(() => success.OK(res))
+    .then(() => next())
     .catch(err => {
       console.error('Error sending password reset:', err);
-      return error.InternalServerError(res);
+      req.error = err;
+      return next(JSON.stringify(req.error));
     });
 };
 
-module.exports.unfollowBranch = (req, res) => {
+module.exports.unfollowBranch = (req, res, next) => {
   const { branchid } = req.query;
   const username = req.user.get('username');
 
   if (!branchid) {
-    return error.BadRequest(res, 'Missing branchid');
+    req.error = {
+      message: 'Missing branchid.',
+      status: 400,
+    };
+    return next(JSON.stringify(req.error));
   }
 
   if (branchid === 'root') {
-    return error.BadRequest(res, 'Invalid branchid');
+    req.error = {
+      message: 'Invalid branchid.',
+      status: 400,
+    };
+    return next(JSON.stringify(req.error));
   }
 
   // The branch must exist.
@@ -581,18 +677,24 @@ module.exports.unfollowBranch = (req, res) => {
         username,
       });
     })
-    .then(() => success.OK(res))
+    .then(() => next())
     .catch(err => {
       if (err) {
         console.error('Error unfollowing branch:', err);
-        return error.InternalServerError(res);
+        req.error = {
+          message: err,
+        };
+        return next(JSON.stringify(req.error));
       }
 
-      return error.NotFound(res);
+      req.error = {
+        status: 404,
+      };
+      return next(JSON.stringify(req.error));
     });
 };
 
-module.exports.verify = (req, res) => {
+module.exports.verify = (req, res, next) => {
   const {
     token,
     username,
@@ -600,11 +702,19 @@ module.exports.verify = (req, res) => {
   let user;
 
   if (!username) {
-    return error.BadRequest(res, 'Missing username.');
+    req.error = {
+      message: 'Missing username.',
+      status: 400,
+    };
+    return next(JSON.stringify(req.error));
   }
 
   if (!token) {
-    return error.BadRequest(res, 'Missing token.');
+    req.error = {
+      message: 'Missing token.',
+      status: 400,
+    };
+    return next(JSON.stringify(req.error));
   }
 
   return Models.User.findOne({
@@ -627,7 +737,7 @@ module.exports.verify = (req, res) => {
       // Token must be valid.
       if (user.get('token') !== token) {
         return Promise.reject({
-          code: 400,
+          status: 400,
           message: 'Invalid token.',
         });
       }
@@ -648,13 +758,19 @@ module.exports.verify = (req, res) => {
 
       return Promise.reject(err);
     })
-    .then(() => success.OK(res))
+    .then(() => next())
     .catch(err => {
       if (err) {
         console.error('Error verifying user:', err);
-        return error.InternalServerError(res);
+        req.error = {
+          message: err,
+        };
+        return next(JSON.stringify(req.error));
       }
 
-      return error.NotFound(res);
+      req.error = {
+        status: 404,
+      };
+      return next(JSON.stringify(req.error));
     });
 };

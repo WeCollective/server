@@ -12,7 +12,6 @@ const reqlib = require('app-root-path').require;
 
 const algolia = reqlib('config/algolia');
 const auth = reqlib('config/auth');
-const error = reqlib('responses/errors');
 const JwtConfig = reqlib('config/jwt');
 const mailer = reqlib('config/mailer');
 const Models = reqlib('models/');
@@ -224,7 +223,8 @@ const authenticate = (strategy, callbackOrOptional) => (req, res, next) => {
     return passport.authenticate('jwt', JwtConfig.jwtSession, (err, user, info) => {
       // callbackOrOptional
       if (!user && info && typeof info === 'object' && req.headers.authorization) {
-        return error.code(res, info.status, info.message);
+        req.error = err;
+        return next(JSON.stringify(req.error));
       }
       return next();
     })(req, res, next);

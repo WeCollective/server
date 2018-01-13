@@ -1,15 +1,13 @@
 const reqlib = require('app-root-path').require;
 
 const Constants = reqlib('config/constants');
-const error = reqlib('responses/errors');
 const mailer = reqlib('config/mailer');
 const Models = reqlib('models/');
 const NotificationTypes = reqlib('config/notification-types');
-const success = reqlib('responses/successes');
 
 const { createNotificationId } = Constants.Helpers;
 
-module.exports.addModerator = (req, res) => {
+module.exports.addModerator = (req, res, next) => {
   const { branchid } = req.params;
   const { username } = req.body;
   const date = new Date().getTime();
@@ -18,11 +16,19 @@ module.exports.addModerator = (req, res) => {
   let user;
 
   if (!branchid) {
-    return error.BadRequest(res, 'Invalid branchid.');
+    req.error = {
+      message: 'Invalid branchid.',
+      status: 400,
+    };
+    return next(JSON.stringify(req.error));
   }
 
   if (!username) {
-    return error.BadRequest(res, 'Invalid username.');
+    req.error = {
+      message: 'Invalid username.',
+      status: 400,
+    };
+    return next(JSON.stringify(req.error));
   }
 
   // The added user must be a real user and cannot be a moderator
@@ -134,36 +140,51 @@ module.exports.addModerator = (req, res) => {
     // update the SendGrid contact list with the new user data
     // todo
     .then(() => mailer.addContact(user.dataValues, true))
-    .then(() => success.OK(res))
+    .then(() => next())
     .catch(err => {
       console.error('Error adding a moderator:', err);
-      return error.code(res, err.status, err.message);
+      req.error = err;
+      return next(JSON.stringify(req.error));
     });
 };
 
-module.exports.get = (req, res) => {
+module.exports.get = (req, res, next) => {
   const { branchid } = req.params;
 
   if (!branchid) {
-    return error.BadRequest(res, 'Missing branchid');
+    req.error = {
+      message: 'Missing branchid.',
+      status: 400,
+    };
+    return next(JSON.stringify(req.error));
   }
 
   return Models.Mod.findByBranch(branchid)
-    .then(mods => success.OK(res, mods.map(instance => ({
-      branchid: instance.get('branchid'),
-      date: instance.get('date'),
-      username: instance.get('username'),
-    }))))
+    .then(mods => {
+      res.locals.data = mods.map(instance => ({
+        branchid: instance.get('branchid'),
+        date: instance.get('date'),
+        username: instance.get('username'),
+      }));
+      return next();
+    })
     .catch(err => {
       if (err) {
         console.error('Error fetching mods.');
-        return error.InternalServerError(res);
+        req.error = {
+          message: err,
+        };
+        return next(JSON.stringify(req.error));
       }
-      return error.NotFound(res);
+
+      req.error = {
+        status: 404,
+      };
+      return next(JSON.stringify(req.error));
     });
 };
 
-module.exports.removeModerator = (req, res) => {
+module.exports.removeModerator = (req, res, next) => {
   const {
     branchid,
     username,
@@ -176,11 +197,19 @@ module.exports.removeModerator = (req, res) => {
   let userMod;
 
   if (!branchid) {
-    return error.BadRequest(res, 'Invalid branchid.');
+    req.error = {
+      message: 'Invalid branchid.',
+      status: 400,
+    };
+    return next(JSON.stringify(req.error));
   }
 
   if (!username) {
-    return error.BadRequest(res, 'Invalid username.');
+    req.error = {
+      message: 'Invalid username.',
+      status: 400,
+    };
+    return next(JSON.stringify(req.error));
   }
 
   return Models.Mod.findByBranch(branchid)
@@ -294,9 +323,10 @@ module.exports.removeModerator = (req, res) => {
     // update the SendGrid contact list with the new user data
     // todo
     .then(() => mailer.addContact(user.dataValues, true))
-    .then(() => success.OK(res))
+    .then(() => next())
     .catch(err => {
       console.error('Error removing a moderator:', err);
-      return error.code(res, err.status, err.message);
+      req.error = err;
+      return next(JSON.stringify(req.error));
     });
 };

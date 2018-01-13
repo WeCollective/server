@@ -3,7 +3,6 @@ const reqlib = require('app-root-path').require;
 const urlLib = require('url');
 
 const app = reqlib('/');
-const error = reqlib('responses/errors');
 
 const version = '/v1';
 
@@ -27,17 +26,24 @@ const getRouter = dir => reqlib(`routers/${dir}/router`)(app);
  * @apiUse Forbidden
  * @apiUse InternalServerError
  */
-app.get(`${version}/proxy`, (req, res) => {
+app.get(`${version}/proxy`, (req, res, next) => {
   const { url } = req.query;
 
   if (!url) {
-    return error.NotFound(res);
+    req.error = {
+      status: 404,
+    };
+    return next(JSON.stringify(req.error));
   }
 
   const url_parts = urlLib.parse(url, true);
 
   if (url_parts.protocol !== 'http:') {
-    return error.BadRequest(res, 'Only http resources can be proxied');
+    req.error = {
+      message: 'Only http resources can be proxied.',
+      status: 400,
+    };
+    return next(JSON.stringify(req.error));
   }
 
   http.get(url, response => {
@@ -48,10 +54,19 @@ app.get(`${version}/proxy`, (req, res) => {
       response.pipe(res);
     }
     else {
-      return error.NotFound(res);
+      req.error = {
+        status: 404,
+      };
+      return next(JSON.stringify(req.error));
     }
   })
-    .on('error', () => error.BadRequest(res, 'Invalid URL parameter'));
+    .on('error', () => {
+      req.error = {
+        message: 'Invalid URL parameter.',
+        status: 400,
+      };
+      return next(JSON.stringify(req.error));
+    });
 });
 
 app.use(`${version}/branch`, getRouter('branch'));
@@ -63,3 +78,50 @@ app.use(`${version}/poll`, getRouter('poll'));
 app.use(`${version}/post`, getRouter('post'));
 app.use(`${version}/search`, getRouter('search'));
 app.use(`${version}/user`, getRouter('user'));
+
+/**
+ * @apiDefine BadRequest
+ * @apiError (Errors) 400-BadRequest The server could not process the request due to missing or invalid parameters.
+ * @apiErrorExample BadRequest:
+ *     HTTP/1.1 400 BadRequest
+ *     {
+ *       "message": "Description of invalid parameter"
+ *     }
+ */
+/**
+ * @apiDefine Forbidden
+ * @apiError (Errors) 403-Forbidden The user does not have the necessary permissions to perform this request.
+ * @apiErrorExample Forbidden:
+ *     HTTP/1.1 403 Forbidden
+ *     {
+ *       "message": "Access denied"
+ *     }
+ */
+/**
+ * @apiDefine NotFound
+ * @apiError (Errors) 404-NotFound The requested resource couldn't be found
+ * @apiErrorExample Not Found:
+ *     HTTP/1.1 404 Not Found
+ *     {
+ *       "message": "The requested resource couldn't be found"
+ *     }
+ */
+/**
+ * @apiDefine InternalServerError
+ * @apiError (Errors) 500-InternalServerError The server was unable to carry out the request due to an internal error.
+ * @apiErrorExample InternalServerError:
+ *     HTTP/1.1 500 InternalServerError
+ *     {
+ *       "message": "Something went wrong. We're looking into it."
+ *     }
+ */
+/**
+ * @apiDefine OK
+ * @apiError (Successes) 200-OK The server successfully carried out the request.
+ * @apiErrorExample OK:
+ *     HTTP/1.1 200 OK
+ *     {
+ *       "message": "Success"
+ *     }
+ */
+ 

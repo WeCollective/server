@@ -4,7 +4,6 @@ const reqlib = require('app-root-path').require;
 const ACL = reqlib('config/acl');
 const Models = reqlib('models/');
 const passport = reqlib('config/passport')();
-const success = reqlib('responses/successes');
 
 const router = express.Router();
 
@@ -47,10 +46,10 @@ module.exports = () => {
           instance.set('data', instance.get('data') + 1);
           return instance.update();
         })
-        .then(() => success.OK(res))
+        .then(() => next())
         .catch(err => {
           console.error('Error updating user count:', err);
-          return success.OK(res);
+          return next();
         });
     })(req, res, next));
 
@@ -58,7 +57,7 @@ module.exports = () => {
    * @api {post} /user/login Login
    * @apiName Login
    * @apiGroup User
-   * @apiPermission guest#
+   * @apiPermission guest
    * @apiVersion 1.0.0
    *
    * @apiParam (Body Parameters) {String} username User's unique username. (1-20 lowercase chars, no whitespace, not numeric, not one of 'me', 'orig', 'picture', 'cover')
@@ -80,21 +79,21 @@ module.exports = () => {
         return res.status(info.status).json({ message: info.message });
       }
 
-      return success.OK(res, user.jwt);
+      res.locals.data = user.jwt;
+      return next();
     })(req, res, next));
 
   /**
    * @api {get} /user/logout Logout
    * @apiName Logout
-   * @apiGroup User
-   * @apiPermission guest
+   * @apiGroup guest
    * @apiVersion 1.0.0
    *
    * @apiUse OK
    * @apiUse InternalServerError
    */
   router.route('/logout')
-    .get(ACL.allow(ACL.Roles.Guest), (req, res) => success.OK(res));
+    .get(ACL.allow(ACL.Roles.User));
 
   router.route('/me')
     /**
@@ -215,7 +214,7 @@ module.exports = () => {
      * @apiUse Forbidden
      * @apiUse InternalServerError
      */
-    .get(ACL.allow(ACL.Roles.User), (req, res) => controller.getPictureUploadUrl(req, res, 'picture'));
+    .get(ACL.allow(ACL.Roles.User), (req, res, next) => controller.getPictureUploadUrl(req, res, next, 'picture'));
 
   router.route('/me/cover-upload-url')
     /**
@@ -237,7 +236,7 @@ module.exports = () => {
      * @apiUse Forbidden
      * @apiUse InternalServerError
      */
-    .get(ACL.allow(ACL.Roles.User), (req, res) => controller.getPictureUploadUrl(req, res, 'cover'));
+    .get(ACL.allow(ACL.Roles.User), (req, res, next) => controller.getPictureUploadUrl(req, res, next, 'cover'));
 
   router.route('/:username/notifications')
     /**

@@ -8,6 +8,7 @@ const fs = reqlib('config/filestorage');
 const mailer = reqlib('config/mailer');
 const Models = reqlib('models/');
 const NotificationTypes = reqlib('config/notification-types');
+const slack = reqlib('slack');
 
 const { validator } = Models.Dynamite;
 
@@ -1373,6 +1374,7 @@ module.exports.post = (req, res, next) => {
       username,
     }))
     .then(() => {
+      slack.newPost(username, id, title, type, branchids);
       res.locals.data = id;
       return next();
     })

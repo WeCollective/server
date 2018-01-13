@@ -15,6 +15,7 @@ const auth = reqlib('config/auth');
 const JwtConfig = reqlib('config/jwt');
 const mailer = reqlib('config/mailer');
 const Models = reqlib('models/');
+const slack = reqlib('slack');
 
 passport.use(new JwtStrategy({
   jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
@@ -206,10 +207,14 @@ passport.use('LocalSignUp', new LocalStrategy({
       user = instance;
       // todo
       return mailer.sendVerification(user.dataValues, token);
-    })
-    // Add new user to the search index.
+    })    
     // todo
-    .then(() => algolia.addObjects(user.dataValues, 'user'))
+    .then(() => {
+      // Post to Slack.
+      slack.newAccount(name, email, username);
+      // Add new user to the search index.
+      return algolia.addObjects(user.dataValues, 'user');
+    })
     .then(() => done(null, { username }))
     .catch(err => {
       console.error('Error signing up:', err);

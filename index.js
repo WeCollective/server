@@ -112,5 +112,8 @@ app.use((err, req, res, next) => { // eslint-disable-line no-unused-vars
   res.send({ message });
 });
 
+// Start Slack integrations.
+reqlib('slack');
+
 // Open the port to accept incoming requests.
 reqlib('listen');

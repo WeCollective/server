@@ -21,6 +21,7 @@ module.exports = (Dynamite, validate) => {
   }, {
     TableIndexes: [
       'parentid-date-index',
+      'childid-date-index',
     ],
   });
 
@@ -32,9 +33,19 @@ module.exports = (Dynamite, validate) => {
     KeyConditionExpression: 'parentid = :parentid and childid = :childid',
   }, SubBranchRequest, 'all');
 
-  SubBranchRequest.findByBranch = branchid => Dynamite.query({
+  SubBranchRequest.findByChild = id => Dynamite.query({
     ExpressionAttributeValues: {
-      ':id': branchid,
+      ':id': id,
+    },
+    IndexName: SubBranchRequest.config.keys.TableIndexes[1],
+    KeyConditionExpression: 'childid = :id',
+    // return results newest first
+    ScanIndexForward: false,
+  }, SubBranchRequest, 'all');
+
+  SubBranchRequest.findByParent = id => Dynamite.query({
+    ExpressionAttributeValues: {
+      ':id': id,
     },
     IndexName: SubBranchRequest.config.keys.TableIndexes[0],
     KeyConditionExpression: 'parentid = :id',

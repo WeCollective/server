@@ -100,7 +100,7 @@ const put = {
 
 module.exports.get = (req, res, next) => {
   const { branchid } = req.params;
-  return Models.SubBranchRequest.findByBranch(branchid)
+  return Models.SubBranchRequest.findByParent(branchid)
     // todo
     .then(requests => {
       res.locals.data = requests.map(instance => instance.dataValues);

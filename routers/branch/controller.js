@@ -128,6 +128,18 @@ const deleteBranch = branch => {
 
       return Promise.all(promises);
     })
+    // Delete all branch requests made to this branch.
+    .then(() => Models.SubBranchRequest.findByParent(branchid))
+    .then(instances => {
+      const promises = instances.map(x => x.destroy());
+      return Promise.all(promises);
+    })
+    // Delete all branch requests made by this branch.
+    .then(() => Models.SubBranchRequest.findByChild(branchid))
+    .then(instances => {
+      const promises = instances.map(x => x.destroy());
+      return Promise.all(promises);
+    })
     // Delete all branch tags.
     .then(() => Models.Tag.findByBranch(branchid))
     .then(tags => {
@@ -470,7 +482,7 @@ module.exports.delete = (req, res, next) => {
       // Delete this branch.
       return deleteBranch(branch);
     })
-    .then(() => next(res))
+    .then(() => next())
     .catch(err => {
       if (typeof err === 'object' && err.status) {
         req.error = err;

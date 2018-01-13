@@ -1149,7 +1149,7 @@ module.exports.post = (req, res, next) => {
     locked,
     nsfw,
   } = req.body;
-  const {
+  let {
     captcha,
     text,
     title,
@@ -1195,7 +1195,7 @@ module.exports.post = (req, res, next) => {
     return next(JSON.stringify(req.error));
   }
 
-  if (!validator.postText(text) || (type === PostTypeText && !text.length)) {
+  if (text !== null && (!validator.postText(text) || (type === PostTypeText && !text.length))) {
     req.error = {
       message: 'Invalid text.',
       status: 400,

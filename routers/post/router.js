@@ -138,7 +138,7 @@ module.exports = () => {
      * @apiUse NotFound
      * @apiUse InternalServerError
      */
-    .get(ACL.allow(ACL.Roles.User), (req, res) => controller.getPictureUploadUrl(req, res));
+    .get(ACL.allow(ACL.Roles.User), (req, res, next) => controller.getPictureUploadUrl(req, res, next));
 
   router.route('/:postid/picture')
     /**
@@ -361,11 +361,11 @@ module.exports = () => {
      */
     .put(ACL.allow(ACL.Roles.User), (req, res, next) => {
       if (req.body.vote) {
-        return controller.voteComment(req, res);
+        return controller.voteComment(req, res, next);
       }
 
       if (req.body.text) {
-        return controller.editComment(req, res);
+        return controller.editComment(req, res, next);
       }
 
       req.error = {

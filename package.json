@@ -11,7 +11,8 @@
     "lint": "eslint . .js --ignore-pattern node_modules/ --ignore-pattern docs/",
     "precommit": "npm-run-all lint build-api",
     "start": "nodemon --watch",
-    "start:dev": "npm-run-all lint build-api start",
+    "start-local": "cross-env NODE_ENV=local nodemon --watch",
+    "start:dev": "npm-run-all lint build-api start-local",
     "test": "mocha tests/test.js"
   },
   "repository": {
@@ -30,6 +31,7 @@
     "body-parser": "^1.15.2",
     "cookie-parser": "^1.4.3",
     "cors": "^2.8.4",
+    "cross-env": "^5.1.3",
     "dotenv": "4.0.0",
     "express": "^4.13.4",
     "express-bearer-token": "^2.1.0",
@@ -62,6 +64,6 @@
     "title": "WECO API Docs",
     "description": "Documentation for the WE Collective RESTful API.",
     "version": "1.0.0",
-    "url" : ""
+    "url": ""
   }
 }

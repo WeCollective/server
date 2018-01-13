@@ -1,12 +1,28 @@
 // INITIALISE SOCKET.IO FOR EACH NAMESPACE
-const http = require('http');
+const fs = require('fs');
+const https = require('https');
 const reqlib = require('app-root-path').require;
 
 const app = reqlib('/');
 const clearConsole = reqlib('utils/clear-console');
 
+const env = process.env.NODE_ENV;
 const port = process.env.PORT || 8080;
-const server = http.Server(app);
+let server;
+
+// Mock SSL in local environment.
+if (env === 'local') {
+  const httpsOptions = {
+    cert: fs.readFileSync('./config/ssl/local-cert.pem'),
+    key: fs.readFileSync('./config/ssl/local-key.pem'),
+    rejectUnauthorized: false,
+    requestCert: false,
+  };
+  server = https.createServer(httpsOptions, app).listen(port);
+}
+else {
+  server = app.listen(port);
+}
 
 const io = reqlib('config/io')(server);
 
@@ -19,8 +35,6 @@ io.notifications.on('connection', socket => {
     socket.emit('on_disconnect', { id: socket.id });
   });
 });
-
-server.listen(port);
 
 clearConsole();
 console.log(`🎩 Magic happens on port ${port}!`);

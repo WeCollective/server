@@ -48,8 +48,7 @@ const newAccount = (name, email, username) => {
 
 const newPost = (username, postid, title, type, tags) => {
   const post_namespace = `p/${postid}`;
-  const username_namespace = `u/${username}`;
-  const url = `${domain}/${username_namespace}/${post_namespace}`;
+  const url = `${domain}/b/root/${post_namespace}`;
   const text = `${username} posted a new ${type}. 🚀`;
 
   webhook({

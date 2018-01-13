@@ -10,7 +10,7 @@ const webhooks = {
   lmenus: 'https://hooks.slack.com/services/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',
 };
 
-slack.setWebhook(webhooks.lmenus);
+slack.setWebhook(env === 'production' ? webhooks.general : webhooks.lmenus);
 
 const webhook = data => {
   slack.webhook(data, err => {

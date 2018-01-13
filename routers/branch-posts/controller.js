@@ -205,7 +205,7 @@ module.exports.resolveFlag = (req, res, next) => {
             postid,
             username,
           };
-          const type = isChangingType ? NotificationTypes.POST_TYPE_CHANGED : NotificationTypes.POST_MARKED_NSFW;
+          const typeNotif = isChangingType ? NotificationTypes.POST_TYPE_CHANGED : NotificationTypes.POST_MARKED_NSFW;
           const user = postData.get('creator');
 
           if (isChangingType) {
@@ -216,7 +216,7 @@ module.exports.resolveFlag = (req, res, next) => {
             data,
             date,
             id: createNotificationId(user, date),
-            type,
+            type: typeNotif,
             unread: true,
             user,
           });

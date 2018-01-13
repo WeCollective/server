@@ -2,7 +2,6 @@ const express = require('express');
 const reqlib = require('app-root-path').require;
 
 const ACL = reqlib('config/acl');
-
 const router = express.Router({ mergeParams: true });
 
 module.exports = () => {

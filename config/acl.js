@@ -96,7 +96,7 @@ const allowAccess = (role, branchid) => (req, res, next) => {
       });
   }
 
-  return next(JSON.stringify(req.error));
+  return next(true);
 };
 
 module.exports = {

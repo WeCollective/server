@@ -2,6 +2,7 @@
 const fs = require('fs');
 const https = require('https');
 const reqlib = require('app-root-path').require;
+// const Slack = require('slack-node');
 
 const app = reqlib('/');
 const clearConsole = reqlib('utils/clear-console');
@@ -40,3 +41,18 @@ clearConsole();
 console.log(`🎩 Magic happens on port ${port}!`);
 
 module.exports = server;
+
+/*
+const webhookUri = 'https://hooks.slack.com/services/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';
+
+const slack = new Slack();
+slack.setWebhook(webhookUri);
+
+slack.webhook({
+  // channel: '#general',
+  username: 'testbot',
+  text: 'Hmmm.',
+}, (err, res) => {
+  console.log(err, res);
+});
+*/

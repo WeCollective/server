@@ -4,7 +4,6 @@ const reqlib = require('app-root-path').require;
 const ACL = reqlib('config/acl');
 const Models = reqlib('models/');
 const passport = reqlib('config/passport')();
-
 const router = express.Router();
 
 module.exports = () => {

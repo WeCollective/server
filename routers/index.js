@@ -77,6 +77,7 @@ app.use(`${version}/constant`, getRouter('constant'));
 app.use(`${version}/poll`, getRouter('poll'));
 app.use(`${version}/post`, getRouter('post'));
 app.use(`${version}/search`, getRouter('search'));
+app.use(`${version}/slack`, getRouter('slack'));
 app.use(`${version}/user`, getRouter('user'));
 
 /**

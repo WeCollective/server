@@ -6,11 +6,12 @@ const env = process.env.NODE_ENV;
 const domain = env === 'production' ? 'https://weco.io' : 'http://webapp-dev.eu9ntpt33z.eu-west-1.elasticbeanstalk.com';
 const iconWeco = 'https://s3-us-west-2.amazonaws.com/slack-files2/avatars/2017-02-02/136111767555_a0c541b8e8fdec77e42b_132.jpg';
 const webhooks = {
-  general: 'https://hooks.slack.com/services/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',
+  activityTracker: 'https://hooks.slack.com/services/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',
+  general: 'https://hooks.slack.com/services/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',
   lmenus: 'https://hooks.slack.com/services/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',
 };
 
-slack.setWebhook(env === 'production' ? webhooks.general : webhooks.lmenus);
+slack.setWebhook(env === 'production' ? webhooks.activityTracker : webhooks.lmenus);
 
 const webhook = data => {
   slack.webhook(data, err => {

@@ -19,7 +19,6 @@ const {
 } = Constants.BannedValues;
 const {
   postText,
-  timestamp,
   userAgeMin,
   userPasswordMax,
   userPasswordMin,
@@ -56,7 +55,7 @@ const checkId = (type, str) => {
 };
 
 // EXPORTS.
-const date = int => int && Number.parseInt(int, 10) > 0 && int.toString().length <= timestamp;
+const date = int => exists(int) && !Number.isNaN(int);
 const age = int => date(int) && moment().diff(moment(int), 'years') >= userAgeMin;
 const array = (arr, minEntries = 0) => Array.isArray(arr) && arr.length >= minEntries;
 const boolean = value => typeof value === 'boolean';

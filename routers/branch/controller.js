@@ -5,6 +5,7 @@ const Constants = reqlib('config/constants');
 const fs = reqlib('config/filestorage');
 const mailer = reqlib('config/mailer');
 const Models = reqlib('models/');
+const NotificationTypes = reqlib('config/notification-types');
 const RequestsController = reqlib('routers/requests/controller');
 
 const {
@@ -12,7 +13,10 @@ const {
   BranchThumbnailType,
 } = Constants;
 const { BranchImageTypes } = Constants.AllowedValues;
-const { createBranchImageId } = Constants.Helpers;
+const {
+  createBranchImageId,
+  createNotificationId,
+} = Constants.Helpers;
 
 // Deletes the branch completely and moves all of its children under b/root.
 const deleteBranch = branch => {
@@ -162,6 +166,21 @@ const deleteBranch = branch => {
 
       for (let i = 0; i < tags.length; i += 1) {
         const promise = tags[i].destroy();
+        promises = [
+          ...promises,
+          promise,
+        ];
+      }
+
+      return Promise.all(promises);
+    })
+    // Remove this branch from followed for all users that used to follow it.
+    .then(() => Models.FollowedBranch.findByBranch(branchid))
+    .then(instances => {
+      let promises = [];
+
+      for (let i = 0; i < instances.length; i += 1) {
+        const promise = instances[i].destroy();
         promises = [
           ...promises,
           promise,
@@ -395,11 +414,35 @@ module.exports.createBranch = (req, res, next) => {
         req.body.action = 'accept';
         req.params.childid = childBranchId;
         req.params.branchid = parentBranchId;
-        return RequestsController.put(req, res);
+        req.synthetic = true;
+        return RequestsController.put(req, res, next);
       }
 
-      // We need a permission.
-      return Promise.resolve();
+      // We need a permission, notify the destination parent branch
+      // moderators that we want to move there.
+      let promises = [];
+
+      for (let i = 0; i < mods.length; i += 1) {
+        const modUsername = mods[i];
+        const promise = Models.Notification.create({
+          data: {
+            childid: childBranchId,
+            parentid: parentBranchId,
+            username: creator,
+          },
+          date,
+          id: createNotificationId(modUsername, date),
+          type: NotificationTypes.NEW_CHILD_BRANCH_REQUEST,
+          unread: true,
+          user: modUsername,
+        });
+        promises = [
+          ...promises,
+          promise,
+        ];
+      }
+
+      return Promise.all(promises);
     })
     // Auto-follow the created branch.
     .then(() => Models.FollowedBranch.create({
@@ -423,7 +466,6 @@ module.exports.createBranch = (req, res, next) => {
 module.exports.delete = (req, res, next) => {
   const { child: childBranch } = req.query;
   const { branchid: parentBranch } = req.params;
-
   let branch;
   let child;
 

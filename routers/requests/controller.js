@@ -424,7 +424,12 @@ module.exports.put = (req, res, next) => {
         // Send notifications to both branch mods that the child branch has moved.
         .then(() => Models.Mod.findByBranch(parentBranchId))
         .then(mods => {
-          modsParentBranch = mods;
+          modsParentBranch = mods.filter(x => {
+            if (req.synthetic && x.get('username') === username) {
+              return false;
+            }
+            return true;
+          });
           return Models.Mod.findByBranch(childBranchId);
         })
         // Remove all duplicates i.e. users who are mods of both branches.
@@ -434,11 +439,12 @@ module.exports.put = (req, res, next) => {
           let alreadyInsertedUsernames = uniqueMods.map(instance => instance.get('username'));
 
           instances.forEach(instance => {
-            const username = instance.get('username');
-            if (!alreadyInsertedUsernames.includes(username)) {
+            const modUsername = instance.get('username');
+            const canInsert = req.synthetic ? modUsername !== username : true;
+            if (!alreadyInsertedUsernames.includes(modUsername) && canInsert) {
               alreadyInsertedUsernames = [
                 ...alreadyInsertedUsernames,
-                username,
+                modUsername,
               ];
               uniqueMods = [
                 ...uniqueMods,
@@ -485,7 +491,13 @@ module.exports.put = (req, res, next) => {
       username,
     }))
     // Inform the request creator about the decision.
-    .then(() => createSubbranchRequestCreatorNotification())
+    .then(() => {
+      if (!req.synthetic) {
+        return createSubbranchRequestCreatorNotification();
+      }
+
+      return Promise.resolve();
+    })
     .then(() => next())
     .catch(err => {
       if (err) {

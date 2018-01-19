@@ -35,11 +35,6 @@ const newAccount = (name, email, username) => {
       author_link: url,
       title: name,
       title_link: url,
-      fields: [{
-        title: 'Email',
-        value: email,
-        short: false,
-      }],
       footer: 'Weco',
       footer_icon: iconWeco,
       ts: Math.floor(Date.now() / 1000),

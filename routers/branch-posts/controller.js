@@ -37,7 +37,7 @@ const VALID_SORT_BY_MOD_VALUES = [
   ...PostFlagTypes,
 ];
 const VALID_SORT_BY_USER_VALUES = [
-  'comment_count',
+  'comments',
   'date',
   'points',
 ];

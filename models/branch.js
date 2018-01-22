@@ -68,11 +68,7 @@ module.exports = (Dynamite, validate) => {
   // TODO: this has an upper limit on the number of results; if so, a LastEvaluatedKey
   // will be supplied to indicate where to continue the search from
   // (see: http://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/DynamoDB.html#query-property)
-  Branch.findSubbranches = (parentid, timeafter, sortBy, lastBranchInstance, limit) => {
-    if (limit === undefined || limit === null) {
-      limit = 20;
-    }
-
+  Branch.findSubbranches = (parentid, timeafter, sortBy, lastBranchInstance, returnAll) => {
     const { TableIndexes } = Branch.config.keys;
     let IndexName;
 
@@ -129,7 +125,7 @@ module.exports = (Dynamite, validate) => {
       queryParams.KeyConditionExpression = 'parentid = :parentid';
     }
 
-    return Dynamite.query(queryParams, limit, Branch, 'slice');
+    return Dynamite.query(queryParams, Branch, returnAll ? 'all' : 'slice');
   };
 
   return Branch;

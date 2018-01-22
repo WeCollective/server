@@ -118,7 +118,7 @@ module.exports = (Dynamite, validate) => {
         KeyConditionExpression: 'branchid = :branchid AND #date >= :timeafter',
       };
     }
-    else if (sortBy === 'comment_count') {
+    else if (sortBy === 'comments') {
       indexName = TableIndexes[3];
 
       if (lastPostInstance) {

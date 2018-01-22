@@ -190,7 +190,7 @@ const deleteBranch = branch => {
       return Promise.all(promises);
     })
     // Change all direct children parentid to b/root.
-    .then(() => Models.Branch.findSubbranches(branchid, 0, 'date', null, 0))
+    .then(() => Models.Branch.findSubbranches(branchid, 0, 'date', null, true))
     .then(children => {
       let promises = [];
 

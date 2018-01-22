@@ -59,6 +59,9 @@ const Dynamite = {
   getPaginationLimit(model) {
     const { models } = this;
     switch (model) {
+      case models.Branch:
+        return Limits.branches;
+
       case models.Comment:
         return Limits.comments;
 

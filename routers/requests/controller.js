@@ -108,7 +108,7 @@ module.exports.get = (req, res, next) => {
     })
     .catch(err => {
       console.log(err);
-      if (typeof err === 'object' && err.code) {
+      if (typeof err === 'object' && err.status) {
         req.error = err;
         return next(JSON.stringify(req.error));
       }
@@ -223,7 +223,7 @@ module.exports.post = (req, res, next) => {
     })
     .catch(err => {
       console.error('Error creating subbranch request:', err);
-      if (typeof err === 'object' && err.code) {
+      if (typeof err === 'object' && err.status) {
         req.error = err;
         return next(JSON.stringify(req.error));
       }
@@ -501,7 +501,7 @@ module.exports.put = (req, res, next) => {
     .then(() => next())
     .catch(err => {
       if (err) {
-        if (typeof err === 'object' && err.code) {
+        if (typeof err === 'object' && err.status) {
           req.error = err;
           return next(JSON.stringify(req.error));
         }

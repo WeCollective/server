@@ -201,7 +201,7 @@ module.exports.vote = (req, res, next) => {
     .catch(err => {
       console.error('Error voting on poll answer:', err);
 
-      if (typeof err === 'object' && err.code) {
+      if (typeof err === 'object' && err.status) {
         req.error = err;
         return next(JSON.stringify(req.error));
       }

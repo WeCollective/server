@@ -20,6 +20,7 @@ const {
 const {
   createCommentId,
   createNotificationId,
+  createPollAnswerId,
   createPostId,
   createPostImageId,
   createUserVoteItemId,
@@ -30,7 +31,10 @@ const {
   VoteDirections,
 } = Constants.AllowedValues;
 
-const { postTitle } = Constants.EntityLimits;
+const {
+  postText,
+  postTitle,
+} = Constants.EntityLimits;
 
 const ensureHost = (url, host) => {
   const protocol = 'https';
@@ -1146,12 +1150,11 @@ module.exports.getPostPicture = (postid, thumbnail = false) => {
 
 module.exports.post = (req, res, next) => {
   let {
-    branchids,
+    branches,
+    captcha,
     locked,
     nsfw,
-  } = req.body;
-  let {
-    captcha,
+    pollAnswers,
     text,
     title,
     type,
@@ -1160,8 +1163,8 @@ module.exports.post = (req, res, next) => {
   const username = req.user.get('username');
   const date = new Date().getTime();
   const id = createPostId(username, date);
-  // fetch the tags of each specfied branch. The union of these is the list of
-  // the branches the post should be tagged to.
+  // Contains the list of all branches the post should be tagged to. This is different
+  // from the client supplied branches as those can be multiple levels deep.
   let branchidsArr = [];
   let searchIndexData = {};
 
@@ -1170,7 +1173,7 @@ module.exports.post = (req, res, next) => {
 
   if (captcha !== '') {
     Models.Logger.record('HoneyPot', JSON.stringify({
-      branchids,
+      branches,
       captcha,
       id,
       locked,
@@ -1188,65 +1191,36 @@ module.exports.post = (req, res, next) => {
     return next(JSON.stringify(req.error));
   }
 
+  let error = '';
   if (!validator.postType(type)) {
-    req.error = {
-      message: 'Invalid type.',
-      status: 400,
-    };
-    return next(JSON.stringify(req.error));
+    error = 'Invalid type.';
+  }
+  else if ((type === PostTypeText && !text) || (text && !validator.postText(text))) {
+    error = 'Invalid text.';
+  }
+  else if (!title || title.length > postTitle) {
+    error = 'Invalid title.';
+  }
+  else if (text.length > postText) {
+    error = 'Invalid title.';
+  }
+  else if (!Array.isArray(branches)) {
+    error = 'Invalid branches.';
+  }
+  else if (branches.length > 5) {
+    error = 'Max 5 tags allowed.';
+  }
+  else if (([PostTypeText, PostTypePoll].includes(type) && url) || 
+    (![PostTypeText, PostTypePoll].includes(type) && !validator.url(url))) {
+    error = 'Invalid url.';
+  }
+  else if (type === PostTypePoll && (!Array.isArray(pollAnswers) || (locked && pollAnswers.length < 2))) {
+    error = 'Invalid pollAnswers.';
   }
 
-  if (text !== null && (!validator.postText(text) || (type === PostTypeText && !text.length))) {
+  if (error) {
     req.error = {
-      message: 'Invalid text.',
-      status: 400,
-    };
-    return next(JSON.stringify(req.error));
-  }
-
-  if (!title || title.length > postTitle) {
-    req.error = {
-      message: 'Invalid title.',
-      status: 400,
-    };
-    return next(JSON.stringify(req.error));
-  }
-
-  try {
-    branchids = JSON.parse(branchids);
-  }
-  catch (err) {
-    req.error = {
-      message: 'Malformed branchids.',
-      status: 400,
-    };
-    return next(JSON.stringify(req.error));
-  }
-
-  if (!branchids) {
-    req.error = {
-      message: 'Invalid branchids.',
-      status: 400,
-    };
-    return next(JSON.stringify(req.error));
-  }
-  else if (!branchids.length) {
-    branchids = [
-      ...branchids,
-      'root',
-    ];
-  }
-  else if (branchids.length > 5) {
-    req.error = {
-      message: 'Max 5 tags allowed.',
-      status: 400,
-    };
-    return next(JSON.stringify(req.error));
-  }
-
-  if (url && (!validator.url(url) || [PostTypeText, PostTypePoll].includes(type))) {
-    req.error = {
-      message: 'Invalid url.',
+      message: error,
       status: 400,
     };
     return next(JSON.stringify(req.error));
@@ -1254,12 +1228,23 @@ module.exports.post = (req, res, next) => {
 
   if (type !== PostTypePoll) {
     locked = false;
+    pollAnswers = [];
   }
+
+  if (!branches.includes('root')) {
+    branches = [
+      'root',
+      ...branches,
+    ];
+  }
+
+  if ([PostTypePoll, PostTypeText].includes(type)) url = null;
+  if (!text) text = null;
 
   let promises = [];
 
-  for (let i = 0; i < branchids.length; i += 1) {
-    const promise = Models.Tag.findByBranch(branchids[i])
+  for (let i = 0; i < branches.length; i += 1) {
+    const promise = Models.Tag.findByBranch(branches[i])
       .then(tags => {
         // All tags are collected, these are the branchids to tag the post to.
         for (let j = 0; j < tags.length; j += 1) {
@@ -1283,12 +1268,11 @@ module.exports.post = (req, res, next) => {
   }
 
   return Promise.all(promises)
-    // Validate the post data first, so this method doesn't fail halfway through.
     .then(() => {
       const data = {
         creator: username,
         id,
-        original_branches: JSON.stringify(branchids),
+        original_branches: JSON.stringify(branches),
         text,
         title,
         type,
@@ -1364,6 +1348,28 @@ module.exports.post = (req, res, next) => {
       req.user.set('num_posts', req.user.get('num_posts') + 1);
       return req.user.update();
     })
+    // Add all poll answers.
+    .then(() => {
+      let promises = [];
+
+      pollAnswers.forEach(answer => {
+        const promise = Models.PollAnswer.create({
+          creator: username,
+          date,
+          id: createPollAnswerId(id, date),
+          postid: id,
+          text: answer,
+          votes: 0,
+        });
+
+        promises = [
+          ...promises,
+          promise,
+        ];
+      });
+
+      return Promise.all(promises);
+    })
     // update the SendGrid contact list with the new user data
     // todo
     .then(() => mailer.addContact(req.user.dataValues, true))
@@ -1374,7 +1380,7 @@ module.exports.post = (req, res, next) => {
       username,
     }))
     .then(() => {
-      slack.newPost(username, id, title, type, branchids);
+      slack.newPost(username, id, title, type, branches);
       res.locals.data = id;
       return next();
     })

@@ -14,9 +14,11 @@ const reqlib = require('app-root-path').require;
 const corsOptions = reqlib('config/cors')();
 const passport = reqlib('config/passport')();
 
-Raven
-  .config('https://d53b586644e047b788637aa1c3ae035f:04519c04021c41d48e86fc6583f5ee99@sentry.io/271047')
-  .install();
+if (process.env.NODE_ENV === 'production') {
+  Raven
+    .config('https://d53b586644e047b788637aa1c3ae035f:04519c04021c41d48e86fc6583f5ee99@sentry.io/271047')
+    .install();
+}
 
 const app = express();
 module.exports = app;
@@ -25,7 +27,9 @@ module.exports = app;
 if (process.env.NODE_ENV === 'test') console.error = () => {};
 
 // MIDDLEWARE
-app.use(Raven.requestHandler());
+if (process.env.NODE_ENV === 'production') {
+  app.use(Raven.requestHandler());
+}
 app.use(helmet());
 app.use(cookieParser());
 app.use(bodyParser.json());
@@ -67,7 +71,7 @@ app.use((req, res, next) => { // eslint-disable-line no-unused-vars
   const success = {
     message: 'Success',
   };
-  
+
   if (res.locals.data !== undefined) {
     success.data = res.locals.data;
   }
@@ -77,7 +81,9 @@ app.use((req, res, next) => { // eslint-disable-line no-unused-vars
 });
 
 // Handle errors.
-app.use(Raven.errorHandler());
+if (process.env.NODE_ENV === 'production') {
+  app.use(Raven.errorHandler());
+}
 app.use((err, req, res, next) => { // eslint-disable-line no-unused-vars
   req.error = req.error || {};
   let message = req.error.message;

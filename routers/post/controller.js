@@ -1352,11 +1352,12 @@ module.exports.post = (req, res, next) => {
     .then(() => {
       let promises = [];
 
-      pollAnswers.forEach(answer => {
+      // We need to use fake timestamps because the id has to be unique...
+      pollAnswers.forEach((answer, index) => {
         const promise = Models.PollAnswer.create({
           creator: username,
           date,
-          id: createPollAnswerId(id, date),
+          id: createPollAnswerId(id, date + index),
           postid: id,
           text: answer,
           votes: 0,

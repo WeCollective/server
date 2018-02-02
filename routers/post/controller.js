@@ -1207,7 +1207,7 @@ module.exports.post = (req, res, next) => {
   else if (!Array.isArray(branches)) {
     error = 'Invalid branches.';
   }
-  else if (branches.length > 5) {
+  else if (branches.length > (5 + (branches.includes('root') ? 1 : 0))) {
     error = 'Max 5 tags allowed.';
   }
   else if (([PostTypeText, PostTypePoll].includes(type) && url) || 

@@ -721,6 +721,7 @@ module.exports.getComment = (req, res, next) => {
           .then(comment => {
             // todo
             Object.keys(comment.dataValues).forEach(key => instance.set(key, comment.get(key)));
+            instance.set('comments', []);
             return Promise.resolve();
           })
           .catch(err => Promise.reject(err));

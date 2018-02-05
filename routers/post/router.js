@@ -34,30 +34,6 @@ module.exports = () => {
      */
     .post(ACL.allow(ACL.Roles.User), controller.post);
 
-  router.route('/picture-suggestion')
-    /**
-     * @api {get} /post/:postid/picture-suggestion Get Picture URL
-     * @apiName Get Picture URL
-     * @apiDescription Get a suggested URL from the requested website.
-     * @apiGroup Posts
-     * @apiPermission guest
-     * @apiVersion 1.0.0
-     *
-     * @apiParam (URL Parameters) {String} url Website url.
-     *
-     * @apiSuccess (Successes) {String} data The suggested picture URL.
-     * @apiSuccessExample {json} SuccessResponse:
-     *  HTTP/1.1 200
-     *  {
-     *    "message": "Success",
-     *    "data": "https://weco.io/picture.jpg"
-     *  }
-     *
-     * @apiUse NotFound
-     * @apiUse InternalServerError
-     */
-    .get(ACL.allow(ACL.Roles.Guest), controller.getPictureUrlSuggestion);
-
   router.route('/:postid')
     /**
      * @api {get} /post/:postid Get Post

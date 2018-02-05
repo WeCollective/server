@@ -1,6 +1,4 @@
-const htmlparser = require('htmlparser');
 const reqlib = require('app-root-path').require;
-const request = require('request');
 
 const algolia = reqlib('config/algolia');
 const Constants = reqlib('config/constants');
@@ -35,21 +33,6 @@ const {
   postText,
   postTitle,
 } = Constants.EntityLimits;
-
-const ensureHost = (url, host) => {
-  const protocol = 'https';
-
-  if (!url.includes('http') && !url.includes('ftp') && url.indexOf('//') !== 0) {
-    if (!url.includes(host)) {
-      url = `${protocol}://${host}${url}`;
-    }
-    else {
-      url = `${protocol}://${url}`;
-    }
-  }
-
-  return url;
-};
 
 const shouldAddImage = attrs => {
   const {
@@ -1053,77 +1036,6 @@ module.exports.getPictureUploadUrl = (req, res, next) => {
     })
     .catch(err => {
       console.error('Error fetching post data:', err);
-      return next(JSON.stringify(req.error));
-    });
-};
-
-module.exports.getPictureUrlSuggestion = (req, res, next) => {
-  const { url } = req.query;
-  let result = '';
-
-  if (!url) {
-    req.error = {
-      message: 'Missing url.',
-      status: 400,
-    };
-    return next(JSON.stringify(req.error));
-  }
-
-  const path = url.includes('http') ? url : `https://${url}`;
-
-  if (path.length <= 'http://'.length) {
-    req.error = {
-      message: 'Missing url.',
-      status: 400,
-    };
-    return next(JSON.stringify(req.error));
-  }
-
-  return new Promise((resolve, reject) => request(path, (err, res, body) => {
-    if (err) {
-      if (err.code === 'ENOTFOUND') {
-        return resolve(result);
-      }
-      console.log(err);
-      return reject(err);
-    }
-
-    const handler = new htmlparser.DefaultHandler((error, dom) => {
-      let foundImagesArr = [];
-
-      if (error) {
-        console.log(error);
-      }
-
-      for (let i = 0; i < dom.length; i += 1) {
-        foundImagesArr = [
-          ...foundImagesArr,
-          ...searchImages(dom[i]),
-        ];
-      }
-
-      let highWeight = 0;
-      foundImagesArr.forEach(img => {
-        if (img.weight > highWeight) {
-          result = ensureHost(img.src, res.request.originalHost);
-          highWeight = img.weight;
-        }
-      });
-    });
-
-    const parser = new htmlparser.Parser(handler);
-    parser.parseComplete(body);
-    console.log(`Found suggested image at ${result}`);
-    return resolve(result);
-  }))
-    .then(data => {
-      res.locals.data = data;
-      return next();
-    })
-    .catch(err => {
-      req.error = {
-        message: err,
-      };
       return next(JSON.stringify(req.error));
     });
 };

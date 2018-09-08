@@ -1,6 +1,6 @@
 const reqlib = require('app-root-path').require;
 
-const algolia = reqlib('config/algolia');
+// const algolia = reqlib('config/algolia');
 const Constants = reqlib('config/constants');
 const fs = reqlib('config/filestorage');
 const mailer = reqlib('config/mailer');
@@ -220,10 +220,9 @@ module.exports.delete = (req, res, next) => {
         branch.set('post_comments', branch.get('post_comments') - postComments);
         branch.set('post_points', branch.get('post_points') - postGlobalPoints);
 
-        const promise = branch.update()
-          // todo
-          .then(() => algolia.updateObjects(branch.dataValues, 'branch'))
-          .catch(err => Promise.reject(err));
+        const promise = branch.update();
+        // todo
+        // .then(() => algolia.updateObjects(branch.dataValues, 'branch'))
 
         promises = [
           ...promises,
@@ -1227,7 +1226,7 @@ module.exports.post = (req, res, next) => {
       return Promise.all(promises);
     })
     // Add new post to the search index.
-    .then(() => algolia.addObjects(searchIndexData, 'post'))
+    // .then(() => algolia.addObjects(searchIndexData, 'post'))
     // Increment the post counters on the branch objects
     .then(() => {
       let promises = [];
@@ -1284,15 +1283,19 @@ module.exports.post = (req, res, next) => {
 
       return Promise.all(promises);
     })
-    // update the SendGrid contact list with the new user data
-    // todo
-    .then(() => mailer.addContact(req.user.dataValues, true))
     // Self-upvote the post.
-    .then(() => Models.UserVote.create({
-      direction: 'up',
-      itemid: createUserVoteItemId(id, 'post'),
-      username,
-    }))
+    .then(() => {
+      // update the SendGrid contact list with the new user data
+      // todo
+      mailer.addContact(req.user.dataValues, true)
+        .catch(err => console.log(err));
+
+      return Models.UserVote.create({
+        direction: 'up',
+        itemid: createUserVoteItemId(id, 'post'),
+        username,
+      });
+    })
     .then(() => {
       slack.newPost(username, id, title, type, branches);
       res.locals.data = id;

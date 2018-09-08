@@ -10,7 +10,7 @@ const JwtStrategy = require('passport-jwt').Strategy;
 const passport = require('passport');
 const reqlib = require('app-root-path').require;
 
-const algolia = reqlib('config/algolia');
+// const algolia = reqlib('config/algolia');
 const auth = reqlib('config/auth');
 const JwtConfig = reqlib('config/jwt');
 const mailer = reqlib('config/mailer');
@@ -213,7 +213,7 @@ passport.use('LocalSignUp', new LocalStrategy({
       // Post to Slack.
       slack.newAccount(name, email, username);
       // Add new user to the search index.
-      return algolia.addObjects(user.dataValues, 'user');
+      // return algolia.addObjects(user.dataValues, 'user');
     })
     .then(() => done(null, { username }))
     .catch(err => {

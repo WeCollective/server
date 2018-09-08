@@ -1,6 +1,6 @@
 const reqlib = require('app-root-path').require;
 
-const algolia = reqlib('config/algolia');
+// const algolia = reqlib('config/algolia');
 const Constants = reqlib('config/constants');
 const fs = reqlib('config/filestorage');
 const mailer = reqlib('config/mailer');
@@ -352,7 +352,7 @@ module.exports.createBranch = (req, res, next) => {
     }))
     // Add new branch to the search index.
     // todo
-    .then(instance => algolia.addObjects(instance.dataValues, 'branch'))
+    // .then(instance => algolia.addObjects(instance.dataValues, 'branch'))
     // Create tags for the new branch - since it's only a child of root for now,
     // these will always be equal to 'root' and childBranchId.
     // Skip validation as we have already established above that childBranchId
@@ -913,7 +913,7 @@ module.exports.put = (req, res, next) => {
     })
     // Update branch in the search index.
     // todo
-    .then(() => algolia.updateObjects(branch.dataValues, 'branch'))
+    // .then(() => algolia.updateObjects(branch.dataValues, 'branch'))
     .then(() => next())
     .catch(err => {
       req.error = {

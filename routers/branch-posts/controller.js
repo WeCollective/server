@@ -1,6 +1,6 @@
 const reqlib = require('app-root-path').require;
 
-const algolia = reqlib('config/algolia');
+// const algolia = reqlib('config/algolia');
 const ACL = reqlib('config/acl');
 const Constants = reqlib('config/constants');
 const Models = reqlib('models/');
@@ -283,7 +283,7 @@ module.exports.resolveFlag = (req, res, next) => {
           return branch.update();
         })
         // todo
-        .then(() => algolia.updateObjects(branch.dataValues, 'branch'))
+        // .then(() => algolia.updateObjects(branch.dataValues, 'branch'))
         // Delete flag for this post on this branch.
         .then(() => Models.FlaggedPost.destroy({
           branchid,
@@ -661,7 +661,7 @@ module.exports.put = (req, res, next) => {
             instance.set('post_points', instance.get('post_points') + resData.delta);
 
             // todo
-            algolia.updateObjects(instance.dataValues, 'branch');
+            // algolia.updateObjects(instance.dataValues, 'branch');
             return instance.update();
           })
           .catch(err => Promise.reject(err));

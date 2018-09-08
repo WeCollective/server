@@ -2,7 +2,7 @@
 const reqlib = require('app-root-path').require;
 
 // const ACL = reqlib('config/acl');
-const algolia = reqlib('config/algolia');
+// const algolia = reqlib('config/algolia');
 const auth = reqlib('config/auth');
 const Constants = reqlib('config/constants');
 const fs = reqlib('config/filestorage');
@@ -416,7 +416,7 @@ module.exports.put = (req, res, next) => {
     // todo
     .then(() => mailer.addContact(user.dataValues, true))
     // todo
-    .then(() => algolia.updateObjects(user.dataValues, 'user'))
+    // .then(() => algolia.updateObjects(user.dataValues, 'user'))
     .then(() => next())
     .catch(err => {
       console.error('Error updating user.', err);

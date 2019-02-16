@@ -95,20 +95,20 @@ module.exports = () => {
     .get(ACL.allow(ACL.Roles.User));
 
   router.route('/me')
-    /**
-     * @api {delete} /user/me Delete Self
-     * @apiName Delete Self
-     * @apiGroup User
-     * @apiPermission self
-     * @apiVersion 1.0.0
-     *
-     * @apiUse OK
-     * @apiUse Forbidden
-     * @apiUse BadRequest
-     * @apiUse InternalServerError
-     * @apiUse NotFound
-     */
-    // .delete(ACL.allow(ACL.Roles.User), controller.delete)
+  /**
+   * @api {delete} /user/me Delete Self
+   * @apiName Delete Self
+   * @apiGroup User
+   * @apiPermission self
+   * @apiVersion 1.0.0
+   *
+   * @apiUse OK
+   * @apiUse Forbidden
+   * @apiUse BadRequest
+   * @apiUse InternalServerError
+   * @apiUse NotFound
+   */
+  // .delete(ACL.allow(ACL.Roles.User), controller.delete)
     /**
      * @api {get} /user/me Get Self
      * @apiName Get Self

@@ -33,94 +33,94 @@ const {
   postTitle,
 } = Constants.EntityLimits;
 
-const shouldAddImage = attrs => {
-  const {
-    height,
-    width,
-  } = attrs;
+// const shouldAddImage = attrs => {
+//   const {
+//     height,
+//     width,
+//   } = attrs;
 
-  const h = Number.parseInt(height, 10);
-  const w = Number.parseInt(width, 10);
+//   const h = Number.parseInt(height, 10);
+//   const w = Number.parseInt(width, 10);
 
-  if (!Number.isNaN(h) || !Number.isNaN(w)) {
-    // Skip tracking pixels.
-    if (h <= 1 || w <= 1) {
-      return false;
-    }
-  }
+//   if (!Number.isNaN(h) || !Number.isNaN(w)) {
+//     // Skip tracking pixels.
+//     if (h <= 1 || w <= 1) {
+//       return false;
+//     }
+//   }
 
-  return true;
-};
+//   return true;
+// };
 
-const searchImages = node => {
-  const {
-    children,
-    name,
-    type,
-  } = node;
+// const searchImages = node => {
+//   const {
+//     children,
+//     name,
+//     type,
+//   } = node;
 
-  let resultsArr = [];
-  let { attribs } = node;
+//   let resultsArr = [];
+//   let { attribs } = node;
 
-  attribs = attribs || {};
+//   attribs = attribs || {};
 
-  if (type === 'tag') {
-    const {
-      itemprop,
-      name: aName,
-      property,
-    } = attribs;
+//   if (type === 'tag') {
+//     const {
+//       itemprop,
+//       name: aName,
+//       property,
+//     } = attribs;
 
-    if (name === 'meta') {
-      const metaTagsArr = [
-        'twitter:image',
-        'og:image',
-      ];
+//     if (name === 'meta') {
+//       const metaTagsArr = [
+//         'twitter:image',
+//         'og:image',
+//       ];
 
-      if (itemprop === 'image' && shouldAddImage(attribs)) {
-        resultsArr = [
-          ...resultsArr,
-          {
-            src: attribs.content,
-            weight: 1,
-          },
-        ];
-      }
+//       if (itemprop === 'image' && shouldAddImage(attribs)) {
+//         resultsArr = [
+//           ...resultsArr,
+//           {
+//             src: attribs.content,
+//             weight: 1,
+//           },
+//         ];
+//       }
 
-      if ((metaTagsArr.includes(property) ||
-        metaTagsArr.includes(aName)) && shouldAddImage(attribs)) {
-        resultsArr = [
-          ...resultsArr,
-          {
-            src: attribs.content,
-            weight: 3,
-          },
-        ];
-      }
-    }
+//       if ((metaTagsArr.includes(property) ||
+//         metaTagsArr.includes(aName)) && shouldAddImage(attribs)) {
+//         resultsArr = [
+//           ...resultsArr,
+//           {
+//             src: attribs.content,
+//             weight: 3,
+//           },
+//         ];
+//       }
+//     }
 
-    if (name === 'img' && shouldAddImage(attribs)) {
-      resultsArr = [
-        ...resultsArr,
-        {
-          src: attribs.src,
-          weight: 2,
-        },
-      ];
-    }
-  }
+//     if (name === 'img' && shouldAddImage(attribs)) {
+//       resultsArr = [
+//         ...resultsArr,
+//         {
+//           src: attribs.src,
+//           weight: 2,
+//         },
+//       ];
+//     }
+//   }
 
-  if (children) {
-    for (let i = 0; i < children.length; i += 1) {
-      resultsArr = [
-        ...resultsArr,
-        ...searchImages(children[i]),
-      ];
-    }
-  }
+//   if (children) {
+//     for (let i = 0; i < children.length; i += 1) {
+//       resultsArr = [
+//         ...resultsArr,
+//         ...searchImages(children[i]),
+//       ];
+//     }
+//   }
 
-  return resultsArr;
-};
+//   return resultsArr;
+// };
 
 module.exports.delete = (req, res, next) => {
   const { postid } = req.params;

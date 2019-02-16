@@ -595,53 +595,34 @@ module.exports.resendVerification = (req, res, next) => {
     });
 };
 
-module.exports.sendResetPasswordLink = (req, res, next) => {
-  const { username } = req.params;
-  let token;
-  let user;
-
-  if (!username) {
-    req.error = {
+module.exports.sendResetPasswordLink = async (req, res, next) => {
+  try {
+    const { username } = req.params;
+    if (!username) throw {
       message: 'Missing username parameter.',
       status: 400,
     };
-    return next(JSON.stringify(req.error));
+
+    const user = await Models.User.findOne({ where: { username }});
+    if (user) {
+      const expires = new Date();
+      expires.setHours(expires.getHours() + 1);
+      const jwt = {
+        expires: expires.getTime(),
+        token: auth.generateToken(),
+      };
+      user.set('resetPasswordToken', JSON.stringify(jwt));
+      await user.update();
+      await mailer.sendResetPasswordLink(user.dataValues, jwt.token);
+    }
+
+    next();
   }
-
-  return Models.User.findOne({
-    where: {
-      username,
-    },
-  })
-    .then(instance => {
-      if (instance) {
-        user = instance;
-
-        const expires = new Date();
-        expires.setHours(expires.getHours() + 1);
-        token = {
-          expires: expires.getTime(),
-          token: auth.generateToken(),
-        };
-        user.set('resetPasswordToken', JSON.stringify(token));
-        return user.update();
-      }
-
-      return Promise.resolve();
-    })
-    // todo
-    .then(() => {
-      if (user) {
-        return mailer.sendResetPasswordLink(user.dataValues, token.token);
-      }
-      return Promise.resolve();
-    })
-    .then(() => next())
-    .catch(err => {
-      console.error('Error sending password reset:', err);
-      req.error = err;
-      return next(JSON.stringify(req.error));
-    });
+  catch (e) {
+    console.error('Error sending password reset:', e);
+    req.error = e;
+    next(JSON.stringify(req.error));
+  }
 };
 
 module.exports.unfollowBranch = (req, res, next) => {

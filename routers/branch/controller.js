@@ -1,21 +1,15 @@
-const reqlib = require('app-root-path').require;
+const reqlib = require('app-root-path').require
+const { List } = require('immutable')
 
-const Constants = reqlib('config/constants');
-const fs = reqlib('config/filestorage');
-const mailer = reqlib('config/mailer');
-const Models = reqlib('models/');
-const NotificationTypes = reqlib('config/notification-types');
-const RequestsController = reqlib('routers/requests/controller');
+const Constants = reqlib('config/constants')
+const fs = reqlib('config/filestorage')
+const Models = reqlib('models/')
+const NotificationTypes = reqlib('config/notification-types')
+const RequestsController = reqlib('routers/requests/controller')
 
-const {
-  BranchCoverType,
-  BranchThumbnailType,
-} = Constants;
-const { BranchImageTypes } = Constants.AllowedValues;
-const {
-  createBranchImageId,
-  createNotificationId,
-} = Constants.Helpers;
+const { BranchCoverType, BranchThumbnailType } = Constants
+const { BranchImageTypes } = Constants.AllowedValues
+const { createBranchImageId, createNotificationId } = Constants.Helpers
 
 // Deletes the branch completely and moves all of its children under b/root.
 const deleteBranch = branch => {
@@ -287,56 +281,41 @@ const detachBranch = branch => {
     });
 };
 
-module.exports.createBranch = (req, res, next) => {
-  const {
-    id: childBranchId,
-    name,
-    parentid: parentBranchId,
-  } = req.body;
-  const creator = req.user.get('username');
-  const date = new Date().getTime();
+module.exports.createBranch = async (req, res, next) => {
+  try {
+    const { id: childBranchId, name, parentid: parentBranchId } = req.body
+    const creator = req.user.get('username')
+    const date = new Date().getTime()
 
-  return Models.Branch.findById(childBranchId)
-    .then(instance => {
-      if (instance !== null) {
-        return Promise.reject({
-          message: `${childBranchId} already exists.`,
-          status: 400,
-        });
-      }
+    const childBranch = await Models.Branch.findById(childBranchId)
+    if (childBranch !== null) throw {
+      message: `${childBranchId} already exists.`,
+      status: 400,
+    }
 
-      // The parent branch must exist.
-      return Models.Branch.findById(parentBranchId);
-    })
+    // The parent branch must exist.
+    const parentBranch = await Models.Branch.findById(parentBranchId)
+    if (parentBranch === null) throw {
+      message: `${parentBranchId} does not exist.`,
+      status: 404,
+    }
+
     // If we are attaching branch to anything other than root, we will
     // need a permission to do so before moving it there.
-    .then(instance => {
-      if (instance === null) {
-        return Promise.reject({
-          message: `${parentBranchId} does not exist.`,
-          status: 404,
-        });
-      }
-
-      if (parentBranchId === 'root') {
-        return Promise.resolve();
-      }
-
-      return Models.SubBranchRequest.create({
+    if (parentBranchId !== 'root') {
+      await Models.SubBranchRequest.create({
         childid: childBranchId,
         creator,
         date,
         parentid: parentBranchId,
-      });
-    })
+      })
+    }
+
     // Make the user automatically the first moderator of the new branch.
-    .then(() => Models.Mod.create({
-      branchid: childBranchId,
-      date,
-      username: creator,
-    }))
+    await Models.Mod.create({ branchid: childBranchId, date, username: creator })
+
     // Create the new branch.
-    .then(() => Models.Branch.create({
+    await Models.Branch.create({
       creator,
       date,
       id: childBranchId,
@@ -348,119 +327,81 @@ module.exports.createBranch = (req, res, next) => {
       post_comments: 0,
       post_count: 0,
       post_points: 0,
-    }))
-    // Add new branch to the search index.
-    // todo
-    // .then(instance => algolia.addObjects(instance.dataValues, 'branch'))
+    })
+
     // Create tags for the new branch - since it's only a child of root for now,
     // these will always be equal to 'root' and childBranchId.
     // Skip validation as we have already established above that childBranchId
     // is valid. We have created a branch with its name, after all.
-    .then(() => Models.Tag.create({
-      branchid: childBranchId,
-      tag: childBranchId,
-    }))
-    .then(() => Models.Tag.create({
-      branchid: childBranchId,
-      tag: 'root',
-    }))
-    // Increase user's branch and mod count.
-    .then(() => {
-      req.user.set('num_branches', req.user.get('num_branches') + 1);
-      req.user.set('num_mod_positions', req.user.get('num_mod_positions') + 1);
-      return req.user.update();
-    })
-    // Update the SendGrid contact list with the new user data.
-    // todo
-    .then(() => mailer.addContact(req.user.dataValues, true))
-    // Update branch_count.
-    .then(() => Models.Constant.findById('branch_count'))
-    .then(instance => {
-      if (instance === null) {
-        return Promise.reject({
-          message: 'Constant does not exist.',
-          status: 404,
-        });
-      }
+    await Models.Tag.create({ branchid: childBranchId, tag: childBranchId })
+    await Models.Tag.create({ branchid: childBranchId, tag: 'root' })
 
-      instance.set('data', instance.get('data') + 1);
-      return instance.update();
-    })
+    // Increase user's branch and mod count.
+    req.user.set('num_branches', req.user.get('num_branches') + 1)
+    req.user.set('num_mod_positions', req.user.get('num_mod_positions') + 1)
+    await req.user.update()
+
+    // Update branch_count.
+    const instance = await Models.Constant.findById('branch_count')
+    if (instance === null) throw {
+      message: 'Constant does not exist.',
+      status: 404,
+    }
+
+    instance.set('data', instance.get('data') + 1)
+    await instance.update()
+
     // Remember how we put this branch under root because we might need a permission
     // in case we want to attach it to any branch other than root? Well, here we will
     // find out if we really need a permission to move this newly created branch.
-    .then(() => {
-      if (parentBranchId === 'root') {
-        return Promise.resolve();
-      }
-
-      return Models.Mod.findByBranch(parentBranchId);
-    })
-    .then(mods => {
-      // We don't need a permission but there is also
-      // nothing to move as we are already under root,
-      // so we can end it here.
-      if (parentBranchId === 'root') {
-        return Promise.resolve();
-      }
-
-      mods = mods.map(obj => obj.get('username'));
+    if (parentBranchId !== 'root') {
+      let mods = await Models.Mod.findByBranch(parentBranchId)
+      mods = mods.map(obj => obj.get('username'))
 
       // We don't need a permission.
       if (mods.includes(creator)) {
         // Inject the action parameter to the request so it doesn't
         // fail while accepting the branch request.
-        req.body.action = 'accept';
-        req.params.childid = childBranchId;
-        req.params.branchid = parentBranchId;
-        req.synthetic = true;
-        return RequestsController.put(req, res, next);
+        req.body.action = 'accept'
+        req.params.childid = childBranchId
+        req.params.branchid = parentBranchId
+        req.synthetic = true
+        await RequestsController.put(req, res, next)
       }
-
-      // We need a permission, notify the destination parent branch
+      // We need a permission - notify the destination parent branch
       // moderators that we want to move there.
-      let promises = [];
-
-      for (let i = 0; i < mods.length; i += 1) {
-        const modUsername = mods[i];
-        const promise = Models.Notification.create({
-          data: {
-            childid: childBranchId,
-            parentid: parentBranchId,
-            username: creator,
-          },
-          date,
-          id: createNotificationId(modUsername, date),
-          type: NotificationTypes.NEW_CHILD_BRANCH_REQUEST,
-          unread: true,
-          user: modUsername,
-        });
-        promises = [
-          ...promises,
-          promise,
-        ];
+      else {
+        let promises = new List()
+        mods.forEach(modUsername => {
+          const promise = Models.Notification.create({
+            data: {
+              childid: childBranchId,
+              parentid: parentBranchId,
+              username: creator,
+            },
+            date,
+            id: createNotificationId(modUsername, date),
+            type: NotificationTypes.NEW_CHILD_BRANCH_REQUEST,
+            unread: true,
+            user: modUsername,
+          })
+          promises = promises.push(promise)
+        })
+        await Promise.all(promises.toArray())
       }
+    }
 
-      return Promise.all(promises);
-    })
     // Auto-follow the created branch.
-    .then(() => Models.FollowedBranch.create({
-      branchid: childBranchId,
-      username: creator,
-    }))
-    .then(() => next())
-    .catch(err => {
-      if (typeof err === 'object' && err.status) {
-        req.error = err;
-        return next(JSON.stringify(req.error));
-      }
+    await Models.FollowedBranch.create({ branchid: childBranchId, username: creator })
 
-      req.error = {
-        message: err,
-      };
-      return next(JSON.stringify(req.error));
-    });
-};
+    next()
+  }
+  catch (e) {
+    const error = typeof e === 'object' && e.status ? e : { message: e }
+    req.error = error
+    next(JSON.stringify(req.error))
+  }
+}
 
 module.exports.delete = (req, res, next) => {
   const { child: childBranch } = req.query;

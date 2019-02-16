@@ -22,7 +22,6 @@
   "author": "WE Collective",
   "license": "ISC",
   "dependencies": {
-    "algoliasearch": "^3.24.6",
     "apidoc": "^0.17.6",
     "app-root-path": "^2.0.1",
     "aws-sdk": "^2.4.0",

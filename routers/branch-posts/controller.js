@@ -1,6 +1,5 @@
 const reqlib = require('app-root-path').require;
 
-// const algolia = reqlib('config/algolia');
 const ACL = reqlib('config/acl');
 const Constants = reqlib('config/constants');
 const Models = reqlib('models/');

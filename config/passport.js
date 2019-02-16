@@ -10,7 +10,6 @@ const JwtStrategy = require('passport-jwt').Strategy;
 const passport = require('passport');
 const reqlib = require('app-root-path').require;
 
-// const algolia = reqlib('config/algolia');
 const auth = reqlib('config/auth');
 const JwtConfig = reqlib('config/jwt');
 const mailer = reqlib('config/mailer');

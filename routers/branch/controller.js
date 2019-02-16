@@ -1,6 +1,5 @@
 const reqlib = require('app-root-path').require;
 
-// const algolia = reqlib('config/algolia');
 const Constants = reqlib('config/constants');
 const fs = reqlib('config/filestorage');
 const mailer = reqlib('config/mailer');

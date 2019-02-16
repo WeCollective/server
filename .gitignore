@@ -1,6 +1,21 @@
-node_modules/
-docs/
-.env
-npm-debug.log
-.idea
+# dependencies
+node_modules
+
+# testing
+coverage
+
+# production
+build
+docs
+
+# Local development
+.DS_Store
 .elasticbeanstalk/logs
+.env
+.eslintcache
+.idea
+.trash
+
+# misc
+npm-debug.log*
+package-log.json

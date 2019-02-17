@@ -1,14 +1,41 @@
-const mailHelper = require('sendgrid').mail;
-const sendgrid = require('sendgrid')(process.env.SENDGRID_MAIL_API_KEY);
+const sendgrid = require('@sendgrid/mail')
+const sendgridLegacy = require('sendgrid')(process.env.SENDGRID_MAIL_API_KEY)
+// const ContactImporter = require('@sendgrid/contact-importer')
 
-function mmddyyyy(date) {
-  const mm = (date.getMonth() + 1).toString();
-  const dd = date.getDate().toString();
-  return [mm < 10 ? ('0' + mm) : mm, '/', dd < 10 ? ('0' + dd) : dd, '/', date.getFullYear()].join('');
+sendgrid.setApiKey(process.env.SENDGRID_MAIL_API_KEY)
+
+// const contactImporter = new ContactImporter(sendgrid)
+const padDigit = num => num < 10 ? `0${num}` : num
+
+const mmddyyyy = date => {
+  const mm = (date.getMonth() + 1).toString()
+  const dd = date.getDate().toString()
+  const yyyy = date.getFullYear()
+  return `${padDigit(mm)}/${padDigit(dd)}/${yyyy}`
 }
 
-module.exports.addContact = (user, update) => new Promise((resolve, reject) => {
-  const req = sendgrid.emptyRequest();
+const send = async (message, user) => {
+  try {
+    if (!message.from) {
+      message.from = {
+        email: process.env.WECO_EMAIL,
+        name: 'James from WECO',
+      }
+    }
+
+    if (!message.to) {
+      message.to = user.email
+    }
+
+    await sendgrid.send(message)
+  }
+  catch (e) {
+    throw e
+  }
+}
+
+module.exports.addContact = (user, update = false) => new Promise((resolve, reject) => {
+  const req = sendgridLegacy.emptyRequest();
   req.body = [{
     datejoined: mmddyyyy(new Date(user.datejoined)),
     email: user.email,
@@ -27,7 +54,7 @@ module.exports.addContact = (user, update) => new Promise((resolve, reject) => {
   req.method = update ? 'PATCH' : 'POST';
   req.path = '/v3/contactdb/recipients';
 
-  sendgrid.API(req, (err, res) => {
+  sendgridLegacy.API(req, (err, res) => {
     console.log(res.body)
 
     if (err || (res && res.body && res.body.error_count > 0)) {
@@ -36,87 +63,33 @@ module.exports.addContact = (user, update) => new Promise((resolve, reject) => {
 
     return resolve();
   });
-});
+})
 
-module.exports.sendResetPasswordLink = (user, token) => new Promise((resolve, reject) => {
-  const mail = new mailHelper.Mail();
-  const personalization = new mailHelper.Personalization();
+module.exports.sendResetPasswordLink = (user, token) => send({
+  subject: 'WE Collective | Reset password',
+  substitutions: {
+    name: user.name,
+    reset_url: `${process.env.WEBAPP_URL}reset-password/${user.username}/${token}`,
+    username: user.username,
+  },
+  template_id: 'a9c63f7e-a7f6-4d16-b788-2241c2fd1d0a',
+}, user)
 
-  personalization.addTo(new mailHelper.Email(user.email));
-  personalization.addSubstitution(new mailHelper.Substitution('%name%', user.name));
-  personalization.addSubstitution(new mailHelper.Substitution('%username%', user.username));
-  personalization.addSubstitution(new mailHelper.Substitution('%reset_url%', `${process.env.WEBAPP_URL}reset-password/${user.username}/${token}`));
+module.exports.sendVerification = (user, token) => send({
+  subject: 'WE Collective | Verify your account',
+  substitutions: {
+    name: user.name,
+    username: user.username,
+    verify_url: `${process.env.WEBAPP_URL + user.username}/verify/${token}`,
+  },
+  template_id: '76ae83b3-3bac-4f9b-afe6-08b220916a32',
+}, user)
 
-  mail.addPersonalization(personalization);
-  mail.setFrom(new mailHelper.Email(process.env.WECO_EMAIL, 'James from WECO'));
-  mail.setSubject('WE Collective | Reset password');
-  mail.setTemplateId('a9c63f7e-a7f6-4d16-b788-2241c2fd1d0a');
-
-  const req = sendgrid.emptyRequest({
-    method: 'POST',
-    path: '/v3/mail/send',
-    body: mail.toJSON()
-  });
-
-  sendgrid.API(req, err => {
-    if (err) {
-      return reject();
-    }
-    return resolve();
-  });
-});
-
-module.exports.sendVerification = (user, token) => new Promise((resolve, reject) => {
-  const mail = new mailHelper.Mail();
-  const personalization = new mailHelper.Personalization();
-
-  personalization.addTo(new mailHelper.Email(user.email));
-  personalization.addSubstitution(new mailHelper.Substitution('%name%', user.name));
-  personalization.addSubstitution(new mailHelper.Substitution('%username%', user.username));
-  personalization.addSubstitution(new mailHelper.Substitution('%verify_url%', `${process.env.WEBAPP_URL + user.username}/verify/${token}`));
-
-  mail.addPersonalization(personalization);
-  mail.setFrom(new mailHelper.Email(process.env.WECO_EMAIL, 'James from WECO'));
-  mail.setSubject('WE Collective | Verify your account');
-  mail.setTemplateId('76ae83b3-3bac-4f9b-afe6-08b220916a32');
-
-  const req = sendgrid.emptyRequest({
-    method: 'POST',
-    path: '/v3/mail/send',
-    body: mail.toJSON()
-  });
-
-  sendgrid.API(req, err => {
-    if (err) {
-      return reject();
-    }
-    return resolve();
-  });
-});
-
-module.exports.sendWelcome = user => new Promise((resolve, reject) => {
-  const mail = new mailHelper.Mail();
-  const personalization = new mailHelper.Personalization();
-
-  personalization.addTo(new mailHelper.Email(user.email));
-  personalization.addSubstitution(new mailHelper.Substitution('%name%', user.name));
-  personalization.addSubstitution(new mailHelper.Substitution('%username%', user.username));
-
-  mail.addPersonalization(personalization);
-  mail.setFrom(new mailHelper.Email(process.env.WECO_EMAIL, 'James from WECO'));
-  mail.setSubject('Welcome to the WE Collective!');
-  mail.setTemplateId('1b91558d-aa4d-4722-adb2-a264ba754706');
-
-  const req = sendgrid.emptyRequest({
-    method: 'POST',
-    path: '/v3/mail/send',
-    body: mail.toJSON()
-  });
-
-  sendgrid.API(req, err => {
-    if (err) {
-      return reject();
-    }
-    return resolve();
-  });
-});
+module.exports.sendWelcome = user => send({
+  subject: 'Welcome to the WE Collective!',
+  substitutions: {
+    name: user.name,
+    username: user.username,
+  },
+  template_id: '1b91558d-aa4d-4722-adb2-a264ba754706',
+}, user)

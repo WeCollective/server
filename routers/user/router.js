@@ -27,29 +27,22 @@ module.exports = () => {
    */
   router.route('/')
     // local-signup with override of done() method to access info object from passport strategy
-    .post(ACL.allow(ACL.Roles.Guest), (req, res, next) => passport.authenticate('LocalSignUp', (err, user, info) => {
-      if (err) {
-        return res.status(err.status || 403).json({ message: err.message });
-      }
-      
-      // If no user object, send error response
-      if (!user) {
-        return res.status(info.status || 403).json({ message: info.message });
-      }
+    .post(ACL.allow(ACL.Roles.Guest), (req, res, next) => passport.authenticate('LocalSignUp', async (err, user, info) => {
+      if (err) return res.status(err.status || 403).json({ message: err.message })
+      // User object must exist.
+      if (!user) return res.status(info.status || 403).json({ message: info.message })
 
-      return Models.Constant.findById('user_count')
-        .then(instance => {
-          if (instance === null) {
-            return Promise.reject('The constant does not exist.');
-          }
-          instance.set('data', instance.get('data') + 1);
-          return instance.update();
-        })
-        .then(() => next())
-        .catch(err => {
-          console.error('Error updating user count:', err);
-          return next();
-        });
+      try {
+        const userCount = await Models.Constant.findById('user_count')
+        if (userCount === null) throw 'The constant does not exist.'
+        userCount.set('data', userCount.get('data') + 1)
+        await userCount.update()
+        next()
+      }
+      catch (e) {
+        console.error('Error updating user count:', e)
+        next()
+      }
     })(req, res, next));
 
   /**
@@ -72,7 +65,7 @@ module.exports = () => {
       if (err) {
         return res.status(err.status).json({ message: err.message });
       }
-      
+
       // if no user object, send error response
       if (!user) {
         return res.status(info.status).json({ message: info.message });
@@ -126,7 +119,7 @@ module.exports = () => {
      *    "message": "Success",
      *    "data": {
      *      "datejoined": 1469017726490,
-     *      "dob": null, 
+     *      "dob": null,
      *      "email": "john@doe.com",
      *      "name": "John",
      *      "username": "johndoe"

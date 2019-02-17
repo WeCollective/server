@@ -581,7 +581,7 @@ module.exports.getBranchPicture = (branchid, type, thumbnail = false) => {
 };
 
 module.exports.getModLog = (req, res, next) => {
-  const { branchid } = req.params; 
+  const { branchid } = req.params;
 
   if (!branchid) {
     req.error = {
@@ -732,7 +732,7 @@ module.exports.getSubbranches = (req, res, next) => {
 
   let branches = [];
   let lastBranch = null;
-  
+
   // if lastBranchId is specified, client wants results which appear _after_ this branch (pagination)
   return new Promise((resolve, reject) => {
     if (lastBranchId) {

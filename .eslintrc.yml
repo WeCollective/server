@@ -19,6 +19,7 @@ rules:
     - unix
   no-console: off
   no-control-regex: off
+  no-trailing-spaces: 2
   quotes:
     - error
     - single

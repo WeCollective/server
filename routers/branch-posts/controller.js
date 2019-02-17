@@ -395,7 +395,7 @@ module.exports.get = (req, res, next) => {
     };
     return next(JSON.stringify(req.error));
   }
-  
+
   if (!VALID_POST_TYPE_VALUES.includes(opts.postType)) {
     req.error = {
       message: 'Invalid postType parameter.',
@@ -411,7 +411,7 @@ module.exports.get = (req, res, next) => {
     };
     return next(JSON.stringify(req.error));
   }
-  
+
   return new Promise((resolve, reject) => {
     // Client wants only results that appear after this post (pagination).
     if (lastPostId) {
@@ -441,7 +441,7 @@ module.exports.get = (req, res, next) => {
           return reject({ status: 404 });
         });
     }
-    
+
     // No last post specified, continue...
     return resolve();
   })
@@ -455,7 +455,7 @@ module.exports.get = (req, res, next) => {
         // User must be a mod.
         return ACL.allow(ACL.Roles.Moderator, branchid)(req, res, resolve);
       }
-      
+
       return resolve();
     }))
     // Get the posts - metadata, votes, etc.
@@ -645,7 +645,7 @@ module.exports.put = (req, res, next) => {
     })
     // Update the post points count on each branch object the post appears in.
     .then(() => {
-      let promises = [];        
+      let promises = [];
 
       for (let i = 0; i < branchIds.length; i += 1) {
         const promise = Models.Branch.findById(branchIds[i])
@@ -698,7 +698,7 @@ module.exports.put = (req, res, next) => {
           return next(JSON.stringify(req.error));
         }
 
-        
+
         req.error = {
           message: err,
         };

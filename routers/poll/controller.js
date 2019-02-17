@@ -158,7 +158,7 @@ module.exports.vote = (req, res, next) => {
     };
     return next(JSON.stringify(req.error));
   }
-  
+
   return Models.PollAnswer.findById(answerid)
     .then(instance => {
       if (instance === null) {

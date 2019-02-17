@@ -102,7 +102,7 @@ module.exports.addModerator = (req, res, next) => {
       });
     })
     // Notify branch moderators there is a new moderator.
-    .then(() => {    
+    .then(() => {
       let promises = [];
 
       // Notify everyone but ourselves.

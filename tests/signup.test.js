@@ -116,5 +116,5 @@ module.exports = server => {
       .expect(400, done)
       // .expect({ message: 'Username already exists.' }, done);
   });
-  
+
 };

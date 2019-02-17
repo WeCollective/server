@@ -1,6 +1,6 @@
 /**
  * Uses Passport.js
- * 
+ *
  * Visit http://passportjs.org/docs to learn how the Strategies work.
  */
 const ExtractJwt = require('passport-jwt').ExtractJwt;
@@ -131,95 +131,62 @@ passport.use('LocalSignIn', new LocalStrategy((username, password, done) => proc
 
 passport.use('LocalSignUp', new LocalStrategy({
   passReqToCallback: true,
-}, (req, username, password, done) => process.nextTick(() => {
-  username = username.toLowerCase();
+}, (req, username, password, done) => process.nextTick(async () => {
+  try {
+    username = username.toLowerCase()
+    const { email, name } = req.body
 
-  const {
-    email,
-    name,
-  } = req.body;
+    const userFromUsername = await Models.User.findOne({ where: { username }})
+    if (userFromUsername !== null) throw {
+      message: 'Username already exists.',
+      status: 400,
+    }
 
-  let token;
-  let user;
+    const userFromEmail = await Models.User.findByEmail(email)
+    if (userFromEmail !== null) throw {
+      message: 'Email already exists.',
+      status: 400,
+    }
 
-  return Models.User.findOne({
-    where: {
+    const isValidPassword = Models.Dynamite.validator.password(password)
+    if (!isValidPassword) throw {
+      message: 'Invalid password.',
+      status: 400,
+    }
+
+    const token = auth.generateToken()
+    const salt = await auth.generateSalt()
+    const hash = await auth.hash(password, salt)
+
+    const user = await Models.User.create({
+      banned: false,
+      datejoined: new Date().getTime(),
+      email,
+      name,
+      num_branches: 0,
+      num_comments: 0,
+      num_mod_positions: 0,
+      num_posts: 0,
+      password: hash,
+      show_nsfw: false,
+      token,
       username,
-    },
-  })
-    .then(instance => {
-      if (instance !== null) {
-        return Promise.reject({
-          message: 'Username already exists.',
-          status: 400,
-        });
-      }
-
-      return Models.User.findByEmail(email);
+      verified: false,
     })
-    .then(instance => {
-      if (instance !== null) {
-        return Promise.reject({
-          message: 'Email already exists.',
-          status: 400,
-        });
-      }
 
-      const isValidPassword = Models.Dynamite.validator.password(password);
+    // Send email verification message.
+    await mailer.sendVerification(user.dataValues, token)
 
-      if (!isValidPassword) {
-        return Promise.reject({
-          message: 'Invalid password.',
-          status: 400,
-        });
-      }
+    // Post to Slack.
+    slack.newAccount(name, email, username)
 
-      token = auth.generateToken();
-
-      return auth.generateSalt();
-    })
-    .then(salt => auth.hash(password, salt))
-    .then(hash => {
-      try {
-        return Models.User.create({
-          banned: false,
-          datejoined: new Date().getTime(),
-          email,
-          name,
-          num_branches: 0,
-          num_comments: 0,
-          num_mod_positions: 0,
-          num_posts: 0,
-          password: hash,
-          show_nsfw: false,
-          token,
-          username,
-          verified: false,
-        });
-      }
-      catch (err) {
-        console.log(err);
-        return Promise.reject(err);
-      }
-    })
-    .then(instance => {
-      user = instance;
-      // todo
-      return mailer.sendVerification(user.dataValues, token);
-    })    
-    // todo
-    .then(() => {
-      // Post to Slack.
-      slack.newAccount(name, email, username);
-      // Add new user to the search index.
-      // return algolia.addObjects(user.dataValues, 'user');
-    })
-    .then(() => done(null, { username }))
-    .catch(err => {
-      console.error('Error signing up:', err);
-      return done(err, false, err);
-    });
-})));
+    done(null, { username })
+  }
+  catch (e) {
+    console.error('Error signing up:', e)
+    done(e, false, e)
+  }
+})))
 
 const authenticate = (strategy, callbackOrOptional) => (req, res, next) => {
   if (strategy === 'jwt') {

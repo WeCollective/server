@@ -1111,7 +1111,7 @@ module.exports.post = (req, res, next) => {
   else if (branches.length > (5 + (branches.includes('root') ? 1 : 0))) {
     error = 'Max 5 tags allowed.';
   }
-  else if (([PostTypeText, PostTypePoll].includes(type) && url) || 
+  else if (([PostTypeText, PostTypePoll].includes(type) && url) ||
     (![PostTypeText, PostTypePoll].includes(type) && !validator.url(url))) {
     error = 'Invalid url.';
   }
@@ -1376,7 +1376,7 @@ module.exports.postComment = async (req, res, next) => {
           message: 'Branch does not exist',
           status: 404,
         }
-  
+
         post.set('comment_count', post.get('comment_count') + 1)
         await post.update()
 

@@ -261,7 +261,7 @@ module.exports.getNotifications = (req, res, next) => {
   const username = req.user.get('username');
   // if lastNotificationId is specified, client wants results which appear _after_ this notification (pagination)
   let lastInstance = null;
-  
+
   return new Promise((resolve, reject) => {
     if (lastNotificationId) {
       return Models.Notification.findById(lastNotificationId)
@@ -500,7 +500,7 @@ module.exports.resetPassword = (req, res, next) => {
     };
     return next(JSON.stringify(req.error));
   }
-  
+
   return Models.User.findOne({
     where: {
       username,
@@ -514,7 +514,7 @@ module.exports.resetPassword = (req, res, next) => {
       user = instance;
 
       const uToken = JSON.parse(user.get('resetPasswordToken'));
-      
+
       // check token matches
       if (uToken.token !== token) {
         return Promise.reject({
@@ -522,7 +522,7 @@ module.exports.resetPassword = (req, res, next) => {
           status: 400,
         });
       }
-      
+
       // check token hasnt expired
       if (uToken.expires < new Date().getTime()) {
         return Promise.reject({
@@ -674,83 +674,47 @@ module.exports.unfollowBranch = (req, res, next) => {
     });
 };
 
-module.exports.verify = (req, res, next) => {
-  const {
-    token,
-    username,
-  } = req.params;
-  let user;
+module.exports.verify = async (req, res, next) => {
+  try {
+    const { token, username } = req.params
 
-  if (!username) {
-    req.error = {
+    if (!username) throw {
       message: 'Missing username.',
       status: 400,
-    };
-    return next(JSON.stringify(req.error));
-  }
+    }
 
-  if (!token) {
-    req.error = {
+    if (!token) throw {
       message: 'Missing token.',
       status: 400,
-    };
-    return next(JSON.stringify(req.error));
-  }
+    }
 
-  return Models.User.findOne({
-    where: {
-      username,
-    },
-  })
-    .then(instance => {
-      if (instance === null) {
-        return Promise.reject();
-      }
+    const user = await Models.User.findOne({ where: { username }})
+    if (user === null) throw {
+      status: 404,
+    }
 
-      user = instance;
-
-      // Skip if already verified.
-      if (user.get('verified')) {
-        return Promise.reject('verified');
-      }
-
+    if (!user.get('verified')) {
       // Token must be valid.
-      if (user.get('token') !== token) {
-        return Promise.reject({
-          status: 400,
-          message: 'Invalid token.',
-        });
+      if (user.get('token') !== token) throw {
+        status: 400,
+        message: 'Invalid token.',
       }
 
-      user.set('verified', true);
-      return user.update();
-    })
-    // Save the user's contact info in SendGrid contact list for email marketing.
-    // todo
-    .then(() => mailer.addContact(user.dataValues))
-    // Send the user a welcome email.
-    // todo
-    .then(() => mailer.sendWelcome(user.dataValues))
-    .catch(err => {
-      if (err === 'verified') {
-        return Promise.resolve();
-      }
+      user.set('verified', true)
+      await user.update()
 
-      return Promise.reject(err);
-    })
-    .then(() => next())
-    .catch(err => {
-      if (err) {
-        console.error('Error verifying user:', err);
-        req.error = {
-          message: err,
-        };
-        return next(JSON.stringify(req.error));
-      }
+      // Save the user's contact info in SendGrid contact list for email marketing.
+      await mailer.addContact(user.dataValues)
 
-      req.error = {
-        status: 404,
-      };
-      return next(JSON.stringify(req.error));
-    });
-};
+      // Send the user a welcome email.
+      await mailer.sendWelcome(user.dataValues)
+    }
+
+    next()
+  }
+  catch (e) {
+    const error = typeof e === 'object' && e.status ? e : { message: e }
+    req.error = error
+    next(JSON.stringify(req.error))
+  }
+}

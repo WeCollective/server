@@ -67,7 +67,7 @@ reqlib('routers/');
 // Handle successful request.
 app.use((req, res, next) => { // eslint-disable-line no-unused-vars
   res.statusCode = 200;
-  
+
   const success = {
     message: 'Success',
   };

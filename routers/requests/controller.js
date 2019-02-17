@@ -302,9 +302,9 @@ module.exports.put = (req, res, next) => {
       }
 
       // Get all parent branch tags.
-      // 
+      //
       // Example: root - a - b - parent
-      // 
+      //
       // This will return [root, a, b, parent]
       return Models.Tag.findByBranch(parentBranchId)
         // Check if the child branch we are asking to move is not a parent branch
@@ -325,9 +325,9 @@ module.exports.put = (req, res, next) => {
           }
 
           // Get all child branch tags.
-          // 
+          //
           // Example: root - a - b - child
-          // 
+          //
           // This will return [root, a, b, child]
           return Models.Tag.findByBranch(childBranchId);
         })

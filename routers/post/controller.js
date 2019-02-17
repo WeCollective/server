@@ -1,18 +1,15 @@
-const reqlib = require('app-root-path').require;
+const reqlib = require('app-root-path').require
+const { List } = require('immutable')
 
-const Constants = reqlib('config/constants');
-const fs = reqlib('config/filestorage');
-const mailer = reqlib('config/mailer');
-const Models = reqlib('models/');
-const NotificationTypes = reqlib('config/notification-types');
-const slack = reqlib('slack');
+const Constants = reqlib('config/constants')
+const fs = reqlib('config/filestorage')
+const mailer = reqlib('config/mailer')
+const Models = reqlib('models/')
+const NotificationTypes = reqlib('config/notification-types')
+const slack = reqlib('slack')
 
-const { validator } = Models.Dynamite;
-
-const {
-  PostTypePoll,
-  PostTypeText,
-} = Constants;
+const { validator } = Models.Dynamite
+const { PostTypePoll, PostTypeText } = Constants
 
 const {
   createCommentId,
@@ -21,17 +18,10 @@ const {
   createPostId,
   createPostImageId,
   createUserVoteItemId,
-} = Constants.Helpers;
+} = Constants.Helpers
 
-const {
-  PostFlagTypes,
-  VoteDirections,
-} = Constants.AllowedValues;
-
-const {
-  postText,
-  postTitle,
-} = Constants.EntityLimits;
+const { PostFlagTypes, VoteDirections } = Constants.AllowedValues
+const { postText, postTitle } = Constants.EntityLimits
 
 // const shouldAddImage = attrs => {
 //   const {
@@ -1311,83 +1301,60 @@ module.exports.post = (req, res, next) => {
     });
 };
 
-module.exports.postComment = (req, res, next) => {
-  const {
-    parentid,
-    text,
-  } = req.body;
-  const { postid } = req.params;
-  const date = new Date().getTime();
-  const username = req.user.get('username');
-  const id = createCommentId(username, date);
-  let parent;
-  let posts = [];
+module.exports.postComment = async (req, res, next) => {
+  try {
+    const { parentid, text } = req.body
+    const { postid } = req.params
+    const date = new Date().getTime()
+    const username = req.user.get('username')
+    const id = createCommentId(username, date)
 
-  if (!parentid) {
-    req.error = {
+    if (!parentid) throw {
       message: 'Invalid parentid.',
       status: 400,
-    };
-    return next(JSON.stringify(req.error));
-  }
+    }
 
-  if (!postid) {
-    req.error = {
+    if (!postid) throw {
       message: 'Invalid postid.',
       status: 400,
-    };
-    return next(JSON.stringify(req.error));
-  }
+    }
 
-  // Post must exist.
-  return Models.Post.findById(postid)
-    .then(instances => {
-      if (!instances.length || instances[0] === null) {
-        return Promise.reject({
-          message: 'Post does not exist.',
-          status: 404,
-        });
+    // Post must exist.
+    const posts = await Models.Post.findById(postid)
+    if (!posts.length || posts[0] === null) throw {
+      message: 'Post does not exist.',
+      status: 404,
+    }
+
+    // If we are replying to a comment thread, ensure the parent comment
+    // exists and belongs to the same post.
+    let parent
+    if (parentid !== 'none') {
+      parent = await Models.Comment.findById(parentid)
+
+      if (parent === null) throw {
+        message: 'Parent comment does not exist.',
+        status: 400,
       }
 
-      posts = instances;
-
-      // if this is a root comment, continue
-      if (parentid === 'none') {
-        return Promise.resolve();
+      if (parent.get('postid') !== postid) throw {
+        message: 'Parent comment does not belong to the same post.',
+        status: 400,
       }
 
-      // otherwise, ensure the specified parent comment exists
-      return Models.Comment.findById(parentid);
+      parent.set('replies', parent.get('replies') + 1)
+      await parent.update()
+    }
+
+    await Models.CommentData.create({
+      creator: username,
+      date,
+      edited: false,
+      id,
+      text,
     })
-    .then(instance => {
-      if (parentid !== 'none') {
-        if (instance === null) {
-          return Promise.reject({
-            message: 'Parent comment does not exist.',
-            status: 400,
-          });
-        }
 
-        parent = instance;
-
-        // Parent comment must belong to this post.
-        if (instance.get('postid') !== postid) {
-          return Promise.reject({
-            message: 'Parent comment does not belong to the same post.',
-            status: 400,
-          });
-        }
-      }
-
-      return Models.CommentData.create({
-        creator: username,
-        date,
-        edited: false,
-        id,
-        text,
-      });
-    })
-    .then(() => Models.Comment.create({
+    await Models.Comment.create({
       date,
       down: 0,
       id,
@@ -1397,93 +1364,50 @@ module.exports.postComment = (req, res, next) => {
       rank: 0,
       replies: 0,
       up: 1,
-    }))
-    .then(() => {
-      if (parentid === 'none') {
-        return Promise.resolve();
-      }
-
-      parent.set('replies', parent.get('replies') + 1);
-      return parent.update();
     })
-    // increment the number of comments on the post
-    .then(() => {
-      let promises = [];
 
-      for (let i = 0; i < posts.length; i += 1) {
-        const post = posts[i];
-        post.set('comment_count', post.get('comment_count') + 1);
-        const promise = post.update();
+    // Increment the number of comments on the post and the post comments count
+    // on each branch object the post appears in.
+    let promises = new List()
+    posts.forEach(post => {
+      const promise = async () => {
+        const branch = await Models.Branch.findById(post.get('branchid'))
+        if (branch === null) throw {
+          message: 'Branch does not exist',
+          status: 404,
+        }
+  
+        post.set('comment_count', post.get('comment_count') + 1)
+        await post.update()
 
-        promises = [
-          ...promises,
-          promise,
-        ];
+        branch.set('post_comments', branch.get('post_comments') + 1)
+        await branch.update()
       }
-
-      return Promise.all(promises);
+      promises = promises.push(promise)
     })
-    // increment the post comments count on each branch object
-    // the post appears in
-    .then(() => {
-      let promises = [];
+    await Promise.all(promises.toArray())
 
-      for (let i = 0; i < posts.length; i += 1) {
-        const promise = Models.Branch.findById(posts[i].get('branchid'))
-          .then(instance => {
-            if (instance === null) {
-              return Promise.reject({
-                message: 'Branch does not exist',
-                status: 404,
-              });
-            }
-
-            instance.set('post_comments', instance.get('post_comments') + 1);
-            return instance.update();
-          })
-          .catch(err => Promise.reject(err));
-
-        promises = [
-          ...promises,
-          promise,
-        ];
-      }
-
-      return Promise.all(promises);
-    })
     // Notify the post or comment author that a comment has been posted
     // on their content. If the comment is a reply to someone, we will
     // notify the comment author. Otherwise, the comment is a root comment
     // and we will notify the post author.
-    .then(() => {
-      const model = parentid === 'none' ? Models.PostData : Models.CommentData;
-      return model.findById(parentid === 'none' ? postid : parentid);
-    })
-    .then(instance => {
-      if (instance === null) {
-        return Promise.reject({
-          message: `${parentid === 'none' ? 'Post' : 'Comment'} does not exist.`,
-          status: 404,
-        });
-      }
+    const model = parentid === 'none' ? Models.PostData : Models.CommentData
+    const instance = await model.findById(parentid === 'none' ? postid : parentid)
+    if (instance === null) throw {
+      message: `${parentid === 'none' ? 'Post' : 'Comment'} does not exist.`,
+      status: 404,
+    }
+    const author = instance.get('creator')
 
-      // Get the id of a branch where the post appears. Take the first branch
-      // this post appears in (there are many) for the purposes of viewing the
-      // notification. (todo WHY?)
-      return Promise.resolve({
-        author: instance.get('creator'),
-        branchid: posts[0].get('branchid'),
-      });
-    })
-    // Notify the author that their content has been interacted with.
-    .then(data => {
-      // Skip if interacting with our own content or if we are replying
-      // to a deleted comment.
-      if (username === data.author || (parentid !== 'none' && data.author === 'N/A')) {
-        return Promise.resolve();
-      }
+    // Get the id of a branch where the post appears. Take the first branch
+    // this post appears in (there are many) for the purposes of viewing the
+    // notification. (todo WHY?)
+    const data = { author, branchid: posts[0].get('branchid') }
 
-      return Models.Notification.create({
+    // Notify the author that their content has been interacted with. Skip if
+    // interacting with our own content or replying to a deleted comment.
+    if (username !== data.author && (parentid === 'none' || data.author !== 'N/A')) {
+      await Models.Notification.create({
         data: {
           branchid: data.branchid,
           commentid: id,
@@ -1496,37 +1420,28 @@ module.exports.postComment = (req, res, next) => {
         type: NotificationTypes.COMMENT,
         unread: true,
         user: data.author,
-      });
-    })
-    .then(() => {
-      req.user.set('num_comments', req.user.get('num_comments') + 1);
-      return req.user.update();
-    })
-    // update the SendGrid contact list with the new user data
-    // todo
-    .then(() => mailer.addContact(req.user.dataValues, true))
+      })
+    }
+
+    req.user.set('num_comments', req.user.get('num_comments') + 1)
+    await req.user.update()
+
     // Self-upvote the comment.
-    .then(() => Models.UserVote.create({
+    await Models.UserVote.create({
       direction: 'up',
       itemid: createUserVoteItemId(id, 'comment'),
       username,
-    }))
-    .then(() => {
-      res.locals.data = id;
-      return next();
     })
-    .catch(err => {
-      if (err) {
-        console.error('Error posting comment:', err);
-        return next(JSON.stringify(req.error));
-      }
 
-      req.error = {
-        status: 404,
-      };
-      return next(JSON.stringify(req.error));
-    });
-};
+    res.locals.data = id
+    next()
+  }
+  catch (e) {
+    const error = typeof e === 'object' && e.status ? e : { status: 404 }
+    req.error = error
+    next(JSON.stringify(req.error))
+  }
+}
 
 module.exports.voteComment = (req, res, next) => {
   const {

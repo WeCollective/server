@@ -1372,18 +1372,14 @@ module.exports.postComment = async (req, res, next) => {
     posts.forEach(post => {
       const promise = async () => {
         const branch = await Models.Branch.findById(post.get('branchid'))
-        if (branch === null) throw {
-          message: 'Branch does not exist',
-          status: 404,
+        if (branch) {
+          post.set('comment_count', post.get('comment_count') + 1)
+          await post.update()
+          branch.set('post_comments', branch.get('post_comments') + 1)
+          await branch.update()
         }
-
-        post.set('comment_count', post.get('comment_count') + 1)
-        await post.update()
-
-        branch.set('post_comments', branch.get('post_comments') + 1)
-        await branch.update()
       }
-      promises = promises.push(promise)
+      promises = promises.push(promise())
     })
     await Promise.all(promises.toArray())
 

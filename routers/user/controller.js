@@ -411,11 +411,6 @@ module.exports.put = (req, res, next) => {
   if (show_nsfw !== undefined) user.set('show_nsfw', show_nsfw === 'true');
 
   return user.update()
-    // Update the SendGrid contact list with the new user data
-    // todo
-    .then(() => mailer.addContact(user.dataValues, true))
-    // todo
-    // .then(() => algolia.updateObjects(user.dataValues, 'user'))
     .then(() => next())
     .catch(err => {
       console.error('Error updating user.', err);
@@ -702,9 +697,6 @@ module.exports.verify = async (req, res, next) => {
 
       user.set('verified', true)
       await user.update()
-
-      // Save the user's contact info in SendGrid contact list for email marketing.
-      await mailer.addContact(user.dataValues)
 
       // Send the user a welcome email.
       await mailer.sendWelcome(user.dataValues)

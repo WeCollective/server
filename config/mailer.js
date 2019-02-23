@@ -1,18 +1,6 @@
 const sendgrid = require('@sendgrid/mail')
-const sendgridLegacy = require('sendgrid')(process.env.SENDGRID_MAIL_API_KEY)
-// const ContactImporter = require('@sendgrid/contact-importer')
 
 sendgrid.setApiKey(process.env.SENDGRID_MAIL_API_KEY)
-
-// const contactImporter = new ContactImporter(sendgrid)
-const padDigit = num => num < 10 ? `0${num}` : num
-
-const mmddyyyy = date => {
-  const mm = (date.getMonth() + 1).toString()
-  const dd = date.getDate().toString()
-  const yyyy = date.getFullYear()
-  return `${padDigit(mm)}/${padDigit(dd)}/${yyyy}`
-}
 
 const send = async (message, user) => {
   try {
@@ -33,37 +21,6 @@ const send = async (message, user) => {
     throw e
   }
 }
-
-module.exports.addContact = (user, update = false) => new Promise((resolve, reject) => {
-  const req = sendgridLegacy.emptyRequest();
-  req.body = [{
-    datejoined: mmddyyyy(new Date(user.datejoined)),
-    email: user.email,
-    name: user.name,
-    num_branches: user.num_branches,
-    num_comments: user.num_comments,
-    num_mod_positions: user.num_mod_positions,
-    num_posts: user.num_posts,
-    username: user.username
-  }];
-
-  if (user.dob) {
-    req.body[0]['dob'] = mmddyyyy(new Date(user.dob));
-  }
-
-  req.method = update ? 'PATCH' : 'POST';
-  req.path = '/v3/contactdb/recipients';
-
-  sendgridLegacy.API(req, (err, res) => {
-    console.log(res.body)
-
-    if (err || (res && res.body && res.body.error_count > 0)) {
-      return reject();
-    }
-
-    return resolve();
-  });
-})
 
 module.exports.sendResetPasswordLink = (user, token) => send({
   subject: 'WE Collective | Reset password',

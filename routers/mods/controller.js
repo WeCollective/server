@@ -1,7 +1,6 @@
 const reqlib = require('app-root-path').require;
 
 const Constants = reqlib('config/constants');
-const mailer = reqlib('config/mailer');
 const Models = reqlib('models/');
 const NotificationTypes = reqlib('config/notification-types');
 
@@ -137,9 +136,6 @@ module.exports.addModerator = (req, res, next) => {
       user.set('num_mod_positions', user.get('num_mod_positions') + 1);
       return user.update();
     })
-    // update the SendGrid contact list with the new user data
-    // todo
-    .then(() => mailer.addContact(user.dataValues, true))
     .then(() => next())
     .catch(err => {
       console.error('Error adding a moderator:', err);
@@ -320,9 +316,6 @@ module.exports.removeModerator = (req, res, next) => {
       user.set('num_mod_positions', user.get('num_mod_positions') - 1);
       return user.update();
     })
-    // update the SendGrid contact list with the new user data
-    // todo
-    .then(() => mailer.addContact(user.dataValues, true))
     .then(() => next())
     .catch(err => {
       console.error('Error removing a moderator:', err);

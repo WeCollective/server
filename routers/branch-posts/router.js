@@ -113,7 +113,7 @@ module.exports = () => {
      * @apiUse BadRequest
      * @apiUse InternalServerError
      */
-    .put(ACL.allow(ACL.Roles.User), controller.put);
+    .put(ACL.allow(ACL.Roles.User), controller.postVote);
 
   router.route('/:postid/resolve')
     /**

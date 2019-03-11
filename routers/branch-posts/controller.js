@@ -1,10 +1,11 @@
-const reqlib = require('app-root-path').require;
+const reqlib = require('app-root-path').require
+const { List } = require('immutable')
 
-const ACL = reqlib('config/acl');
-const Constants = reqlib('config/constants');
-const Models = reqlib('models/');
-const NotificationTypes = reqlib('config/notification-types');
-const PostCtrl = reqlib('routers/post/controller');
+const ACL = reqlib('config/acl')
+const Constants = reqlib('config/constants')
+const Models = reqlib('models/')
+const NotificationTypes = reqlib('config/notification-types')
+const PostCtrl = reqlib('routers/post/controller')
 
 const {
   PostFlagPostViolatesSiteRules,
@@ -12,37 +13,23 @@ const {
   PostFlagResponseDeletePost,
   PostFlagResponseKeepPost,
   PostFlagResponseMarkPostNSFW,
-} = Constants;
+} = Constants
 
 const {
   PostFlagTypes,
   PostFlagResponseTypes,
   PostTypes,
   VoteDirections,
-} = Constants.AllowedValues;
+} = Constants.AllowedValues
 
-const {
-  createNotificationId,
-  createUserVoteItemId,
-} = Constants.Helpers;
+const { createNotificationId, createUserVoteItemId } = Constants.Helpers
 
-const VALID_POST_TYPE_VALUES = [
-  'all',
-  ...PostTypes,
-];
-
-const VALID_SORT_BY_MOD_VALUES = [
-  'date',
-  ...PostFlagTypes,
-];
-const VALID_SORT_BY_USER_VALUES = [
-  'comments',
-  'date',
-  'points',
-];
+const VALID_POST_TYPE_VALUES = ['all', ...PostTypes]
+const VALID_SORT_BY_MOD_VALUES = ['date', ...PostFlagTypes]
+const VALID_SORT_BY_USER_VALUES = ['comments', 'date', 'points']
 
 // Authenticated users can choose to see nsfw posts.
-const userCanDisplayNSFWPosts = req => req.user ? !!req.user.get('show_nsfw') : false;
+const userCanDisplayNSFWPosts = req => req.user ? !!req.user.get('show_nsfw') : false
 
 module.exports.resolveFlag = (req, res, next) => {
   const {
@@ -281,8 +268,6 @@ module.exports.resolveFlag = (req, res, next) => {
           branch.set('post_points', branch.get('post_points') - pointsToSubtract);
           return branch.update();
         })
-        // todo
-        // .then(() => algolia.updateObjects(branch.dataValues, 'branch'))
         // Delete flag for this post on this branch.
         .then(() => Models.FlaggedPost.destroy({
           branchid,
@@ -565,149 +550,85 @@ module.exports.getPost = (req, res, next) => {
     });
 };
 
-module.exports.put = (req, res, next) => {
-  const {
-    branchid,
-    postid,
-  } = req.params;
-  const { vote } = req.body;
-  const itemid = createUserVoteItemId(postid, 'post');
-  const username = req.user.get('username');
-  let branchIds = [];
-  let resData = { delta: 0 };
-  let voteInstance;
-
-  if (!branchid) {
-    req.error = {
+module.exports.postVote = async (req, res, next) => {
+  try {
+    const { branchid, postid } = req.params
+    if (!branchid) throw {
       message: 'Invalid branchid.',
       status: 400,
-    };
-    return next(JSON.stringify(req.error));
-  }
+    }
 
-  if (!postid) {
-    req.error = {
+    if (!postid) throw {
       message: 'Invalid postid.',
       status: 400,
-    };
-    return next(JSON.stringify(req.error));
-  }
+    }
 
-  if (!VoteDirections.includes(vote)) {
-    req.error = {
+    const { vote } = req.body
+    if (!VoteDirections.includes(vote)) throw {
       message: 'Invalid vote.',
       status: 400,
-    };
-    return next(JSON.stringify(req.error));
-  }
+    }
 
-  return Models.UserVote.findByUsernameAndItemId(username, itemid)
-    // If the vote already exists, we can update it.
-    .then(instance => {
-      if (instance !== null) {
-        voteInstance = instance;
-      }
+    const itemid = createUserVoteItemId(postid, 'post')
+    const username = req.user.get('username')
+    const voteInstance = await Models.UserVote.findByUsernameAndItemId(username, itemid)
+    // Find all post entries to get the list of branches it is tagged to.
+    const posts = await Models.Post.findById(postid)
+    const resData = { delta: 0 }
 
-      return Models.Post.findById(postid);
-    })
     // Update the post 'up' attribute.
     // Vote stats will be auto-updated by a lambda function.
-    .then(posts => {
-      // find all post entries to get the list of branches it is tagged to
-      let promise;
-
-      for (let i = 0; i < posts.length; i += 1) {
-        const postBranchId = posts[i].get('branchid');
-        branchIds = [
-          ...branchIds,
-          postBranchId,
-        ];
-
-        // Find the post on the specified branch and
-        // undo the existing vote or add to the total.
-        if (postBranchId === branchid) {
-          const instance = posts[i];
-          // If the vote instance exists, the user has voted.
-          resData.delta = voteInstance ? -1 : 1;
-          instance.set(vote, instance.get(vote) + resData.delta);
-          promise = instance.update();
-        }
+    let branchIds = new List()
+    let promise
+    for (let i = 0; i < posts.length; i += 1) {
+      const post = posts[i]
+      const postBranchId = post.get('branchid')
+      branchIds = branchIds.push(postBranchId)
+      // Find the post on the specified branch and undo the existing vote or
+      // add to the total. If a vote instance exists, the user has voted.
+      if (postBranchId === branchid) {
+        resData.delta = voteInstance ? -1 : 1
+        post.set(vote, post.get(vote) + resData.delta)
+        promise = () => post.update()
       }
+    }
 
-      if (!promise) {
-        return Promise.reject({
-          status: 400,
-          message: 'Invalid branchid.',
-        });
-      }
+    if (!promise) throw {
+      message: 'Invalid branchid.',
+      status: 400,
+    }
+    else {
+      await promise()
+    }
 
-      return promise;
-    })
     // Update the post points count on each branch object the post appears in.
-    .then(() => {
-      let promises = [];
-
-      for (let i = 0; i < branchIds.length; i += 1) {
-        const promise = Models.Branch.findById(branchIds[i])
-          .then(instance => {
-            if (instance === null) {
-              return Promise.reject({
-                message: 'Branch does not exist.',
-                status: 404,
-              });
-            }
-
-            instance.set('post_points', instance.get('post_points') + resData.delta);
-
-            // todo
-            // algolia.updateObjects(instance.dataValues, 'branch');
-            return instance.update();
-          })
-          .catch(err => Promise.reject(err));
-
-        promises = [
-          ...promises,
-          promise,
-        ];
-      }
-
-      return Promise.all(promises);
-    })
-    // Create or delete the vote record in the database.
-    .then(() => {
-      if (voteInstance) {
-        return voteInstance.destroy();
-      }
-
-      return Models.UserVote.create({
-        direction: vote,
-        itemid,
-        username,
-      });
-    })
-    .then(() => {
-      res.locals.data = resData;
-      return next();
-    })
-    .catch(err => {
-      if (err) {
-        console.error('Error voting on a post:', err);
-
-        if (typeof err === 'object' && err.status) {
-          req.error = err;
-          return next(JSON.stringify(req.error));
+    let promises = new List()
+    branchIds.forEach(postBranchId => {
+      const promise = async () => {
+        const branch = await Models.Branch.findById(postBranchId)
+        if (branch) {
+          branch.set('post_points', branch.get('post_points') + resData.delta)
+          await branch.update()
         }
-
-
-        req.error = {
-          message: err,
-        };
-        return next(JSON.stringify(req.error));
       }
+      promises = promises.push(promise())
+    })
+    await Promise.all(promises.toArray())
 
-      req.error = {
-        status: 404,
-      };
-      return next(JSON.stringify(req.error));
-    });
-};
+    // Create or delete the vote record in the database.
+    if (voteInstance) {
+      await voteInstance.destroy()
+    }
+    else {
+      await Models.UserVote.create({ direction: vote, itemid, username })
+    }
+
+    res.locals.data = resData
+    next()
+  }
+  catch (e) {
+    const error = typeof e === 'object' && e.status ? e : { status: 404 }
+    req.error = error
+    next(JSON.stringify(req.error))
+  }
+}

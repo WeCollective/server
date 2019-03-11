@@ -22,7 +22,6 @@
   "author": "WE Collective",
   "license": "ISC",
   "dependencies": {
-    "@sendgrid/contact-importer": "^6.2.1",
     "@sendgrid/mail": "^6.3.1",
     "apidoc": "^0.17.6",
     "app-root-path": "^2.0.1",
@@ -49,7 +48,6 @@
     "passport-local": "^1.0.0",
     "pluralize": "^7.0.0",
     "raven": "^2.3.0",
-    "sendgrid": "^4.1.0",
     "slack-node": "^0.1.8",
     "socket.io": "^2.2.0"
   },

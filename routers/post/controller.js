@@ -3,7 +3,6 @@ const { List } = require('immutable')
 
 const Constants = reqlib('config/constants')
 const fs = reqlib('config/filestorage')
-const mailer = reqlib('config/mailer')
 const Models = reqlib('models/')
 const NotificationTypes = reqlib('config/notification-types')
 const slack = reqlib('slack')
@@ -1273,18 +1272,11 @@ module.exports.post = (req, res, next) => {
       return Promise.all(promises);
     })
     // Self-upvote the post.
-    .then(() => {
-      // update the SendGrid contact list with the new user data
-      // todo
-      mailer.addContact(req.user.dataValues, true)
-        .catch(err => console.log(err));
-
-      return Models.UserVote.create({
-        direction: 'up',
-        itemid: createUserVoteItemId(id, 'post'),
-        username,
-      });
-    })
+    .then(() => Models.UserVote.create({
+      direction: 'up',
+      itemid: createUserVoteItemId(id, 'post'),
+      username,
+    }))
     .then(() => {
       slack.newPost(username, id, title, type, branches);
       res.locals.data = id;

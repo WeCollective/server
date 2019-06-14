@@ -79,6 +79,8 @@ app.use(`${version}/post`, getRouter('post'));
 app.use(`${version}/scraper`, getRouter('scraper'));
 app.use(`${version}/slack`, getRouter('slack'));
 app.use(`${version}/user`, getRouter('user'));
+app.use(`${version}/search`, getRouter('search'));
+
 
 /**
  * @apiDefine BadRequest

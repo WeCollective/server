@@ -125,12 +125,21 @@ module.exports = (Dynamite, validate) => {
     return Dynamite.query(params, FlaggedPost, 'slice');
   };
 
+
+
+
   FlaggedPost.findById = id => Dynamite.query({
     ExpressionAttributeValues: {
       ':id': id,
     },
     KeyConditionExpression: 'id = :id',
   }, FlaggedPost, 'all');
+
+
+
+
+
+
 
   FlaggedPost.findByPostAndBranchIds = (postid, branchid) => Dynamite.query({
     ExpressionAttributeValues: {
@@ -139,6 +148,100 @@ module.exports = (Dynamite, validate) => {
     },
     KeyConditionExpression: 'id = :postid AND branchid = :branchid',
   }, FlaggedPost, 'first');
+
+
+
+
+
+
+
+
+  //TODO finish like models.Post with pagnation
+  // Fetch the flagged posts on a specific branch
+  FlaggedPost.ScanForPosts = (branchid, posts, timeafter, nsfw, sortBy, stat, postType) => {
+
+    if (posts.length === 0)
+      return [];
+
+    const { TableIndexes } = FlaggedPost.config.keys;
+    let index;
+
+    switch (sortBy) {
+      case 'branch_rules':
+        index = TableIndexes[1];
+        break;
+
+      case 'nsfw':
+        index = TableIndexes[4];
+        break;
+
+      case 'site_rules':
+        index = TableIndexes[2];
+        break;
+
+      case 'wrong_type':
+        index = TableIndexes[3];
+        break;
+
+      case 'date':
+      default:
+        index = TableIndexes[0];
+        break;
+    }
+
+
+
+    const params = {
+      ExclusiveStartKey: null, // fetch results which come _after_ this
+      // date is a reserved dynamodb keyword so must use this alias:
+      ExpressionAttributeNames: {
+        '#date': 'date',
+      },
+      ExpressionAttributeValues: {
+        ':branchid': String(branchid),
+        ':timeafter': Number(timeafter),
+      },
+      IndexName: index,
+      FilterExpression: 'branchid = :branchid AND #date >= :timeafter',
+      ScanIndexForward: false, // return results highest first
+      Select: 'ALL_PROJECTED_ATTRIBUTES',
+    };
+
+
+    if (postType !== 'all') {
+      params.ExpressionAttributeNames['#type'] = 'type';
+      params.ExpressionAttributeValues[':postType'] = String(postType);
+
+      if (sortBy === 'date') {
+        params.FilterExpression += 'AND #type = :postType';
+      }
+      else {
+        params.FilterExpression += ' AND #type = :postType';
+      }
+    }
+
+
+    posts.forEach((instance, index) => {
+      if (index === 0) {
+        params.FilterExpression = params.FilterExpression + ' AND (id = :postid' + index;
+        params.ExpressionAttributeValues[':postid' + index] = posts[index].get('id');
+      }
+      else if (index != posts.length - 1) {
+        params.FilterExpression = params.FilterExpression + ' OR id = :postid' + index;
+        params.ExpressionAttributeValues[':postid' + index] = posts[index].get('id');
+      }
+      else {
+        params.FilterExpression = params.FilterExpression + ' OR id = :postid' + index + ' )';
+        params.ExpressionAttributeValues[':postid' + index] = posts[index].get('id');
+      }
+    });
+
+    return Dynamite.query(params, FlaggedPost, 'slice');
+  };
+
+
+
+
 
   return FlaggedPost;
 };

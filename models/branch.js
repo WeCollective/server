@@ -68,11 +68,12 @@ module.exports = (Dynamite, validate) => {
   // TODO: this has an upper limit on the number of results; if so, a LastEvaluatedKey
   // will be supplied to indicate where to continue the search from
   // (see: http://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/DynamoDB.html#query-property)
-  Branch.findSubbranches = (parentid, timeafter, sortBy, lastBranchInstance, returnAll) => {
+  Branch.findSubbranches = (parentid, timeafter, sortBy, lastBranchInstance, returnAll, query) => {
+
     const { TableIndexes } = Branch.config.keys;
     let IndexName;
 
-    switch(sortBy) {
+    switch (sortBy) {
       case 'post_count':
         IndexName = TableIndexes[1];
         break;
@@ -125,8 +126,68 @@ module.exports = (Dynamite, validate) => {
       queryParams.KeyConditionExpression = 'parentid = :parentid';
     }
 
+    if (query) {
+      queryParams.ExpressionAttributeNames['#name'] = 'name';
+      queryParams.ExpressionAttributeValues[':name'] = query;
+      queryParams.FilterExpression = queryParams.FilterExpression + ' AND contains(#name, :name)'
+    }
+
+
     return Dynamite.query(queryParams, Branch, returnAll ? 'all' : 'slice');
   };
+
+
+
+
+  Branch.findLooselyByNameAndParent = (name, rootId) => {
+    if (rootId) {
+      const { TableIndexes } = Branch.config.keys;
+      let IndexName = TableIndexes[1];
+
+      const params = {
+        KeyConditionExpression: 'parentid = :parentid',
+        FilterExpression: 'contains(#name, :name)',
+        ExpressionAttributeNames: {
+          '#name': 'name',
+        },
+        ExpressionAttributeValues: {
+          ':name': name, ':parentid': rootId,
+        },
+        IndexName,
+        ScanIndexForward: false,
+        Select: 'ALL_PROJECTED_ATTRIBUTES',
+      };
+
+
+
+
+      return Dynamite.query(params, Branch, 'all');
+    }
+    else {
+      const { TableIndexes } = Branch.config.keys;
+      let IndexName = TableIndexes[0];
+
+      const params = {
+        FilterExpression: 'contains(#name, :name)',
+        ExpressionAttributeNames: {
+          '#name': 'name',
+        },
+        ExpressionAttributeValues: {
+          ':name': name,
+        },
+        IndexName,
+        ScanIndexForward: false,
+        Select: 'ALL_PROJECTED_ATTRIBUTES',
+      };
+
+
+
+
+      return Dynamite.scan(params, Branch, 'all');
+    }
+  };
+
+
 
   return Branch;
 };

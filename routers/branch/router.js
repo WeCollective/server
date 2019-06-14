@@ -233,7 +233,7 @@ module.exports = () => {
      * @apiParam (URL Parameters) {String} branchid Branch unique id.
      * @apiParam (Query Parameters) {Number} timeafter Only fetch child branches created after this time (UNIX timestamp)
      * @apiParam (Query Parameters) {String} lastBranchId The id of the last branch seen by the client. Results _after_ this branch will be returned, facilitating pagination.
-     *
+     * @apiParam (Query Parameters) {String} query - query to search by
      * @apiSuccess (Successes) {String} data An array of child branch objects.
      * @apiSuccessExample {json} SuccessResponse:
      *  HTTP/1.1 200

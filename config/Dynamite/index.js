@@ -116,6 +116,71 @@ const Dynamite = {
     }));
   },
 
+
+
+  scan(...params) {
+    const last = params[params.length - 1];
+    const handler = typeof last === 'string' ? last : null;
+    const queryParams = params[0];
+    let caller = null;
+
+    if (params.length > 1) {
+      const end = handler ? 2 : 1;
+      caller = params[params.length - end];
+      queryParams.TableName = caller.config.table;
+    }
+
+    return new Promise((resolve, reject) => this.aws.dbClient.scan(queryParams, (err, data) => {
+      if (caller && handler) {
+        const limit = caller && handler === 'slice' ? this.getPaginationLimit(caller) : 0;
+        return caller
+          .responseHandler(handler, err, data, queryParams, limit)
+          .then(res => resolve(res))
+          .catch(err => reject(err));
+      }
+
+      if (err) {
+        return reject(err);
+      }
+
+      return resolve(data);
+    }));
+  },
+
+
+
+  //not finished not working
+  batchGetItems(...params) {
+    const last = params[params.length - 1];
+    const handler = typeof last === 'string' ? last : null;
+    const queryParams = params[0];
+    let caller = null;
+
+    if (params.length > 1) {
+      const end = handler ? 2 : 1;
+      caller = params[params.length - end];
+      queryParams.TableName = caller.config.table;
+    }
+
+    return new Promise((resolve, reject) => this.aws.dbClient.batchGet(queryParams, (err, data) => {
+      if (caller && handler) {
+        const limit = caller && handler === 'slice' ? this.getPaginationLimit(caller) : 0;
+        return caller
+          .responseHandler(handler, err, data, queryParams, limit)
+          .then(res => resolve(res))
+          .catch(err => reject(err));
+      }
+
+      if (err) {
+        return reject(err);
+      }
+
+      return resolve(data);
+    }));
+  },
+
+
+
   validator,
 };
 

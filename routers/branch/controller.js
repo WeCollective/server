@@ -709,6 +709,7 @@ module.exports.getSubbranches = (req, res, next) => {
   const {
     lastBranchId,
     timeafter,
+    query,
   } = req.query;
 
   if (!branchid) {
@@ -726,6 +727,10 @@ module.exports.getSubbranches = (req, res, next) => {
     };
     return next(JSON.stringify(req.error));
   }
+
+  if (query)
+    var queryIsOk = query != null && query.length > 0;
+
 
   // const branch = new Branch();
   const sortBy = req.query.sortBy || 'date';
@@ -751,7 +756,15 @@ module.exports.getSubbranches = (req, res, next) => {
     // No last branch specified, continue.
     return resolve();
   })
-    .then(() => Models.Branch.findSubbranches(branchid, timeafter, sortBy, lastBranch))
+    .then(() => {
+
+      if (queryIsOk) {
+        return Models.Branch.findSubbranches(branchid, timeafter, sortBy, lastBranch, undefined, query);
+      }
+      else
+        return Models.Branch.findSubbranches(branchid, timeafter, sortBy, lastBranch);
+
+    })
     // Attach branch profile images.
     .then(instances => {
       branches = instances;

@@ -88,5 +88,33 @@ module.exports = (Dynamite, validate) => {
     Select: 'ALL_PROJECTED_ATTRIBUTES',
   }, User, 'first');
 
+
+
+
+
+
+
+
+
+
+  User.findLooselyByUsername = (query) => {
+
+    var params = {};
+
+    params.ExpressionAttributeNames = { '#username': 'username' };
+    params.ExpressionAttributeValues = {
+      ':username': query,
+    };
+
+    params.FilterExpression = 'contains(#username, :username)';
+
+    params.ScanIndexForward = false;   // return results highest first
+    params.Select = 'ALL_ATTRIBUTES';
+
+    return Dynamite.scan(params, User, 'slice');
+
+  };
+
+
   return User;
 };

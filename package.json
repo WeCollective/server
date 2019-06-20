@@ -10,6 +10,7 @@
     "deploy:test": "eb deploy api-prod-test --profile weco-iam",
     "lint": "eslint . --ext .js --ignore-pattern node_modules/ --ignore-pattern docs/",
     "precommit": "npm-run-all lint build-api",
+	"fix":"eslint . --ext .js --fix --ignore-pattern node_modules/ --ignore-pattern docs/",
     "start": "nodemon --watch",
     "start:dev": "npm-run-all lint build-api start:local",
     "start:local": "cross-env NODE_ENV=local nodemon --watch",

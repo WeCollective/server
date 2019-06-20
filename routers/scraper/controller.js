@@ -60,6 +60,7 @@ module.exports.scrap = async (req, res, next) => {
       text: openGraph.description || general.description || '',
       title: openGraph.title || general.title || '',
       type,
+      image: openGraph.image || general.image || '',
       url: normalizeUrl(url, openGraph.url || general.url || general.canonical),
     }
     next()

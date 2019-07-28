@@ -9,6 +9,7 @@ shell.exec(command);
 fs.readFile(file, 'utf8', function(err, data) {
   if(!data.includes(LocalStackContainerName))
   {
+	shell.cd("lambda_stuff");
     console.log(data);
     shell.exec('docker-compose up -d');
     shell.exec('node lambdas.js');

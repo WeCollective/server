@@ -34,32 +34,38 @@ shell.exec('aws lambda --endpoint-url=http://localhost:4574 create-event-source-
 var dirnameBranches = 'devbranchimages';
 var destbucketBranches = 'dev-weco-branch-images';
 fs.readdir(dirnameBranches, (err, files) => {
-  files.forEach(file => {
-    var absolutePathB = path.resolve(dirnameBranches + '\\' + file);
-    var commandB = 'aws --endpoint-url http://localhost:4572 s3api put-object --bucket '+ destbucketBranches + ' --key ' + file + ' --body ' + absolutePathB;
-    shell.exec(commandB);
+	if(!!files){
+	  files.forEach(file => {
+		var absolutePathB = path.resolve(dirnameBranches + '\\' + file);
+		var commandB = 'aws --endpoint-url http://localhost:4572 s3api put-object --bucket '+ destbucketBranches + ' --key ' + file + ' --body ' + absolutePathB;
+		shell.exec(commandB);
 
-  });
+	  });
+	}
 });
 
 var dirnamePosts = 'devpostimages';
 var destbucketPosts = 'dev-weco-post-images';
 fs.readdir(dirnamePosts, (err, files) => {
-  files.forEach(file => {
-    var absolutePathP = path.resolve(dirnamePosts + '\\' + file);
-    var commandP = 'aws --endpoint-url http://localhost:4572 s3api put-object --bucket '+ destbucketPosts + ' --key ' + file + ' --body ' + absolutePathP;
-    shell.exec(commandP);
+  if(!!files){
+	  files.forEach(file => {
+		var absolutePathP = path.resolve(dirnamePosts + '\\' + file);
+		var commandP = 'aws --endpoint-url http://localhost:4572 s3api put-object --bucket '+ destbucketPosts + ' --key ' + file + ' --body ' + absolutePathP;
+		shell.exec(commandP);
 
-  });
+	  });
+  }
 });
 
 var dirnameUsers = 'devuserimages';
 var destbucketUsers = 'dev-weco-user-images';
 fs.readdir(dirnameUsers, (err, files) => {
-  files.forEach(file => {
-    var absolutePathU = path.resolve(dirnameUsers + '\\' + file);
-    var commandU = 'aws --endpoint-url http://localhost:4572 s3api put-object --bucket '+ destbucketUsers + ' --key ' + file + ' --body ' + absolutePathU;
-    shell.exec(commandU);
+	if(!!files){
+	  files.forEach(file => {
+		var absolutePathU = path.resolve(dirnameUsers + '\\' + file);
+		var commandU = 'aws --endpoint-url http://localhost:4572 s3api put-object --bucket '+ destbucketUsers + ' --key ' + file + ' --body ' + absolutePathU;
+		shell.exec(commandU);
 
-  });
+	  });
+	}
 });

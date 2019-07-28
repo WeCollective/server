@@ -30,7 +30,7 @@
             }
         ],
         "TableStatus": "ACTIVE",
-        "CreationDateTime": 1564266183.442,
+        "CreationDateTime": 1564306648.179,
         "ProvisionedThroughput": {
             "LastIncreaseDateTime": 0.0,
             "LastDecreaseDateTime": 0.0,
@@ -123,7 +123,7 @@
             "StreamEnabled": true,
             "StreamViewType": "NEW_AND_OLD_IMAGES"
         },
-        "LatestStreamLabel": "2019-07-27T22:24:31.641",
-        "LatestStreamArn": "arn:aws:dynamodb:us-east-1:000000000000:table/devComments/stream/2019-07-27T22:24:31.641"
+        "LatestStreamLabel": "2019-07-28T09:40:03.717",
+        "LatestStreamArn": "arn:aws:dynamodb:us-east-1:000000000000:table/devComments/stream/2019-07-28T09:40:03.717"
     }
 }

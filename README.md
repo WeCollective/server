@@ -74,13 +74,13 @@ This repository contains the code for the RESTful API used by the WECO front-end
     
 -   Request to become a member of the WeCollective organisation on Github [here](https://github.com/orgs/WeCollective/people).
     
--   Create a new branch from the [master branch](https://github.com/WeCollective/server/tree/master) on the “server” repository and give it a unique name
+-   Create a new branch from the [local branch](https://github.com/WeCollective/server/tree/local) on the “server” repository and give it a unique name
     
 -   Commit any changes you make in your local directory to the new branch and create a pull request to develop
     
 -   When the branch is ready for review, let us know on discord or send an email to [james@weco.io](mailto:james@weco.io) so we can begin testing  out the feature you’ve developed.
     
--   If your feature is accepted, we will merge your new branch into the main [master branch](https://github.com/WeCollective/server/tree/master) and the changes will be deployed to the development environment
+-   If your feature is accepted, we will merge your new branch into the main [local branch](https://github.com/WeCollective/server/tree/local) and the changes will be deployed to the development environment
 
 -   Changes will later be reviewed and live api will be updated
 

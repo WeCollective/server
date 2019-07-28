@@ -19,3 +19,8 @@ docs
 # misc
 npm-debug.log*
 package-log.json
+
+#localstackstuff
+lambda_stuff/devCommentsArn.json
+lambda_stuff/devPostsArn.json
+lambda_stuff/container.txt

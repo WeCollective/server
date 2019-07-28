@@ -1,0 +1,57 @@
+{
+  "Table": {
+    "GlobalSecondaryIndexes": [
+      {
+        "IndexSizeBytes": 8644, 
+        "IndexName": "email-index", 
+        "Projection": {
+          "ProjectionType": "ALL"
+        }, 
+        "IndexStatus": "ACTIVE", 
+        "ProvisionedThroughput": {
+          "NumberOfDecreasesToday": 0, 
+          "WriteCapacityUnits": 1, 
+          "ReadCapacityUnits": 1
+        }, 
+        "KeySchema": [
+          {
+            "KeyType": "HASH", 
+            "AttributeName": "email"
+          }
+        ], 
+        "IndexArn": "arn:aws:dynamodb:eu-west-1:470576480462:table/devUsers/index/email-index", 
+        "ItemCount": 33
+      }
+    ], 
+    "AttributeDefinitions": [
+      {
+        "AttributeName": "email", 
+        "AttributeType": "S"
+      }, 
+      {
+        "AttributeName": "username", 
+        "AttributeType": "S"
+      }
+    ], 
+    "TableArn": "arn:aws:dynamodb:eu-west-1:470576480462:table/devUsers", 
+    "ProvisionedThroughput": {
+      "NumberOfDecreasesToday": 0, 
+      "WriteCapacityUnits": 1, 
+      "LastIncreaseDateTime": 1496171644.452, 
+      "ReadCapacityUnits": 3, 
+      "LastDecreaseDateTime": 1467715415.122
+    }, 
+    "TableSizeBytes": 8644, 
+    "TableName": "devUsers", 
+    "TableStatus": "ACTIVE", 
+    "TableId": "c32cf11b-143b-44f5-8a55-22c629069c3e", 
+    "KeySchema": [
+      {
+        "KeyType": "HASH", 
+        "AttributeName": "username"
+      }
+    ], 
+    "ItemCount": 33, 
+    "CreationDateTime": 1466516065.595
+  }
+}

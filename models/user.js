@@ -98,7 +98,6 @@ module.exports = (Dynamite, validate) => {
 
 
   User.findLooselyByUsername = (query) => {
-
     var params = {};
 
     params.ExpressionAttributeNames = { '#username': 'username' };

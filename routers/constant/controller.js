@@ -5,6 +5,7 @@ const Models = reqlib('models/');
 
 const { WecoConstants } = Constants.AllowedValues;
 
+
 module.exports.get = (req, res, next) => {
   const { id } = req.params;
 
@@ -40,25 +41,30 @@ module.exports.get = (req, res, next) => {
     });
 };
 
-module.exports.getAll = (req, res, next) => Models.Constant.findAll({
-  where: {
-    id: WecoConstants,
-  },
-})
-  .then(constants => {
-    res.locals.data = constants.map(instance => ({
-      data: instance.get('data'),
-      id: instance.get('id'),
-    }));
-    return next();
+module.exports.getAll = (req, res, next) => {
+
+  return Models.Constant.findAll({
+    where: {
+      id: WecoConstants,
+    },
   })
-  .catch(err => {
-    console.error('Error fetching constant:', err);
-    req.error = {
-      message: err,
-    };
-    return next(JSON.stringify(req.error));
-  });
+    .then(constants => {
+      res.locals.data = constants.map(instance => ({
+        data: instance.get('data'),
+        id: instance.get('id'),
+      }));
+      return next();
+    })
+    .catch(err => {
+      console.error('Error fetching constant:', err);
+      req.error = {
+
+        message: err,
+      };
+
+      return next(JSON.stringify(req.error));
+    });
+};
 
 module.exports.put = (req, res, next) => {
   const { data } = req.body;

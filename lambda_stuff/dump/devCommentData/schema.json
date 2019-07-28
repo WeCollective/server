@@ -1,0 +1,28 @@
+{
+  "Table": {
+    "TableArn": "arn:aws:dynamodb:eu-west-1:470576480462:table/devCommentData", 
+    "AttributeDefinitions": [
+      {
+        "AttributeName": "id", 
+        "AttributeType": "S"
+      }
+    ], 
+    "ProvisionedThroughput": {
+      "NumberOfDecreasesToday": 0, 
+      "WriteCapacityUnits": 1, 
+      "ReadCapacityUnits": 1
+    }, 
+    "TableSizeBytes": 39273, 
+    "TableName": "devCommentData", 
+    "TableStatus": "ACTIVE", 
+    "TableId": "e9f22991-cdbb-4eb4-9973-792a2335754b", 
+    "KeySchema": [
+      {
+        "KeyType": "HASH", 
+        "AttributeName": "id"
+      }
+    ], 
+    "ItemCount": 364, 
+    "CreationDateTime": 1471258129.236
+  }
+}

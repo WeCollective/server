@@ -1,0 +1,11 @@
+{
+	"LambdaFunctionConfigurations": [
+		{
+		    "Id": "75aa57f09aa0c8caeab4f8c24e99d10f8e7faeebf76c078efc7c6caea54ba06a",
+			"LambdaFunctionArn": "arn:aws:lambda:us-east-1:000000000000:function:images",
+			"Events": [
+				"s3:ObjectCreated:*"
+			]
+		}
+	]
+}

@@ -27,6 +27,7 @@ const getRouter = dir => reqlib(`routers/${dir}/router`)(app);
  * @apiUse InternalServerError
  */
 app.get(`${version}/proxy`, (req, res, next) => {
+
   const { url } = req.query;
 
   if (!url) {

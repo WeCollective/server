@@ -1,0 +1,28 @@
+{
+  "Table": {
+    "TableArn": "arn:aws:dynamodb:eu-west-1:470576480462:table/devPostData", 
+    "AttributeDefinitions": [
+      {
+        "AttributeName": "id", 
+        "AttributeType": "S"
+      }
+    ], 
+    "ProvisionedThroughput": {
+      "NumberOfDecreasesToday": 0, 
+      "WriteCapacityUnits": 1, 
+      "ReadCapacityUnits": 1
+    }, 
+    "TableSizeBytes": 98871, 
+    "TableName": "devPostData", 
+    "TableStatus": "ACTIVE", 
+    "TableId": "d3cf8141-f3eb-4b3f-93b0-2cd69bbd41ae", 
+    "KeySchema": [
+      {
+        "KeyType": "HASH", 
+        "AttributeName": "id"
+      }
+    ], 
+    "ItemCount": 384, 
+    "CreationDateTime": 1470225477.004
+  }
+}

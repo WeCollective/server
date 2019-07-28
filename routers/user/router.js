@@ -102,7 +102,7 @@ module.exports = () => {
    * @apiUse NotFound
    */
   // .delete(ACL.allow(ACL.Roles.User), controller.delete)
-    /**
+  /**
      * @api {get} /user/me Get Self
      * @apiName Get Self
      * @apiGroup User
@@ -131,6 +131,7 @@ module.exports = () => {
      * @apiUse InternalServerError
      * @apiUse NotFound
      */
+
     .get(ACL.allow(ACL.Roles.User), controller.get)
     /**
      * @api {put} /user/me Update Self

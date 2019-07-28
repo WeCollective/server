@@ -1,0 +1,127 @@
+{
+  "Table": {
+    "GlobalSecondaryIndexes": [
+      {
+        "IndexSizeBytes": 43864, 
+        "IndexName": "postid-date-index", 
+        "Projection": {
+          "ProjectionType": "ALL"
+        }, 
+        "IndexStatus": "ACTIVE", 
+        "ProvisionedThroughput": {
+          "NumberOfDecreasesToday": 0, 
+          "WriteCapacityUnits": 1, 
+          "ReadCapacityUnits": 1
+        }, 
+        "KeySchema": [
+          {
+            "KeyType": "HASH", 
+            "AttributeName": "postid"
+          }, 
+          {
+            "KeyType": "RANGE", 
+            "AttributeName": "date"
+          }
+        ], 
+        "IndexArn": "arn:aws:dynamodb:eu-west-1:470576480462:table/devComments/index/postid-date-index", 
+        "ItemCount": 366
+      }, 
+      {
+        "IndexSizeBytes": 43864, 
+        "IndexName": "postid-replies-index", 
+        "Projection": {
+          "ProjectionType": "ALL"
+        }, 
+        "IndexStatus": "ACTIVE", 
+        "ProvisionedThroughput": {
+          "NumberOfDecreasesToday": 0, 
+          "WriteCapacityUnits": 1, 
+          "ReadCapacityUnits": 1
+        }, 
+        "KeySchema": [
+          {
+            "KeyType": "HASH", 
+            "AttributeName": "postid"
+          }, 
+          {
+            "KeyType": "RANGE", 
+            "AttributeName": "replies"
+          }
+        ], 
+        "IndexArn": "arn:aws:dynamodb:eu-west-1:470576480462:table/devComments/index/postid-replies-index", 
+        "ItemCount": 366
+      }, 
+      {
+        "IndexSizeBytes": 43864, 
+        "IndexName": "postid-individual-index", 
+        "Projection": {
+          "ProjectionType": "ALL"
+        }, 
+        "IndexStatus": "ACTIVE", 
+        "ProvisionedThroughput": {
+          "NumberOfDecreasesToday": 0, 
+          "WriteCapacityUnits": 1, 
+          "ReadCapacityUnits": 1
+        }, 
+        "KeySchema": [
+          {
+            "KeyType": "HASH", 
+            "AttributeName": "postid"
+          }, 
+          {
+            "KeyType": "RANGE", 
+            "AttributeName": "individual"
+          }
+        ], 
+        "IndexArn": "arn:aws:dynamodb:eu-west-1:470576480462:table/devComments/index/postid-individual-index", 
+        "ItemCount": 366
+      }
+    ], 
+    "AttributeDefinitions": [
+      {
+        "AttributeName": "date", 
+        "AttributeType": "N"
+      }, 
+      {
+        "AttributeName": "id", 
+        "AttributeType": "S"
+      }, 
+      {
+        "AttributeName": "individual", 
+        "AttributeType": "N"
+      }, 
+      {
+        "AttributeName": "postid", 
+        "AttributeType": "S"
+      }, 
+      {
+        "AttributeName": "replies", 
+        "AttributeType": "N"
+      }
+    ], 
+    "TableArn": "arn:aws:dynamodb:eu-west-1:470576480462:table/devComments", 
+    "ProvisionedThroughput": {
+      "NumberOfDecreasesToday": 0, 
+      "WriteCapacityUnits": 1, 
+      "ReadCapacityUnits": 1
+    }, 
+    "TableSizeBytes": 43864, 
+    "TableName": "devComments", 
+    "TableStatus": "ACTIVE", 
+    "StreamSpecification": {
+      "StreamViewType": "NEW_AND_OLD_IMAGES", 
+      "StreamEnabled": true
+    }, 
+    "TableId": "f30d7ffe-ca6d-4f87-bdb4-9af65f2a8813", 
+    "LatestStreamLabel": "2016-08-18T18:46:06.071", 
+    "KeySchema": [
+      {
+        "KeyType": "HASH", 
+        "AttributeName": "id"
+      }
+    ], 
+    "ItemCount": 366, 
+    "CreationDateTime": 1471255463.856, 
+    "LatestStreamArn": "arn:aws:dynamodb:eu-west-1:470576480462:table/devComments/stream/2016-08-18T18:46:06.071"
+  }
+}

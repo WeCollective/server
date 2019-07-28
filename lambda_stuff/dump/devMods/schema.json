@@ -1,0 +1,37 @@
+{
+  "Table": {
+    "TableArn": "arn:aws:dynamodb:eu-west-1:470576480462:table/devMods", 
+    "AttributeDefinitions": [
+      {
+        "AttributeName": "branchid", 
+        "AttributeType": "S"
+      }, 
+      {
+        "AttributeName": "date", 
+        "AttributeType": "N"
+      }
+    ], 
+    "ProvisionedThroughput": {
+      "NumberOfDecreasesToday": 0, 
+      "WriteCapacityUnits": 1, 
+      "ReadCapacityUnits": 1, 
+      "LastDecreaseDateTime": 1468234385.083
+    }, 
+    "TableSizeBytes": 4898, 
+    "TableName": "devMods", 
+    "TableStatus": "ACTIVE", 
+    "TableId": "c5c4103b-b71e-4608-a350-dd2d880b9afc", 
+    "KeySchema": [
+      {
+        "KeyType": "HASH", 
+        "AttributeName": "branchid"
+      }, 
+      {
+        "KeyType": "RANGE", 
+        "AttributeName": "date"
+      }
+    ], 
+    "ItemCount": 112, 
+    "CreationDateTime": 1468234359.955
+  }
+}

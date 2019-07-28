@@ -1,0 +1,28 @@
+{
+  "Table": {
+    "TableArn": "arn:aws:dynamodb:eu-west-1:470576480462:table/devConstants", 
+    "AttributeDefinitions": [
+      {
+        "AttributeName": "id", 
+        "AttributeType": "S"
+      }
+    ], 
+    "ProvisionedThroughput": {
+      "NumberOfDecreasesToday": 0, 
+      "WriteCapacityUnits": 1, 
+      "ReadCapacityUnits": 1
+    }, 
+    "TableSizeBytes": 82, 
+    "TableName": "devConstants", 
+    "TableStatus": "ACTIVE", 
+    "TableId": "60d04ac0-659d-4050-9371-8498e33e893f", 
+    "KeySchema": [
+      {
+        "KeyType": "HASH", 
+        "AttributeName": "id"
+      }
+    ], 
+    "ItemCount": 4, 
+    "CreationDateTime": 1475830661.823
+  }
+}

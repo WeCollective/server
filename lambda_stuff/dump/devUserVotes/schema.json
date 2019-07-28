@@ -1,0 +1,36 @@
+{
+  "Table": {
+    "TableArn": "arn:aws:dynamodb:eu-west-1:470576480462:table/devUserVotes", 
+    "AttributeDefinitions": [
+      {
+        "AttributeName": "itemid", 
+        "AttributeType": "S"
+      }, 
+      {
+        "AttributeName": "username", 
+        "AttributeType": "S"
+      }
+    ], 
+    "ProvisionedThroughput": {
+      "NumberOfDecreasesToday": 0, 
+      "WriteCapacityUnits": 1, 
+      "ReadCapacityUnits": 1
+    }, 
+    "TableSizeBytes": 21102, 
+    "TableName": "devUserVotes", 
+    "TableStatus": "ACTIVE", 
+    "TableId": "76a327c9-c638-4563-bc87-ea28662a7883", 
+    "KeySchema": [
+      {
+        "KeyType": "HASH", 
+        "AttributeName": "username"
+      }, 
+      {
+        "KeyType": "RANGE", 
+        "AttributeName": "itemid"
+      }
+    ], 
+    "ItemCount": 372, 
+    "CreationDateTime": 1474823823.97
+  }
+}

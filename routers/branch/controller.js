@@ -572,7 +572,8 @@ module.exports.getBranchPicture = (branchid, type, thumbnail = false) => {
 
       const Bucket = fs.Bucket.BranchImagesResized;
       const Key = `${id}-${size}.${extension}`;
-      return Promise.resolve(`https://${Bucket}.s3-eu-west-1.amazonaws.com/${Key}${params}`);
+
+      return Promise.resolve(`${Models.Dynamite.aws.getRootPath(Bucket)}${Key}${params}`);
     })
     .catch(err => {
       console.error('Error fetching branch image:', err);
@@ -791,8 +792,9 @@ module.exports.getSubbranches = (req, res, next) => {
               const Bucket = fs.Bucket.BranchImagesResized;
               const Key = `${id}-640.${extension}`;
               const KeyThumb = `${id}-200.${extension}`;
-              const profileUrl = `https://${Bucket}.s3-eu-west-1.amazonaws.com/${Key}${time}`;
-              const profileUrlThumb = `https://${Bucket}.s3-eu-west-1.amazonaws.com/${KeyThumb}${time}`;
+
+              const profileUrl = `${Models.Dynamite.aws.getRootPath(Bucket)}${Key}${time}`;
+              const profileUrlThumb = `${Models.Dynamite.aws.getRootPath(Bucket)}${KeyThumb}${time}`;
 
               branch.set('profileUrl', profileUrl);
               branch.set('profileUrlThumb', profileUrlThumb);

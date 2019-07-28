@@ -1,0 +1,28 @@
+{
+  "Count": 2, 
+  "Items": [
+  {
+      "username": {
+        "S": "james"
+      }, 
+      "itemid": {
+        "S": "post-james-1516928532567"
+      }, 
+      "direction": {
+        "S": "up"
+      }
+    },
+	{
+      "username": {
+        "S": "dtmakm"
+      }, 
+      "itemid": {
+        "S": "post-dtmakm-1562758399334"
+      }, 
+      "direction": {
+        "S": "up"
+      }
+    }
+  ], 
+  "ScannedCount": 2
+}

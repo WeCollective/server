@@ -4,6 +4,7 @@ const AWS = reqlib('config/Dynamite/aws');
 
 class Model {
   constructor(config) {
+
     this.config = Object.assign({}, config || {});
   }
 
@@ -206,6 +207,7 @@ class Model {
 
   // todo validation for findAll()
   findAll(config) {
+
     const cfg = this.validateOperationConfig(config);
     let Keys = [];
 
@@ -266,6 +268,7 @@ class Model {
   }
 
   findOne(config) {
+
     const cfg = this.validateOperationConfig(config);
 
     return new Promise((resolve, reject) => AWS.dbClient.get({
@@ -284,7 +287,6 @@ class Model {
       if (!Object.keys(data).length || !data.Item) {
         return resolve(null);
       }
-
       const instance = this.createInstance(data.Item);
       return resolve(instance);
     }));

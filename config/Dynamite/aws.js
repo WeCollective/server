@@ -8,7 +8,25 @@ AWS.config.update({
   sslEnabled: true,
 });
 
+var local = !!process.env.NODE_ENV;
 module.exports = {
-  dbClient: new AWS.DynamoDB.DocumentClient(),
-  s3Client: new AWS.S3(),
+  dbClient: local? new AWS.DynamoDB.DocumentClient({service:new AWS.DynamoDB({  endpoint: 'http://localhost:4569'})})
+    : new AWS.DynamoDB.DocumentClient(),
+  s3Client: local? new AWS.S3({   endpoint: 'http://localhost:4572', s3ForcePathStyle: true }) : new AWS.S3(),
+  s3Path: local? 'localhost:4572/' :'.s3-eu-west-1.amazonaws.com/',
+  s3Cert: local? 'http://' : 'https://',
+  s3Local: local,
+  getRootPath : (bucket) => {
+    var pth = local? 'localhost:4572/' :'.s3-eu-west-1.amazonaws.com/';
+    var cert = local? 'http://' : 'https://';
+    if(local){
+      //localpath
+      return `${cert}${pth}${bucket}/`;
+    }
+    else
+    {
+      return `${cert}${bucket}${pth}`;
+      //server path s3
+    }
+  },
 };

@@ -1,0 +1,30 @@
+{
+  "Table": {
+    "TableArn": "arn:aws:dynamodb:eu-west-1:470576480462:table/devBranchImages", 
+    "AttributeDefinitions": [
+      {
+        "AttributeName": "id", 
+        "AttributeType": "S"
+      }
+    ], 
+    "ProvisionedThroughput": {
+      "NumberOfDecreasesToday": 0, 
+      "WriteCapacityUnits": 1, 
+      "LastIncreaseDateTime": 1496171799.371, 
+      "ReadCapacityUnits": 8, 
+      "LastDecreaseDateTime": 1468174481.786
+    }, 
+    "TableSizeBytes": 1255, 
+    "TableName": "devBranchImages", 
+    "TableStatus": "ACTIVE", 
+    "TableId": "60a70752-3284-41ab-86c2-995576fd9a9d", 
+    "KeySchema": [
+      {
+        "KeyType": "HASH", 
+        "AttributeName": "id"
+      }
+    ], 
+    "ItemCount": 31, 
+    "CreationDateTime": 1467894637.252
+  }
+}

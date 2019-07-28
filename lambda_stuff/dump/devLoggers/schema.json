@@ -1,0 +1,37 @@
+{
+  "Table": {
+    "TableArn": "arn:aws:dynamodb:eu-west-1:470576480462:table/devLoggers", 
+    "AttributeDefinitions": [
+      {
+        "AttributeName": "createdAt", 
+        "AttributeType": "N"
+      }, 
+      {
+        "AttributeName": "event", 
+        "AttributeType": "S"
+      }
+    ], 
+    "ProvisionedThroughput": {
+      "NumberOfDecreasesToday": 0, 
+      "WriteCapacityUnits": 1, 
+      "ReadCapacityUnits": 1, 
+      "LastDecreaseDateTime": 1511287501.189
+    }, 
+    "TableSizeBytes": 162, 
+    "TableName": "devLoggers", 
+    "TableStatus": "ACTIVE", 
+    "TableId": "50a2e903-93dd-4b98-8b6c-e3da9939139d", 
+    "KeySchema": [
+      {
+        "KeyType": "HASH", 
+        "AttributeName": "event"
+      }, 
+      {
+        "KeyType": "RANGE", 
+        "AttributeName": "createdAt"
+      }
+    ], 
+    "ItemCount": 1, 
+    "CreationDateTime": 1511287478.563
+  }
+}

@@ -1,0 +1,92 @@
+{
+  "Table": {
+    "GlobalSecondaryIndexes": [
+      {
+        "IndexSizeBytes": 862, 
+        "IndexName": "childid-date-index", 
+        "Projection": {
+          "ProjectionType": "ALL"
+        }, 
+        "IndexStatus": "ACTIVE", 
+        "ProvisionedThroughput": {
+          "NumberOfDecreasesToday": 0, 
+          "WriteCapacityUnits": 1, 
+          "ReadCapacityUnits": 1
+        }, 
+        "KeySchema": [
+          {
+            "KeyType": "HASH", 
+            "AttributeName": "childid"
+          }, 
+          {
+            "KeyType": "RANGE", 
+            "AttributeName": "date"
+          }
+        ], 
+        "IndexArn": "arn:aws:dynamodb:eu-west-1:470576480462:table/devSubBranchRequests/index/childid-date-index", 
+        "ItemCount": 15
+      }, 
+      {
+        "IndexSizeBytes": 862, 
+        "IndexName": "parentid-date-index", 
+        "Projection": {
+          "ProjectionType": "ALL"
+        }, 
+        "IndexStatus": "ACTIVE", 
+        "ProvisionedThroughput": {
+          "NumberOfDecreasesToday": 0, 
+          "WriteCapacityUnits": 1, 
+          "ReadCapacityUnits": 1
+        }, 
+        "KeySchema": [
+          {
+            "KeyType": "HASH", 
+            "AttributeName": "parentid"
+          }, 
+          {
+            "KeyType": "RANGE", 
+            "AttributeName": "date"
+          }
+        ], 
+        "IndexArn": "arn:aws:dynamodb:eu-west-1:470576480462:table/devSubBranchRequests/index/parentid-date-index", 
+        "ItemCount": 15
+      }
+    ], 
+    "AttributeDefinitions": [
+      {
+        "AttributeName": "childid", 
+        "AttributeType": "S"
+      }, 
+      {
+        "AttributeName": "date", 
+        "AttributeType": "N"
+      }, 
+      {
+        "AttributeName": "parentid", 
+        "AttributeType": "S"
+      }
+    ], 
+    "TableArn": "arn:aws:dynamodb:eu-west-1:470576480462:table/devSubBranchRequests", 
+    "ProvisionedThroughput": {
+      "NumberOfDecreasesToday": 0, 
+      "WriteCapacityUnits": 1, 
+      "ReadCapacityUnits": 1
+    }, 
+    "TableSizeBytes": 862, 
+    "TableName": "devSubBranchRequests", 
+    "TableStatus": "ACTIVE", 
+    "TableId": "10a743ae-bcd5-48eb-97b2-dfbdaded348c", 
+    "KeySchema": [
+      {
+        "KeyType": "HASH", 
+        "AttributeName": "parentid"
+      }, 
+      {
+        "KeyType": "RANGE", 
+        "AttributeName": "childid"
+      }
+    ], 
+    "ItemCount": 15, 
+    "CreationDateTime": 1469031668.06
+  }
+}

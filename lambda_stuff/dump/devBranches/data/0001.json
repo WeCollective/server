@@ -1,0 +1,486 @@
+{
+  "Count": 15, 
+  "Items": [
+    {
+      "description": {
+        "NULL": true
+      }, 
+      "post_comments": {
+        "N": "0"
+      }, 
+      "creator": {
+        "S": "lmenus"
+      }, 
+      "post_count": {
+        "N": "1"
+      }, 
+      "name": {
+        "S": "I need some children branches!"
+      }, 
+      "rules": {
+        "NULL": true
+      }, 
+      "parentid": {
+        "S": "root"
+      }, 
+      "date": {
+        "N": "1501851216351"
+      }, 
+      "id": {
+        "S": "givemechildren"
+      }, 
+      "post_points": {
+        "N": "0"
+      }
+    }, 
+    {
+      "description": {
+        "NULL": true
+      }, 
+      "post_comments": {
+        "N": "0"
+      }, 
+      "creator": {
+        "S": "lmenus"
+      }, 
+      "post_count": {
+        "N": "0"
+      }, 
+      "name": {
+        "S": "fsdfsfsdfsdfds"
+      }, 
+      "rules": {
+        "NULL": true
+      }, 
+      "parentid": {
+        "S": "givemechildren"
+      }, 
+      "date": {
+        "N": "1515969798990"
+      }, 
+      "id": {
+        "S": "testingthisagain"
+      }, 
+      "post_points": {
+        "N": "0"
+      }
+    }, 
+    {
+      "description": {
+        "NULL": true
+      }, 
+      "post_comments": {
+        "N": "0"
+      }, 
+      "creator": {
+        "S": "lmenus"
+      }, 
+      "post_count": {
+        "N": "1"
+      }, 
+      "name": {
+        "S": "Spain"
+      }, 
+      "rules": {
+        "NULL": true
+      }, 
+      "parentid": {
+        "S": "root"
+      }, 
+      "date": {
+        "N": "1502034667764"
+      }, 
+      "id": {
+        "S": "spain"
+      }, 
+      "post_points": {
+        "N": "0"
+      }
+    }, 
+    {
+      "description": {
+        "NULL": true
+      }, 
+      "post_comments": {
+        "N": "0"
+      }, 
+      "creator": {
+        "S": "lmenus"
+      }, 
+      "post_count": {
+        "N": "0"
+      }, 
+      "name": {
+        "S": "lmenus"
+      }, 
+      "rules": {
+        "NULL": true
+      }, 
+      "parentid": {
+        "S": "root"
+      }, 
+      "date": {
+        "N": "1502034470845"
+      }, 
+      "id": {
+        "S": "lmenus"
+      }, 
+      "post_points": {
+        "N": "0"
+      }
+    },
+	{
+      "description": {
+        "NULL": true
+      }, 
+      "post_comments": {
+        "N": "3"
+      }, 
+      "creator": {
+        "S": "james"
+      }, 
+      "post_count": {
+        "N": "17"
+      }, 
+      "name": {
+        "S": "Comedy"
+      }, 
+      "rules": {
+        "NULL": true
+      }, 
+      "parentid": {
+        "S": "root"
+      }, 
+      "date": {
+        "N": "1497708374746"
+      }, 
+      "id": {
+        "S": "comedy"
+      }, 
+      "post_points": {
+        "N": "17"
+      }
+    },
+    {
+      "description": {
+        "NULL": true
+      }, 
+      "post_comments": {
+        "N": "0"
+      }, 
+      "creator": {
+        "S": "lmenus"
+      }, 
+      "post_count": {
+        "N": "0"
+      }, 
+      "name": {
+        "S": "Lubos Parent"
+      }, 
+      "rules": {
+        "NULL": true
+      }, 
+      "parentid": {
+        "S": "root"
+      }, 
+      "date": {
+        "N": "1501669781313"
+      }, 
+      "id": {
+        "S": "@lubosparent"
+      }, 
+      "post_points": {
+        "N": "0"
+      }
+    }, 
+    {
+      "description": {
+        "NULL": true
+      }, 
+      "post_comments": {
+        "N": "0"
+      }, 
+      "creator": {
+        "S": "lmenus"
+      }, 
+      "post_count": {
+        "N": "0"
+      }, 
+      "name": {
+        "S": "newbranch9"
+      }, 
+      "rules": {
+        "NULL": true
+      }, 
+      "parentid": {
+        "S": "root"
+      }, 
+      "date": {
+        "N": "1550346087655"
+      }, 
+      "id": {
+        "S": "newbranch9"
+      }, 
+      "post_points": {
+        "N": "0"
+      }
+    }, 
+    {
+      "description": {
+        "NULL": true
+      }, 
+      "post_comments": {
+        "N": "0"
+      }, 
+      "creator": {
+        "S": "lmenus"
+      }, 
+      "post_count": {
+        "N": "1"
+      }, 
+      "name": {
+        "S": "not again..."
+      }, 
+      "rules": {
+        "NULL": true
+      }, 
+      "parentid": {
+        "S": "root"
+      }, 
+      "date": {
+        "N": "1501851499729"
+      }, 
+      "id": {
+        "S": "notagain"
+      }, 
+      "post_points": {
+        "N": "0"
+      }
+    }, 
+    {
+      "description": {
+        "NULL": true
+      }, 
+      "post_comments": {
+        "N": "0"
+      }, 
+      "creator": {
+        "S": "lmenus"
+      }, 
+      "post_count": {
+        "N": "6"
+      }, 
+      "name": {
+        "S": "Bristol"
+      }, 
+      "rules": {
+        "NULL": true
+      }, 
+      "parentid": {
+        "S": "root"
+      }, 
+      "date": {
+        "N": "1502032394930"
+      }, 
+      "id": {
+        "S": "bristol"
+      }, 
+      "post_points": {
+        "N": "0"
+      }
+    }, 
+    {
+      "description": {
+        "NULL": true
+      }, 
+      "post_comments": {
+        "N": "8"
+      }, 
+      "creator": {
+        "S": "james"
+      }, 
+      "post_count": {
+        "N": "3"
+      }, 
+      "name": {
+        "S": "Quantum Biology"
+      }, 
+      "rules": {
+        "NULL": true
+      }, 
+      "parentid": {
+        "S": "givemechildren"
+      }, 
+      "date": {
+        "N": "1502741251564"
+      }, 
+      "id": {
+        "S": "quantumbiology"
+      }, 
+      "post_points": {
+        "N": "0"
+      }
+    }, 
+    {
+      "description": {
+        "NULL": true
+      }, 
+      "post_comments": {
+        "N": "0"
+      }, 
+      "creator": {
+        "S": "lmenus"
+      }, 
+      "post_count": {
+        "N": "6"
+      }, 
+      "name": {
+        "S": "Places"
+      }, 
+      "rules": {
+        "NULL": true
+      }, 
+      "parentid": {
+        "S": "root"
+      }, 
+      "date": {
+        "N": "1502030110264"
+      }, 
+      "id": {
+        "S": "places"
+      }, 
+      "post_points": {
+        "N": "0"
+      }
+    }, 
+    {
+      "description": {
+        "NULL": true
+      }, 
+      "post_comments": {
+        "N": "0"
+      }, 
+      "creator": {
+        "S": "james"
+      }, 
+      "post_count": {
+        "N": "1"
+      }, 
+      "name": {
+        "S": "Particle Physics"
+      }, 
+      "rules": {
+        "NULL": true
+      }, 
+      "parentid": {
+        "S": "root"
+      }, 
+      "date": {
+        "N": "1507491214770"
+      }, 
+      "id": {
+        "S": "particle-phy"
+      }, 
+      "post_points": {
+        "N": "0"
+      }
+    }, 
+    {
+      "description": {
+        "NULL": true
+      }, 
+      "post_comments": {
+        "N": "0"
+      }, 
+      "creator": {
+        "S": "lmenus"
+      }, 
+      "post_count": {
+        "N": "0"
+      }, 
+      "name": {
+        "S": "test2"
+      }, 
+      "rules": {
+        "NULL": true
+      }, 
+      "parentid": {
+        "S": "root"
+      }, 
+      "date": {
+        "N": "1506197465108"
+      }, 
+      "id": {
+        "S": "test2"
+      }, 
+      "post_points": {
+        "N": "0"
+      }
+    },
+	{
+  "creator": {
+    "S": "lmenus"
+  },
+  "date": {
+    "N": "1500000000000"
+  },
+  "description": {
+    "NULL": true
+  },
+  "id": {
+    "S": "root"
+  },
+  "name": {
+    "S": "All"
+  },
+  "parentid": {
+    "S": "none"
+  },
+  "post_comments": {
+    "N": "47"
+  },
+  "post_count": {
+    "N": "177"
+  },
+  "post_points": {
+    "N": "180"
+  },
+  "rules": {
+    "NULL": true
+  }
+},
+{
+  "creator": {
+    "S": "james"
+  },
+  "date": {
+    "N": "1495457944996"
+  },
+  "description": {
+    "NULL": true
+  },
+  "id": {
+    "S": "polls"
+  },
+  "name": {
+    "S": "Polls"
+  },
+  "parentid": {
+    "S": "root"
+  },
+  "post_comments": {
+    "N": "12"
+  },
+  "post_count": {
+    "N": "8"
+  },
+  "post_points": {
+    "N": "0"
+  },
+  "rules": {
+    "NULL": true
+  }
+}
+  ], 
+  "ScannedCount": 15
+}

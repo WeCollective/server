@@ -1,0 +1,29 @@
+{
+  "Table": {
+    "TableArn": "arn:aws:dynamodb:eu-west-1:470576480462:table/devUserImages", 
+    "AttributeDefinitions": [
+      {
+        "AttributeName": "id", 
+        "AttributeType": "S"
+      }
+    ], 
+    "ProvisionedThroughput": {
+      "NumberOfDecreasesToday": 0, 
+      "WriteCapacityUnits": 1, 
+      "ReadCapacityUnits": 1, 
+      "LastDecreaseDateTime": 1467715412.077
+    }, 
+    "TableSizeBytes": 253, 
+    "TableName": "devUserImages", 
+    "TableStatus": "ACTIVE", 
+    "TableId": "8280a9c8-ced8-4e8e-b0b6-4b1f5c72fe3b", 
+    "KeySchema": [
+      {
+        "KeyType": "HASH", 
+        "AttributeName": "id"
+      }
+    ], 
+    "ItemCount": 6, 
+    "CreationDateTime": 1467204145.913
+  }
+}

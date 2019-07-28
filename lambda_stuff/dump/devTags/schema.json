@@ -1,0 +1,63 @@
+{
+  "Table": {
+    "GlobalSecondaryIndexes": [
+      {
+        "IndexSizeBytes": 7235, 
+        "IndexName": "tag-branchid-index", 
+        "Projection": {
+          "ProjectionType": "ALL"
+        }, 
+        "IndexStatus": "ACTIVE", 
+        "ProvisionedThroughput": {
+          "NumberOfDecreasesToday": 0, 
+          "WriteCapacityUnits": 1, 
+          "ReadCapacityUnits": 1
+        }, 
+        "KeySchema": [
+          {
+            "KeyType": "HASH", 
+            "AttributeName": "tag"
+          }, 
+          {
+            "KeyType": "RANGE", 
+            "AttributeName": "branchid"
+          }
+        ], 
+        "IndexArn": "arn:aws:dynamodb:eu-west-1:470576480462:table/devTags/index/tag-branchid-index", 
+        "ItemCount": 273
+      }
+    ], 
+    "AttributeDefinitions": [
+      {
+        "AttributeName": "branchid", 
+        "AttributeType": "S"
+      }, 
+      {
+        "AttributeName": "tag", 
+        "AttributeType": "S"
+      }
+    ], 
+    "TableArn": "arn:aws:dynamodb:eu-west-1:470576480462:table/devTags", 
+    "ProvisionedThroughput": {
+      "NumberOfDecreasesToday": 0, 
+      "WriteCapacityUnits": 1, 
+      "ReadCapacityUnits": 1
+    }, 
+    "TableSizeBytes": 7235, 
+    "TableName": "devTags", 
+    "TableStatus": "ACTIVE", 
+    "TableId": "8bb95931-b7df-4f2b-bf5e-e1632a331ba0", 
+    "KeySchema": [
+      {
+        "KeyType": "HASH", 
+        "AttributeName": "branchid"
+      }, 
+      {
+        "KeyType": "RANGE", 
+        "AttributeName": "tag"
+      }
+    ], 
+    "ItemCount": 273, 
+    "CreationDateTime": 1469707382.41
+  }
+}

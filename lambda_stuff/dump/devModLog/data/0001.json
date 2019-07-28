@@ -1,0 +1,24 @@
+{
+  "Count": 1, 
+  "Items": [
+   {
+      "action": {
+        "S": "make-subbranch-request"
+      }, 
+      "username": {
+        "S": "lmenus"
+      }, 
+      "date": {
+        "N": "1502027677314"
+      }, 
+      "data": {
+        "S": "root"
+      }, 
+      "branchid": {
+        "S": "givemechildren"
+      }
+    }
+    
+  ], 
+  "ScannedCount": 1
+}

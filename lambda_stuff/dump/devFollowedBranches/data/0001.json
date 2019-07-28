@@ -1,0 +1,30 @@
+{
+  "Count": 3, 
+  "Items": [
+    {
+      "username": {
+        "S": "lmenus"
+      }, 
+      "branchid": {
+        "S": "givemechildren"
+      }
+    }, 
+    {
+      "username": {
+        "S": "lmenus"
+      }, 
+      "branchid": {
+        "S": "fsdfsfsdfsdfds"
+      }
+    }, 
+    {
+      "username": {
+        "S": "lmenus"
+      }, 
+      "branchid": {
+        "S": "testingthisagain"
+      }
+    }
+  ], 
+  "ScannedCount": 3
+}

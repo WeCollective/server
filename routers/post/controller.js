@@ -1,5 +1,7 @@
 const reqlib = require('app-root-path').require
 const { List } = require('immutable')
+const request = require('request')
+
 
 const Constants = reqlib('config/constants')
 const fs = reqlib('config/filestorage')
@@ -862,6 +864,7 @@ module.exports.getOneComment = (id, req) => {
 };
 
 module.exports.getOnePost = (id, req, branchid) => {
+
   let post;
   return Models.Post.findById(id)
     .then(instances => {
@@ -1027,7 +1030,71 @@ module.exports.getPictureUploadUrl = (req, res, next) => {
     });
 };
 
+module.exports.uploadPictureByUrl = (req, res, next) => {
+  const {link,pid} = req.body;
+  const username = req.user.get('username');
+
+  if (!pid || !link || !link.includes('http')) {
+    req.error = {
+      message: 'Invalid postid or link.' + link,
+      status: 400,
+    };
+    return next(JSON.stringify(req.error));
+  }
+
+  // ensure this user is the creator of the specified post
+  return Models.PostData.findById(pid)
+    .then(instance => {
+
+      if (instance === null) {
+        return Promise.reject({
+          message: 'Post does not exist.',
+          status: 404,
+        });
+      }
+
+      if (instance.get('creator') !== username) {
+        // user did not create this post
+        return Promise.reject({
+          message: 'You are not the author of the post.',
+          status: 403,
+        });
+      }
+      const filename = `${pid}-picture-orig.jpg`;
+
+      return new Promise((resolve,reject)=> {
+        //download img and upload to s3
+        request({
+          url: link,
+          encoding: null
+        }, function(err, res, body) {
+          if (err){
+            reject(err);
+          }
+          var objectParams = {
+            Bucket: fs.Bucket.PostImages,
+            Key: filename,
+            ContentType: 'image/*',
+            Body: body
+          };
+
+          resolve(Models.Dynamite.aws.s3Client.putObject(objectParams).promise());
+        });
+      });
+
+
+    }).then(() => {
+      return next();
+    }).catch(err => {
+      console.error('Error uploading post:', err);
+      return next(JSON.stringify(req.error));
+    });
+
+
+};
+
 module.exports.getPostPicture = (postid, thumbnail = false) => {
+
   const size = thumbnail ? 200 : 640;
   return Models.PostImage.findById(createPostImageId(postid))
     .then(instance => {
@@ -1035,12 +1102,13 @@ module.exports.getPostPicture = (postid, thumbnail = false) => {
         return Promise.resolve('');
       }
 
+
       const extension = instance.get('extension');
       const id = instance.get('id');
 
       const Bucket = fs.Bucket.PostImagesResized;
       const Key = `${id}-${size}.${extension}`;
-      return Promise.resolve(`https://${Bucket}.s3-eu-west-1.amazonaws.com/${Key}`);
+      return Promise.resolve(`${Models.Dynamite.aws.getRootPath(Bucket)}${Key}`);
     })
     .catch(err => {
       console.error('Error fetching post image:', err);
@@ -1143,6 +1211,7 @@ module.exports.post = (req, res, next) => {
 
   let promises = [];
 
+
   for (let i = 0; i < branches.length; i += 1) {
     const promise = Models.Tag.findByBranch(branches[i])
       .then(tags => {
@@ -1185,6 +1254,7 @@ module.exports.post = (req, res, next) => {
     // Now create the branch ids.
     .then(() => {
       let promises = [];
+
 
       for (let i = 0; i < branchidsArr.length; i += 1) {
         const branchid = branchidsArr[i];

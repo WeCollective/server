@@ -1,0 +1,30 @@
+{
+  "Table": {
+    "TableArn": "arn:aws:dynamodb:eu-west-1:470576480462:table/devSessions", 
+    "AttributeDefinitions": [
+      {
+        "AttributeName": "id", 
+        "AttributeType": "S"
+      }
+    ], 
+    "ProvisionedThroughput": {
+      "NumberOfDecreasesToday": 0, 
+      "WriteCapacityUnits": 4, 
+      "LastIncreaseDateTime": 1496171743.547, 
+      "ReadCapacityUnits": 4, 
+      "LastDecreaseDateTime": 1467715406.9
+    }, 
+    "TableSizeBytes": 361, 
+    "TableName": "devSessions", 
+    "TableStatus": "ACTIVE", 
+    "TableId": "c73063a7-f7e7-4559-8fcc-ab8d07301f7e", 
+    "KeySchema": [
+      {
+        "KeyType": "HASH", 
+        "AttributeName": "id"
+      }
+    ], 
+    "ItemCount": 2, 
+    "CreationDateTime": 1466596163.767
+  }
+}

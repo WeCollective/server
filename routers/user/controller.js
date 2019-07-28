@@ -132,6 +132,7 @@ module.exports.ban = (req, res, next) => {
 };
 
 module.exports.followBranch = (req, res, next) => {
+
   const { branchid } = req.body;
   const username = req.user.get('username');
 
@@ -181,6 +182,7 @@ module.exports.followBranch = (req, res, next) => {
 };
 
 module.exports.get = (req, res, next) => {
+
   const clientUsername = req.user ? req.user.get('username') : false;
   let { username = clientUsername } = req.params;
 
@@ -353,7 +355,7 @@ module.exports.getUserPicture = (username, type, thumbnail = false) => {
 
       const Bucket = fs.Bucket.UserImagesResized;
       const Key = `${id}-${size}.${extension}`;
-      return Promise.resolve(`https://${Bucket}.s3-eu-west-1.amazonaws.com/${Key}`);
+      return Promise.resolve(`${Models.Dynamite.aws.getRootPath(Bucket)}${Key}`);
     })
     .catch(err => {
       console.error('Error fetching user image:', err);

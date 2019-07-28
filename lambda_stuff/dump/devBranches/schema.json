@@ -1,0 +1,150 @@
+{
+  "Table": {
+    "GlobalSecondaryIndexes": [
+      {
+        "IndexSizeBytes": 14088, 
+        "IndexName": "parentid-post_comments-index", 
+        "Projection": {
+          "ProjectionType": "ALL"
+        }, 
+        "IndexStatus": "ACTIVE", 
+        "ProvisionedThroughput": {
+          "NumberOfDecreasesToday": 0, 
+          "WriteCapacityUnits": 1, 
+          "ReadCapacityUnits": 1
+        }, 
+        "KeySchema": [
+          {
+            "KeyType": "HASH", 
+            "AttributeName": "parentid"
+          }, 
+          {
+            "KeyType": "RANGE", 
+            "AttributeName": "post_comments"
+          }
+        ], 
+        "IndexArn": "arn:aws:dynamodb:eu-west-1:470576480462:table/devBranches/index/parentid-post_comments-index", 
+        "ItemCount": 103
+      }, 
+      {
+        "IndexSizeBytes": 14088, 
+        "IndexName": "parentid-post_count-index", 
+        "Projection": {
+          "ProjectionType": "ALL"
+        }, 
+        "IndexStatus": "ACTIVE", 
+        "ProvisionedThroughput": {
+          "NumberOfDecreasesToday": 0, 
+          "WriteCapacityUnits": 1, 
+          "ReadCapacityUnits": 1
+        }, 
+        "KeySchema": [
+          {
+            "KeyType": "HASH", 
+            "AttributeName": "parentid"
+          }, 
+          {
+            "KeyType": "RANGE", 
+            "AttributeName": "post_count"
+          }
+        ], 
+        "IndexArn": "arn:aws:dynamodb:eu-west-1:470576480462:table/devBranches/index/parentid-post_count-index", 
+        "ItemCount": 103
+      }, 
+      {
+        "IndexSizeBytes": 14088, 
+        "IndexName": "parentid-date-index", 
+        "Projection": {
+          "ProjectionType": "ALL"
+        }, 
+        "IndexStatus": "ACTIVE", 
+        "ProvisionedThroughput": {
+          "NumberOfDecreasesToday": 0, 
+          "WriteCapacityUnits": 1, 
+          "ReadCapacityUnits": 1
+        }, 
+        "KeySchema": [
+          {
+            "KeyType": "HASH", 
+            "AttributeName": "parentid"
+          }, 
+          {
+            "KeyType": "RANGE", 
+            "AttributeName": "date"
+          }
+        ], 
+        "IndexArn": "arn:aws:dynamodb:eu-west-1:470576480462:table/devBranches/index/parentid-date-index", 
+        "ItemCount": 103
+      }, 
+      {
+        "IndexSizeBytes": 14088, 
+        "IndexName": "parentid-post_points-index", 
+        "Projection": {
+          "ProjectionType": "ALL"
+        }, 
+        "IndexStatus": "ACTIVE", 
+        "ProvisionedThroughput": {
+          "NumberOfDecreasesToday": 0, 
+          "WriteCapacityUnits": 1, 
+          "ReadCapacityUnits": 1
+        }, 
+        "KeySchema": [
+          {
+            "KeyType": "HASH", 
+            "AttributeName": "parentid"
+          }, 
+          {
+            "KeyType": "RANGE", 
+            "AttributeName": "post_points"
+          }
+        ], 
+        "IndexArn": "arn:aws:dynamodb:eu-west-1:470576480462:table/devBranches/index/parentid-post_points-index", 
+        "ItemCount": 103
+      }
+    ], 
+    "AttributeDefinitions": [
+      {
+        "AttributeName": "date", 
+        "AttributeType": "N"
+      }, 
+      {
+        "AttributeName": "id", 
+        "AttributeType": "S"
+      }, 
+      {
+        "AttributeName": "parentid", 
+        "AttributeType": "S"
+      }, 
+      {
+        "AttributeName": "post_comments", 
+        "AttributeType": "N"
+      }, 
+      {
+        "AttributeName": "post_count", 
+        "AttributeType": "N"
+      }, 
+      {
+        "AttributeName": "post_points", 
+        "AttributeType": "N"
+      }
+    ], 
+    "TableArn": "arn:aws:dynamodb:eu-west-1:470576480462:table/devBranches", 
+    "ProvisionedThroughput": {
+      "NumberOfDecreasesToday": 0, 
+      "WriteCapacityUnits": 1, 
+      "ReadCapacityUnits": 1
+    }, 
+    "TableSizeBytes": 14088, 
+    "TableName": "devBranches", 
+    "TableStatus": "ACTIVE", 
+    "TableId": "dcc2c152-4b2c-432e-a6ae-796cb402f3b2", 
+    "KeySchema": [
+      {
+        "KeyType": "HASH", 
+        "AttributeName": "id"
+      }
+    ], 
+    "ItemCount": 103, 
+    "CreationDateTime": 1467715822.512
+  }
+}

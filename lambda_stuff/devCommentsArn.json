@@ -1,0 +1,129 @@
+{
+    "TableDescription": {
+        "AttributeDefinitions": [
+            {
+                "AttributeName": "date",
+                "AttributeType": "N"
+            },
+            {
+                "AttributeName": "replies",
+                "AttributeType": "N"
+            },
+            {
+                "AttributeName": "individual",
+                "AttributeType": "N"
+            },
+            {
+                "AttributeName": "id",
+                "AttributeType": "S"
+            },
+            {
+                "AttributeName": "postid",
+                "AttributeType": "S"
+            }
+        ],
+        "TableName": "devComments",
+        "KeySchema": [
+            {
+                "AttributeName": "id",
+                "KeyType": "HASH"
+            }
+        ],
+        "TableStatus": "ACTIVE",
+        "CreationDateTime": 1564266183.442,
+        "ProvisionedThroughput": {
+            "LastIncreaseDateTime": 0.0,
+            "LastDecreaseDateTime": 0.0,
+            "NumberOfDecreasesToday": 0,
+            "ReadCapacityUnits": 1,
+            "WriteCapacityUnits": 1
+        },
+        "TableSizeBytes": 207,
+        "ItemCount": 2,
+        "TableArn": "arn:aws:dynamodb:us-east-1:000000000000:table/devComments",
+        "BillingModeSummary": {
+            "BillingMode": "PROVISIONED",
+            "LastUpdateToPayPerRequestDateTime": 0.0
+        },
+        "GlobalSecondaryIndexes": [
+            {
+                "IndexName": "postid-date-index",
+                "KeySchema": [
+                    {
+                        "AttributeName": "postid",
+                        "KeyType": "HASH"
+                    },
+                    {
+                        "AttributeName": "date",
+                        "KeyType": "RANGE"
+                    }
+                ],
+                "Projection": {
+                    "ProjectionType": "ALL"
+                },
+                "IndexStatus": "ACTIVE",
+                "ProvisionedThroughput": {
+                    "ReadCapacityUnits": 1,
+                    "WriteCapacityUnits": 1
+                },
+                "IndexSizeBytes": 207,
+                "ItemCount": 2,
+                "IndexArn": "arn:aws:dynamodb:ddblocal:000000000000:table/devComments/index/postid-date-index"
+            },
+            {
+                "IndexName": "postid-replies-index",
+                "KeySchema": [
+                    {
+                        "AttributeName": "postid",
+                        "KeyType": "HASH"
+                    },
+                    {
+                        "AttributeName": "replies",
+                        "KeyType": "RANGE"
+                    }
+                ],
+                "Projection": {
+                    "ProjectionType": "ALL"
+                },
+                "IndexStatus": "ACTIVE",
+                "ProvisionedThroughput": {
+                    "ReadCapacityUnits": 1,
+                    "WriteCapacityUnits": 1
+                },
+                "IndexSizeBytes": 207,
+                "ItemCount": 2,
+                "IndexArn": "arn:aws:dynamodb:ddblocal:000000000000:table/devComments/index/postid-replies-index"
+            },
+            {
+                "IndexName": "postid-individual-index",
+                "KeySchema": [
+                    {
+                        "AttributeName": "postid",
+                        "KeyType": "HASH"
+                    },
+                    {
+                        "AttributeName": "individual",
+                        "KeyType": "RANGE"
+                    }
+                ],
+                "Projection": {
+                    "ProjectionType": "ALL"
+                },
+                "IndexStatus": "ACTIVE",
+                "ProvisionedThroughput": {
+                    "ReadCapacityUnits": 1,
+                    "WriteCapacityUnits": 1
+                },
+                "IndexSizeBytes": 207,
+                "ItemCount": 2,
+                "IndexArn": "arn:aws:dynamodb:ddblocal:000000000000:table/devComments/index/postid-individual-index"
+            }
+        ],
+        "StreamSpecification": {
+            "StreamEnabled": true,
+            "StreamViewType": "NEW_AND_OLD_IMAGES"
+        },
+        "LatestStreamLabel": "2019-07-27T22:24:31.641",
+        "LatestStreamArn": "arn:aws:dynamodb:us-east-1:000000000000:table/devComments/stream/2019-07-27T22:24:31.641"
+    }
+}

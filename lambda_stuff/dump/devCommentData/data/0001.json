@@ -1,0 +1,40 @@
+{
+  "Count": 2 
+  "Items": [
+	{
+		  "date": {
+			"N": "1501590445276"
+		  }, 
+		  "edited": {
+			"BOOL": false
+		  }, 
+		  "creator": {
+			"S": "lmenus"
+		  }, 
+		  "id": {
+			"S": "lmenus-1501590445276"
+		  }, 
+		  "text": {
+			"S": "yayiii"
+		  }
+		}, 
+		{
+		  "date": {
+			"N": "1496579993043"
+		  }, 
+		  "edited": {
+			"BOOL": false
+		  }, 
+		  "creator": {
+			"S": "james"
+		  }, 
+		  "id": {
+			"S": "james-1496579993043"
+		  }, 
+		  "text": {
+			"S": "2"
+		  }
+		}
+	], 
+  "ScannedCount": 2
+}

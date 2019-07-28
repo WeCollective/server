@@ -115,6 +115,25 @@ module.exports = () => {
      */
     .get(ACL.allow(ACL.Roles.User), (req, res, next) => controller.getPictureUploadUrl(req, res, next));
 
+
+  router.route('/:postid/picture-upload-by-url')
+    /**
+     * @api {post} /post /:postid/picture-upload-by-url uploads a picture using it's url
+     * @apiName Upload Picture By Upload URL
+     * @apiGroup Posts
+     * @apiPermission auth
+     * @apiVersion 1.0.0
+     *
+     * @apiParam (Body Parameters) {String} pid
+     * @apiParam (Body Parameters) {String} link
+     *
+     * @apiSuccess (Successes) OK
+     * @apiUse NotFound
+     * @apiUse BadRequest
+     * @apiUse InternalServerError
+     */
+    .post(ACL.allow(ACL.Roles.User), controller.uploadPictureByUrl);
+
   router.route('/:postid/picture')
     /**
      * @api {get} /post/:postid/picture Get Picture

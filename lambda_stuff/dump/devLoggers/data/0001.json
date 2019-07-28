@@ -1,0 +1,17 @@
+{
+  "Count": 1, 
+  "Items": [
+    {
+      "event": {
+        "S": "HoneyPot"
+      }, 
+      "createdAt": {
+        "N": "1511287714542"
+      }, 
+      "extra": {
+        "S": "{\"branchids\":\"[]\",\"id\":\"lmenus-1511287714541\",\"locked\":false,\"nsfw\":false,\"text\":\"fsdfdsfsd\",\"title\":\"fsdfsdfds\",\"type\":\"text\"}"
+      }
+    }
+  ], 
+  "ScannedCount": 1
+}

@@ -9,9 +9,11 @@ shell.exec(command);
 fs.readFile(file, 'utf8', function(err, data) {
   if(!data.includes(LocalStackContainerName))
   {
-    console.log(data);
+    shell.cd('lambda_stuff');
     shell.exec('docker-compose up -d');
-    shell.exec('node lambdas.js');
+    let ip = shell.exec('docker-machine ip', { silent: true }).stdout.trim();
+    let cmdLam = 'node lambdas.js ' + ip;
+    shell.exec(cmdLam)
   }
   else console.log('localstack is already setup');
 });

@@ -40,7 +40,6 @@ fs.readdir(dirnameBranches, (err, files) => {
     var absolutePathB = path.resolve(dirnameBranches + '\\' + file);
     var commandB = 'aws --endpoint-url http://'+ ip +':4572 s3api put-object --bucket '+ destbucketBranches + ' --key ' + file + ' --body ' + absolutePathB;
     shell.exec(commandB);
-
   });
 });
 
@@ -62,6 +61,5 @@ fs.readdir(dirnameUsers, (err, files) => {
     var absolutePathU = path.resolve(dirnameUsers + '\\' + file);
     var commandU = 'aws --endpoint-url http://'+ ip +':4572 s3api put-object --bucket '+ destbucketUsers + ' --key ' + file + ' --body ' + absolutePathU;
     shell.exec(commandU);
-
   });
 });

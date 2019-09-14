@@ -1,28 +1,33 @@
 {
   "Table": {
-    "TableArn": "arn:aws:dynamodb:eu-west-1:470576480462:table/devPostData", 
     "AttributeDefinitions": [
       {
-        "AttributeName": "id", 
+        "AttributeName": "id",
         "AttributeType": "S"
       }
-    ], 
-    "ProvisionedThroughput": {
-      "NumberOfDecreasesToday": 0, 
-      "WriteCapacityUnits": 1, 
-      "ReadCapacityUnits": 1
-    }, 
-    "TableSizeBytes": 98871, 
-    "TableName": "devPostData", 
-    "TableStatus": "ACTIVE", 
-    "TableId": "d3cf8141-f3eb-4b3f-93b0-2cd69bbd41ae", 
+    ],
+    "TableName": "devPostData",
     "KeySchema": [
       {
-        "KeyType": "HASH", 
-        "AttributeName": "id"
+        "AttributeName": "id",
+        "KeyType": "HASH"
       }
-    ], 
-    "ItemCount": 384, 
-    "CreationDateTime": 1470225477.004
+    ],
+    "TableStatus": "ACTIVE",
+    "CreationDateTime": 1568479441.798,
+    "ProvisionedThroughput": {
+      "LastIncreaseDateTime": 0.0,
+      "LastDecreaseDateTime": 0.0,
+      "NumberOfDecreasesToday": 0,
+      "ReadCapacityUnits": 1,
+      "WriteCapacityUnits": 1
+    },
+    "TableSizeBytes": 2239,
+    "ItemCount": 12,
+    "TableArn": "arn:aws:dynamodb:us-east-1:000000000000:table/devPostData",
+    "BillingModeSummary": {
+      "BillingMode": "PROVISIONED",
+      "LastUpdateToPayPerRequestDateTime": 0.0
+    }
   }
 }

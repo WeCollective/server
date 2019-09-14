@@ -1,38 +1,38 @@
 {
-  "Count": 4, 
   "Items": [
     {
       "data": {
         "N": "269"
-      }, 
+      },
       "id": {
         "S": "donation_total"
       }
-    }, 
-    {
-      "data": {
-        "N": "108"
-      }, 
-      "id": {
-        "S": "branch_count"
-      }
-    }, 
+    },
     {
       "data": {
         "N": "71"
-      }, 
+      },
       "id": {
         "S": "user_count"
       }
-    }, 
+    },
     {
       "data": {
         "N": "69"
-      }, 
+      },
       "id": {
         "S": "raised_total"
       }
+    },
+    {
+      "data": {
+        "N": "109"
+      },
+      "id": {
+        "S": "branch_count"
+      }
     }
-  ], 
+  ],
+  "Count": 4,
   "ScannedCount": 4
 }

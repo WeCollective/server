@@ -1,184 +1,193 @@
 {
-  "Count": 16, 
   "Items": [
     {
-      "username": {
-        "S": "lmenus"
-      }, 
       "date": {
         "N": "1501851216351"
-      }, 
+      },
       "branchid": {
         "S": "givemechildren"
-      }
-    }, 
-    {
+      },
       "username": {
         "S": "lmenus"
-      }, 
-      "date": {
-        "N": "1515969798990"
-      }, 
-      "branchid": {
-        "S": "testingthisagain"
       }
-    }, 
+    },
     {
-      "username": {
-        "S": "lmenus"
-      }, 
-      "date": {
-        "N": "1502034667764"
-      }, 
-      "branchid": {
-        "S": "spain"
-      }
-    }, 
-    {
-      "username": {
-        "S": "lmenus"
-      }, 
-      "date": {
-        "N": "1502034470845"
-      }, 
-      "branchid": {
-        "S": "lmenus"
-      }
-    }, 
-    {
-      "username": {
-        "S": "lmenus"
-      }, 
-      "date": {
-        "N": "1501669781313"
-      }, 
-      "branchid": {
-        "S": "@lubosparent"
-      }
-    }, 
-    {
-      "username": {
-        "S": "lmenus"
-      }, 
-      "date": {
-        "N": "1550346087655"
-      }, 
-      "branchid": {
-        "S": "newbranch9"
-      }
-    }, 
-    {
-      "username": {
-        "S": "lmenus"
-      }, 
       "date": {
         "N": "1501851499729"
-      }, 
+      },
       "branchid": {
         "S": "notagain"
-      }
-    }, 
-    {
-      "username": {
-        "S": "mikechristensen"
-      }, 
-      "date": {
-        "N": "1476014021570"
-      }, 
-      "branchid": {
-        "S": "test3"
-      }
-    }, 
-    {
+      },
       "username": {
         "S": "lmenus"
-      }, 
-      "date": {
-        "N": "1502032394930"
-      }, 
-      "branchid": {
-        "S": "bristol"
       }
-    }, 
+    },
     {
-      "username": {
-        "S": "james"
-      }, 
-      "date": {
-        "N": "1502741251564"
-      }, 
-      "branchid": {
-        "S": "quantumbiology"
-      }
-    }, 
-    {
-      "username": {
-        "S": "lmenus"
-      }, 
-      "date": {
-        "N": "1502030110264"
-      }, 
-      "branchid": {
-        "S": "places"
-      }
-    }, 
-    {
-      "username": {
-        "S": "james"
-      }, 
       "date": {
         "N": "1507491214770"
-      }, 
+      },
       "branchid": {
         "S": "particle-phy"
+      },
+      "username": {
+        "S": "james"
       }
-    }, 
+    },
     {
-      "username": {
-        "S": "lmenus"
-      }, 
       "date": {
-        "N": "1506197465108"
-      }, 
+        "N": "1502030110264"
+      },
       "branchid": {
-        "S": "test2"
-      }
-    }, 
-	{
+        "S": "places"
+      },
       "username": {
         "S": "lmenus"
-      }, 
+      }
+    },
+    {
+      "date": {
+        "N": "1501669781313"
+      },
+      "branchid": {
+        "S": "@lubosparent"
+      },
+      "username": {
+        "S": "lmenus"
+      }
+    },
+    {
+      "date": {
+        "N": "1502034667764"
+      },
+      "branchid": {
+        "S": "spain"
+      },
+      "username": {
+        "S": "lmenus"
+      }
+    },
+    {
+      "date": {
+        "N": "1476014021570"
+      },
+      "branchid": {
+        "S": "test3"
+      },
+      "username": {
+        "S": "mikechristensen"
+      }
+    },
+    {
+      "date": {
+        "N": "1502034470845"
+      },
+      "branchid": {
+        "S": "lmenus"
+      },
+      "username": {
+        "S": "lmenus"
+      }
+    },
+    {
+      "date": {
+        "N": "1550346087655"
+      },
+      "branchid": {
+        "S": "newbranch9"
+      },
+      "username": {
+        "S": "lmenus"
+      }
+    },
+    {
+      "date": {
+        "N": "1568476973943"
+      },
+      "branchid": {
+        "S": "evolving-online-discourse"
+      },
+      "username": {
+        "S": "james"
+      }
+    },
+    {
+      "date": {
+        "N": "1502032394930"
+      },
+      "branchid": {
+        "S": "bristol"
+      },
+      "username": {
+        "S": "lmenus"
+      }
+    },
+    {
+      "date": {
+        "N": "1515969798990"
+      },
+      "branchid": {
+        "S": "testingthisagain"
+      },
+      "username": {
+        "S": "lmenus"
+      }
+    },
+    {
       "date": {
         "N": "1500000000000"
-      }, 
+      },
       "branchid": {
         "S": "root"
-      }
-    }, 
-    {
+      },
       "username": {
-        "S": "james"
-      }, 
+        "S": "lmenus"
+      }
+    },
+    {
       "date": {
         "N": "1515207639216"
-      }, 
+      },
       "branchid": {
         "S": "root"
-      }
-    }, 
-    {
+      },
       "username": {
         "S": "james"
-      }, 
+      }
+    },
+    {
+      "date": {
+        "N": "1502741251564"
+      },
+      "branchid": {
+        "S": "quantumbiology"
+      },
+      "username": {
+        "S": "james"
+      }
+    },
+    {
+      "date": {
+        "N": "1506197465108"
+      },
+      "branchid": {
+        "S": "test2"
+      },
+      "username": {
+        "S": "lmenus"
+      }
+    },
+    {
       "date": {
         "N": "1495457944996"
-      }, 
+      },
       "branchid": {
         "S": "polls"
+      },
+      "username": {
+        "S": "james"
       }
     }
-    
-    
-  ], 
-  "ScannedCount": 16
+  ],
+  "Count": 17,
+  "ScannedCount": 17
 }

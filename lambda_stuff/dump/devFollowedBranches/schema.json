@@ -1,59 +1,63 @@
 {
   "Table": {
-    "GlobalSecondaryIndexes": [
-      {
-        "IndexSizeBytes": 1097, 
-        "IndexName": "branchid-index", 
-        "Projection": {
-          "ProjectionType": "ALL"
-        }, 
-        "IndexStatus": "ACTIVE", 
-        "ProvisionedThroughput": {
-          "NumberOfDecreasesToday": 0, 
-          "WriteCapacityUnits": 1, 
-          "ReadCapacityUnits": 1
-        }, 
-        "KeySchema": [
-          {
-            "KeyType": "HASH", 
-            "AttributeName": "branchid"
-          }
-        ], 
-        "IndexArn": "arn:aws:dynamodb:eu-west-1:470576480462:table/devFollowedBranches/index/branchid-index", 
-        "ItemCount": 34
-      }
-    ], 
     "AttributeDefinitions": [
       {
-        "AttributeName": "branchid", 
+        "AttributeName": "branchid",
         "AttributeType": "S"
-      }, 
+      },
       {
-        "AttributeName": "username", 
+        "AttributeName": "username",
         "AttributeType": "S"
       }
-    ], 
-    "TableArn": "arn:aws:dynamodb:eu-west-1:470576480462:table/devFollowedBranches", 
-    "ProvisionedThroughput": {
-      "NumberOfDecreasesToday": 0, 
-      "WriteCapacityUnits": 1, 
-      "ReadCapacityUnits": 1
-    }, 
-    "TableSizeBytes": 1097, 
-    "TableName": "devFollowedBranches", 
-    "TableStatus": "ACTIVE", 
-    "TableId": "04dbfba7-8da1-4a9b-82ba-c26a991b080f", 
+    ],
+    "TableName": "devFollowedBranches",
     "KeySchema": [
       {
-        "KeyType": "HASH", 
-        "AttributeName": "username"
-      }, 
+        "AttributeName": "username",
+        "KeyType": "HASH"
+      },
       {
-        "KeyType": "RANGE", 
-        "AttributeName": "branchid"
+        "AttributeName": "branchid",
+        "KeyType": "RANGE"
       }
-    ], 
-    "ItemCount": 34, 
-    "CreationDateTime": 1476182204.254
+    ],
+    "TableStatus": "ACTIVE",
+    "CreationDateTime": 1568479436.013,
+    "ProvisionedThroughput": {
+      "LastIncreaseDateTime": 0.0,
+      "LastDecreaseDateTime": 0.0,
+      "NumberOfDecreasesToday": 0,
+      "ReadCapacityUnits": 1,
+      "WriteCapacityUnits": 1
+    },
+    "TableSizeBytes": 156,
+    "ItemCount": 4,
+    "TableArn": "arn:aws:dynamodb:us-east-1:000000000000:table/devFollowedBranches",
+    "BillingModeSummary": {
+      "BillingMode": "PROVISIONED",
+      "LastUpdateToPayPerRequestDateTime": 0.0
+    },
+    "GlobalSecondaryIndexes": [
+      {
+        "IndexName": "branchid-index",
+        "KeySchema": [
+          {
+            "AttributeName": "branchid",
+            "KeyType": "HASH"
+          }
+        ],
+        "Projection": {
+          "ProjectionType": "ALL"
+        },
+        "IndexStatus": "ACTIVE",
+        "ProvisionedThroughput": {
+          "ReadCapacityUnits": 1,
+          "WriteCapacityUnits": 1
+        },
+        "IndexSizeBytes": 156,
+        "ItemCount": 4,
+        "IndexArn": "arn:aws:dynamodb:ddblocal:000000000000:table/devFollowedBranches/index/branchid-index"
+      }
+    ]
   }
 }

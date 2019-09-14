@@ -1,37 +1,41 @@
 {
   "Table": {
-    "TableArn": "arn:aws:dynamodb:eu-west-1:470576480462:table/devLoggers", 
     "AttributeDefinitions": [
       {
-        "AttributeName": "createdAt", 
+        "AttributeName": "createdAt",
         "AttributeType": "N"
-      }, 
+      },
       {
-        "AttributeName": "event", 
+        "AttributeName": "event",
         "AttributeType": "S"
       }
-    ], 
-    "ProvisionedThroughput": {
-      "NumberOfDecreasesToday": 0, 
-      "WriteCapacityUnits": 1, 
-      "ReadCapacityUnits": 1, 
-      "LastDecreaseDateTime": 1511287501.189
-    }, 
-    "TableSizeBytes": 162, 
-    "TableName": "devLoggers", 
-    "TableStatus": "ACTIVE", 
-    "TableId": "50a2e903-93dd-4b98-8b6c-e3da9939139d", 
+    ],
+    "TableName": "devLoggers",
     "KeySchema": [
       {
-        "KeyType": "HASH", 
-        "AttributeName": "event"
-      }, 
+        "AttributeName": "event",
+        "KeyType": "HASH"
+      },
       {
-        "KeyType": "RANGE", 
-        "AttributeName": "createdAt"
+        "AttributeName": "createdAt",
+        "KeyType": "RANGE"
       }
-    ], 
-    "ItemCount": 1, 
-    "CreationDateTime": 1511287478.563
+    ],
+    "TableStatus": "ACTIVE",
+    "CreationDateTime": 1568479436.916,
+    "ProvisionedThroughput": {
+      "LastIncreaseDateTime": 0.0,
+      "LastDecreaseDateTime": 0.0,
+      "NumberOfDecreasesToday": 0,
+      "ReadCapacityUnits": 1,
+      "WriteCapacityUnits": 1
+    },
+    "TableSizeBytes": 162,
+    "ItemCount": 1,
+    "TableArn": "arn:aws:dynamodb:us-east-1:000000000000:table/devLoggers",
+    "BillingModeSummary": {
+      "BillingMode": "PROVISIONED",
+      "LastUpdateToPayPerRequestDateTime": 0.0
+    }
   }
 }

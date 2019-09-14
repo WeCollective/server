@@ -1,28 +1,204 @@
 {
-  "Count": 2, 
   "Items": [
-  {
+    {
+      "itemid": {
+        "S": "comment-james-1568469383784"
+      },
+      "direction": {
+        "S": "up"
+      },
       "username": {
         "S": "james"
-      }, 
+      }
+    },
+    {
+      "itemid": {
+        "S": "comment-james-1568469390627"
+      },
+      "direction": {
+        "S": "up"
+      },
+      "username": {
+        "S": "james"
+      }
+    },
+    {
+      "itemid": {
+        "S": "comment-james-1568469405657"
+      },
+      "direction": {
+        "S": "up"
+      },
+      "username": {
+        "S": "james"
+      }
+    },
+    {
+      "itemid": {
+        "S": "comment-james-1568469412582"
+      },
+      "direction": {
+        "S": "up"
+      },
+      "username": {
+        "S": "james"
+      }
+    },
+    {
+      "itemid": {
+        "S": "comment-james-1568469419802"
+      },
+      "direction": {
+        "S": "up"
+      },
+      "username": {
+        "S": "james"
+      }
+    },
+    {
+      "itemid": {
+        "S": "comment-james-1568469426152"
+      },
+      "direction": {
+        "S": "up"
+      },
+      "username": {
+        "S": "james"
+      }
+    },
+    {
+      "itemid": {
+        "S": "comment-james-1568470725687"
+      },
+      "direction": {
+        "S": "up"
+      },
+      "username": {
+        "S": "james"
+      }
+    },
+    {
+      "itemid": {
+        "S": "comment-james-1568470732157"
+      },
+      "direction": {
+        "S": "up"
+      },
+      "username": {
+        "S": "james"
+      }
+    },
+    {
+      "itemid": {
+        "S": "poll-james-1568471035670"
+      },
+      "direction": {
+        "S": "up"
+      },
+      "username": {
+        "S": "james"
+      }
+    },
+    {
+      "itemid": {
+        "S": "poll-james-1568482174870"
+      },
+      "direction": {
+        "S": "up"
+      },
+      "username": {
+        "S": "james"
+      }
+    },
+    {
       "itemid": {
         "S": "post-james-1516928532567"
-      }, 
+      },
+      "username": {
+        "S": "james"
+      },
       "direction": {
         "S": "up"
       }
     },
-	{
+    {
+      "itemid": {
+        "S": "post-james-1568469287468"
+      },
+      "direction": {
+        "S": "up"
+      },
       "username": {
-        "S": "dtmakm"
-      }, 
+        "S": "james"
+      }
+    },
+    {
+      "itemid": {
+        "S": "post-james-1568471035670"
+      },
+      "direction": {
+        "S": "up"
+      },
+      "username": {
+        "S": "james"
+      }
+    },
+    {
+      "itemid": {
+        "S": "post-james-1568479985398"
+      },
+      "direction": {
+        "S": "up"
+      },
+      "username": {
+        "S": "james"
+      }
+    },
+    {
+      "itemid": {
+        "S": "post-james-1568481691209"
+      },
+      "direction": {
+        "S": "up"
+      },
+      "username": {
+        "S": "james"
+      }
+    },
+    {
+      "itemid": {
+        "S": "post-james-1568482073501"
+      },
+      "direction": {
+        "S": "up"
+      },
+      "username": {
+        "S": "james"
+      }
+    },
+    {
+      "itemid": {
+        "S": "post-james-1568482174870"
+      },
+      "direction": {
+        "S": "up"
+      },
+      "username": {
+        "S": "james"
+      }
+    },
+    {
       "itemid": {
         "S": "post-dtmakm-1562758399334"
-      }, 
+      },
+      "username": {
+        "S": "dtmakm"
+      },
       "direction": {
         "S": "up"
       }
     }
-  ], 
-  "ScannedCount": 2
+  ],
+  "Count": 18,
+  "ScannedCount": 18
 }

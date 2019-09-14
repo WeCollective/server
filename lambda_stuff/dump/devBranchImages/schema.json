@@ -1,30 +1,33 @@
 {
   "Table": {
-    "TableArn": "arn:aws:dynamodb:eu-west-1:470576480462:table/devBranchImages", 
     "AttributeDefinitions": [
       {
-        "AttributeName": "id", 
+        "AttributeName": "id",
         "AttributeType": "S"
       }
-    ], 
-    "ProvisionedThroughput": {
-      "NumberOfDecreasesToday": 0, 
-      "WriteCapacityUnits": 1, 
-      "LastIncreaseDateTime": 1496171799.371, 
-      "ReadCapacityUnits": 8, 
-      "LastDecreaseDateTime": 1468174481.786
-    }, 
-    "TableSizeBytes": 1255, 
-    "TableName": "devBranchImages", 
-    "TableStatus": "ACTIVE", 
-    "TableId": "60a70752-3284-41ab-86c2-995576fd9a9d", 
+    ],
+    "TableName": "devBranchImages",
     "KeySchema": [
       {
-        "KeyType": "HASH", 
-        "AttributeName": "id"
+        "AttributeName": "id",
+        "KeyType": "HASH"
       }
-    ], 
-    "ItemCount": 31, 
-    "CreationDateTime": 1467894637.252
+    ],
+    "TableStatus": "ACTIVE",
+    "CreationDateTime": 1568479430.912,
+    "ProvisionedThroughput": {
+      "LastIncreaseDateTime": 0.0,
+      "LastDecreaseDateTime": 0.0,
+      "NumberOfDecreasesToday": 0,
+      "ReadCapacityUnits": 25,
+      "WriteCapacityUnits": 25
+    },
+    "TableSizeBytes": 0,
+    "ItemCount": 0,
+    "TableArn": "arn:aws:dynamodb:us-east-1:000000000000:table/devBranchImages",
+    "BillingModeSummary": {
+      "BillingMode": "PROVISIONED",
+      "LastUpdateToPayPerRequestDateTime": 0.0
+    }
   }
 }

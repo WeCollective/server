@@ -1,92 +1,95 @@
 {
   "Table": {
-    "GlobalSecondaryIndexes": [
-      {
-        "IndexSizeBytes": 862, 
-        "IndexName": "childid-date-index", 
-        "Projection": {
-          "ProjectionType": "ALL"
-        }, 
-        "IndexStatus": "ACTIVE", 
-        "ProvisionedThroughput": {
-          "NumberOfDecreasesToday": 0, 
-          "WriteCapacityUnits": 1, 
-          "ReadCapacityUnits": 1
-        }, 
-        "KeySchema": [
-          {
-            "KeyType": "HASH", 
-            "AttributeName": "childid"
-          }, 
-          {
-            "KeyType": "RANGE", 
-            "AttributeName": "date"
-          }
-        ], 
-        "IndexArn": "arn:aws:dynamodb:eu-west-1:470576480462:table/devSubBranchRequests/index/childid-date-index", 
-        "ItemCount": 15
-      }, 
-      {
-        "IndexSizeBytes": 862, 
-        "IndexName": "parentid-date-index", 
-        "Projection": {
-          "ProjectionType": "ALL"
-        }, 
-        "IndexStatus": "ACTIVE", 
-        "ProvisionedThroughput": {
-          "NumberOfDecreasesToday": 0, 
-          "WriteCapacityUnits": 1, 
-          "ReadCapacityUnits": 1
-        }, 
-        "KeySchema": [
-          {
-            "KeyType": "HASH", 
-            "AttributeName": "parentid"
-          }, 
-          {
-            "KeyType": "RANGE", 
-            "AttributeName": "date"
-          }
-        ], 
-        "IndexArn": "arn:aws:dynamodb:eu-west-1:470576480462:table/devSubBranchRequests/index/parentid-date-index", 
-        "ItemCount": 15
-      }
-    ], 
     "AttributeDefinitions": [
       {
-        "AttributeName": "childid", 
+        "AttributeName": "childid",
         "AttributeType": "S"
-      }, 
+      },
       {
-        "AttributeName": "date", 
+        "AttributeName": "date",
         "AttributeType": "N"
-      }, 
+      },
       {
-        "AttributeName": "parentid", 
+        "AttributeName": "parentid",
         "AttributeType": "S"
       }
-    ], 
-    "TableArn": "arn:aws:dynamodb:eu-west-1:470576480462:table/devSubBranchRequests", 
-    "ProvisionedThroughput": {
-      "NumberOfDecreasesToday": 0, 
-      "WriteCapacityUnits": 1, 
-      "ReadCapacityUnits": 1
-    }, 
-    "TableSizeBytes": 862, 
-    "TableName": "devSubBranchRequests", 
-    "TableStatus": "ACTIVE", 
-    "TableId": "10a743ae-bcd5-48eb-97b2-dfbdaded348c", 
+    ],
+    "TableName": "devSubBranchRequests",
     "KeySchema": [
       {
-        "KeyType": "HASH", 
-        "AttributeName": "parentid"
-      }, 
+        "AttributeName": "parentid",
+        "KeyType": "HASH"
+      },
       {
-        "KeyType": "RANGE", 
-        "AttributeName": "childid"
+        "AttributeName": "childid",
+        "KeyType": "RANGE"
       }
-    ], 
-    "ItemCount": 15, 
-    "CreationDateTime": 1469031668.06
+    ],
+    "TableStatus": "ACTIVE",
+    "CreationDateTime": 1568479445.898,
+    "ProvisionedThroughput": {
+      "LastIncreaseDateTime": 0.0,
+      "LastDecreaseDateTime": 0.0,
+      "NumberOfDecreasesToday": 0,
+      "ReadCapacityUnits": 25,
+      "WriteCapacityUnits": 25
+    },
+    "TableSizeBytes": 0,
+    "ItemCount": 0,
+    "TableArn": "arn:aws:dynamodb:us-east-1:000000000000:table/devSubBranchRequests",
+    "BillingModeSummary": {
+      "BillingMode": "PROVISIONED",
+      "LastUpdateToPayPerRequestDateTime": 0.0
+    },
+    "GlobalSecondaryIndexes": [
+      {
+        "IndexName": "childid-date-index",
+        "KeySchema": [
+          {
+            "AttributeName": "childid",
+            "KeyType": "HASH"
+          },
+          {
+            "AttributeName": "date",
+            "KeyType": "RANGE"
+          }
+        ],
+        "Projection": {
+          "ProjectionType": "ALL"
+        },
+        "IndexStatus": "ACTIVE",
+        "ProvisionedThroughput": {
+          "ReadCapacityUnits": 1,
+          "WriteCapacityUnits": 25
+        },
+        "IndexSizeBytes": 0,
+        "ItemCount": 0,
+        "IndexArn": "arn:aws:dynamodb:ddblocal:000000000000:table/devSubBranchRequests/index/childid-date-index"
+      },
+      {
+        "IndexName": "parentid-date-index",
+        "KeySchema": [
+          {
+            "AttributeName": "parentid",
+            "KeyType": "HASH"
+          },
+          {
+            "AttributeName": "date",
+            "KeyType": "RANGE"
+          }
+        ],
+        "Projection": {
+          "ProjectionType": "ALL"
+        },
+        "IndexStatus": "ACTIVE",
+        "ProvisionedThroughput": {
+          "ReadCapacityUnits": 1,
+          "WriteCapacityUnits": 25
+        },
+        "IndexSizeBytes": 0,
+        "ItemCount": 0,
+        "IndexArn": "arn:aws:dynamodb:ddblocal:000000000000:table/devSubBranchRequests/index/parentid-date-index"
+      }
+    ]
   }
 }

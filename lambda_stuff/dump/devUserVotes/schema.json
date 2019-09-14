@@ -1,36 +1,41 @@
 {
   "Table": {
-    "TableArn": "arn:aws:dynamodb:eu-west-1:470576480462:table/devUserVotes", 
     "AttributeDefinitions": [
       {
-        "AttributeName": "itemid", 
+        "AttributeName": "itemid",
         "AttributeType": "S"
-      }, 
+      },
       {
-        "AttributeName": "username", 
+        "AttributeName": "username",
         "AttributeType": "S"
       }
-    ], 
-    "ProvisionedThroughput": {
-      "NumberOfDecreasesToday": 0, 
-      "WriteCapacityUnits": 1, 
-      "ReadCapacityUnits": 1
-    }, 
-    "TableSizeBytes": 21102, 
-    "TableName": "devUserVotes", 
-    "TableStatus": "ACTIVE", 
-    "TableId": "76a327c9-c638-4563-bc87-ea28662a7883", 
+    ],
+    "TableName": "devUserVotes",
     "KeySchema": [
       {
-        "KeyType": "HASH", 
-        "AttributeName": "username"
-      }, 
+        "AttributeName": "username",
+        "KeyType": "HASH"
+      },
       {
-        "KeyType": "RANGE", 
-        "AttributeName": "itemid"
+        "AttributeName": "itemid",
+        "KeyType": "RANGE"
       }
-    ], 
-    "ItemCount": 372, 
-    "CreationDateTime": 1474823823.97
+    ],
+    "TableStatus": "ACTIVE",
+    "CreationDateTime": 1568479450.014,
+    "ProvisionedThroughput": {
+      "LastIncreaseDateTime": 0.0,
+      "LastDecreaseDateTime": 0.0,
+      "NumberOfDecreasesToday": 0,
+      "ReadCapacityUnits": 1,
+      "WriteCapacityUnits": 1
+    },
+    "TableSizeBytes": 998,
+    "ItemCount": 18,
+    "TableArn": "arn:aws:dynamodb:us-east-1:000000000000:table/devUserVotes",
+    "BillingModeSummary": {
+      "BillingMode": "PROVISIONED",
+      "LastUpdateToPayPerRequestDateTime": 0.0
+    }
   }
 }

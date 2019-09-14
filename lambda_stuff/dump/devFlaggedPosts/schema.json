@@ -1,183 +1,183 @@
 {
   "Table": {
-    "GlobalSecondaryIndexes": [
-      {
-        "IndexSizeBytes": 741, 
-        "IndexName": "branchid-nsfw_count-index", 
-        "Projection": {
-          "ProjectionType": "ALL"
-        }, 
-        "IndexStatus": "ACTIVE", 
-        "ProvisionedThroughput": {
-          "NumberOfDecreasesToday": 0, 
-          "WriteCapacityUnits": 1, 
-          "ReadCapacityUnits": 1
-        }, 
-        "KeySchema": [
-          {
-            "KeyType": "HASH", 
-            "AttributeName": "branchid"
-          }, 
-          {
-            "KeyType": "RANGE", 
-            "AttributeName": "nsfw_count"
-          }
-        ], 
-        "IndexArn": "arn:aws:dynamodb:eu-west-1:470576480462:table/devFlaggedPosts/index/branchid-nsfw_count-index", 
-        "ItemCount": 6
-      }, 
-      {
-        "IndexSizeBytes": 741, 
-        "IndexName": "branchid-site_rules_count-index", 
-        "Projection": {
-          "ProjectionType": "ALL"
-        }, 
-        "IndexStatus": "ACTIVE", 
-        "ProvisionedThroughput": {
-          "NumberOfDecreasesToday": 0, 
-          "WriteCapacityUnits": 1, 
-          "ReadCapacityUnits": 1
-        }, 
-        "KeySchema": [
-          {
-            "KeyType": "HASH", 
-            "AttributeName": "branchid"
-          }, 
-          {
-            "KeyType": "RANGE", 
-            "AttributeName": "site_rules_count"
-          }
-        ], 
-        "IndexArn": "arn:aws:dynamodb:eu-west-1:470576480462:table/devFlaggedPosts/index/branchid-site_rules_count-index", 
-        "ItemCount": 6
-      }, 
-      {
-        "IndexSizeBytes": 741, 
-        "IndexName": "branchid-date-index", 
-        "Projection": {
-          "ProjectionType": "ALL"
-        }, 
-        "IndexStatus": "ACTIVE", 
-        "ProvisionedThroughput": {
-          "NumberOfDecreasesToday": 0, 
-          "WriteCapacityUnits": 1, 
-          "ReadCapacityUnits": 1
-        }, 
-        "KeySchema": [
-          {
-            "KeyType": "HASH", 
-            "AttributeName": "branchid"
-          }, 
-          {
-            "KeyType": "RANGE", 
-            "AttributeName": "date"
-          }
-        ], 
-        "IndexArn": "arn:aws:dynamodb:eu-west-1:470576480462:table/devFlaggedPosts/index/branchid-date-index", 
-        "ItemCount": 6
-      }, 
-      {
-        "IndexSizeBytes": 741, 
-        "IndexName": "branchid-branch_rules_count-index", 
-        "Projection": {
-          "ProjectionType": "ALL"
-        }, 
-        "IndexStatus": "ACTIVE", 
-        "ProvisionedThroughput": {
-          "NumberOfDecreasesToday": 0, 
-          "WriteCapacityUnits": 1, 
-          "ReadCapacityUnits": 1
-        }, 
-        "KeySchema": [
-          {
-            "KeyType": "HASH", 
-            "AttributeName": "branchid"
-          }, 
-          {
-            "KeyType": "RANGE", 
-            "AttributeName": "branch_rules_count"
-          }
-        ], 
-        "IndexArn": "arn:aws:dynamodb:eu-west-1:470576480462:table/devFlaggedPosts/index/branchid-branch_rules_count-index", 
-        "ItemCount": 6
-      }, 
-      {
-        "IndexSizeBytes": 741, 
-        "IndexName": "branchid-wrong_type_count-index", 
-        "Projection": {
-          "ProjectionType": "ALL"
-        }, 
-        "IndexStatus": "ACTIVE", 
-        "ProvisionedThroughput": {
-          "NumberOfDecreasesToday": 0, 
-          "WriteCapacityUnits": 1, 
-          "ReadCapacityUnits": 1
-        }, 
-        "KeySchema": [
-          {
-            "KeyType": "HASH", 
-            "AttributeName": "branchid"
-          }, 
-          {
-            "KeyType": "RANGE", 
-            "AttributeName": "wrong_type_count"
-          }
-        ], 
-        "IndexArn": "arn:aws:dynamodb:eu-west-1:470576480462:table/devFlaggedPosts/index/branchid-wrong_type_count-index", 
-        "ItemCount": 6
-      }
-    ], 
     "AttributeDefinitions": [
       {
-        "AttributeName": "branch_rules_count", 
+        "AttributeName": "date",
         "AttributeType": "N"
-      }, 
+      },
       {
-        "AttributeName": "branchid", 
+        "AttributeName": "branchid",
         "AttributeType": "S"
-      }, 
+      },
       {
-        "AttributeName": "date", 
+        "AttributeName": "wrong_type_count",
         "AttributeType": "N"
-      }, 
+      },
       {
-        "AttributeName": "id", 
+        "AttributeName": "id",
         "AttributeType": "S"
-      }, 
+      },
       {
-        "AttributeName": "nsfw_count", 
+        "AttributeName": "nsfw_count",
         "AttributeType": "N"
-      }, 
+      },
       {
-        "AttributeName": "site_rules_count", 
+        "AttributeName": "branch_rules_count",
         "AttributeType": "N"
-      }, 
+      },
       {
-        "AttributeName": "wrong_type_count", 
+        "AttributeName": "site_rules_count",
         "AttributeType": "N"
       }
-    ], 
-    "TableArn": "arn:aws:dynamodb:eu-west-1:470576480462:table/devFlaggedPosts", 
-    "ProvisionedThroughput": {
-      "NumberOfDecreasesToday": 0, 
-      "WriteCapacityUnits": 1, 
-      "ReadCapacityUnits": 1
-    }, 
-    "TableSizeBytes": 741, 
-    "TableName": "devFlaggedPosts", 
-    "TableStatus": "ACTIVE", 
-    "TableId": "ef8aff79-aac5-40ea-b0ed-457f0d0acf35", 
+    ],
+    "TableName": "devFlaggedPosts",
     "KeySchema": [
       {
-        "KeyType": "HASH", 
-        "AttributeName": "id"
-      }, 
+        "AttributeName": "id",
+        "KeyType": "HASH"
+      },
       {
-        "KeyType": "RANGE", 
-        "AttributeName": "branchid"
+        "AttributeName": "branchid",
+        "KeyType": "RANGE"
       }
-    ], 
-    "ItemCount": 6, 
-    "CreationDateTime": 1473862076.749
+    ],
+    "TableStatus": "ACTIVE",
+    "CreationDateTime": 1568479435.089,
+    "ProvisionedThroughput": {
+      "LastIncreaseDateTime": 0.0,
+      "LastDecreaseDateTime": 0.0,
+      "NumberOfDecreasesToday": 0,
+      "ReadCapacityUnits": 1,
+      "WriteCapacityUnits": 1
+    },
+    "TableSizeBytes": 718,
+    "ItemCount": 6,
+    "TableArn": "arn:aws:dynamodb:us-east-1:000000000000:table/devFlaggedPosts",
+    "BillingModeSummary": {
+      "BillingMode": "PROVISIONED",
+      "LastUpdateToPayPerRequestDateTime": 0.0
+    },
+    "GlobalSecondaryIndexes": [
+      {
+        "IndexName": "branchid-nsfw_count-index",
+        "KeySchema": [
+          {
+            "AttributeName": "branchid",
+            "KeyType": "HASH"
+          },
+          {
+            "AttributeName": "nsfw_count",
+            "KeyType": "RANGE"
+          }
+        ],
+        "Projection": {
+          "ProjectionType": "ALL"
+        },
+        "IndexStatus": "ACTIVE",
+        "ProvisionedThroughput": {
+          "ReadCapacityUnits": 1,
+          "WriteCapacityUnits": 1
+        },
+        "IndexSizeBytes": 718,
+        "ItemCount": 6,
+        "IndexArn": "arn:aws:dynamodb:ddblocal:000000000000:table/devFlaggedPosts/index/branchid-nsfw_count-index"
+      },
+      {
+        "IndexName": "branchid-site_rules_count-index",
+        "KeySchema": [
+          {
+            "AttributeName": "branchid",
+            "KeyType": "HASH"
+          },
+          {
+            "AttributeName": "site_rules_count",
+            "KeyType": "RANGE"
+          }
+        ],
+        "Projection": {
+          "ProjectionType": "ALL"
+        },
+        "IndexStatus": "ACTIVE",
+        "ProvisionedThroughput": {
+          "ReadCapacityUnits": 1,
+          "WriteCapacityUnits": 1
+        },
+        "IndexSizeBytes": 718,
+        "ItemCount": 6,
+        "IndexArn": "arn:aws:dynamodb:ddblocal:000000000000:table/devFlaggedPosts/index/branchid-site_rules_count-index"
+      },
+      {
+        "IndexName": "branchid-date-index",
+        "KeySchema": [
+          {
+            "AttributeName": "branchid",
+            "KeyType": "HASH"
+          },
+          {
+            "AttributeName": "date",
+            "KeyType": "RANGE"
+          }
+        ],
+        "Projection": {
+          "ProjectionType": "ALL"
+        },
+        "IndexStatus": "ACTIVE",
+        "ProvisionedThroughput": {
+          "ReadCapacityUnits": 1,
+          "WriteCapacityUnits": 1
+        },
+        "IndexSizeBytes": 718,
+        "ItemCount": 6,
+        "IndexArn": "arn:aws:dynamodb:ddblocal:000000000000:table/devFlaggedPosts/index/branchid-date-index"
+      },
+      {
+        "IndexName": "branchid-branch_rules_count-index",
+        "KeySchema": [
+          {
+            "AttributeName": "branchid",
+            "KeyType": "HASH"
+          },
+          {
+            "AttributeName": "branch_rules_count",
+            "KeyType": "RANGE"
+          }
+        ],
+        "Projection": {
+          "ProjectionType": "ALL"
+        },
+        "IndexStatus": "ACTIVE",
+        "ProvisionedThroughput": {
+          "ReadCapacityUnits": 1,
+          "WriteCapacityUnits": 1
+        },
+        "IndexSizeBytes": 718,
+        "ItemCount": 6,
+        "IndexArn": "arn:aws:dynamodb:ddblocal:000000000000:table/devFlaggedPosts/index/branchid-branch_rules_count-index"
+      },
+      {
+        "IndexName": "branchid-wrong_type_count-index",
+        "KeySchema": [
+          {
+            "AttributeName": "branchid",
+            "KeyType": "HASH"
+          },
+          {
+            "AttributeName": "wrong_type_count",
+            "KeyType": "RANGE"
+          }
+        ],
+        "Projection": {
+          "ProjectionType": "ALL"
+        },
+        "IndexStatus": "ACTIVE",
+        "ProvisionedThroughput": {
+          "ReadCapacityUnits": 1,
+          "WriteCapacityUnits": 1
+        },
+        "IndexSizeBytes": 718,
+        "ItemCount": 6,
+        "IndexArn": "arn:aws:dynamodb:ddblocal:000000000000:table/devFlaggedPosts/index/branchid-wrong_type_count-index"
+      }
+    ]
   }
 }

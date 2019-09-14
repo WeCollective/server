@@ -1,37 +1,41 @@
 {
   "Table": {
-    "TableArn": "arn:aws:dynamodb:eu-west-1:470576480462:table/devMods", 
     "AttributeDefinitions": [
       {
-        "AttributeName": "branchid", 
+        "AttributeName": "branchid",
         "AttributeType": "S"
-      }, 
+      },
       {
-        "AttributeName": "date", 
+        "AttributeName": "date",
         "AttributeType": "N"
       }
-    ], 
-    "ProvisionedThroughput": {
-      "NumberOfDecreasesToday": 0, 
-      "WriteCapacityUnits": 1, 
-      "ReadCapacityUnits": 1, 
-      "LastDecreaseDateTime": 1468234385.083
-    }, 
-    "TableSizeBytes": 4898, 
-    "TableName": "devMods", 
-    "TableStatus": "ACTIVE", 
-    "TableId": "c5c4103b-b71e-4608-a350-dd2d880b9afc", 
+    ],
+    "TableName": "devMods",
     "KeySchema": [
       {
-        "KeyType": "HASH", 
-        "AttributeName": "branchid"
-      }, 
+        "AttributeName": "branchid",
+        "KeyType": "HASH"
+      },
       {
-        "KeyType": "RANGE", 
-        "AttributeName": "date"
+        "AttributeName": "date",
+        "KeyType": "RANGE"
       }
-    ], 
-    "ItemCount": 112, 
-    "CreationDateTime": 1468234359.955
+    ],
+    "TableStatus": "ACTIVE",
+    "CreationDateTime": 1568479438.838,
+    "ProvisionedThroughput": {
+      "LastIncreaseDateTime": 0.0,
+      "LastDecreaseDateTime": 0.0,
+      "NumberOfDecreasesToday": 0,
+      "ReadCapacityUnits": 1,
+      "WriteCapacityUnits": 1
+    },
+    "TableSizeBytes": 735,
+    "ItemCount": 17,
+    "TableArn": "arn:aws:dynamodb:us-east-1:000000000000:table/devMods",
+    "BillingModeSummary": {
+      "BillingMode": "PROVISIONED",
+      "LastUpdateToPayPerRequestDateTime": 0.0
+    }
   }
 }

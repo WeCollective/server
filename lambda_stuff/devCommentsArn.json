@@ -30,11 +30,7 @@
             }
         ],
         "TableStatus": "ACTIVE",
-<<<<<<< HEAD
-        "CreationDateTime": 1565537939.531,
-=======
-        "CreationDateTime": 1564306648.179,
->>>>>>> 904567ba0b943bf564750208ce69216da456c560
+        "CreationDateTime": 1568651369.188,
         "ProvisionedThroughput": {
             "LastIncreaseDateTime": 0.0,
             "LastDecreaseDateTime": 0.0,
@@ -42,8 +38,8 @@
             "ReadCapacityUnits": 1,
             "WriteCapacityUnits": 1
         },
-        "TableSizeBytes": 207,
-        "ItemCount": 2,
+        "TableSizeBytes": 22527,
+        "ItemCount": 207,
         "TableArn": "arn:aws:dynamodb:us-east-1:000000000000:table/devComments",
         "BillingModeSummary": {
             "BillingMode": "PROVISIONED",
@@ -70,8 +66,8 @@
                     "ReadCapacityUnits": 1,
                     "WriteCapacityUnits": 1
                 },
-                "IndexSizeBytes": 207,
-                "ItemCount": 2,
+                "IndexSizeBytes": 22527,
+                "ItemCount": 207,
                 "IndexArn": "arn:aws:dynamodb:ddblocal:000000000000:table/devComments/index/postid-date-index"
             },
             {
@@ -94,8 +90,8 @@
                     "ReadCapacityUnits": 1,
                     "WriteCapacityUnits": 1
                 },
-                "IndexSizeBytes": 207,
-                "ItemCount": 2,
+                "IndexSizeBytes": 22527,
+                "ItemCount": 207,
                 "IndexArn": "arn:aws:dynamodb:ddblocal:000000000000:table/devComments/index/postid-replies-index"
             },
             {
@@ -118,8 +114,8 @@
                     "ReadCapacityUnits": 1,
                     "WriteCapacityUnits": 1
                 },
-                "IndexSizeBytes": 207,
-                "ItemCount": 2,
+                "IndexSizeBytes": 22527,
+                "ItemCount": 207,
                 "IndexArn": "arn:aws:dynamodb:ddblocal:000000000000:table/devComments/index/postid-individual-index"
             }
         ],
@@ -127,12 +123,7 @@
             "StreamEnabled": true,
             "StreamViewType": "NEW_AND_OLD_IMAGES"
         },
-<<<<<<< HEAD
-        "LatestStreamLabel": "2019-08-11T15:39:59.034",
-        "LatestStreamArn": "arn:aws:dynamodb:us-east-1:000000000000:table/devComments/stream/2019-08-11T15:39:59.034"
-=======
-        "LatestStreamLabel": "2019-07-28T09:40:03.717",
-        "LatestStreamArn": "arn:aws:dynamodb:us-east-1:000000000000:table/devComments/stream/2019-07-28T09:40:03.717"
->>>>>>> 904567ba0b943bf564750208ce69216da456c560
+        "LatestStreamLabel": "2019-09-16T16:33:12.258",
+        "LatestStreamArn": "arn:aws:dynamodb:us-east-1:000000000000:table/devComments/stream/2019-09-16T16:33:12.258"
     }
 }

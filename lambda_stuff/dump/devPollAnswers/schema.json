@@ -1,123 +1,121 @@
 {
   "Table": {
-    "AttributeDefinitions": [
-      {
-        "AttributeName": "date",
-        "AttributeType": "N"
-      },
-      {
-        "AttributeName": "creator",
-        "AttributeType": "S"
-      },
-      {
-        "AttributeName": "votes",
-        "AttributeType": "N"
-      },
-      {
-        "AttributeName": "id",
-        "AttributeType": "S"
-      },
-      {
-        "AttributeName": "postid",
-        "AttributeType": "S"
-      }
-    ],
-    "TableName": "devPollAnswers",
-    "KeySchema": [
-      {
-        "AttributeName": "id",
-        "KeyType": "HASH"
-      }
-    ],
-    "TableStatus": "ACTIVE",
-    "CreationDateTime": 1568479440.798,
-    "ProvisionedThroughput": {
-      "LastIncreaseDateTime": 0.0,
-      "LastDecreaseDateTime": 0.0,
-      "NumberOfDecreasesToday": 0,
-      "ReadCapacityUnits": 1,
-      "WriteCapacityUnits": 1
-    },
-    "TableSizeBytes": 1396,
-    "ItemCount": 12,
-    "TableArn": "arn:aws:dynamodb:us-east-1:000000000000:table/devPollAnswers",
-    "BillingModeSummary": {
-      "BillingMode": "PROVISIONED",
-      "LastUpdateToPayPerRequestDateTime": 0.0
-    },
     "GlobalSecondaryIndexes": [
       {
-        "IndexName": "postid-date-index",
-        "KeySchema": [
-          {
-            "AttributeName": "postid",
-            "KeyType": "HASH"
-          },
-          {
-            "AttributeName": "date",
-            "KeyType": "RANGE"
-          }
-        ],
+        "IndexSizeBytes": 14939, 
+        "IndexName": "postid-date-index", 
         "Projection": {
           "ProjectionType": "ALL"
-        },
-        "IndexStatus": "ACTIVE",
+        }, 
+        "IndexStatus": "ACTIVE", 
         "ProvisionedThroughput": {
-          "ReadCapacityUnits": 1,
-          "WriteCapacityUnits": 1
-        },
-        "IndexSizeBytes": 1396,
-        "ItemCount": 12,
-        "IndexArn": "arn:aws:dynamodb:ddblocal:000000000000:table/devPollAnswers/index/postid-date-index"
-      },
+          "NumberOfDecreasesToday": 0, 
+          "WriteCapacityUnits": 1, 
+          "ReadCapacityUnits": 1
+        }, 
+        "KeySchema": [
+          {
+            "KeyType": "HASH", 
+            "AttributeName": "postid"
+          }, 
+          {
+            "KeyType": "RANGE", 
+            "AttributeName": "date"
+          }
+        ], 
+        "IndexArn": "arn:aws:dynamodb:eu-west-1:470576480462:table/devPollAnswers/index/postid-date-index", 
+        "ItemCount": 135
+      }, 
       {
-        "IndexName": "postid-votes-index",
-        "KeySchema": [
-          {
-            "AttributeName": "postid",
-            "KeyType": "HASH"
-          },
-          {
-            "AttributeName": "votes",
-            "KeyType": "RANGE"
-          }
-        ],
+        "IndexSizeBytes": 14939, 
+        "IndexName": "postid-votes-index", 
         "Projection": {
           "ProjectionType": "ALL"
-        },
-        "IndexStatus": "ACTIVE",
+        }, 
+        "IndexStatus": "ACTIVE", 
         "ProvisionedThroughput": {
-          "ReadCapacityUnits": 1,
-          "WriteCapacityUnits": 1
-        },
-        "IndexSizeBytes": 1396,
-        "ItemCount": 12,
-        "IndexArn": "arn:aws:dynamodb:ddblocal:000000000000:table/devPollAnswers/index/postid-votes-index"
-      },
+          "NumberOfDecreasesToday": 0, 
+          "WriteCapacityUnits": 1, 
+          "ReadCapacityUnits": 1
+        }, 
+        "KeySchema": [
+          {
+            "KeyType": "HASH", 
+            "AttributeName": "postid"
+          }, 
+          {
+            "KeyType": "RANGE", 
+            "AttributeName": "votes"
+          }
+        ], 
+        "IndexArn": "arn:aws:dynamodb:eu-west-1:470576480462:table/devPollAnswers/index/postid-votes-index", 
+        "ItemCount": 135
+      }, 
       {
-        "IndexName": "creator-date-index",
-        "KeySchema": [
-          {
-            "AttributeName": "creator",
-            "KeyType": "HASH"
-          },
-          {
-            "AttributeName": "date",
-            "KeyType": "RANGE"
-          }
-        ],
+        "IndexSizeBytes": 14939, 
+        "IndexName": "creator-date-index", 
         "Projection": {
           "ProjectionType": "ALL"
-        },
-        "IndexStatus": "ACTIVE",
+        }, 
+        "IndexStatus": "ACTIVE", 
         "ProvisionedThroughput": {
-          "ReadCapacityUnits": 1,
-          "WriteCapacityUnits": 1
-        },
-        "IndexSizeBytes": 1396,
-        "ItemCount": 12,
-        "IndexArn": "arn:aws:dynamodb:ddblocal:000000000000:table/devPollAnswers/index/creator-date-index"
+          "NumberOfDecreasesToday": 0, 
+          "WriteCapacityUnits": 1, 
+          "ReadCapacityUnits": 1
+        }, 
+        "KeySchema": [
+          {
+            "KeyType": "HASH", 
+            "AttributeName": "creator"
+          }, 
+          {
+            "KeyType": "RANGE", 
+            "AttributeName": "date"
+          }
+        ], 
+        "IndexArn": "arn:aws:dynamodb:eu-west-1:470576480462:table/devPollAnswers/index/creator-date-index", 
+        "ItemCount": 135
       }
-    ]
+    ], 
+    "AttributeDefinitions": [
+      {
+        "AttributeName": "creator", 
+        "AttributeType": "S"
+      }, 
+      {
+        "AttributeName": "date", 
+        "AttributeType": "N"
+      }, 
+      {
+        "AttributeName": "id", 
+        "AttributeType": "S"
+      }, 
+      {
+        "AttributeName": "postid", 
+        "AttributeType": "S"
+      }, 
+      {
+        "AttributeName": "votes", 
+        "AttributeType": "N"
+      }
+    ], 
+    "TableArn": "arn:aws:dynamodb:eu-west-1:470576480462:table/devPollAnswers", 
+    "ProvisionedThroughput": {
+      "NumberOfDecreasesToday": 0, 
+      "WriteCapacityUnits": 1, 
+      "ReadCapacityUnits": 1
+    }, 
+    "TableSizeBytes": 14939, 
+    "TableName": "devPollAnswers", 
+    "TableStatus": "ACTIVE", 
+    "TableId": "ca848082-7312-4c77-b343-c193285e68d2", 
+    "KeySchema": [
+      {
+        "KeyType": "HASH", 
+        "AttributeName": "id"
+      }
+    ], 
+    "ItemCount": 135, 
+    "CreationDateTime": 1487420172.173
   }
 }

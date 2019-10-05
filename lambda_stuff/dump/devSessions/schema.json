@@ -1,33 +1,30 @@
 {
   "Table": {
+    "TableArn": "arn:aws:dynamodb:eu-west-1:470576480462:table/devSessions", 
     "AttributeDefinitions": [
       {
-        "AttributeName": "id",
+        "AttributeName": "id", 
         "AttributeType": "S"
       }
-    ],
-    "TableName": "devSessions",
+    ], 
+    "ProvisionedThroughput": {
+      "NumberOfDecreasesToday": 0, 
+      "WriteCapacityUnits": 4, 
+      "LastIncreaseDateTime": 1496171743.547, 
+      "ReadCapacityUnits": 4, 
+      "LastDecreaseDateTime": 1467715406.9
+    }, 
+    "TableSizeBytes": 361, 
+    "TableName": "devSessions", 
+    "TableStatus": "ACTIVE", 
+    "TableId": "c73063a7-f7e7-4559-8fcc-ab8d07301f7e", 
     "KeySchema": [
       {
-        "AttributeName": "id",
-        "KeyType": "HASH"
+        "KeyType": "HASH", 
+        "AttributeName": "id"
       }
-    ],
-    "TableStatus": "ACTIVE",
-    "CreationDateTime": 1568479444.858,
-    "ProvisionedThroughput": {
-      "LastIncreaseDateTime": 0.0,
-      "LastDecreaseDateTime": 0.0,
-      "NumberOfDecreasesToday": 0,
-      "ReadCapacityUnits": 4,
-      "WriteCapacityUnits": 4
-    },
-    "TableSizeBytes": 361,
-    "ItemCount": 2,
-    "TableArn": "arn:aws:dynamodb:us-east-1:000000000000:table/devSessions",
-    "BillingModeSummary": {
-      "BillingMode": "PROVISIONED",
-      "LastUpdateToPayPerRequestDateTime": 0.0
-    }
+    ], 
+    "ItemCount": 2, 
+    "CreationDateTime": 1466596163.767
   }
 }

@@ -1,34 +1,34 @@
 {
+  "Count": 2, 
   "Items": [
     {
-      "expires": {
-        "N": "1506171976"
-      },
-      "id": {
-        "S": "sess:v_NoHC4e7KvC53--6OYL_TBHm9Q71h9Q"
-      },
-      "type": {
-        "S": "connect-session"
-      },
       "sess": {
         "S": "{\"cookie\":{\"originalMaxAge\":null,\"expires\":null,\"httpOnly\":true,\"path\":\"/\"},\"passport\":{\"user\":\"james\"}}"
-      }
-    },
-    {
+      }, 
       "expires": {
-        "N": "1505735692120"
-      },
-      "id": {
-        "S": "sess:J4JwOKMJ4ChiwBJhvaChcMTa5DbTCI4s"
-      },
+        "N": "1506171976"
+      }, 
       "type": {
         "S": "connect-session"
-      },
+      }, 
+      "id": {
+        "S": "sess:v_NoHC4e7KvC53--6OYL_TBHm9Q71h9Q"
+      }
+    }, 
+    {
       "sess": {
         "S": "{\"cookie\":{\"originalMaxAge\":null,\"expires\":null,\"httpOnly\":true,\"path\":\"/\"},\"passport\":{\"user\":\"lmenus\"}}"
+      }, 
+      "expires": {
+        "N": "1505735692120"
+      }, 
+      "type": {
+        "S": "connect-session"
+      }, 
+      "id": {
+        "S": "sess:J4JwOKMJ4ChiwBJhvaChcMTa5DbTCI4s"
       }
     }
-  ],
-  "Count": 2,
+  ], 
   "ScannedCount": 2
 }

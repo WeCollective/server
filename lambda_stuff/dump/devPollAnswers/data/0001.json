@@ -1,246 +1,47 @@
 {
+  "Count": 2, 
   "Items": [
-    {
-      "date": {
-        "N": "1568471035670"
-      },
-      "creator": {
-        "S": "james"
-      },
+  {
       "votes": {
         "N": "0"
-      },
-      "id": {
-        "S": "james-1568471035670-1568471035670"
-      },
-      "postid": {
-        "S": "james-1568471035670"
-      },
-      "text": {
-        "S": "Answer 1"
-      }
-    },
-    {
-      "date": {
-        "N": "1568482174870"
-      },
-      "creator": {
-        "S": "james"
-      },
-      "votes": {
-        "N": "1"
-      },
-      "id": {
-        "S": "james-1568482174870-1568482174870"
-      },
-      "postid": {
-        "S": "james-1568482174870"
-      },
-      "text": {
-        "S": "Yes, I think humans are effecting climate change."
-      }
-    },
-    {
-      "date": {
-        "N": "1568471035670"
-      },
-      "creator": {
-        "S": "james"
-      },
-      "votes": {
-        "N": "0"
-      },
-      "id": {
-        "S": "james-1568471035670-1568471035674"
-      },
-      "postid": {
-        "S": "james-1568471035670"
-      },
-      "text": {
-        "S": "Answer 5"
-      }
-    },
-    {
-      "date": {
-        "N": "1568482073501"
-      },
-      "creator": {
-        "S": "james"
-      },
-      "votes": {
-        "N": "0"
-      },
-      "id": {
-        "S": "james-1568482073501-1568482073502"
-      },
-      "postid": {
-        "S": "james-1568482073501"
-      },
-      "text": {
-        "S": "No, I *don't* think humans are effecting climate change."
-      }
-    },
-    {
-      "date": {
-        "N": "1568471035670"
-      },
-      "creator": {
-        "S": "james"
-      },
-      "votes": {
-        "N": "0"
-      },
-      "id": {
-        "S": "james-1568471035670-1568471035675"
-      },
-      "postid": {
-        "S": "james-1568471035670"
-      },
-      "text": {
-        "S": "Answer 6"
-      }
-    },
-    {
-      "date": {
-        "N": "1568471035670"
-      },
-      "creator": {
-        "S": "james"
-      },
-      "votes": {
-        "N": "0"
-      },
-      "id": {
-        "S": "james-1568471035670-1568471035671"
-      },
-      "postid": {
-        "S": "james-1568471035670"
-      },
-      "text": {
-        "S": "Answer 2"
-      }
-    },
-    {
-      "date": {
-        "N": "1568482073501"
-      },
-      "creator": {
-        "S": "james"
-      },
-      "votes": {
-        "N": "0"
-      },
-      "id": {
-        "S": "james-1568482073501-1568482073501"
-      },
-      "postid": {
-        "S": "james-1568482073501"
-      },
-      "text": {
-        "S": "Yes, I think humans are effecting climate change."
-      }
-    },
-    {
-      "date": {
-        "N": "1568482174870"
-      },
-      "creator": {
-        "S": "james"
-      },
-      "votes": {
-        "N": "0"
-      },
-      "id": {
-        "S": "james-1568482174870-1568482174871"
-      },
-      "postid": {
-        "S": "james-1568482174870"
-      },
-      "text": {
-        "S": "No, I don't think humans are effecting climate change."
-      }
-    },
-    {
-      "date": {
-        "N": "1568471035670"
-      },
-      "creator": {
-        "S": "james"
-      },
-      "votes": {
-        "N": "1"
-      },
-      "id": {
-        "S": "james-1568471035670-1568471035673"
-      },
-      "postid": {
-        "S": "james-1568471035670"
-      },
-      "text": {
-        "S": "Answer 4"
-      }
-    },
-    {
-      "date": {
-        "N": "1503409248946"
-      },
-      "votes": {
-        "N": "0"
-      },
+      }, 
       "creator": {
         "S": "lmenus"
-      },
-      "text": {
-        "S": "a2"
-      },
-      "postid": {
-        "S": "lmenus-1503409244306"
-      },
-      "id": {
-        "S": "lmenus-1503409244306-1503409248946"
-      }
-    },
-    {
-      "date": {
-        "N": "1503409247322"
-      },
-      "votes": {
-        "N": "0"
-      },
-      "creator": {
-        "S": "lmenus"
-      },
+      }, 
       "text": {
         "S": "a1"
-      },
+      }, 
+      "date": {
+        "N": "1503409247322"
+      }, 
       "postid": {
         "S": "lmenus-1503409244306"
-      },
+      }, 
       "id": {
         "S": "lmenus-1503409244306-1503409247322"
       }
     },
-    {
-      "date": {
-        "N": "1568471035670"
-      },
-      "creator": {
-        "S": "james"
-      },
+	
+	{
       "votes": {
         "N": "0"
-      },
-      "id": {
-        "S": "james-1568471035670-1568471035672"
-      },
-      "postid": {
-        "S": "james-1568471035670"
-      },
+      }, 
+      "creator": {
+        "S": "lmenus"
+      }, 
       "text": {
-        "S": "Answer 3"
+        "S": "a2"
+      }, 
+      "date": {
+        "N": "1503409248946"
+      }, 
+      "postid": {
+        "S": "lmenus-1503409244306"
+      }, 
+      "id": {
+        "S": "lmenus-1503409244306-1503409248946"
       }
     }
-  ],
-  "Count": 12,
-  "ScannedCount": 12
+  ], 
+  "ScannedCount": 2
 }

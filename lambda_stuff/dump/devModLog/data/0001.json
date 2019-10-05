@@ -1,23 +1,24 @@
 {
+  "Count": 1, 
   "Items": [
-    {
-      "date": {
-        "N": "1502027677314"
-      },
+   {
       "action": {
         "S": "make-subbranch-request"
-      },
-      "branchid": {
-        "S": "givemechildren"
-      },
-      "data": {
-        "S": "root"
-      },
+      }, 
       "username": {
         "S": "lmenus"
+      }, 
+      "date": {
+        "N": "1502027677314"
+      }, 
+      "data": {
+        "S": "root"
+      }, 
+      "branchid": {
+        "S": "givemechildren"
       }
     }
-  ],
-  "Count": 1,
+    
+  ], 
   "ScannedCount": 1
 }

@@ -1,33 +1,28 @@
 {
   "Table": {
+    "TableArn": "arn:aws:dynamodb:eu-west-1:470576480462:table/devCommentData", 
     "AttributeDefinitions": [
       {
-        "AttributeName": "id",
+        "AttributeName": "id", 
         "AttributeType": "S"
       }
-    ],
-    "TableName": "devCommentData",
+    ], 
+    "ProvisionedThroughput": {
+      "NumberOfDecreasesToday": 0, 
+      "WriteCapacityUnits": 1, 
+      "ReadCapacityUnits": 1
+    }, 
+    "TableSizeBytes": 39273, 
+    "TableName": "devCommentData", 
+    "TableStatus": "ACTIVE", 
+    "TableId": "e9f22991-cdbb-4eb4-9973-792a2335754b", 
     "KeySchema": [
       {
-        "AttributeName": "id",
-        "KeyType": "HASH"
+        "KeyType": "HASH", 
+        "AttributeName": "id"
       }
-    ],
-    "TableStatus": "ACTIVE",
-    "CreationDateTime": 1568479431.716,
-    "ProvisionedThroughput": {
-      "LastIncreaseDateTime": 0.0,
-      "LastDecreaseDateTime": 0.0,
-      "NumberOfDecreasesToday": 0,
-      "ReadCapacityUnits": 25,
-      "WriteCapacityUnits": 25
-    },
-    "TableSizeBytes": 3521,
-    "ItemCount": 7,
-    "TableArn": "arn:aws:dynamodb:us-east-1:000000000000:table/devCommentData",
-    "BillingModeSummary": {
-      "BillingMode": "PROVISIONED",
-      "LastUpdateToPayPerRequestDateTime": 0.0
-    }
+    ], 
+    "ItemCount": 364, 
+    "CreationDateTime": 1471258129.236
   }
 }

@@ -1,38 +1,30 @@
 {
+  "Count": 3, 
   "Items": [
     {
-      "branchid": {
-        "S": "evolving-online-discourse"
-      },
-      "username": {
-        "S": "james"
-      }
-    },
-    {
-      "branchid": {
-        "S": "fsdfsfsdfsdfds"
-      },
       "username": {
         "S": "lmenus"
-      }
-    },
-    {
+      }, 
       "branchid": {
         "S": "givemechildren"
-      },
+      }
+    }, 
+    {
       "username": {
         "S": "lmenus"
+      }, 
+      "branchid": {
+        "S": "fsdfsfsdfsdfds"
       }
-    },
+    }, 
     {
+      "username": {
+        "S": "lmenus"
+      }, 
       "branchid": {
         "S": "testingthisagain"
-      },
-      "username": {
-        "S": "lmenus"
       }
     }
-  ],
-  "Count": 4,
-  "ScannedCount": 4
+  ], 
+  "ScannedCount": 3
 }

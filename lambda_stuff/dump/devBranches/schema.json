@@ -1,151 +1,150 @@
 {
   "Table": {
-    "AttributeDefinitions": [
-      {
-        "AttributeName": "date",
-        "AttributeType": "N"
-      },
-      {
-        "AttributeName": "post_comments",
-        "AttributeType": "N"
-      },
-      {
-        "AttributeName": "post_points",
-        "AttributeType": "N"
-      },
-      {
-        "AttributeName": "id",
-        "AttributeType": "S"
-      },
-      {
-        "AttributeName": "post_count",
-        "AttributeType": "N"
-      },
-      {
-        "AttributeName": "parentid",
-        "AttributeType": "S"
-      }
-    ],
-    "TableName": "devBranches",
-    "KeySchema": [
-      {
-        "AttributeName": "id",
-        "KeyType": "HASH"
-      }
-    ],
-    "TableStatus": "ACTIVE",
-    "CreationDateTime": 1568479429.801,
-    "ProvisionedThroughput": {
-      "LastIncreaseDateTime": 0.0,
-      "LastDecreaseDateTime": 0.0,
-      "NumberOfDecreasesToday": 0,
-      "ReadCapacityUnits": 1,
-      "WriteCapacityUnits": 1
-    },
-    "TableSizeBytes": 1930,
-    "ItemCount": 16,
-    "TableArn": "arn:aws:dynamodb:us-east-1:000000000000:table/devBranches",
-    "BillingModeSummary": {
-      "BillingMode": "PROVISIONED",
-      "LastUpdateToPayPerRequestDateTime": 0.0
-    },
     "GlobalSecondaryIndexes": [
       {
-        "IndexName": "parentid-post_comments-index",
-        "KeySchema": [
-          {
-            "AttributeName": "parentid",
-            "KeyType": "HASH"
-          },
-          {
-            "AttributeName": "post_comments",
-            "KeyType": "RANGE"
-          }
-        ],
+        "IndexSizeBytes": 14088, 
+        "IndexName": "parentid-post_comments-index", 
         "Projection": {
           "ProjectionType": "ALL"
-        },
-        "IndexStatus": "ACTIVE",
+        }, 
+        "IndexStatus": "ACTIVE", 
         "ProvisionedThroughput": {
-          "ReadCapacityUnits": 1,
-          "WriteCapacityUnits": 1
-        },
-        "IndexSizeBytes": 1930,
-        "ItemCount": 16,
-        "IndexArn": "arn:aws:dynamodb:ddblocal:000000000000:table/devBranches/index/parentid-post_comments-index"
-      },
+          "NumberOfDecreasesToday": 0, 
+          "WriteCapacityUnits": 1, 
+          "ReadCapacityUnits": 1
+        }, 
+        "KeySchema": [
+          {
+            "KeyType": "HASH", 
+            "AttributeName": "parentid"
+          }, 
+          {
+            "KeyType": "RANGE", 
+            "AttributeName": "post_comments"
+          }
+        ], 
+        "IndexArn": "arn:aws:dynamodb:eu-west-1:470576480462:table/devBranches/index/parentid-post_comments-index", 
+        "ItemCount": 103
+      }, 
       {
-        "IndexName": "parentid-post_count-index",
-        "KeySchema": [
-          {
-            "AttributeName": "parentid",
-            "KeyType": "HASH"
-          },
-          {
-            "AttributeName": "post_count",
-            "KeyType": "RANGE"
-          }
-        ],
+        "IndexSizeBytes": 14088, 
+        "IndexName": "parentid-post_count-index", 
         "Projection": {
           "ProjectionType": "ALL"
-        },
-        "IndexStatus": "ACTIVE",
+        }, 
+        "IndexStatus": "ACTIVE", 
         "ProvisionedThroughput": {
-          "ReadCapacityUnits": 1,
-          "WriteCapacityUnits": 1
-        },
-        "IndexSizeBytes": 1930,
-        "ItemCount": 16,
-        "IndexArn": "arn:aws:dynamodb:ddblocal:000000000000:table/devBranches/index/parentid-post_count-index"
-      },
+          "NumberOfDecreasesToday": 0, 
+          "WriteCapacityUnits": 1, 
+          "ReadCapacityUnits": 1
+        }, 
+        "KeySchema": [
+          {
+            "KeyType": "HASH", 
+            "AttributeName": "parentid"
+          }, 
+          {
+            "KeyType": "RANGE", 
+            "AttributeName": "post_count"
+          }
+        ], 
+        "IndexArn": "arn:aws:dynamodb:eu-west-1:470576480462:table/devBranches/index/parentid-post_count-index", 
+        "ItemCount": 103
+      }, 
       {
-        "IndexName": "parentid-date-index",
-        "KeySchema": [
-          {
-            "AttributeName": "parentid",
-            "KeyType": "HASH"
-          },
-          {
-            "AttributeName": "date",
-            "KeyType": "RANGE"
-          }
-        ],
+        "IndexSizeBytes": 14088, 
+        "IndexName": "parentid-date-index", 
         "Projection": {
           "ProjectionType": "ALL"
-        },
-        "IndexStatus": "ACTIVE",
+        }, 
+        "IndexStatus": "ACTIVE", 
         "ProvisionedThroughput": {
-          "ReadCapacityUnits": 1,
-          "WriteCapacityUnits": 1
-        },
-        "IndexSizeBytes": 1930,
-        "ItemCount": 16,
-        "IndexArn": "arn:aws:dynamodb:ddblocal:000000000000:table/devBranches/index/parentid-date-index"
-      },
+          "NumberOfDecreasesToday": 0, 
+          "WriteCapacityUnits": 1, 
+          "ReadCapacityUnits": 1
+        }, 
+        "KeySchema": [
+          {
+            "KeyType": "HASH", 
+            "AttributeName": "parentid"
+          }, 
+          {
+            "KeyType": "RANGE", 
+            "AttributeName": "date"
+          }
+        ], 
+        "IndexArn": "arn:aws:dynamodb:eu-west-1:470576480462:table/devBranches/index/parentid-date-index", 
+        "ItemCount": 103
+      }, 
       {
-        "IndexName": "parentid-post_points-index",
-        "KeySchema": [
-          {
-            "AttributeName": "parentid",
-            "KeyType": "HASH"
-          },
-          {
-            "AttributeName": "post_points",
-            "KeyType": "RANGE"
-          }
-        ],
+        "IndexSizeBytes": 14088, 
+        "IndexName": "parentid-post_points-index", 
         "Projection": {
           "ProjectionType": "ALL"
-        },
-        "IndexStatus": "ACTIVE",
+        }, 
+        "IndexStatus": "ACTIVE", 
         "ProvisionedThroughput": {
-          "ReadCapacityUnits": 1,
-          "WriteCapacityUnits": 1
-        },
-        "IndexSizeBytes": 1930,
-        "ItemCount": 16,
-        "IndexArn": "arn:aws:dynamodb:ddblocal:000000000000:table/devBranches/index/parentid-post_points-index"
+          "NumberOfDecreasesToday": 0, 
+          "WriteCapacityUnits": 1, 
+          "ReadCapacityUnits": 1
+        }, 
+        "KeySchema": [
+          {
+            "KeyType": "HASH", 
+            "AttributeName": "parentid"
+          }, 
+          {
+            "KeyType": "RANGE", 
+            "AttributeName": "post_points"
+          }
+        ], 
+        "IndexArn": "arn:aws:dynamodb:eu-west-1:470576480462:table/devBranches/index/parentid-post_points-index", 
+        "ItemCount": 103
       }
-    ]
+    ], 
+    "AttributeDefinitions": [
+      {
+        "AttributeName": "date", 
+        "AttributeType": "N"
+      }, 
+      {
+        "AttributeName": "id", 
+        "AttributeType": "S"
+      }, 
+      {
+        "AttributeName": "parentid", 
+        "AttributeType": "S"
+      }, 
+      {
+        "AttributeName": "post_comments", 
+        "AttributeType": "N"
+      }, 
+      {
+        "AttributeName": "post_count", 
+        "AttributeType": "N"
+      }, 
+      {
+        "AttributeName": "post_points", 
+        "AttributeType": "N"
+      }
+    ], 
+    "TableArn": "arn:aws:dynamodb:eu-west-1:470576480462:table/devBranches", 
+    "ProvisionedThroughput": {
+      "NumberOfDecreasesToday": 0, 
+      "WriteCapacityUnits": 1, 
+      "ReadCapacityUnits": 1
+    }, 
+    "TableSizeBytes": 14088, 
+    "TableName": "devBranches", 
+    "TableStatus": "ACTIVE", 
+    "TableId": "dcc2c152-4b2c-432e-a6ae-796cb402f3b2", 
+    "KeySchema": [
+      {
+        "KeyType": "HASH", 
+        "AttributeName": "id"
+      }
+    ], 
+    "ItemCount": 103, 
+    "CreationDateTime": 1467715822.512
   }
 }

@@ -1,258 +1,120 @@
 {
+  "Count": 6, 
   "Items": [
-    {
-      "original_branches": {
-        "S": "[\"root\",\"evolving-online-discourse\"]"
-      },
-      "creator": {
-        "S": "james"
-      },
-      "id": {
-        "S": "james-1568482073501"
-      },
-      "text": {
-        "S": "What do you think?\n\nCast your vote below!"
-      },
-      "title": {
-        "S": "Poll: Are humans effecting climate change?"
-      },
-      "type": {
-        "S": "poll"
-      },
-      "url": {
-        "NULL": true
-      }
-    },
-    {
-      "original_branches": {
-        "S": "[\"root\"]"
-      },
-      "creator": {
-        "S": "james"
-      },
-      "id": {
-        "S": "james-1568479985398"
-      },
-      "text": {
-        "S": "Bill Nye has argued that climate change deniers suffer psychological delusions. Tucker takes him on in an unforgettable debate #Tucker"
-      },
-      "title": {
-        "S": "Tucker vs. Bill Nye the Science Guy"
-      },
-      "type": {
-        "S": "page"
-      },
-      "url": {
-        "S": "https://www.youtube.com/watch?v=qN5L2q6hfWo"
-      }
-    },
-    {
-      "original_branches": {
-        "S": "[\"givemechildren\"]"
-      },
-      "creator": {
-        "S": "lmenus"
-      },
-      "text": {
-        "S": "Test post, NSFW"
-      },
-      "id": {
-        "S": "lmenus-1496427246798"
-      },
-      "title": {
-        "S": "Lubos Post"
-      }
-    },
-    {
-      "original_branches": {
-        "S": "[\"root\",\"evolving-online-discourse\"]"
-      },
-      "creator": {
-        "S": "james"
-      },
-      "id": {
-        "S": "james-1568482174870"
-      },
-      "text": {
-        "S": "What do you think?\n\nCast your vote below!"
-      },
-      "title": {
-        "S": "Poll: Are humans effecting climate change?"
-      },
-      "type": {
-        "S": "poll"
-      },
-      "url": {
-        "NULL": true
-      }
-    },
-    {
-      "original_branches": {
-        "S": "[\"root\"]"
-      },
-      "creator": {
-        "S": "james"
-      },
-      "id": {
-        "S": "james-1568469287468"
-      },
-      "text": {
-        "S": "Catch up on the live feed from our unedited webcast! A new field of collective intelligence has emerged in recent years, supported by a wave of new digital t..."
-      },
-      "title": {
-        "S": "How Collective Intelligence Can Change the World | Geoff Mulgan | RSA Replay"
-      },
-      "type": {
-        "S": "page"
-      },
-      "url": {
-        "S": "https://www.youtube.com/watch?v=iLnvqSRo2_Q"
-      }
-    },
-    {
-      "original_branches": {
-        "S": "[\"root\"]"
-      },
-      "creator": {
-        "S": "dtmakm"
-      },
-      "text": {
-        "S": "119 Followers, 270 Following, 16 Posts - See Instagram photos and videos from \u0414\u0435\u044f\u043d \u0421\u0430\u043c\u0430\u0440\u0434\u0436\u0438\u0435\u0432 (@dean.42)"
-      },
-      "id": {
-        "S": "dtmakm-1562758399334"
-      },
-      "title": {
-        "S": "\u0414\u0435\u044f\u043d \u0421\u0430\u043c\u0430\u0440\u0434\u0436\u0438\u0435\u0432 (@dean.42) \u2022 Instagram photos and videos"
-      },
-      "type": {
-        "S": "page"
-      },
-      "url": {
-        "S": "https://www.instagram.com/dean.42/"
-      }
-    },
-    {
-      "original_branches": {
-        "S": "[\"root\"]"
-      },
-      "creator": {
-        "S": "james"
-      },
-      "text": {
-        "NULL": true
-      },
-      "id": {
-        "S": "james-1516928532567"
-      },
-      "title": {
-        "S": "Test Poll 3"
-      },
-      "type": {
-        "S": "poll"
-      },
-      "url": {
-        "NULL": true
-      }
-    },
-    {
-      "original_branches": {
-        "S": "[\"polls\"]"
-      },
-      "creator": {
-        "S": "lmenus"
-      },
-      "text": {
-        "NULL": true
-      },
-      "id": {
-        "S": "lmenus-1503409244306"
-      },
-      "title": {
-        "S": "Question"
-      }
-    },
-    {
-      "original_branches": {
-        "S": "[\"givemechildren\"]"
-      },
-      "creator": {
-        "S": "lmenus"
-      },
-      "text": {
-        "S": "here and givemechildren"
-      },
-      "id": {
-        "S": "lmenus-1502029490975"
-      },
-      "title": {
-        "S": "suchbeauty post"
-      }
-    },
-    {
-      "original_branches": {
-        "S": "[\"givemechildren\"]"
-      },
-      "creator": {
-        "S": "lmenus"
-      },
+  {
       "text": {
         "S": "this post is good"
-      },
-      "id": {
-        "S": "lmenus-1501580198230"
-      },
+      }, 
+      "original_branches": {
+        "S": "[\"givemechildren\"]"
+      }, 
       "title": {
         "S": "what's good"
+      }, 
+      "id": {
+        "S": "lmenus-1501580198230"
+      }, 
+      "creator": {
+        "S": "lmenus"
       }
     },
-    {
+	{
+      "text": {
+        "S": "Test post, NSFW"
+      }, 
       "original_branches": {
-        "S": "[\"root\"]"
-      },
-      "creator": {
-        "S": "james"
-      },
+        "S": "[\"givemechildren\"]"
+      }, 
+      "title": {
+        "S": "Lubos Post"
+      }, 
       "id": {
-        "S": "james-1568471035670"
-      },
+        "S": "lmenus-1496427246798"
+      }, 
+      "creator": {
+        "S": "lmenus"
+      }
+    },
+	{
+      "text": {
+        "S": "here and givemechildren"
+      }, 
+      "original_branches": {
+        "S": "[\"givemechildren\"]"
+      }, 
+      "title": {
+        "S": "suchbeauty post"
+      }, 
+      "id": {
+        "S": "lmenus-1502029490975"
+      }, 
+      "creator": {
+        "S": "lmenus"
+      }
+    },
+	{
       "text": {
         "NULL": true
-      },
+      }, 
+      "original_branches": {
+        "S": "[\"polls\"]"
+      }, 
       "title": {
-        "S": "Sample Poll"
-      },
+        "S": "Question"
+      }, 
+      "id": {
+        "S": "lmenus-1503409244306"
+      }, 
+      "creator": {
+        "S": "lmenus"
+      }
+    },
+	{
+      "title": {
+        "S": "Test Poll 3"
+      }, 
+      "url": {
+        "NULL": true
+      }, 
+      "text": {
+        "NULL": true
+      }, 
+      "creator": {
+        "S": "james"
+      }, 
+      "id": {
+        "S": "james-1516928532567"
+      }, 
       "type": {
         "S": "poll"
-      },
-      "url": {
-        "NULL": true
+      }, 
+      "original_branches": {
+        "S": "[\"root\"]"
       }
     },
-    {
-      "original_branches": {
-        "S": "[\"root\",\"evolving-online-discourse\"]"
-      },
-      "creator": {
-        "S": "james"
-      },
-      "id": {
-        "S": "james-1568481691209"
-      },
-      "text": {
-        "S": "Bill Nye has argued that climate change deniers suffer psychological delusions. Tucker takes him on in an unforgettable debate #Tucker"
-      },
+	{
       "title": {
-        "S": "Tucker vs. Bill Nye the Science Guy"
-      },
-      "type": {
-        "S": "video"
-      },
+        "S": "\u0414\u0435\u044f\u043d \u0421\u0430\u043c\u0430\u0440\u0434\u0436\u0438\u0435\u0432 (@dean.42) \u2022 Instagram photos and videos"
+      }, 
       "url": {
-        "S": "https://www.youtube.com/watch?v=qN5L2q6hfWo"
+        "S": "https://www.instagram.com/dean.42/"
+      }, 
+      "text": {
+        "S": "119 Followers, 270 Following, 16 Posts - See Instagram photos and videos from \u0414\u0435\u044f\u043d \u0421\u0430\u043c\u0430\u0440\u0434\u0436\u0438\u0435\u0432 (@dean.42)"
+      }, 
+      "creator": {
+        "S": "dtmakm"
+      }, 
+      "id": {
+        "S": "dtmakm-1562758399334"
+      }, 
+      "type": {
+        "S": "page"
+      }, 
+      "original_branches": {
+        "S": "[\"root\"]"
       }
     }
-  ],
-  "Count": 12,
-  "ScannedCount": 12
+  ], 
+  "ScannedCount": 6
 }

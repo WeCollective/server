@@ -1,33 +1,29 @@
 {
   "Table": {
+    "TableArn": "arn:aws:dynamodb:eu-west-1:470576480462:table/devUserImages", 
     "AttributeDefinitions": [
       {
-        "AttributeName": "id",
+        "AttributeName": "id", 
         "AttributeType": "S"
       }
-    ],
-    "TableName": "devUserImages",
+    ], 
+    "ProvisionedThroughput": {
+      "NumberOfDecreasesToday": 0, 
+      "WriteCapacityUnits": 1, 
+      "ReadCapacityUnits": 1, 
+      "LastDecreaseDateTime": 1467715412.077
+    }, 
+    "TableSizeBytes": 253, 
+    "TableName": "devUserImages", 
+    "TableStatus": "ACTIVE", 
+    "TableId": "8280a9c8-ced8-4e8e-b0b6-4b1f5c72fe3b", 
     "KeySchema": [
       {
-        "AttributeName": "id",
-        "KeyType": "HASH"
+        "KeyType": "HASH", 
+        "AttributeName": "id"
       }
-    ],
-    "TableStatus": "ACTIVE",
-    "CreationDateTime": 1568479447.787,
-    "ProvisionedThroughput": {
-      "LastIncreaseDateTime": 0.0,
-      "LastDecreaseDateTime": 0.0,
-      "NumberOfDecreasesToday": 0,
-      "ReadCapacityUnits": 25,
-      "WriteCapacityUnits": 25
-    },
-    "TableSizeBytes": 0,
-    "ItemCount": 0,
-    "TableArn": "arn:aws:dynamodb:us-east-1:000000000000:table/devUserImages",
-    "BillingModeSummary": {
-      "BillingMode": "PROVISIONED",
-      "LastUpdateToPayPerRequestDateTime": 0.0
-    }
+    ], 
+    "ItemCount": 6, 
+    "CreationDateTime": 1467204145.913
   }
 }

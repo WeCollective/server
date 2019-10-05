@@ -1,67 +1,63 @@
 {
   "Table": {
-    "AttributeDefinitions": [
-      {
-        "AttributeName": "date",
-        "AttributeType": "N"
-      },
-      {
-        "AttributeName": "id",
-        "AttributeType": "S"
-      },
-      {
-        "AttributeName": "user",
-        "AttributeType": "S"
-      }
-    ],
-    "TableName": "devNotifications",
-    "KeySchema": [
-      {
-        "AttributeName": "id",
-        "KeyType": "HASH"
-      }
-    ],
-    "TableStatus": "ACTIVE",
-    "CreationDateTime": 1568479439.796,
-    "ProvisionedThroughput": {
-      "LastIncreaseDateTime": 0.0,
-      "LastDecreaseDateTime": 0.0,
-      "NumberOfDecreasesToday": 0,
-      "ReadCapacityUnits": 25,
-      "WriteCapacityUnits": 25
-    },
-    "TableSizeBytes": 0,
-    "ItemCount": 0,
-    "TableArn": "arn:aws:dynamodb:us-east-1:000000000000:table/devNotifications",
-    "BillingModeSummary": {
-      "BillingMode": "PROVISIONED",
-      "LastUpdateToPayPerRequestDateTime": 0.0
-    },
     "GlobalSecondaryIndexes": [
       {
-        "IndexName": "user-date-index",
-        "KeySchema": [
-          {
-            "AttributeName": "user",
-            "KeyType": "HASH"
-          },
-          {
-            "AttributeName": "date",
-            "KeyType": "RANGE"
-          }
-        ],
+        "IndexSizeBytes": 100462, 
+        "IndexName": "user-date-index", 
         "Projection": {
           "ProjectionType": "ALL"
-        },
-        "IndexStatus": "ACTIVE",
+        }, 
+        "IndexStatus": "ACTIVE", 
         "ProvisionedThroughput": {
-          "ReadCapacityUnits": 1,
-          "WriteCapacityUnits": 25
-        },
-        "IndexSizeBytes": 0,
-        "ItemCount": 0,
-        "IndexArn": "arn:aws:dynamodb:ddblocal:000000000000:table/devNotifications/index/user-date-index"
+          "NumberOfDecreasesToday": 0, 
+          "WriteCapacityUnits": 1, 
+          "ReadCapacityUnits": 1
+        }, 
+        "KeySchema": [
+          {
+            "KeyType": "HASH", 
+            "AttributeName": "user"
+          }, 
+          {
+            "KeyType": "RANGE", 
+            "AttributeName": "date"
+          }
+        ], 
+        "IndexArn": "arn:aws:dynamodb:eu-west-1:470576480462:table/devNotifications/index/user-date-index", 
+        "ItemCount": 741
       }
-    ]
+    ], 
+    "AttributeDefinitions": [
+      {
+        "AttributeName": "date", 
+        "AttributeType": "N"
+      }, 
+      {
+        "AttributeName": "id", 
+        "AttributeType": "S"
+      }, 
+      {
+        "AttributeName": "user", 
+        "AttributeType": "S"
+      }
+    ], 
+    "TableArn": "arn:aws:dynamodb:eu-west-1:470576480462:table/devNotifications", 
+    "ProvisionedThroughput": {
+      "NumberOfDecreasesToday": 0, 
+      "WriteCapacityUnits": 1, 
+      "ReadCapacityUnits": 1
+    }, 
+    "TableSizeBytes": 100462, 
+    "TableName": "devNotifications", 
+    "TableStatus": "ACTIVE", 
+    "TableId": "41cbbbee-340f-48e0-be44-6f9742332308", 
+    "KeySchema": [
+      {
+        "KeyType": "HASH", 
+        "AttributeName": "id"
+      }
+    ], 
+    "ItemCount": 741, 
+    "CreationDateTime": 1472633404.756
   }
 }

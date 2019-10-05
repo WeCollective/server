@@ -4,8 +4,7 @@ var path = require('path');
 var ip = process.argv[2];
 //setup db
 let dynamodbCmd = 'python dynamodump.py -m restore -r local -s "*" --host '+ ip +' --port 4569';
-shell.exec(dynamodbCmd,{ timeout: 240000 });
-
+shell.exec(dynamodbCmd);
 //setup s3
 var s3cmd = 's3CreateBucketsWACL.bat '+ip;
 shell.exec(s3cmd);

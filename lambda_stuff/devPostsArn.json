@@ -42,7 +42,11 @@
             }
         ],
         "TableStatus": "ACTIVE",
-        "CreationDateTime": 1568651380.171,
+<<<<<<< HEAD
+        "CreationDateTime": 1565537949.742,
+=======
+        "CreationDateTime": 1564306662.604,
+>>>>>>> 904567ba0b943bf564750208ce69216da456c560
         "ProvisionedThroughput": {
             "LastIncreaseDateTime": 0.0,
             "LastDecreaseDateTime": 0.0,
@@ -50,8 +54,8 @@
             "ReadCapacityUnits": 1,
             "WriteCapacityUnits": 1
         },
-        "TableSizeBytes": 1431,
-        "ItemCount": 12,
+        "TableSizeBytes": 702,
+        "ItemCount": 6,
         "TableArn": "arn:aws:dynamodb:us-east-1:000000000000:table/devPosts",
         "BillingModeSummary": {
             "BillingMode": "PROVISIONED",
@@ -78,8 +82,8 @@
                     "ReadCapacityUnits": 1,
                     "WriteCapacityUnits": 1
                 },
-                "IndexSizeBytes": 1431,
-                "ItemCount": 12,
+                "IndexSizeBytes": 702,
+                "ItemCount": 6,
                 "IndexArn": "arn:aws:dynamodb:ddblocal:000000000000:table/devPosts/index/branchid-individual-index"
             },
             {
@@ -102,8 +106,8 @@
                     "ReadCapacityUnits": 1,
                     "WriteCapacityUnits": 1
                 },
-                "IndexSizeBytes": 1431,
-                "ItemCount": 12,
+                "IndexSizeBytes": 702,
+                "ItemCount": 6,
                 "IndexArn": "arn:aws:dynamodb:ddblocal:000000000000:table/devPosts/index/branchid-date-index"
             },
             {
@@ -126,8 +130,8 @@
                     "ReadCapacityUnits": 1,
                     "WriteCapacityUnits": 1
                 },
-                "IndexSizeBytes": 1431,
-                "ItemCount": 12,
+                "IndexSizeBytes": 702,
+                "ItemCount": 6,
                 "IndexArn": "arn:aws:dynamodb:ddblocal:000000000000:table/devPosts/index/branchid-local-index"
             },
             {
@@ -150,8 +154,8 @@
                     "ReadCapacityUnits": 1,
                     "WriteCapacityUnits": 1
                 },
-                "IndexSizeBytes": 1431,
-                "ItemCount": 12,
+                "IndexSizeBytes": 702,
+                "ItemCount": 6,
                 "IndexArn": "arn:aws:dynamodb:ddblocal:000000000000:table/devPosts/index/branchid-global-index"
             },
             {
@@ -174,8 +178,8 @@
                     "ReadCapacityUnits": 1,
                     "WriteCapacityUnits": 1
                 },
-                "IndexSizeBytes": 1431,
-                "ItemCount": 12,
+                "IndexSizeBytes": 702,
+                "ItemCount": 6,
                 "IndexArn": "arn:aws:dynamodb:ddblocal:000000000000:table/devPosts/index/branchid-comment_count-index"
             }
         ],
@@ -183,7 +187,12 @@
             "StreamEnabled": true,
             "StreamViewType": "NEW_AND_OLD_IMAGES"
         },
-        "LatestStreamLabel": "2019-09-16T16:33:19.370",
-        "LatestStreamArn": "arn:aws:dynamodb:us-east-1:000000000000:table/devPosts/stream/2019-09-16T16:33:19.370"
+<<<<<<< HEAD
+        "LatestStreamLabel": "2019-08-11T15:40:06.558",
+        "LatestStreamArn": "arn:aws:dynamodb:us-east-1:000000000000:table/devPosts/stream/2019-08-11T15:40:06.558"
+=======
+        "LatestStreamLabel": "2019-07-28T09:40:11.640",
+        "LatestStreamArn": "arn:aws:dynamodb:us-east-1:000000000000:table/devPosts/stream/2019-07-28T09:40:11.640"
+>>>>>>> 904567ba0b943bf564750208ce69216da456c560
     }
 }

@@ -7,14 +7,13 @@ const send = async (message, user) => {
     if (!message.from) {
       message.from = {
         email: process.env.WECO_EMAIL,
-        name: 'James from WECO',
+        name: 'from WECO',
       }
     }
 
     if (!message.to) {
       message.to = user.email
     }
-
     await sendgrid.send(message)
   }
   catch (e) {

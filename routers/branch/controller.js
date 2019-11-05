@@ -810,6 +810,7 @@ module.exports.getSubbranches = (req, res, next) => {
                 creator: instance.get('creator'),
                 date: instance.get('date'),
                 id: instance.get('id'),
+				description: instance.get('description'),
                 name: instance.get('name'),
                 parentid: instance.get('parentid'),
                 post_comments: instance.get('post_comments'),

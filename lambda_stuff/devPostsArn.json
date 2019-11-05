@@ -42,11 +42,7 @@
             }
         ],
         "TableStatus": "ACTIVE",
-<<<<<<< HEAD
-        "CreationDateTime": 1565537949.742,
-=======
-        "CreationDateTime": 1564306662.604,
->>>>>>> 904567ba0b943bf564750208ce69216da456c560
+        "CreationDateTime": 1572918216.681,
         "ProvisionedThroughput": {
             "LastIncreaseDateTime": 0.0,
             "LastDecreaseDateTime": 0.0,
@@ -187,12 +183,7 @@
             "StreamEnabled": true,
             "StreamViewType": "NEW_AND_OLD_IMAGES"
         },
-<<<<<<< HEAD
-        "LatestStreamLabel": "2019-08-11T15:40:06.558",
-        "LatestStreamArn": "arn:aws:dynamodb:us-east-1:000000000000:table/devPosts/stream/2019-08-11T15:40:06.558"
-=======
-        "LatestStreamLabel": "2019-07-28T09:40:11.640",
-        "LatestStreamArn": "arn:aws:dynamodb:us-east-1:000000000000:table/devPosts/stream/2019-07-28T09:40:11.640"
->>>>>>> 904567ba0b943bf564750208ce69216da456c560
+        "LatestStreamLabel": "2019-11-05T01:44:44.342",
+        "LatestStreamArn": "arn:aws:dynamodb:us-east-1:000000000000:table/devPosts/stream/2019-11-05T01:44:44.342"
     }
 }

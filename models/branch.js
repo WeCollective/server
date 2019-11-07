@@ -1,3 +1,4 @@
+
 module.exports = (Dynamite, validate) => {
   const Branch = Dynamite.define('Branch', {
     creator: {
@@ -68,7 +69,7 @@ module.exports = (Dynamite, validate) => {
   // TODO: this has an upper limit on the number of results; if so, a LastEvaluatedKey
   // will be supplied to indicate where to continue the search from
   // (see: http://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/DynamoDB.html#query-property)
-  Branch.findSubbranches = (parentid, timeafter, sortBy, lastBranchInstance, returnAll, query) => {
+  Branch.findSubbranches = (parentid, timeafter, sortBy, lastBranchInstance, returnAll) => {
 
     const { TableIndexes } = Branch.config.keys;
     let IndexName;
@@ -126,12 +127,6 @@ module.exports = (Dynamite, validate) => {
       queryParams.KeyConditionExpression = 'parentid = :parentid';
     }
 
-    if (query) {
-      queryParams.ExpressionAttributeNames['#name'] = 'name';
-      queryParams.ExpressionAttributeValues[':name'] = query;
-      queryParams.FilterExpression = queryParams.FilterExpression + ' AND contains(#name, :name)'
-    }
-
 
     return Dynamite.query(queryParams, Branch, returnAll ? 'all' : 'slice');
   };
@@ -185,6 +180,38 @@ module.exports = (Dynamite, validate) => {
 
       return Dynamite.scan(params, Branch, 'all');
     }
+  };
+  
+  
+  
+   Branch.cloudSearchSuggestions = (name, func) => {
+	   if(!name) return;
+      var params = {//future deep paging research
+		  query: name,// text to suggest
+		  suggester: "branch_name", //query language
+		  size: 7, //max results  
+		};
+		
+	return Dynamite.getBranchSuggestions(params,func);
+		
+  };
+
+
+//finish me
+  Branch.searchForSubbranches = (parentid, timeafter, sortBy, cursor, query, func) => {
+	  
+	  if(!parentid) return;
+	  //add in sorts
+	  let qur = "(and (phrase field='name' '"+query+"') (and ( term field='parentid' '"+parentid+"')))" //search query
+      const params = {
+		  query: qur, //add in time after
+		  queryParser: "structured", //query language
+		  size: 20, //max results  should be limits in the future 
+		  cursor:cursor,//pagnation, cursor is passed with request needs to be passed back and forth with the webapp (already do something like this)
+		  sort:'date desc'
+		};
+		
+	return Dynamite.getBranchSearch(params,func);
   };
 
 

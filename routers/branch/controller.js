@@ -708,6 +708,7 @@ module.exports.getSubbranches = (req, res, next) => {
         lastBranchId,
         timeafter,
         query,
+		cursor,
     } = req.query;
 
     if (!branchid) {
@@ -725,6 +726,9 @@ module.exports.getSubbranches = (req, res, next) => {
         };
         return next(JSON.stringify(req.error));
     }
+	let crs = cursor;
+	if (!crs)
+		crs = "initial";
 
     if (query)
         var queryIsOk = query != null && query.length > 0;
@@ -736,6 +740,134 @@ module.exports.getSubbranches = (req, res, next) => {
     let branches = [];
     let lastBranch = null;
 
+	if(queryIsOk){ //if the searching have to check outside of dynamodb
+		Models.Branch.searchForSubbranches(branchid, timeafter, sortBy, crs, query,(err,data)=>{
+			//err send err
+
+			if(err)
+				return err;
+			//fromat data
+			crs = data.hits.cursor;	 //attach att he end
+			
+			let instancesFormatted = [];
+			if(!data.hits.hit || data.hits.hit.length==0){
+				//return no data
+				res.locals.data = {};
+				res.locals.data.results = [];
+				res.locals.data.cursor = crs;
+				return next();
+			}
+			data.hits.hit.forEach((h) => {
+				let fh = new Object(); //formatted instance to add
+				console.log(h);
+				/*
+				fh.set('id', h.id);
+				fh.set('creator', h.fields.creator[0]);
+				fh.set('date', h.fields.date[0]);
+				fh.set('name', h.fields.name[0]);
+				fh.set('post_comments',h.fields.post_comments[0]);
+				fh.set('rules', h.fields.rules[0]);
+				fh.set('post_count', h.fields.post_count[0]);
+				fh.set('parentid', h.fields.parentid[0]);
+				fh.set('post_points', h.fields.post_points[0]);
+				fh.set('description', h.fields.description?  h.fields.description[0] : null);
+				instancesFormatted.push(fh);
+				*/
+				fh.id = h.id;
+				fh.creator = h.fields.creator[0];
+				fh.date = h.fields.date[0];
+				fh.name = h.fields.name[0];
+				fh.post_comments = h.fields.post_comments[0];
+				fh.rules = h.fields.rules?  h.fields.rules[0] : null;
+				fh.post_count = h.fields.post_count[0];
+				fh.parentid = h.fields.parentid[0];
+				fh.post_points = h.fields.post_points[0];
+				fh.description = h.fields.description?  h.fields.description[0] : null;
+				instancesFormatted.push(fh);
+				
+
+			});
+			//continue with same processes as below
+			
+			
+			branches = instancesFormatted;
+
+            let promises = [];
+
+            for (let i = 0; i < branches.length; i += 1) {
+
+                promises.push(new Promise((resolve, reject) => {
+
+                    const branch = branches[i];
+                    const id = branch.id;
+
+
+
+                    Models.BranchImage
+                        .findById(createBranchImageId(id, BranchThumbnailType))
+                        .then(instance => {
+
+                            if (instance === null) {
+                                return resolve('');
+                            }
+
+                            const date = instance.get('date');
+                            const extension = instance.get('extension');
+                            const id = instance.get('id');
+
+                            const time = date ? `?time=${date}` : '';
+                            const Bucket = fs.Bucket.BranchImagesResized;
+                            const Key = `${id}-640.${extension}`;
+                            const KeyThumb = `${id}-200.${extension}`;
+                            const profileUrl = `${Models.Dynamite.aws.getRootPath(Bucket)}${Key}${time}`;
+                            const profileUrlThumb = `${Models.Dynamite.aws.getRootPath(Bucket)}${KeyThumb}${time}`;
+
+                            branch.profileUrl = profileUrl;
+                            branch.profileUrlThumb = profileUrlThumb;
+
+
+                            return resolve();
+                        })
+                        .catch(err => {
+                            console.log(err);
+                            return reject();
+                        });
+                }));
+            }
+			
+			Promise.all(promises)
+        .then(() => {
+            res.locals.data = {};
+			
+			res.locals.data.results = branches.map(instance => ({
+                creator: instance.creator,
+                date: instance.date,
+                id: instance.id,
+				description: instance.description,
+                name: instance.name,
+                parentid: instance.parentid,
+                post_comments: instance.post_comments,
+                post_count: instance.post_count,
+                post_points: instance.post_points,
+                profileUrl: instance.profileUrl,
+                profileUrlThumb: instance.profileUrlThumb
+            }));
+			res.locals.data.cursor = crs;
+            return next();
+        })
+        .catch(err => {
+            console.error('Error fetching subbranches:', err);
+            req.error = {
+                message: err,
+            };
+            return next(JSON.stringify(req.error));
+        });
+
+			
+		});
+		
+	}
+	else
     // if lastBranchId is specified, client wants results which appear _after_ this branch (pagination)
     return new Promise((resolve, reject) => {
             if (lastBranchId) {
@@ -755,12 +887,7 @@ module.exports.getSubbranches = (req, res, next) => {
             return resolve();
         })
         .then(() => {
-
-            if (queryIsOk) {
-                return Models.Branch.findSubbranches(branchid, timeafter, sortBy, lastBranch, undefined, query);
-            } else
                 return Models.Branch.findSubbranches(branchid, timeafter, sortBy, lastBranch);
-
         })
         // Attach branch profile images.
         .then(instances => {
@@ -806,7 +933,8 @@ module.exports.getSubbranches = (req, res, next) => {
             return Promise.all(promises);
         })
         .then(() => {
-            res.locals.data = branches.map(instance => ({
+			res.locals.data = {};
+            res.locals.data.results = branches.map(instance => ({
                 creator: instance.get('creator'),
                 date: instance.get('date'),
                 id: instance.get('id'),

@@ -358,14 +358,15 @@ module.exports.get = (req, res, next) => {
     stat,
     timeafter,
     query,
-    lastFiltered,
+	cursor,
   } = req.query;
 
+	let crs = cursor;
+	if (!crs)
+		crs = "initial";
 
   //set queryIsOk
   var queryIsOk = query != null && query.length > 0;
-  var lastfilteredobj = null;
-
 
   const getFlaggedPosts = flag === 'true';
   const opts = {
@@ -381,9 +382,6 @@ module.exports.get = (req, res, next) => {
   const { branchid } = req.params;
   let lastInstance = null;
   let posts = [];
-  //this will be passed back with the response to mark the last post that was gotten by the query
-  //(if searching)
-  let lastPostToPass = {};
 
   if (!branchid) {
     req.error = {
@@ -409,41 +407,105 @@ module.exports.get = (req, res, next) => {
     return next(JSON.stringify(req.error));
   }
 
-  let searchedForPosts = [];
-  //idea for searching
-  //find posts using the query (scan for now replace give title sort or partition new CSGI)
-  //then for each of those posts get them ordered and filtered
-  //then add the additional data
+  if(queryIsOk){
+	  //search for posts
+	  	  Models.Post.searchForPosts(branchid, opts.timeafter,opts.nsfw, opts.sortBy,opts.stat,opts.postType, crs, query,(err,data)=>{
+		  //err send err
 
+			if(err)
+				return err;
+			//fromat data
+			crs = data.hits.cursor;	 //attach att he end
 
-  //initial search finds too many posts and has to pagnate, passes found posts to filters, filters remove all and you don't get all possible results
-  //fix: after applying filter do a check if the err case is the case, redo the search starting from the lasteval index until lasteval indexes converge send that [] found //not implemented
-  //problem: filter might return 0 because of dynamodb scan and end preemptively (same for search)
-  //fix: check if lasteval exists if it does there's more to search //not implemented
-  //TODO merge two fixes
-  //TODO make same thing for flag posts
-  //TODO remove tags from query
+			let instancesFormatted = [];
+			if(!data.hits.hit || data.hits.hit.length==0){
+				//return no data
+				res.locals.data = {};
+				res.locals.data.results = [];
+				res.locals.data.cursor = crs;
+				return next();
+			}
+	  //fix formating
+			data.hits.hit.forEach((h) => {
+				let fh = new Map(); //formatted instance to add
 
+				fh.set("id", h.fields.id[0]);
+				
+				instancesFormatted.push(fh);
+				
 
-  //problem: results from the searched ones are grabbed by the filters and the posts that are good are taken
-  //there may be more results from the search than the filter can handle
-  //fix: what you wanna do is start evaluating filter starting from it's last one but with the same search keys
-  //idea to merge fixes: newPosts are 0 but lastfilterid and/or searchid are set
+			});
+	  	  //gather other data and return 
+		  let promises = [];
+		  posts = instancesFormatted;
+		  
+		  posts.forEach((instance, index) => {
+			  
+			const promise = PostCtrl
+			  .getOnePost(instance.get('id'), req, branchid)
+			  .then(instance => {
+				// Set manually so we don't overwrite the flagged post properties.
+				const post = posts[index];
+				// todo have instance method for this
+				Object.keys(instance.dataValues).forEach(key => 
+				{
+					post.set(key, instance.get(key))
+				});
+				return Promise.resolve();
+			  })
+			  .catch(err => console.log(err));
 
-  //problem: when searching sort by applied to posts in segments that are downloaded and not through all segments
-  //fix: None
+			promises = [
+			  ...promises,
+			  promise,
+			];
+		  });
 
+		Promise.all(promises)
+		.then(() => {
+
+		  let results = [];
+		  
+		  posts.forEach(instance => {
+			let obj = {};
+			instance.forEach((val,key,map) =>{
+				obj[key] = val;
+
+			});
+			
+			results = [
+			  ...results,
+			  obj,
+			];
+		  });
+
+		  res.locals.data = {}
+		  res.locals.data.results = results;
+		  res.locals.data.cursor = crs;
+		  return next();
+		})
+		.catch(err => {
+		  console.error('Error fetching posts:', err);
+
+		  if (typeof err === 'object' && err.status) {
+			req.error = err;
+			return next(JSON.stringify(req.error));
+		  }
+
+		  req.error = {
+			message: err,
+		  };
+		  return next(JSON.stringify(req.error));
+		});
+		  
+		  
+	  });
+
+  }
+  else
   return new Promise((resolve, reject) => {
-    // Client wants only results that appear after this post (pagination).
-    //if searching don't bother looking up old post (as you only need the id and you already have it)
-    //set last posts id to the passed id
-    if (lastPostId && !!query) {
-
-      lastInstance = { id: lastPostId };
-      return resolve();
-
-    }
-    else if (lastPostId) {
+    
+	if (lastPostId) {
       return Models.Post.findByPostAndBranchIds(lastPostId, branchid)
         // fetch post data
         .then(instance => {
@@ -473,34 +535,6 @@ module.exports.get = (req, res, next) => {
 
     // No last post specified, continue...
     return resolve();
-  }).then(() => {
-    if (lastFiltered) {
-      return Models.Post.findByPostAndBranchIds(lastFiltered, branchid)
-        // fetch post data
-        .then(instance => {
-          if (instance === null) {
-            return;
-          }
-
-          lastfilteredobj = instance;
-          return Models.PostData.findById(lastFiltered);
-        })
-        .then(instance => {
-          if (instance === null) {
-            return;
-          }
-
-          Object.keys(instance.dataValues).forEach(key => lastfilteredobj.set(key, instance.get(key)));
-          return;
-        })
-        .catch(err => {
-          if (err) {
-            return err;
-          }
-        });
-
-    }
-    // No last filtered post specified, continue...
   })
     // Check if the user has permissions to fetch the requested posts.
     .then(() => new Promise((resolve, reject) => {
@@ -516,55 +550,14 @@ module.exports.get = (req, res, next) => {
     }))
     //either search by query and then filter or just filter
     .then(() => {
-      if (queryIsOk) {
-        return Models.PostData.findPostLooselyByTitle(query, lastInstance);
-      }
-      else {
+      
         const model = opts.fetchOnlyflaggedPosts ? Models.FlaggedPost : Models.Post;
         return model.findByBranch(branchid, opts.timeafter, opts.nsfw, opts.sortBy, opts.stat, opts.postType, lastInstance);
-      }
-    })
-    .then(instances => {
-
-      //if instances > 0 get the last instance and set it to lastPostToPass
-      lastPostToPass = instances.length > 0 ? instances[instances.length - 1] : null;
-
-      if (queryIsOk) {
-        searchedForPosts = instances;
-        //filter them and return the filtered ones
-        //return Models.Post.batchGetItems(branchid, instances, opts.timeafter, opts.nsfw, opts.sortBy, opts.stat, opts.postType);
-        //TODO do the same for flagged posts
-        if (lastFiltered)
-          return Models.Post.ScanForPosts(branchid, instances, opts.timeafter, opts.nsfw, opts.sortBy, opts.stat, opts.postType, lastfilteredobj);
-        else
-          return Models.Post.ScanForPosts(branchid, instances, opts.timeafter, opts.nsfw, opts.sortBy, opts.stat, opts.postType);
-
-      }
-      else {
-        return instances;
-      }
     })
     // Get posts.
     .then(instances => {
       posts = instances;
       let promises = [];
-      //check again and don't send last post if results after filter are 0
-      //can do a check over here if filter destroyed all the queryied by title posts
-      if (queryIsOk) {
-
-        lastPostToPass = instances.length > 0 ? lastPostToPass : null;
-        //TODO change this to use the set constant limit.posts
-        if (lastPostToPass && instances.length == 30) {
-          //if the filtered posts list has reached it's max len go through again with the same search keys
-          //set start to get old keys
-          lastPostToPass = searchedForPosts[0];
-          //set filter to start from
-          lastPostToPass.dataValues.lastfilterid = instances[instances.length - 1].get('id');
-          //have to attach lastFiltered if you want to pagnete the filter
-
-        }
-        //if (instances.length==0 && searchedForPosts.length!=0){}
-      }
 
       posts.forEach((instance, index) => {
         const promise = PostCtrl
@@ -595,10 +588,10 @@ module.exports.get = (req, res, next) => {
           Object.assign({}, instance.dataValues),
         ];
       });
-      //add last to pasw
-      if (lastPostToPass)
-        results = [...results, lastPostToPass.dataValues];
-      res.locals.data = results;
+
+      res.locals.data = {}
+	  res.locals.data.results = results;
+	  res.locals.data.cursor = crs;
       return next();
     })
     .catch(err => {

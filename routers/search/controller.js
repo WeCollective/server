@@ -12,55 +12,29 @@ module.exports.getposts = (req, res, next) => {
   if (!q) {
     return [];
   }
+  
+  Models.Post.cloudSearchSuggestions(q, ((err, data) => { //change to post
+	   
+		  if (err)  return Promise.reject({
+							  message: 'err searching',
+							  status: 404,
+							}); // an error occurred
+		  else     {
+			let instances = data.suggest.suggestions;
+			let results = [];
+			instances.forEach(instance => {
 
+			  results = [
+				...results,
+				Object.assign({}, { id: instance.id, type: 'post', text: instance.suggestion }),
+			  ];
 
-  //create a promise
-  //return after it's resolved
-
-  var results = [];
-
-  //search posts
-  var postsToAppend = [];
-
-  var promisesSearch = [];
-
-
-
-  //search posts
-  promisesSearch.push(
-    Models.PostData.findPostLooselyByTitle(q)
-      .then(instances => {
-
-
-        let results = [];
-        let titles = [];
-        instances.forEach(instance => {
-          let title = instance.get('title');
-          if (!titles.includes(title)) {
-            titles = [...titles, title];
-            results = [
-              ...results,
-              Object.assign({}, { id: instance.get('id'), type: 'post', text: title }),
-            ];
-          }
-
-        });
-        postsToAppend = results;
-      })
-  );
-
-  //promises resolve all then do all below
-  Promise.all(promisesSearch).then(() => {
-    results = results.concat(postsToAppend);
-    res.locals.data = { results };
-    return next();
-  }).catch(() => {
-    return Promise.reject({
-      message: 'err searching',
-      status: 404,
-    });
-  });
-
+			});
+			  res.locals.data = { results };
+			  return next();
+		  };         
+		}
+   ));
 
 
 };
@@ -74,52 +48,29 @@ module.exports.getbranches = (req, res, next) => {
     return [];
   }
 
+  
+  Models.Branch.cloudSearchSuggestions(q, ((err, data) => {
+	   
+		  if (err)  return Promise.reject({
+							  message: 'err searching',
+							  status: 404,
+							}); // an error occurred
+		  else     {
+			let instances = data.suggest.suggestions;
+			let results = [];
+			instances.forEach(instance => {
 
-  //create a promise
-  //return after it's resolved
+			  results = [
+				...results,
+				Object.assign({}, { id: instance.id, type: 'branch', text: instance.suggestion }),
+			  ];
 
-  var results = [];
-
-  //search branches
-  var branches = [];
-
-
-  var promisesSearch = [];
-
-
-
-  //search branches
-  promisesSearch.push(
-    Models.Branch.findLooselyByNameAndParent(q, rootId)
-      .then(instances => {
-
-
-        let results = [];
-        instances.forEach(instance => {
-
-          results = [
-            ...results,
-            Object.assign({}, { id: instance.get('id'), type: 'branch', text: instance.get('name') }),
-          ];
-
-        });
-        branches = results;
-      })
-  );
-
-  //promises resolve all then do all below
-  Promise.all(promisesSearch).then(() => {
-    results = results.concat(branches);
-    res.locals.data = { results };
-    return next();
-  }).catch(() => {
-    return Promise.reject({
-      message: 'err searching',
-      status: 404,
-    });
-  });
-
-
+			});
+			  res.locals.data = { results };
+			  return next();
+		  };         
+		}
+   ));
 
 };
 

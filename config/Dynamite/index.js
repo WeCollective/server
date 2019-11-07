@@ -14,7 +14,7 @@ const Dynamite = {
       options = {};
     }
 
-    const prefix = process.env.NODE_ENV !== 'production' ? 'dev' : '';
+    const prefix = process.env.NODE_ENV !== 'production' ? 'dev' : ''; 
     const table = `${prefix}${pluralize(name, options.pluralize === false ? 1 : 2)}`;
 
     if (this.models[name]) {
@@ -178,7 +178,22 @@ const Dynamite = {
       return resolve(data);
     }));
   },
+  
+  getBranchSuggestions(params,func){
+	  AWS.BranchCloudSearch.suggest(params, func);
+  },
+  
+  getPostSuggestions(params,func){
+	  AWS.PostCloudSearch.suggest(params, func);
+  },
+  
+   getPostSearch(params,func){
+	  AWS.PostCloudSearch.search(params, func);
+  },
 
+  getBranchSearch(params,func){
+	  AWS.BranchCloudSearch.search(params, func);
+  },
 
 
   validator,

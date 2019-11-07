@@ -185,6 +185,44 @@ module.exports = (Dynamite, validate) => {
 
 
 
+	Post.cloudSearchSuggestions = ((title,func) => {
+		 if(!title) return;
+      var params = {//future deep paging research
+		  query: title,// text to suggest
+		  suggester: "title_suggest", //query language
+		  size: 7, //max results  
+		};
+		
+	return Dynamite.getPostSuggestions(params,func);
+		
+	});
+	
+	
+	//finish me
+  Post.searchForPosts = (branchid, timeafter,nsfw, sortBy,stat,type, cursor, query, func) => {
+
+	  if(!branchid || !query) return;
+	  
+	  //add in sorts
+	  let qur = "(and (phrase field='title' '"+query+"') (and ( term field='branchid' '"+branchid+"')))" //search query
+      const params = {
+		  query: qur, //add in time after
+		  queryParser: "structured", //query language
+		  size: 20, //max results  should be limits in the future 
+		  cursor:cursor,//pagnation, cursor is passed with request needs to be passed back and forth with the webapp (already do something like this)
+		  sort:'date desc'
+		};
+
+	return Dynamite.getPostSearch(params,func);
+  };
+	  /*let qur = "(and (phrase field='title' '"+query+"') (and ( term field='branchid' '"+branchid+"')))" //search query
+      const params = {
+		  query: qur, //add in time after
+		  queryParser: "structured", //query language
+		  size: 20, //max results  should be limits in the future 
+		  cursor:cursor,//pagnation, cursor is passed with request needs to be passed back and forth with the webapp (already do something like this)
+		  sort:'date desc'
+		};*/
 
 
 

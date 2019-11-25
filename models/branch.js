@@ -225,9 +225,15 @@ module.exports = (Dynamite, validate) => {
         break;
     }
 	sort = sort + " desc";
+	
+	let qur = '';
+	if(parentid="all")
+		let qur = "(and (phrase field='name' '"+query+"'))"; //search query
+	else
+		let qur = "(and (phrase field='name' '"+query+"') (and ( term field='parentid' '"+parentid+"')))"; //search query
+		
 		//why doesn't this work
   //let qur = "(and (phrase field='name' '"+query+"') (and ( term field='parentid' '"+parentid+"')) (and (range field=date [4,})) )"; //search query
-   let qur = "(and (phrase field='name' '"+query+"') (and ( term field='parentid' '"+parentid+"')))"; //search query
       const params = {
 		  query: qur, //"(and (phrase field='name' 'weco') (and ( term field='parentid' 'root')) )", //add in time after
 		  queryParser: "structured", //query language

@@ -227,10 +227,10 @@ module.exports = (Dynamite, validate) => {
 	sort = sort + " desc";
 	
 	let qur = '';
-	if(parentid="all")
-		let qur = "(and (phrase field='name' '"+query+"'))"; //search query
+	if(parentid="allPosts")
+		qur = "(and (phrase field='name' '"+query+"'))"; //search query
 	else
-		let qur = "(and (phrase field='name' '"+query+"') (and ( term field='parentid' '"+parentid+"')))"; //search query
+		qur = "(and (phrase field='name' '"+query+"') (and ( term field='parentid' '"+parentid+"')))"; //search query
 		
 		//why doesn't this work
   //let qur = "(and (phrase field='name' '"+query+"') (and ( term field='parentid' '"+parentid+"')) (and (range field=date [4,})) )"; //search query

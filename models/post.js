@@ -200,17 +200,50 @@ module.exports = (Dynamite, validate) => {
 	
 	//finish me
   Post.searchForPosts = (branchid, timeafter,nsfw, sortBy,stat,type, cursor, query, func) => {
-
-	  if(!branchid || !query) return;
+	  	if(!branchid || !query) return;
+		if (nsfw === undefined) nsfw = true;
+        if (type === undefined) type = 'all';
+        if (sortBy === undefined) sortBy = 'date';
+        if (stat === undefined) stat = 'global';
+        if (timeafter === undefined) timeafter = 0;
 	  
-	  //add in sorts
-	  let qur = "(and (phrase field='title' '"+query+"') (and ( term field='branchid' '"+branchid+"')))" //search query
+	  
+	  let sort = 'comments';
+	  
+	  if (sortBy === 'points') {
+            switch (stat) {
+                case 'individual':
+                    sort = 'individual';
+                    break;
+
+                case 'local':
+                    sort = 'local';
+                    break;
+
+                case 'global':
+                default:
+                    sort = 'global';
+                    break;
+            }
+
+        }
+		else if(sortBy === "date"){
+			sort = "date";
+		}		
+	  sort = sort + " desc";
+	  let qur = '';
+	  if(type=="all")
+		qur = "(and (phrase field='title' '"+query+"') (and ( term field='branchid' '"+branchid+"')) (and (range field=date {"+timeafter+",}))  )" //search query
+	  else//not all
+		qur = "(and (phrase field='title' '"+query+"') (and ( term field='branchid' '"+branchid+"')) (and (range field=date {"+timeafter+",}))" + 
+	" (and ( term field='type' '"+type+"'))  )" //search query
+
       const params = {
 		  query: qur, //add in time after
 		  queryParser: "structured", //query language
 		  size: 20, //max results  should be limits in the future 
 		  cursor:cursor,//pagnation, cursor is passed with request needs to be passed back and forth with the webapp (already do something like this)
-		  sort:'date desc'
+		  sort:sort
 		};
 
 	return Dynamite.getPostSearch(params,func);

@@ -202,13 +202,37 @@ module.exports = (Dynamite, validate) => {
 	  
 	  if(!parentid) return;
 	  //add in sorts
-	  let qur = "(and (phrase field='name' '"+query+"') (and ( term field='parentid' '"+parentid+"')))" //search query
+
+	  let sort = 'date';
+	  switch (sortBy) {
+      case 'post_count':
+		sort = 'post_count';
+        break;
+
+      case 'post_points':
+		sort = 'post_points';
+        break;
+
+      case 'post_comments':
+	  	sort = 'post_comments';
+        break;
+
+      case 'date':
+		sort = 'date';
+		break;
+		
+      default:
+        break;
+    }
+	sort = sort + " desc";
+		
+	  let qur = "(and (phrase field='name' '"+query+"') (and ( term field='parentid' '"+parentid+"')) (and (range field=date {"+timeafter+",})) )" //search query
       const params = {
 		  query: qur, //add in time after
 		  queryParser: "structured", //query language
 		  size: 20, //max results  should be limits in the future 
 		  cursor:cursor,//pagnation, cursor is passed with request needs to be passed back and forth with the webapp (already do something like this)
-		  sort:'date desc'
+		  sort:sort
 		};
 		
 	return Dynamite.getBranchSearch(params,func);

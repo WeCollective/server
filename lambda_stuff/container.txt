@@ -1,2 +1,2 @@
 CONTAINER ID        IMAGE                         COMMAND                  CREATED             STATUS              PORTS                                                                     NAMES
-5ce59491eb0f        localstack/localstack:0.9.6   "docker-entrypoint.sh"   14 hours ago        Up 14 hours         0.0.0.0:4563-4584->4563-4584/tcp, 4585-4597/tcp, 0.0.0.0:8055->8080/tcp   localstack_demo
+5ce59491eb0f        localstack/localstack:0.9.6   "docker-entrypoint.sh"   2 weeks ago         Up 2 days           0.0.0.0:4563-4584->4563-4584/tcp, 4585-4597/tcp, 0.0.0.0:8055->8080/tcp   localstack_demo

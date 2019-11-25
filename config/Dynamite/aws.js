@@ -17,8 +17,6 @@ var stdout = null;
 
 
 
-
-
 //testing cloudsearch
 
 

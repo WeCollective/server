@@ -225,10 +225,11 @@ module.exports = (Dynamite, validate) => {
         break;
     }
 	sort = sort + " desc";
-		
-	  let qur = "(and (phrase field='name' '"+query+"') (and ( term field='parentid' '"+parentid+"')) (and (range field=date {"+timeafter+",})) )" //search query
+		//why doesn't this work
+  //let qur = "(and (phrase field='name' '"+query+"') (and ( term field='parentid' '"+parentid+"')) (and (range field=date [4,})) )"; //search query
+   let qur = "(and (phrase field='name' '"+query+"') (and ( term field='parentid' '"+parentid+"')))"; //search query
       const params = {
-		  query: qur, //add in time after
+		  query: qur, //"(and (phrase field='name' 'weco') (and ( term field='parentid' 'root')) )", //add in time after
 		  queryParser: "structured", //query language
 		  size: 20, //max results  should be limits in the future 
 		  cursor:cursor,//pagnation, cursor is passed with request needs to be passed back and forth with the webapp (already do something like this)

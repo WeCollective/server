@@ -232,11 +232,11 @@ module.exports = (Dynamite, validate) => {
 		}		
 	  sort = sort + " desc";
 	  let qur = '';
-	  if(type=="all")
-		qur = "(and (phrase field='title' '"+query+"') (and ( term field='branchid' '"+branchid+"')) (and (range field=date {"+timeafter+",}))  )" //search query
+	  if(type=="all")//(and (range field=date {"+timeafter+",})) not working with this ?
+		qur = "(and (phrase field='title' '"+query+"') (and ( term field='branchid' '"+branchid+"'))   )" //search query
 	  else//not all
-		qur = "(and (phrase field='title' '"+query+"') (and ( term field='branchid' '"+branchid+"')) (and (range field=date {"+timeafter+",}))" + 
-	" (and ( term field='type' '"+type+"'))  )" //search query
+		qur = "(and (phrase field='title' '"+query+"') (and ( term field='branchid' '"+branchid+"'))" + 
+	" (and ( term field='type' '"+type+"'))  (and (range field=date ({"+timeafter+",}) )) )" //search query
 
       const params = {
 		  query: qur, //add in time after

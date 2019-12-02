@@ -198,7 +198,7 @@ module.exports = (Dynamite, validate) => {
 
 
 //finish me
-  Branch.searchForSubbranches = (parentid, timeafter, sortBy, cursor, query, func) => {
+  Branch.searchForSubbranches = (parentid, timeafter, sortBy, cursor, query, func,) => {
 	  
 	  if(!parentid) return;
 	  //add in sorts
@@ -226,21 +226,34 @@ module.exports = (Dynamite, validate) => {
     }
 	sort = sort + " desc";
 	
-	let qur = '';
-	if(parentid="allPosts")
-		qur = "(and (phrase field='name' '"+query+"'))"; //search query
-	else
-		qur = "(and (phrase field='name' '"+query+"') (and ( term field='parentid' '"+parentid+"')))"; //search query
+	let params = {};
+	
+	let searchAll = parentid ==="root";
+	if(searchAll){
+		params = {
+		  query: query, 
+		  queryParser: "simple", //query language
+		  size: 20, //max results  should be limits in the future 
+		  cursor:cursor,//pagnation, cursor is passed with request needs to be passed back and forth with the webapp (already do something like this)
+		  sort:sort
+		};
 		
-		//why doesn't this work
+	}
+	else
+	{
+		//why doesn't this work???
   //let qur = "(and (phrase field='name' '"+query+"') (and ( term field='parentid' '"+parentid+"')) (and (range field=date [4,})) )"; //search query
-      const params = {
+		let qur = "(and (phrase field='name' '"+query+"') (and ( term field='parentid' '"+parentid+"')))"; //search query
+		params = {
 		  query: qur, //"(and (phrase field='name' 'weco') (and ( term field='parentid' 'root')) )", //add in time after
 		  queryParser: "structured", //query language
 		  size: 20, //max results  should be limits in the future 
 		  cursor:cursor,//pagnation, cursor is passed with request needs to be passed back and forth with the webapp (already do something like this)
 		  sort:sort
 		};
+	}
+	
+      
 		
 	return Dynamite.getBranchSearch(params,func);
   };

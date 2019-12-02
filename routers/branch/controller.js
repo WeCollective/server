@@ -710,7 +710,6 @@ module.exports.getSubbranches = (req, res, next) => {
         query,
 		cursor,
     } = req.query;
-
     if (!branchid) {
         req.error = {
             message: 'Mising branchid.',
@@ -733,7 +732,6 @@ module.exports.getSubbranches = (req, res, next) => {
     if (query)
         var queryIsOk = query != null && query.length > 0;
 
-
     // const branch = new Branch();
     const sortBy = req.query.sortBy || 'date';
 
@@ -748,7 +746,7 @@ module.exports.getSubbranches = (req, res, next) => {
 				return err;
 			//fromat data
 			crs = data.hits.cursor;	 //attach att he end
-			
+
 			let instancesFormatted = [];
 			if(!data.hits.hit || data.hits.hit.length==0){
 				//return no data
